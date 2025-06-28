@@ -82,14 +82,14 @@ jobs:
           CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
 
       - name: 📝 Upload Cypress screenshots
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: cypress-screenshots
           path: frontend/cypress/screenshots
           retention-days: 7
 
       - name: 📝 Upload Cypress videos
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: cypress-videos
           path: frontend/cypress/videos
