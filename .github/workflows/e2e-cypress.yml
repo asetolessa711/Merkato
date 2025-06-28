@@ -32,23 +32,27 @@ jobs:
 
       - name: 📂 Install frontend dependencies
         run: |
+          echo "📦 Installing frontend dependencies..."
           cd frontend
           npm ci
 
       - name: 📂 Install backend dependencies
         run: |
+          echo "📦 Installing backend dependencies..."
           cd backend
           npm ci
 
       - name: 🌱 Seed test database
         run: |
+          echo "🌱 Seeding test database..."
           cd backend
           npm run test:seed
 
       - name: 🔧 Start backend (test mode)
         run: |
+          echo "🔧 Starting backend on port 5000..."
           cd backend
-          npm run dev &
+          nohup npm run dev > backend.log 2>&1 &
         env:
           MONGO_URI: ${{ secrets.TEST_MONGO_URI }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
@@ -56,16 +60,20 @@ jobs:
           STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
 
       - name: ⏳ Wait for backend
-        run: npx wait-on --timeout=120000 http://localhost:5000/api
+        run: |
+          echo "⏳ Waiting for backend /api to respond..."
+          npx wait-on --timeout=60000 http://localhost:5000/api
 
       - name: 🧱 Build frontend
         run: |
+          echo "🧱 Building frontend..."
           cd frontend
           npm run build
 
       - name: 🚀 Serve frontend
         run: |
-          nohup npx serve -s build -l 3000 > serve.log 2>&1 &
+          echo "🚀 Serving frontend on port 3000..."
+          nohup npx serve -s build -l 3000 --single > serve.log 2>&1 &
         working-directory: frontend
 
       - name: 🧪 Run Cypress tests
