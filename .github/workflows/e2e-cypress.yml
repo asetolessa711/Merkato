@@ -55,14 +55,22 @@ jobs:
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
           STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
 
-      - name: 🚀 Run Cypress tests
+      - name: 🧱 Build frontend
+        run: |
+          cd frontend
+          npm run build
+
+      - name: 🚀 Serve frontend
+        run: |
+          npx serve -s build -l 3000 &
+        working-directory: frontend
+
+      - name: 🧪 Run Cypress tests
         uses: cypress-io/github-action@v5
         with:
           working-directory: frontend
-          start: npm start
           wait-on: 'http://localhost:3000'
           wait-on-timeout: 120
-          wait-on-expected-status: 200
           browser: chrome
         env:
           REACT_APP_API_URL: http://localhost:5000/api
