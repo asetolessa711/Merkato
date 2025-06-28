@@ -55,30 +55,16 @@ jobs:
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
           STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
 
-      - name: 🚀 Start frontend
-        run: |
-          cd frontend
-          npm run dev &
-        env:
-          REACT_APP_API_URL: http://localhost:5000/api
-
-      - name: ⏳ Wait for frontend
-        uses: jakejarvis/wait-action@v0.1.1
-        with:
-          url: http://localhost:3000
-          timeout: 60
-
-      - name: 🚀 Run Cypress tests (parallelized)
+      - name: 🚀 Run Cypress tests
         uses: cypress-io/github-action@v5
         with:
           working-directory: frontend
-          start: npm run dev
+          start: npm start
           wait-on: 'http://localhost:3000'
           browser: chrome
-          parallel: true
-          record: true
           group: 'E2E Tests'
         env:
+          REACT_APP_API_URL: http://localhost:5000/api
           CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
 
       - name: 📝 Upload Cypress screenshots
