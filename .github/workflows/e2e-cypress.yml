@@ -61,6 +61,8 @@ jobs:
           working-directory: frontend
           start: npm start
           wait-on: 'http://localhost:3000'
+          wait-on-timeout: 120
+          wait-on-expected-status: 200
           browser: chrome
         env:
           REACT_APP_API_URL: http://localhost:5000/api
