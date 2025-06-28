@@ -1,0 +1,269 @@
+/* --- General --- */
+.home-page {
+    font-family: 'Poppins', sans-serif;
+    color: #333;
+  }
+  
+  /* --- Hero Section --- */
+  .hero {
+    background-color: #f8f8f8;
+    padding: 60px 20px;
+    text-align: center;
+  }
+  
+  .logo {
+    font-weight: bold;
+    font-size: 3rem;
+    display: flex;
+    gap: 4px;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+  
+  .hero h1 {
+    font-size: 2.2rem;
+    font-weight: bold;
+    color: #00B894;
+    margin-bottom: 10px;
+  }
+  
+  .hero p {
+    font-size: 1rem;
+    color: #555;
+    max-width: 90%;
+    margin: 0 auto 20px;
+  }
+  
+  .hero-buttons {
+    margin-top: 30px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+  }
+  
+  /* --- Button Styles --- */
+  .btn-primary {
+    background-color: #3498DB;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: bold;
+    cursor: pointer;
+    border: none;
+    display: inline-block;
+  }
+  
+  .btn-secondary {
+    background-color: #00B894;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: bold;
+    cursor: pointer;
+    border: none;
+    display: inline-block;
+  }
+  
+  .btn-small {
+    background-color: #0984e3;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+  
+  /* --- Categories Dropdown --- */
+  .categories {
+    padding: 30px 20px;
+    text-align: center;
+  }
+  
+  .category-toggle {
+    background-color: #00B894;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  
+  .category-list {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 10px;
+    gap: 12px;
+  }
+  
+  .category-item {
+    background-color: #f1f1f1;
+    width: 200px;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+  }
+  
+  .category-item:hover {
+    background-color: #d1d1d1;
+  }
+  
+  /* --- Flash Deals, Best Sellers --- */
+  .flash-deals,
+  .best-sellers,
+  .shop-vendor {
+    padding: 40px 20px;
+  }
+  
+  .flash-deals {
+    background-color: #ffeaa7;
+  }
+  
+  .flash-deals h2,
+  .best-sellers h2,
+  .shop-vendor h2 {
+    font-size: 1.8rem;
+    margin-bottom: 20px;
+  }
+  
+  .products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 20px;
+  }
+  
+  .product-card,
+  .vendor-card {
+    background: #fff;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    text-align: center;
+  }
+  
+  /* --- Product/Vendor Image Placeholder --- */
+  .product-image {
+    background-color: #eee;
+    height: 150px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+  }
+  
+  /* --- Price Colors --- */
+  .price-red {
+    color: #E74C3C;
+    font-weight: bold;
+  }
+  
+  .price-green {
+    color: #00B894;
+    font-weight: bold;
+  }
+  
+  /* --- Help Section --- */
+  .help-section {
+    padding: 40px 20px;
+    text-align: center;
+  }
+  
+  .help-section h3 {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+  }
+  
+  /* --- App Download Section --- */
+  .app-download {
+    padding: 40px 20px;
+    background-color: #ffeaa7;
+    text-align: center;
+  }
+  
+  .app-download h3 {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+  }
+  
+  /* --- Footer --- */
+  .footer {
+    padding: 20px;
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    font-size: 0.9rem;
+  }
+  
+  .footer-links {
+    margin: 10px 0;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+  }
+  
+  .footer-links a {
+    color: #fff;
+    text-decoration: none;
+  }
+  
+  .footer-social {
+    margin-top: 10px;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+  }
+  
+  .footer-social a {
+    color: #fff;
+    text-decoration: none;
+  }
+  
+  /* --- Responsive Tweaks --- */
+  @media (max-width: 600px) {
+    .products-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  @media (max-width: 600px) {
+    .hero h1 {
+      font-size: 1.8rem;
+    }
+  
+    .hero p {
+      font-size: 0.95rem;
+    }
+  
+    .logo {
+      font-size: 2.2rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+  
+    .hero-buttons,
+    .cta-row {
+      flex-direction: column;
+      align-items: center;
+    }
+  
+    .category-item {
+      width: 100%;
+      max-width: 300px;
+    }
+  
+    .product-image {
+      height: 120px;
+    }
+  
+    .footer-links,
+    .footer-social {
+      flex-direction: column;
+      gap: 8px;
+    }
+  }
+  

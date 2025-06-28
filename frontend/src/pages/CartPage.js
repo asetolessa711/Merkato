@@ -1,0 +1,151 @@
+import React, { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+
+function CartPage() {
+  const [cart, setCart] = useState([]);
+  const [msg, setMsg] = useState('');
+  const navigate = useNavigate();
+  const token = localStorage.getItem('token');
+
+  useEffect(() => {
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+
+    const saved = localStorage.getItem('merkato-cart');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      const ninetyDays = 90 * 24 * 60 * 60 * 1000;
+      const isExpired = Date.now() - (parsed.timestamp || 0) > ninetyDays;
+
+      if (isExpired) {
+        localStorage.removeItem('merkato-cart');
+        setCart([]);
+      } else {
+        setCart(parsed.items || []);
+      }
+    }
+  }, [navigate, token]);
+
+  const updateAndSaveCart = (newCart) => {
+    setCart(newCart);
+    localStorage.setItem('merkato-cart', JSON.stringify({
+      items: newCart,
+      timestamp: Date.now()
+    }));
+  };
+
+  const updateQuantity = (index, amount) => {
+    const updated = [...cart];
+    updated[index].quantity += amount;
+    if (updated[index].quantity < 1) updated[index].quantity = 1;
+    updateAndSaveCart(updated);
+  };
+
+  const removeItem = (index) => {
+    const updated = cart.filter((_, i) => i !== index);
+    updateAndSaveCart(updated);
+  };
+
+  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  const handleCheckout = () => {
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+    navigate('/checkout'); // ✅ Redirect to proper checkout page
+  };
+
+  if (cart.length === 0) {
+    return (
+      <div style={{ textAlign: 'center', marginTop: 60 }}>
+        <h2>Your cart is empty</h2>
+        <p>Check out our newest products and deals below:</p>
+        <Link to="/shop" style={{
+          display: 'inline-block',
+          marginTop: 20,
+          padding: '10px 16px',
+          backgroundColor: '#00B894',
+          color: 'white',
+          borderRadius: 6,
+          textDecoration: 'none'
+        }}>🛍️ Go back to Shop</Link>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ maxWidth: 900, margin: '40px auto', fontFamily: 'Poppins, sans-serif' }}>
+      <div style={{ textAlign: 'center', marginBottom: 30 }}>
+        <Link to="/" style={{ textDecoration: 'none', fontSize: '2rem', fontWeight: 'bold' }}>
+          <span style={{ color: '#00B894' }}>M</span>
+          <span style={{ color: '#3498DB' }}>e</span>
+          <span style={{ color: '#E67E22' }}>r</span>
+          <span style={{ color: '#9B59B6' }}>k</span>
+          <span style={{ color: '#E74C3C' }}>a</span>
+          <span style={{ color: '#3498DB' }}>t</span>
+          <span style={{ color: '#00B894' }}>o</span>
+        </Link>
+        <h2>Your Cart</h2>
+      </div>
+
+      {cart.map((item, index) => (
+        <div key={index} style={{
+          borderBottom: '1px solid #ccc',
+          padding: 10,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
+          <div>
+            <h4>{item.name}</h4>
+            <p>${item.price} × {item.quantity}</p>
+          </div>
+          <div>
+            <button onClick={() => updateQuantity(index, -1)} style={btn}>-</button>
+            <button onClick={() => updateQuantity(index, 1)} style={btn}>+</button>
+            <button onClick={() => removeItem(index)} style={{ ...btn, backgroundColor: '#e74c3c' }}>Remove</button>
+          </div>
+        </div>
+      ))}
+
+      <h3 style={{ textAlign: 'right', marginTop: 20 }}>Total: ${total.toFixed(2)}</h3>
+
+      {msg && <p style={{ color: msg.includes('✅') ? 'green' : 'red', marginTop: 10 }}>{msg}</p>}
+
+      <div style={{ textAlign: 'right' }}>
+        <button
+          onClick={handleCheckout}
+          style={{
+            backgroundColor: '#00B894',
+            color: 'white',
+            padding: '12px 24px',
+            border: 'none',
+            borderRadius: 6,
+            fontWeight: 'bold',
+            marginTop: 20
+          }}
+        >
+          ✅ Proceed to Checkout
+        </button>
+      </div>
+    </div>
+  );
+}
+
+const btn = {
+  margin: '0 5px',
+  padding: '6px 10px',
+  border: 'none',
+  borderRadius: 4,
+  backgroundColor: '#3498DB',
+  color: 'white',
+  fontWeight: 'bold',
+  cursor: 'pointer'
+};
+
+export default CartPage;
+

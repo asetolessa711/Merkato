@@ -1,0 +1,171 @@
+# 🌐 Merkato Marketplace
+
+Welcome to Merkato – A modern B2B and D2C commerce platform.
+
+![🧪 Backend Tests](https://github.com/asetolessa711/merkato/actions/workflows/backend-tests.yml/badge.svg)
+![🎯 Frontend Tests](https://github.com/asetolessa711/merkato/actions/workflows/frontend-tests.yml/badge.svg)
+![✨ E2E Cypress Tests](https://github.com/asetolessa711/merkato/actions/workflows/e2e-cypress.yml/badge.svg)
+
+---
+
+## 📦 Features
+
+- 🛍️ Product management  
+- 👤 Customer & vendor dashboards  
+- 📈 Sales analytics  
+- 🧾 Stripe payments  
+- 🔒 Role-based access  
+- 🌍 Multilingual support  
+- ✅ Automated testing (Jest, Cypress, GitHub Actions)  
+- 📚 MongoDB with Mongoose models  
+- 📤 Email invoices via Nodemailer  
+- 🧾 PDF receipts & CSV exports  
+
+---
+
+## 📸 Demo
+
+![Merkato Homepage](docs/merkato-homepage.png)
+
+> Merkato connects suppliers and buyers worldwide, delivering an AI-enhanced, scalable marketplace with multi-language support, dynamic monetization, and localized user experiences.
+
+_Add more screenshots or GIFs in the `docs/` folder as your project grows!_
+
+---
+
+## 📂 Folder Structure
+
+```
+merkato/
+  frontend/
+  backend/
+  .github/
+  docs/
+  .env.example
+  README.md
+  ...
+```
+
+---
+
+## 🚀 Getting Started
+
+### 1. Clone and Install
+
+```bash
+git clone https://github.com/asetolessa711/merkato.git
+cd merkato
+npm install
+cd frontend && npm install
+cd ../backend && npm install
+```
+
+### 2. Environment Variables
+
+Copy `.env.example` to `.env`, `.env.test`, and `.env.local` as needed.  
+Fill in your secrets:
+
+```env
+MONGO_URI=mongodb://localhost:27017/merkato
+JWT_SECRET=your_jwt_secret
+STRIPE_SECRET_KEY=sk_test_xxx
+STRIPE_PUBLISHABLE_KEY=pk_test_xxx
+STRIPE_WEBHOOK_SECRET=whsec_xxx
+```
+
+> **Tip:** Never commit real secrets or credentials. Your `.gitignore` already protects `.env*` files.
+
+### 3. Run in Dev Mode
+
+```bash
+# In one terminal
+cd backend
+npm run dev
+
+# In another terminal
+cd frontend
+npm run dev
+```
+
+---
+
+## 🧪 Testing
+
+### ✅ Backend Tests (Jest)
+```bash
+cd backend
+npm run test
+```
+
+### ✅ Frontend Tests (React Testing Library)
+```bash
+cd frontend
+npm test
+```
+
+### ✅ E2E Tests (Cypress)
+```bash
+cd frontend
+npx cypress open  # or `npx cypress run`
+```
+
+**Seeding:**
+```bash
+cd backend
+npm run seed:test
+```
+
+---
+
+## 🔁 CI/CD
+
+GitHub Actions Workflows:
+
+- `.github/workflows/backend-tests.yml`
+- `.github/workflows/frontend-tests.yml`
+- `.github/workflows/e2e-cypress.yml`
+
+**Includes:**
+- DB seeding with `cy.task('db:seed')`
+- Parallel Cypress run
+- Screenshot/video uploads as artifacts
+- Retention of test artifacts for 7 days
+
+> **Tip:** Keep your repo private until you’re ready to launch.  
+> Add badges to your README for instant test status visibility.
+
+---
+
+## 📄 Docs
+
+See [`docs/testing-system.md`](docs/testing-system.md) for full test architecture & coverage.
+
+---
+
+## 🤝 Contributing
+
+Pull requests are welcome!  
+Please lint and test before submitting.  
+For major changes, open an issue first to discuss what you’d like to change.
+
+---
+
+## 🛡️ License
+
+MIT
+
+---
+
+## 💡 Best Practices
+
+- **Commit early, commit often:** Use branches for features and bugfixes.
+- **Keep secrets out of version control:** Your `.gitignore` is set up for this.
+- **Write and maintain tests:** All new features should include tests.
+- **Document your code and APIs:** Use the `docs/` folder for architecture, API, and usage docs.
+- **Use CI/CD:** Let GitHub Actions run your tests on every push and PR.
+
+---
+
+## 📸 Demo
+
+_Add more screenshots or GIFs in the `docs/` folder as your project grows!_

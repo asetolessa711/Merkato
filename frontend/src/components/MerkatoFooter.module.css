@@ -1,0 +1,193 @@
+/* MerkatoFooter Styles */
+.footer {
+  background-color: #f9fafb;
+  padding: 2rem 1rem;
+  color: #4a5568;
+  font-family: 'Poppins', sans-serif;
+  border-top: 1px solid #e2e8f0;
+  margin-top: 40px;
+}
+
+.footerContent {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+  text-align: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 2rem;
+}
+
+.footerSections {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  gap: 3rem;
+  margin-bottom: 2rem;
+}
+
+.column {
+  flex: 1;
+  min-width: 180px;
+}
+
+.column h4 {
+  margin-bottom: 1rem;
+  font-weight: bold;
+  color: #2d3748;
+  font-size: clamp(1.1rem, 1.2vw, 1.25rem);
+}
+
+.column ul {
+  list-style: none;
+  padding: 0;
+}
+
+.column ul li {
+  margin-bottom: 0.5rem;
+}
+
+.socialLinks {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.socialLinks a {
+  color: #4a5568;
+  text-decoration: none;
+  transition: all 0.2s ease-in-out;
+  font-size: clamp(0.85rem, 1vw, 1rem);
+}
+
+.socialLinks a:hover,
+.socialLinks a:focus {
+  color: #00B894;
+}
+
+.socialLinks a:focus {
+  outline: 2px solid #00B894;
+  outline-offset: 2px;
+}
+
+.footerLinks {
+  margin: 1rem 0;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.footerLinks a {
+  color: #4a5568;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: clamp(0.85rem, 1vw, 1rem);
+  transition: all 0.2s ease-in-out;
+}
+
+.footerLinks a:hover,
+.footerLinks a:focus {
+  color: #00B894;
+}
+
+.footerLinks a:focus {
+  outline: 2px solid #00B894;
+  outline-offset: 2px;
+}
+
+.downloadBtn {
+  display: inline-block;
+  background: #00B894;
+  color: white;
+  padding: 0.5rem 1rem;
+  margin-top: 0.5rem;
+  border-radius: 4px;
+  font-size: clamp(0.85rem, 1vw, 1rem);
+  text-decoration: none;
+  transition: all 0.2s ease-in-out;
+}
+
+.downloadBtn:hover,
+.downloadBtn:focus {
+  background: #009b7b;
+}
+
+.downloadBtn:focus {
+  outline: 2px solid #00B894;
+  outline-offset: 2px;
+}
+
+.legalSection {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+  width: 100%;
+}
+
+.copyright {
+  text-align: center;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+  font-size: clamp(0.85rem, 1vw, 1rem);
+  color: #4a5568;
+}
+
+.brand {
+  color: #00B894;
+  font-weight: 600;
+}
+
+.copyright span {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: clamp(0.85rem, 1vw, 1rem);
+}
+
+.copyrightYear {
+  display: block;
+  margin-top: 5px;
+  color: #4a5568;
+}
+
+@media (max-width: 768px) {
+  .footerContent {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .footerSections {
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .footerLinks {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .socialLinks {
+    justify-content: center;
+    margin: 1.5rem 0;
+  }
+
+  .column {
+    min-width: 100%;
+  }
+
+  .copyright {
+    margin-top: 2rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .footerLinks a,
+  .socialLinks a,
+  .downloadBtn {
+    transition: none;
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "merkato",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Monorepo for Merkato Marketplace",
+  "scripts": {
+    "dev:backend": "cd backend && npm run dev",
+    "start:backend": "cd backend && npm start",
+    "dev:frontend": "cd frontend && npm run dev",
+    "build:frontend": "cd frontend && npm run build",
+    "test:backend": "cd backend && npm test",
+    "test:frontend": "cd frontend && npm test",
+    "test": "npm run test:backend && npm run test:frontend"
+  },
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "keywords": [],
+  "author": "Merkato Team",
+  "license": "MIT"
+}

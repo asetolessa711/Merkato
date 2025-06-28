@@ -1,0 +1,217 @@
+/* Container Styles */
+.container {
+  width: 100%;
+  max-width: 460px;
+  margin: 0 auto;
+}
+
+.title {
+  color: #2d3748;
+  text-align: center;
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.subtitle {
+  color: #4a5568;
+  text-align: center;
+  margin-bottom: 2rem;
+  font-size: 0.875rem;
+}
+
+/* Form Styles */
+.formGroup {
+  margin-bottom: 1.5rem;
+}
+
+.label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #4a5568;
+  font-weight: 500;
+}
+
+.required {
+  color: #e53e3e;
+  margin-left: 0.25rem;
+}
+
+.input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #00B894;
+  box-shadow: 0 0 0 2px rgba(0,184,148,0.2);
+}
+
+.input:disabled {
+  background-color: #f7fafc;
+  cursor: not-allowed;
+}
+
+.inputError {
+  border-color: #e53e3e;
+  background-color: #fff5f5;
+}
+
+/* Message Styles */
+.message {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  border-radius: 0.375rem;
+  text-align: center;
+  font-size: 0.875rem;
+}
+
+.error {
+  background-color: #fff5f5;
+  color: #e53e3e;
+  border: 1px solid #fed7d7;
+}
+
+.success {
+  background-color: #e6fffa;
+  color: #00B894;
+  border: 1px solid #b2f5ea;
+}
+
+/* Button Styles */
+.submitButton {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: #00B894;
+  color: white;
+  border: none;
+  border-radius: 0.375rem;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.submitButton:hover:not(:disabled) {
+  background-color: #009b7b;
+  transform: translateY(-1px);
+}
+
+.submitButton:disabled {
+  background-color: #cbd5e0;
+  cursor: not-allowed;
+}
+
+/* Loading Animation */
+.loadingDot {
+  animation: loadingDots 1.4s infinite;
+  display: inline-block;
+  margin: 0 2px;
+}
+
+.loadingDot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.loadingDot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes loadingDots {
+  0%, 80%, 100% { opacity: 0; }
+  40% { opacity: 1; }
+}
+
+/* Success Container */
+.successContainer {
+  text-align: center;
+  padding: 2rem;
+}
+
+.securityNote {
+  color: #718096;
+  font-size: 0.875rem;
+  margin-top: 1rem;
+}
+
+/* Footer and Links */
+.footer {
+  margin-top: 1.5rem;
+  text-align: center;
+}
+
+.backLink {
+  color: #00B894;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.backLink:hover {
+  color: #009b7b;
+  text-decoration: underline;
+}
+
+/* Security Info Section */
+.securityInfo {
+  margin-top: 2rem;
+  padding: 1rem;
+  background-color: #f7fafc;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+}
+
+.securityInfo p {
+  color: #4a5568;
+  margin-bottom: 0.5rem;
+}
+
+.securityInfo ul {
+  list-style-type: none;
+  padding-left: 0;
+}
+
+.securityInfo li {
+  color: #718096;
+  margin-bottom: 0.25rem;
+  padding-left: 1.5rem;
+  position: relative;
+}
+
+.securityInfo li::before {
+  content: "•";
+  position: absolute;
+  left: 0.5rem;
+  color: #00B894;
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+  .container {
+    padding: 1rem;
+  }
+  
+  .title {
+    font-size: 1.25rem;
+  }
+  
+  .securityInfo {
+    margin-top: 1.5rem;
+  }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .input,
+  .submitButton,
+  .backLink,
+  .loadingDot {
+    transition: none;
+    animation: none;
+  }
+}

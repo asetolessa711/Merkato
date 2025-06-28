@@ -1,0 +1,11 @@
+node_modules/ 
+dist/ 
+.env* 
+*.log 
+.vscode/ 
+OneDrive/ 
+AppData/ 
+Thumbs.db 
+*.cab 
+*.lnk 
+Documents/

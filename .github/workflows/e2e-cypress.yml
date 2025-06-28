@@ -1,0 +1,96 @@
+name: ✨ E2E Cypress Tests
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main, dev ]
+
+jobs:
+  cypress-run:
+    runs-on: ubuntu-latest
+
+    services:
+      mongo:
+        image: mongo:5
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd="mongosh --eval 'db.runCommand({ ping: 1 })'"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: 📂 Checkout code
+        uses: actions/checkout@v3
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+
+      - name: 📂 Install frontend dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: 📂 Install backend dependencies
+        run: |
+          cd backend
+          npm ci
+
+      - name: 🌱 Seed test database
+        run: |
+          cd backend
+          npm run test:seed
+
+      - name: 🔧 Start backend (test mode)
+        run: |
+          cd backend
+          npm run dev &
+        env:
+          MONGO_URI: ${{ secrets.TEST_MONGO_URI }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+
+      - name: 🚀 Start frontend
+        run: |
+          cd frontend
+          npm run dev &
+        env:
+          REACT_APP_API_URL: http://localhost:5000/api
+
+      - name: ⏳ Wait for frontend
+        uses: jakejarvis/wait-action@v0.1.1
+        with:
+          url: http://localhost:3000
+          timeout: 60
+
+      - name: 🚀 Run Cypress tests (parallelized)
+        uses: cypress-io/github-action@v5
+        with:
+          working-directory: frontend
+          start: npm run dev
+          wait-on: 'http://localhost:3000'
+          browser: chrome
+          parallel: true
+          record: true
+          group: 'E2E Tests'
+        env:
+          CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
+
+      - name: 📝 Upload Cypress screenshots
+        uses: actions/upload-artifact@v3
+        with:
+          name: cypress-screenshots
+          path: frontend/cypress/screenshots
+          retention-days: 7
+
+      - name: 📝 Upload Cypress videos
+        uses: actions/upload-artifact@v3
+        with:
+          name: cypress-videos
+          path: frontend/cypress/videos
+          retention-days: 7

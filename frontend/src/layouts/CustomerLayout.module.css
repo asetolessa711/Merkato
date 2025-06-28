@@ -1,0 +1,245 @@
+/* Container */
+.container {
+  background-color: #f4faff;
+  min-height: 100vh;
+  font-family: 'Poppins', sans-serif;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Sidebar + Main Content Layout */
+.mainContent {
+  display: flex;
+  flex: 1;
+  position: relative;
+}
+
+/* Main Content Column */
+.contentArea {
+  flex: 1;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Welcome Header */
+.welcomeHeader {
+  text-align: center;
+  margin-bottom: 16px;
+  animation: fadeIn 0.5s ease;
+}
+
+.welcomeTitle {
+  font-size: clamp(1.5rem, 3vw, 1.8rem);
+  color: #0984e3;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+.lastLogin {
+  color: #666;
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+/* Stats Cards */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+  margin: 16px 0;
+  animation: slideUp 0.5s ease;
+}
+
+/* Notification Section */
+.notification {
+  background-color: #dfefff;
+  padding: 16px 24px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  animation: slideIn 0.5s ease;
+}
+
+.notificationButton {
+  padding: 8px 16px;
+  background-color: #0984e3;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.notificationButton:hover {
+  background-color: #0771c2;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.notificationButton:active {
+  transform: translateY(0);
+}
+
+/* Loading & Error States */
+.loadingState,
+.errorState {
+  text-align: center;
+  padding: 40px;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+}
+
+.loadingState {
+  color: #555;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.errorState {
+  color: #e74c3c;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Loading Skeleton */
+.loadingSkeleton {
+  padding: 20px;
+  width: 100%;
+  animation: fadeIn 0.3s ease;
+}
+
+.skeletonHeader {
+  height: 60px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+  margin-bottom: 24px;
+}
+
+.skeletonStats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+  margin: 16px 0;
+}
+
+.skeletonCard {
+  height: 120px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+/* Empty State */
+.emptyState {
+  text-align: center;
+  padding: 40px;
+  color: #999;
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Children Wrapper */
+.childrenWrapper {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  animation: fadeIn 0.5s ease;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .contentArea {
+    padding: 20px;
+  }
+  
+  .statsGrid,
+  .skeletonStats {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+  
+  .childrenWrapper {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .mainContent {
+    flex-direction: column;
+  }
+  
+  .contentArea,
+  .childrenWrapper {
+    padding: 16px;
+  }
+  
+  .notification {
+    flex-direction: column;
+    gap: 12px;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .statsGrid,
+  .skeletonStats {
+    grid-template-columns: 1fr;
+  }
+  
+  .welcomeTitle {
+    font-size: 1.4rem;
+  }
+}
