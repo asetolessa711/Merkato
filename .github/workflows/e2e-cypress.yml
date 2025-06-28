@@ -55,6 +55,9 @@ jobs:
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
           STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
 
+      - name: ⏳ Wait for backend
+        run: npx wait-on http://localhost:5000/api
+
       - name: 🧱 Build frontend
         run: |
           cd frontend
