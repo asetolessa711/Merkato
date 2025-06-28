@@ -115,30 +115,34 @@ cd backend
 npm run seed:test
 ```
 
+> See [`docs/testing-system.md`](docs/testing-system.md) for full test architecture & coverage.
+
 ---
 
-## 🔁 CI/CD
+## 🔁 CI/CD (GitHub Actions)
 
-GitHub Actions Workflows:
+Automated test pipelines:
 
-- `.github/workflows/backend-tests.yml`
-- `.github/workflows/frontend-tests.yml`
-- `.github/workflows/e2e-cypress.yml`
+- **🧪 Backend Tests** → `backend-tests.yml`
+- **🎯 Frontend Tests** → `frontend-tests.yml`
+- **✨ E2E Cypress Tests** → `e2e-cypress.yml`
 
-**Includes:**
+**Features:**
+
 - DB seeding with `cy.task('db:seed')`
-- Parallel Cypress run
-- Screenshot/video uploads as artifacts
-- Retention of test artifacts for 7 days
+- Parallel Cypress execution
+- Screenshots/videos uploaded as artifacts
+- Artifact retention for 7 days
+- Runs on all pushes and pull requests to `main` or `dev` branches
 
-> **Tip:** Keep your repo private until you’re ready to launch.  
-> Add badges to your README for instant test status visibility.
+> 💡 **Tip:** These workflows ensure all tests pass before merging — badges above reflect real-time status.
 
 ---
 
-## 📄 Docs
+## 📄 Documentation
 
-See [`docs/testing-system.md`](docs/testing-system.md) for full test architecture & coverage.
+- See [`docs/testing-system.md`](docs/testing-system.md) for full test architecture & coverage.
+- Use the `docs/` folder for additional architecture, API, and usage docs.
 
 ---
 
@@ -166,6 +170,10 @@ MIT
 
 ---
 
-## 📸 Demo
+### 🚀 Run All Tests Locally
 
-_Add more screenshots or GIFs in the `docs/` folder as your project grows!_
+```bash
+npm run test  # Backend
+cd frontend && npm test  # Frontend
+cd frontend && npx cypress open  # E2E GUI
+```
