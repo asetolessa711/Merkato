@@ -62,10 +62,8 @@ jobs:
           start: npm start
           wait-on: 'http://localhost:3000'
           browser: chrome
-          group: 'E2E Tests'
         env:
           REACT_APP_API_URL: http://localhost:5000/api
-          CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
 
       - name: 📝 Upload Cypress screenshots
         uses: actions/upload-artifact@v4
