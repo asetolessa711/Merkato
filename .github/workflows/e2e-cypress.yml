@@ -96,16 +96,15 @@ jobs:
           fi
         working-directory: frontend
 
-      - name: 🔎 Check if frontend server is running
-        run: |
-          sudo lsof -i :3000 || echo "Nothing running on port 3000"
-
-      - name: 📓 Show frontend serve log (on failure)
-        if: failure()
+      - name: 📓 Show frontend serve log
         working-directory: frontend
         run: |
           echo "🚨 Frontend serve log:"
           cat serve.log || echo "⚠️ serve.log not found"
+
+      - name: 🔎 Check if frontend server is running
+        run: |
+          sudo lsof -i :3000 || echo "Nothing running on port 3000"
 
       - name: 🥪 Run Cypress tests
         uses: cypress-io/github-action@v5
