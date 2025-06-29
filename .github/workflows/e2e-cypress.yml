@@ -81,15 +81,15 @@ jobs:
 
       - name: 📂 List frontend build directory
         run: |
-          echo "Listing frontend/build directory:"
-          ls -l frontend/build || echo "No build directory found"
+          echo "📂 Listing frontend/build directory:"
+          ls -l frontend/build || echo "⚠️ No build directory found"
 
-      - name: 🚀 Serve frontend
+      - name: 🚀 Serve frontend (React SPA)
         run: |
           echo "🚀 Serving frontend on port 3000..."
-          nohup npx serve -s build -l 3000 > serve.log 2>&1 &
+          nohup npx serve build -l 3000 --single > serve.log 2>&1 &
           sleep 5
-          if ! pgrep -f "serve -s build -l 3000"; then
+          if ! pgrep -f "serve build -l 3000 --single"; then
             echo "❌ Serve process not running!"
             cat serve.log || echo "⚠️ serve.log not found"
             exit 1
@@ -104,7 +104,7 @@ jobs:
 
       - name: 🔎 Check if frontend server is running
         run: |
-          sudo lsof -i :3000 || echo "Nothing running on port 3000"
+          sudo lsof -i :3000 || echo "⚠️ Nothing running on port 3000"
 
       - name: 🥪 Run Cypress tests
         uses: cypress-io/github-action@v5
