@@ -27,6 +27,7 @@ const customerRoutes = require('./routes/customerRoutes');
 const emailInvoiceRoutes = require('./routes/emailInvoiceRoutes');
 const invoiceRoutes = require('./routes/invoiceRoutes');
 const devSeedRoute = require('./routes/devSeedRoute');
+const testEmailRoute = require('./routes/testEmailRoute');
 
 // 🚀 Initialize Express App
 const app = express();
@@ -56,10 +57,16 @@ app.use('/api/customer', customerRoutes);
 app.use('/api/email', emailInvoiceRoutes);
 app.use('/api/invoices', invoiceRoutes);
 app.use('/api/dev', devSeedRoute);
+app.use('/api/test-email', testEmailRoute);
 
 // 🌐 Root Health Check
 app.get('/', (req, res) => {
   res.send('Welcome to Merkato Backend API 🌍');
+});
+
+// 🌐 API Health Check (for CI wait-on)
+app.get('/api', (req, res) => {
+  res.status(200).json({ message: 'Backend is running ✅' });
 });
 
 // 🚦 Start Server (only if not in test mode)

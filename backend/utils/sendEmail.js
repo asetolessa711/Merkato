@@ -143,6 +143,7 @@ const testEmailConfig = async () => {
 };
 
 module.exports = {
+  sendEmail, // ✅ Add this line to make it available
   sendOrderConfirmation,
   sendPasswordResetEmail,
   resetRateLimiter,

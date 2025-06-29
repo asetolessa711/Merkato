@@ -177,3 +177,7 @@ npm run test  # Backend
 cd frontend && npm test  # Frontend
 cd frontend && npx cypress open  # E2E GUI
 ```
+## 📋 Documentation
+
+- [Pre-Deployment Checklist](docs/pre-deployment-checklist.md)
+- [Post-Deployment Checklist](docs/post-deployment-checklist.md)
