@@ -85,6 +85,13 @@ jobs:
           nohup npx serve -s build -l 3000 > serve.log 2>&1 &
         working-directory: frontend
 
+      - name: 📝 Show frontend serve log (on failure)
+        if: failure()
+        working-directory: frontend
+        run: |
+          echo "🚨 Frontend serve log (if frontend failed to start):"
+          cat serve.log || echo "⚠️ serve.log not found"
+
       - name: 🧪 Run Cypress tests
         uses: cypress-io/github-action@v5
         with:
