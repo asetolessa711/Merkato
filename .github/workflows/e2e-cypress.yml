@@ -79,14 +79,29 @@ jobs:
           cd frontend
           npm run build
 
+      - name: 📂 List frontend build directory
+        run: |
+          echo "Listing frontend/build directory:"
+          ls -l frontend/build || echo "No build directory found"
+
       - name: 🚀 Serve frontend
         run: |
           echo "🚀 Serving frontend on port 3000..."
           nohup npx serve -s build -l 3000 > serve.log 2>&1 &
+          sleep 5
+          if ! pgrep -f "serve -s build -l 3000"; then
+            echo "❌ Serve process not running!"
+            cat serve.log || echo "⚠️ serve.log not found"
+            exit 1
+          fi
         working-directory: frontend
 
-      - name: 📓 Show frontend serve log (if Cypress fails)
-        if: always()
+      - name: 🔎 Check if frontend server is running
+        run: |
+          sudo lsof -i :3000 || echo "Nothing running on port 3000"
+
+      - name: 📓 Show frontend serve log (on failure)
+        if: failure()
         working-directory: frontend
         run: |
           echo "🚨 Frontend serve log:"
