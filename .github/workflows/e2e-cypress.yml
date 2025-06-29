@@ -25,20 +25,20 @@ jobs:
       - name: 📂 Checkout code
         uses: actions/checkout@v3
 
-      - name: 📦 Setup Node.js
+      - name: 🛆 Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18.x'
 
       - name: 📂 Install frontend dependencies
         run: |
-          echo "📦 Installing frontend dependencies..."
+          echo "🛆 Installing frontend dependencies..."
           cd frontend
           npm ci
 
       - name: 📂 Install backend dependencies
         run: |
-          echo "📦 Installing backend dependencies..."
+          echo "🛆 Installing backend dependencies..."
           cd backend
           npm ci
 
@@ -54,23 +54,24 @@ jobs:
           cd backend
           nohup npm run dev > backend.log 2>&1 &
         env:
-          MONGO_URI: ${{ secrets.MONGO_URI }}
+          MONGO_URI: ${{ secrets.TEST_MONGO_URI }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
           STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
           EMAIL_USER: ${{ secrets.EMAIL_USER }}
           EMAIL_PASS: ${{ secrets.EMAIL_PASS }}
 
-      - name: ⏳ Wait and confirm backend is alive
+      - name: ⏳ Wait for backend
         run: |
           echo "⏳ Waiting for backend /api to respond..."
-          sleep 5
           npx wait-on --timeout=120000 http://localhost:5000/api
 
-      - name: 📄 Show backend log
+      - name: 📓 Show backend log (on failure)
+        if: failure()
+        working-directory: backend
         run: |
-          echo "📄 Backend log contents:"
-          cat backend/backend.log || echo "⚠️ backend.log not found"
+          echo "🚨 Backend log (if backend failed to start):"
+          cat backend.log || echo "⚠️ backend.log not found"
 
       - name: 🧱 Build frontend
         run: |
@@ -78,21 +79,34 @@ jobs:
           cd frontend
           npm run build
 
+      - name: 📂 List frontend build directory
+        run: |
+          echo "Listing frontend/build directory:"
+          ls -l frontend/build || echo "No build directory found"
+
       - name: 🚀 Serve frontend
         run: |
           echo "🚀 Serving frontend on port 3000..."
           nohup npx serve -s build -l 3000 > serve.log 2>&1 &
+          sleep 5
+          if ! pgrep -f "serve -s build -l 3000"; then
+            echo "❌ Serve process not running!"
+            cat serve.log || echo "⚠️ serve.log not found"
+            exit 1
+          fi
         working-directory: frontend
 
-      - name: ⛔️ Check if frontend is up
+      - name: 📓 Show frontend serve log
+        working-directory: frontend
         run: |
-          echo "Checking if serve is running..."
-          sleep 3
-          ps aux | grep "serve -s build -l 3000" || echo "⚠️ serve not running"
-          sudo lsof -i :3000 || echo "⚠️ Port 3000 not active"
-          cat frontend/serve.log || echo "⚠️ serve.log missing"
+          echo "🚨 Frontend serve log:"
+          cat serve.log || echo "⚠️ serve.log not found"
 
-      - name: 💡 Run Cypress tests
+      - name: 🔎 Check if frontend server is running
+        run: |
+          sudo lsof -i :3000 || echo "Nothing running on port 3000"
+
+      - name: 🥪 Run Cypress tests
         uses: cypress-io/github-action@v5
         with:
           working-directory: frontend
@@ -102,14 +116,14 @@ jobs:
         env:
           REACT_APP_API_URL: http://localhost:5000/api
 
-      - name: 📍 Upload Cypress screenshots
+      - name: 📘 Upload Cypress screenshots
         uses: actions/upload-artifact@v4
         with:
           name: cypress-screenshots
           path: frontend/cypress/screenshots
           retention-days: 7
 
-      - name: 📍 Upload Cypress videos
+      - name: 📘 Upload Cypress videos
         uses: actions/upload-artifact@v4
         with:
           name: cypress-videos
