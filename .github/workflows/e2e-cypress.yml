@@ -25,20 +25,20 @@ jobs:
       - name: 📂 Checkout code
         uses: actions/checkout@v3
 
-      - name: 📦 Setup Node.js
+      - name: 🛆 Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18.x'
 
       - name: 📂 Install frontend dependencies
         run: |
-          echo "📦 Installing frontend dependencies..."
+          echo "🛆 Installing frontend dependencies..."
           cd frontend
           npm ci
 
       - name: 📂 Install backend dependencies
         run: |
-          echo "📦 Installing backend dependencies..."
+          echo "🛆 Installing backend dependencies..."
           cd backend
           npm ci
 
@@ -66,7 +66,7 @@ jobs:
           echo "⏳ Waiting for backend /api to respond..."
           npx wait-on --timeout=120000 http://localhost:5000/api
 
-      - name: 🧾 Show backend log (on failure)
+      - name: 📓 Show backend log (on failure)
         if: failure()
         working-directory: backend
         run: |
@@ -85,14 +85,14 @@ jobs:
           nohup npx serve -s build -l 3000 > serve.log 2>&1 &
         working-directory: frontend
 
-      - name: 📝 Show frontend serve log (on failure)
-        if: failure()
+      - name: 📓 Show frontend serve log (if Cypress fails)
+        if: always()
         working-directory: frontend
         run: |
-          echo "🚨 Frontend serve log (if frontend failed to start):"
+          echo "🚨 Frontend serve log:"
           cat serve.log || echo "⚠️ serve.log not found"
 
-      - name: 🧪 Run Cypress tests
+      - name: 🥪 Run Cypress tests
         uses: cypress-io/github-action@v5
         with:
           working-directory: frontend
@@ -102,14 +102,14 @@ jobs:
         env:
           REACT_APP_API_URL: http://localhost:5000/api
 
-      - name: 📝 Upload Cypress screenshots
+      - name: 📘 Upload Cypress screenshots
         uses: actions/upload-artifact@v4
         with:
           name: cypress-screenshots
           path: frontend/cypress/screenshots
           retention-days: 7
 
-      - name: 📝 Upload Cypress videos
+      - name: 📘 Upload Cypress videos
         uses: actions/upload-artifact@v4
         with:
           name: cypress-videos
