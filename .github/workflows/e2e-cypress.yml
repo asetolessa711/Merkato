@@ -64,13 +64,14 @@ jobs:
       - name: ⏳ Wait for backend
         run: |
           echo "⏳ Waiting for backend /api to respond..."
-          npx wait-on --timeout=60000 http://localhost:5000/api
+          npx wait-on --timeout=120000 http://localhost:5000/api
 
       - name: 🧾 Show backend log (on failure)
         if: failure()
+        working-directory: backend
         run: |
           echo "🚨 Backend log (if backend failed to start):"
-          cat backend/backend.log || echo "⚠️ backend.log not found"
+          cat backend.log || echo "⚠️ backend.log not found"
 
       - name: 🧱 Build frontend
         run: |
@@ -81,7 +82,7 @@ jobs:
       - name: 🚀 Serve frontend
         run: |
           echo "🚀 Serving frontend on port 3000..."
-          nohup npx serve -s build -l 3000 --single > serve.log 2>&1 &
+          nohup npx serve -s build -l 3000 > serve.log 2>&1 &
         working-directory: frontend
 
       - name: 🧪 Run Cypress tests
