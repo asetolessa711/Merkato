@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useParams, Outlet } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import axios from 'axios';
+
+// Hooks
+import useUser from './hooks/useUser';
 
 // Layouts
 import PublicLayout from './layouts/PublicLayout';
@@ -68,6 +71,7 @@ import FloatingPromoButton from './components/FloatingPromoButton';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
+// Protected Route Component
 const ProtectedRoute = ({ user, children, requiredRole }) => {
   const [loading, setLoading] = useState(true);
 
@@ -93,49 +97,32 @@ const ProtectedRoute = ({ user, children, requiredRole }) => {
 
   if (loading) return <div className="flex items-center justify-center h-screen">Loading...</div>;
   if (!user) return <Navigate to="/login" replace />;
-  if (requiredRole && user.role !== requiredRole) return <Navigate to="/" replace />;
+  if (requiredRole === "admin") {
+    const isAdmin = user.roles?.includes("admin") || user.roles?.includes("global_admin") || user.roles?.includes("country_admin");
+    if (!isAdmin) return <Navigate to="/" replace />;
+  } else if (requiredRole && !user.roles?.includes(requiredRole)) {
+    return <Navigate to="/" replace />;
+  }
   return children;
 };
 
+// Direct Chat Wrapper
 const DirectChatWrapper = () => {
   const { userId } = useParams();
   return <DirectChat selectedUser={{ _id: userId }} />;
 };
 
 function App() {
+  const { user, loading } = useUser();
   const [lang, setLang] = useState(() => localStorage.getItem('merkato-lang') || 'en');
   const [currency, setCurrency] = useState('USD');
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [showFeedback, setShowFeedback] = useState(false);
   const rates = { USD: 1, ETB: 144, EUR: 0.91 };
-
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      axios.get(`${API_BASE_URL}/api/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      .then(res => {
-        const userData = res.data.user || res.data;
-        setUser(userData);
-      })
-      .catch(err => {
-        console.error('Auth error:', err);
-        localStorage.removeItem('token');
-        setUser(null);
-      })
-      .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
-    }
-  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    setUser(null);
-    setTimeout(() => window.location.href = '/', 100);
+    window.location.href = '/';
   };
 
   if (loading) return <div className="flex items-center justify-center h-screen">Loading...</div>;
@@ -143,7 +130,6 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-
         {/* Public */}
         <Route path="/" element={<PublicLayout user={user} onLogout={handleLogout} lang={lang}><HomePage /></PublicLayout>} />
         <Route path="/shop" element={<PublicLayout user={user} onLogout={handleLogout} lang={lang}><ShopPage /></PublicLayout>} />
@@ -201,10 +187,11 @@ function App() {
         {/* Admin */}
         <Route path="/admin" element={
           <ProtectedRoute user={user} requiredRole="admin">
-            <AdminLayout><Outlet /></AdminLayout>
+            <AdminLayout user={user} />
           </ProtectedRoute>
         }>
-          <Route index element={<AdminDashboard />} />
+          {/* Redirect /admin to /admin/dashboard */}
+          <Route index element={<Navigate to="/admin/dashboard" replace />} />
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="promo-codes" element={<AdminPromoCodes />} />
           <Route path="promo-manager" element={<PromoManager />} />
@@ -221,7 +208,7 @@ function App() {
           <Route path="invoices/report" element={<InvoiceReport />} />
         </Route>
 
-        {/* 404 Fallback */}
+        {/* 404 */}
         <Route path="*" element={
           <PublicLayout user={user} onLogout={handleLogout} lang={lang}>
             <h2>404 – Page Not Found</h2>

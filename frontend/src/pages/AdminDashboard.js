@@ -13,6 +13,7 @@ function AdminDashboard() {
   const [expenses, setExpenses] = useState([]);
   const [countryData, setCountryData] = useState(null);
   const [msg, setMsg] = useState('');
+  const [error, setError] = useState(false);
 
   const token = localStorage.getItem('token');
 
@@ -44,6 +45,7 @@ function AdminDashboard() {
         }
       } catch (err) {
         setMsg('Access denied or error fetching admin data');
+        setError(true);
       }
     };
 
@@ -72,6 +74,17 @@ function AdminDashboard() {
     { name: 'Expenses', value: totalExpenses },
     { name: 'Profit', value: parseFloat(profit) }
   ];
+
+  // Fallback UI if error or no data
+  if (error) {
+    return (
+      <div style={{ padding: '40px' }}>
+        <h1>🛡 Admin Dashboard Loaded</h1>
+        <p>Welcome to your admin panel.</p>
+        <p style={{ color: 'red' }}>{msg}</p>
+      </div>
+    );
+  }
 
   return (
     <div style={{ maxWidth: 1000, margin: '40px auto', fontFamily: 'Poppins, sans-serif' }}>
@@ -144,7 +157,7 @@ function AdminDashboard() {
                 </li>
               ))}
             </ul>
-          </Card>
+              </Card>
         </>
       )}
     </div>

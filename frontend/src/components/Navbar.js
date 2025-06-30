@@ -10,13 +10,11 @@ const LOGO_COLORS = ['#00B894', '#3498DB', '#E67E22', '#9B59B6', '#E74C3C', '#34
 const LANGUAGE_OPTIONS = [
   // Global
   { value: 'en', label: 'English', region: 'Global' },
-  
   // Phase 1: Ethiopia
   { value: 'am', label: 'አማርኛ (Amharic)', region: 'Ethiopia' },
   { value: 'or', label: 'Afaan Oromoo', region: 'Ethiopia' },
   { value: 'ti', label: 'ትግርኛ (Tigrinya)', region: 'Ethiopia' },
   { value: 'so', label: 'Soomaali', region: 'Ethiopia' },
-  
   // Phase 2: Italy
   { value: 'it', label: 'Italiano', region: 'Italy' },
   { value: 'sw', label: 'Kiswahili', region: 'East Africa' },
@@ -54,7 +52,6 @@ const LanguageSelector = React.memo(({ currentLang, onChange }) => (
       aria-label="Select language"
     >
       <option value="en">English (Global)</option>
-      
       <optgroup label="Ethiopia">
         {LANGUAGE_OPTIONS
           .filter(lang => lang.region === 'Ethiopia')
@@ -62,7 +59,6 @@ const LanguageSelector = React.memo(({ currentLang, onChange }) => (
             <option key={value} value={value}>{label}</option>
           ))}
       </optgroup>
-      
       <optgroup label="Italy & East Africa">
         {LANGUAGE_OPTIONS
           .filter(lang => ['Italy', 'East Africa', 'MENA'].includes(lang.region))
@@ -75,6 +71,7 @@ const LanguageSelector = React.memo(({ currentLang, onChange }) => (
 ));
 LanguageSelector.displayName = 'LanguageSelector';
 
+// --- Updated ProfileDropdown for all admin roles ---
 const ProfileDropdown = React.memo(({ user, onLogout, isLoggingOut }) => {
   const [showMenu, setShowMenu] = useState(false);
 
@@ -89,6 +86,12 @@ const ProfileDropdown = React.memo(({ user, onLogout, isLoggingOut }) => {
     return () => document.removeEventListener('click', handleClickOutside);
   }, [handleClickOutside]);
 
+  // Support for all admin roles
+  const roles = Array.isArray(user.roles) ? user.roles : [user.role];
+  const isAdmin = roles.includes('admin') || roles.includes('global_admin') || roles.includes('country_admin');
+  const isVendor = roles.includes('vendor');
+  const isCustomer = roles.includes('customer');
+
   return (
     <div className={styles.profileDropdown}>
       <button 
@@ -98,7 +101,9 @@ const ProfileDropdown = React.memo(({ user, onLogout, isLoggingOut }) => {
         aria-haspopup="true"
       >
         <span>{user.name || 'User'}</span>
-        <span className={styles.roleBadge}>{user.role}</span>
+        <span className={styles.roleBadge}>
+          {roles.join(', ')}
+        </span>
         <ChevronDown size={16} />
       </button>
       
@@ -114,12 +119,12 @@ const ProfileDropdown = React.memo(({ user, onLogout, isLoggingOut }) => {
           <NavLink to="/settings" className={styles.dropdownItem} role="menuitem">
             Settings
           </NavLink>
-          {user.role === 'vendor' && (
+          {isVendor && (
             <NavLink to="/vendor" className={styles.dropdownItem} role="menuitem">
               Vendor Dashboard
             </NavLink>
           )}
-          {user.role === 'admin' && (
+          {isAdmin && (
             <NavLink to="/admin" className={styles.dropdownItem} role="menuitem">
               Admin Dashboard
             </NavLink>
@@ -141,7 +146,6 @@ ProfileDropdown.displayName = 'ProfileDropdown';
 
 const RoleSwitcher = React.memo(({ currentRole, onRoleChange }) => {
   if (process.env.NODE_ENV !== 'development') return null;
-  
   return (
     <select 
       value={currentRole}
@@ -159,7 +163,6 @@ RoleSwitcher.displayName = 'RoleSwitcher';
 
 const ProtectedLink = React.memo(({ to, requiredRole, userRoles, children, onClick }) => {
   const hasAccess = userRoles[`is${requiredRole}`];
-  
   if (!hasAccess) {
     return (
       <span 
@@ -170,7 +173,6 @@ const ProtectedLink = React.memo(({ to, requiredRole, userRoles, children, onCli
       </span>
     );
   }
-
   return (
     <NavLink to={to} className={styles.link} onClick={onClick}>
       {children}
@@ -207,7 +209,7 @@ function Navbar({ user, onLogout, lang, onLangChange }) {
       const r = localUser?.roles || [localUser?.role];
       const roles = Array.isArray(r) ? r : [r];
       return {
-        isAdmin: roles.includes('admin'),
+        isAdmin: roles.includes('admin') || roles.includes('global_admin') || roles.includes('country_admin'),
         isVendor: roles.includes('vendor'),
         isCustomer: roles.includes('customer')
       };
@@ -270,13 +272,11 @@ function Navbar({ user, onLogout, lang, onLangChange }) {
           <NavLink to="/shop" className={styles.link} onClick={() => setIsMobileMenuOpen(false)}>
             Shop
           </NavLink>
-          
           {localUser && (
             <NavLink to="/favorites" className={styles.link} onClick={() => setIsMobileMenuOpen(false)}>
               Favorites
             </NavLink>
           )}
-
           {userRoles.isCustomer && (
             <>
               <ProtectedLink 
@@ -297,7 +297,6 @@ function Navbar({ user, onLogout, lang, onLangChange }) {
               </ProtectedLink>
             </>
           )}
-
           {userRoles.isVendor && (
             <>
               <ProtectedLink 
@@ -317,6 +316,15 @@ function Navbar({ user, onLogout, lang, onLangChange }) {
                 Upload Product
               </ProtectedLink>
             </>
+          )}
+          {userRoles.isAdmin && (
+            <NavLink 
+              to="/admin" 
+              className={styles.link} 
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Admin Dashboard
+            </NavLink>
           )}
         </div>
 
@@ -353,7 +361,6 @@ function Navbar({ user, onLogout, lang, onLangChange }) {
             currentLang={lang} 
             onChange={onLangChange}
           />
-          
           <div className={styles.authSection}>
             {localUser ? (
               <div className={styles.authContainer}>
@@ -404,7 +411,11 @@ ProfileDropdown.propTypes = {
   user: PropTypes.shape({
     name: PropTypes.string,
     email: PropTypes.string.isRequired,
-    role: PropTypes.string.isRequired
+    roles: PropTypes.oneOfType([
+      PropTypes.arrayOf(PropTypes.string),
+      PropTypes.string
+    ]),
+    role: PropTypes.string
   }).isRequired,
   onLogout: PropTypes.func.isRequired,
   isLoggingOut: PropTypes.bool.isRequired
@@ -429,11 +440,14 @@ RoleSwitcher.propTypes = {
 
 Navbar.propTypes = {
   user: PropTypes.shape({
-    roles: PropTypes.arrayOf(PropTypes.string),
+    roles: PropTypes.oneOfType([
+      PropTypes.arrayOf(PropTypes.string),
+      PropTypes.string
+    ]),
     role: PropTypes.string,
     name: PropTypes.string,
-    id: PropTypes.string.isRequired,
-    email: PropTypes.string.isRequired,
+    id: PropTypes.string,
+    email: PropTypes.string,
     cartCount: PropTypes.number
   }),
   onLogout: PropTypes.func.isRequired,
@@ -442,7 +456,6 @@ Navbar.propTypes = {
   isAuthenticated: PropTypes.bool
 };
 
-// Default Props
 Navbar.defaultProps = {
   lang: 'en',
   isAuthenticated: false,

@@ -2,8 +2,11 @@ import React from 'react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
 import AdminSidebar from './AdminSidebar';
 
-const AdminLayout = () => {
+const AdminLayout = ({ user }) => {
   const navigate = useNavigate();
+
+  // Log when AdminLayout loads and show user info
+  console.log("🛠 AdminLayout loaded for user:", user);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -11,8 +14,27 @@ const AdminLayout = () => {
     navigate('/login');
   };
 
+  // Role-based admin controls example
+  let adminNotice = null;
+  if (user?.roles?.includes("global_admin")) {
+    adminNotice = (
+      <div style={{ color: '#0984e3', fontWeight: 'bold', marginBottom: 10 }}>
+        🌍 Global Admin: You have access to all global controls.
+      </div>
+    );
+  } else if (user?.roles?.includes("country_admin")) {
+    adminNotice = (
+      <div style={{ color: '#e67e22', fontWeight: 'bold', marginBottom: 10 }}>
+        🌎 Country Admin: You are limited to your country’s dashboard.
+      </div>
+    );
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', fontFamily: 'Poppins, sans-serif' }}>
+      {/* Show warning if no user */}
+      {!user && <p style={{ padding: '20px', color: 'red' }}>⚠️ No user found.</p>}
+
       {/* Top Navigation with Logo */}
       <div style={{
         backgroundColor: '#f0f0f0',
@@ -52,11 +74,14 @@ const AdminLayout = () => {
         </button>
       </div>
 
+      {/* Admin Role Notice */}
+      {adminNotice}
+
       {/* Admin Layout: Sidebar + Main */}
       <div style={{ display: 'flex', flex: 1 }}>
         <AdminSidebar />
         <main style={{ flex: 1, padding: '20px' }}>
-          <Outlet />
+          <Outlet />  {/* ✅ This renders all nested child routes */}
         </main>
       </div>
     </div>

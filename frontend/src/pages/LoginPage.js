@@ -17,11 +17,16 @@ function LoginPage() {
 
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem('user'));
-    const role = storedUser?.role || storedUser?.roles?.[0];
+    // Prefer roles[0] over role for consistency
+    const role = storedUser?.roles?.[0] || storedUser?.role;
     if (storedUser && role) {
-      if (role === 'admin' || role === 'global_admin') {
+      if (
+        storedUser.roles?.includes('admin') ||
+        storedUser.roles?.includes('global_admin') ||
+        storedUser.roles?.includes('country_admin')
+      ) {
         navigate('/admin');
-      } else if (role === 'vendor') {
+      } else if (storedUser.roles?.includes('vendor') || role === 'vendor') {
         navigate('/vendor');
       } else {
         navigate('/account');
@@ -73,7 +78,8 @@ function LoginPage() {
     try {
       const res = await axios.post('/api/auth/login', { email, password });
       const token = res.data.token;
-      const role = res.data.role || res.data.roles?.[0];
+      // Prefer roles[0] over role for consistency
+      const role = res.data.roles?.[0] || res.data.role;
 
       if (!token || !role) throw new Error('Invalid login response');
 
@@ -88,9 +94,13 @@ function LoginPage() {
 
       setMsg(t.success);
       setTimeout(() => {
-        if (role === 'admin' || role === 'global_admin') {
+        if (
+          res.data.roles?.includes('admin') ||
+          res.data.roles?.includes('global_admin') ||
+          res.data.roles?.includes('country_admin')
+        ) {
           navigate('/admin');
-        } else if (role === 'vendor') {
+        } else if (res.data.roles?.includes('vendor') || role === 'vendor') {
           navigate('/vendor');
         } else {
           navigate('/account');
@@ -114,6 +124,7 @@ function LoginPage() {
           <label htmlFor="email" className={styles.label}>{t.email}</label>
           <input
             id="email"
+            name="email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -129,6 +140,7 @@ function LoginPage() {
           <div className={styles.passwordWrapper}>
             <input
               id="password"
+              name="password"
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
