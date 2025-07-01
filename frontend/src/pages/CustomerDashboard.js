@@ -171,15 +171,17 @@ function CustomerDashboard() {
   }
 
   return (
-    <div className={styles.container}>
-      <header className={styles.welcomeHeader}>
-        <h1 className={styles.welcomeTitle}>
-          👋 Welcome back, {user?.name || 'Valued Customer'}
-        </h1>
-        <p className={styles.lastLogin}>
-          Last login: {user?.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'First time here'}
-        </p>
-      </header>
+  <div className={styles.container}>
+    <header className={styles.welcomeHeader}>
+      <h2>Customer Dashboard</h2> {/* <-- Add this line */}
+      <h1 className={styles.welcomeTitle}>
+        👋 Welcome back, {user?.name || 'Valued Customer'}
+      </h1>
+      <p className={styles.lastLogin}>
+        Last login: {user?.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'First time here'}
+      </p>
+    </header>
+    {/* ...rest of the code... */}
 
       <div className={styles.statsGrid}>
         {quickStats.map((stat, index) => (

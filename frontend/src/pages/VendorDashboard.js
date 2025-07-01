@@ -79,27 +79,31 @@ function VendorDashboard() {
   );
 
   return (
-    <div style={{ 
-      padding: '10px 20px', 
-      fontFamily: 'Poppins, sans-serif', 
-      color: '#333',
-      minHeight: '100vh',
-      display: 'flex',
-      flexDirection: 'column'
-    }}>
-      <div style={{ flex: 1 }}>
-        {msg && (
-          <div style={{
-            marginBottom: '20px',
-            padding: '10px',
-            backgroundColor: '#dff9fb',
-            color: '#0984e3',
-            borderRadius: '6px',
-            textAlign: 'center'
-          }}>
-            {msg}
-          </div>
-        )}
+  <div style={{ 
+    padding: '10px 20px', 
+    fontFamily: 'Poppins, sans-serif', 
+    color: '#333',
+    minHeight: '100vh',
+    display: 'flex',
+    flexDirection: 'column'
+  }}>
+    {/* Add the heading here */}
+    <div style={{ textAlign: 'center', marginBottom: 30 }}>
+      <h2>Vendor Dashboard</h2>
+    </div>
+    <div style={{ flex: 1 }}>
+      {msg && (
+        <div style={{
+          marginBottom: '20px',
+          padding: '10px',
+          backgroundColor: '#dff9fb',
+          color: '#0984e3',
+          borderRadius: '6px',
+          textAlign: 'center'
+        }}>
+          {msg}
+        </div>
+      )}
 
         {loading ? (
           <p>Loading dashboard...</p>

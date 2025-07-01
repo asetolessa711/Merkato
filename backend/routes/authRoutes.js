@@ -15,6 +15,21 @@ const generateToken = (user) => {
   });
 };
 
+// --- /api/auth/verify endpoint ---
+router.get('/verify', (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.json({ valid: false });
+
+  const token = authHeader.split(' ')[1];
+  try {
+    jwt.verify(token, process.env.JWT_SECRET);
+    return res.json({ valid: true });
+  } catch {
+    return res.json({ valid: false });
+  }
+});
+// --- End /api/auth/verify ---
+
 // Register (supports roles[])
 router.post('/register', async (req, res) => {
   const { name, email, password, roles, country } = req.body;
@@ -37,6 +52,7 @@ router.post('/register', async (req, res) => {
       name: user.name,
       email: user.email,
       role: user.roles[0],
+      roles: user.roles, // <-- Add roles array here too for consistency
       token: generateToken(user)
     });
   } catch (err) {
@@ -48,7 +64,7 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// Login (returns single role)
+// Login (returns both role and roles)
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
   try {
@@ -62,6 +78,7 @@ router.post('/login', async (req, res) => {
       name: user.name,
       email: user.email,
       role: user.roles[0],
+      roles: user.roles, // <-- Add this line!
       token: generateToken(user)
     });
   } catch (err) {
@@ -80,7 +97,8 @@ router.get('/me', protect, (req, res) => {
       _id: req.user._id,
       name: req.user.name,
       email: req.user.email,
-      role: req.user.roles[0]
+      role: req.user.roles[0],
+      roles: req.user.roles // <-- Add roles array here too for consistency
     }
   });
 });
@@ -114,7 +132,8 @@ router.post('/register-admin', async (req, res) => {
     res.status(201).json({
       message: 'Admin created successfully',
       email: user.email,
-      role: user.roles[0]
+      role: user.roles[0],
+      roles: user.roles // <-- Add roles array here too for consistency
     });
   } catch (err) {
     console.error('Admin creation failed:', {

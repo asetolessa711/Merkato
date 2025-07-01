@@ -71,7 +71,7 @@ import FloatingPromoButton from './components/FloatingPromoButton';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
-// Protected Route Component
+// Improved Protected Route Component
 const ProtectedRoute = ({ user, children, requiredRole }) => {
   const [loading, setLoading] = useState(true);
 
@@ -79,30 +79,57 @@ const ProtectedRoute = ({ user, children, requiredRole }) => {
     const verifyAuth = async () => {
       const token = localStorage.getItem('token');
       if (!token) return setLoading(false);
+
       try {
         const response = await axios.get(`${API_BASE_URL}/api/auth/verify`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (response.data.valid) {
           setLoading(false);
+        } else {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          setLoading(false);
         }
       } catch (err) {
         console.error('Auth verification failed:', err);
         localStorage.removeItem('token');
+        localStorage.removeItem('user');
         setLoading(false);
       }
     };
+
     verifyAuth();
   }, []);
 
   if (loading) return <div className="flex items-center justify-center h-screen">Loading...</div>;
-  if (!user) return <Navigate to="/login" replace />;
+
+  // 🧠 Prevent rendering if user is missing
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  const roles = user.roles || [];
+
+  // Role-based access logic with dashboard redirect
   if (requiredRole === "admin") {
-    const isAdmin = user.roles?.includes("admin") || user.roles?.includes("global_admin") || user.roles?.includes("country_admin");
-    if (!isAdmin) return <Navigate to="/" replace />;
-  } else if (requiredRole && !user.roles?.includes(requiredRole)) {
+    const isAdmin = roles.includes("admin") || roles.includes("global_admin") || roles.includes("country_admin");
+    if (!isAdmin) {
+      // Redirect to user's dashboard if not admin
+      if (roles.includes("vendor")) return <Navigate to="/vendor" replace />;
+      if (roles.includes("customer")) return <Navigate to="/account/dashboard" replace />;
+      // fallback
+      return <Navigate to="/" replace />;
+    }
+  } else if (requiredRole && !roles.includes(requiredRole)) {
+    // Redirect to user's dashboard if not correct role
+    if (roles.includes("admin") || roles.includes("global_admin") || roles.includes("country_admin")) return <Navigate to="/admin/dashboard" replace />;
+    if (roles.includes("vendor")) return <Navigate to="/vendor" replace />;
+    if (roles.includes("customer")) return <Navigate to="/account/dashboard" replace />;
+    // fallback
     return <Navigate to="/" replace />;
   }
+
   return children;
 };
 
@@ -190,7 +217,7 @@ function App() {
             <AdminLayout user={user} />
           </ProtectedRoute>
         }>
-          {/* Redirect /admin to /admin/dashboard */}
+           {/* Redirect /admin to /admin/dashboard */}
           <Route index element={<Navigate to="/admin/dashboard" replace />} />
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="promo-codes" element={<AdminPromoCodes />} />
@@ -207,7 +234,7 @@ function App() {
           <Route path="delivery-options" element={<AdminDeliveryOptions />} />
           <Route path="invoices/report" element={<InvoiceReport />} />
         </Route>
-
+        
         {/* 404 */}
         <Route path="*" element={
           <PublicLayout user={user} onLogout={handleLogout} lang={lang}>

@@ -29,7 +29,7 @@ function LoginPage() {
       } else if (storedUser.roles?.includes('vendor') || role === 'vendor') {
         navigate('/vendor');
       } else {
-        navigate('/account');
+        navigate('/account/dashboard'); // Redirect customers to dashboard
       }
     }
   }, [navigate]);
@@ -103,7 +103,7 @@ function LoginPage() {
         } else if (res.data.roles?.includes('vendor') || role === 'vendor') {
           navigate('/vendor');
         } else {
-          navigate('/account');
+          navigate('/account/dashboard'); // Redirect customers to dashboard
         }
       }, 500);
     } catch (err) {
