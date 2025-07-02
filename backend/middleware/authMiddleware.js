@@ -12,23 +12,33 @@ const protect = async (req, res, next) => {
     try {
       token = req.headers.authorization.split(' ')[1];
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      req.user = await User.findById(decoded.id).select('-password');
-      next();
+      const user = await User.findById(decoded.id).select('-password');
+
+      if (!user) {
+        console.error('❌ protect: user not found for decoded id');
+        return res.status(401).json({ message: 'User not found' });
+      }
+
+      req.user = user;
+      return next();
     } catch (err) {
+      console.error('Token verification failed:', err.message);
       return res.status(401).json({ message: 'Not authorized, token failed' });
     }
   }
 
+  // Null check for token outside the if block
   if (!token) {
-    return res.status(401).json({ message: 'Not authorized, no token' });
+    console.error('❌ protect: no token provided');
+    return res.status(401).json({ message: 'Not authorized, no token provided' });
   }
 };
 
 // ✅ Middleware: Authorize one or more allowed roles
 const authorize = (...allowedRoles) => {
   return (req, res, next) => {
-    const userRoles = req.user.roles || [req.user.role]; // fallback for old tokens
-    if (!allowedRoles.some(role => userRoles.includes(role))) {
+    const userRoles = req.user?.roles || [req.user?.role];
+    if (!userRoles || !allowedRoles.some(role => userRoles.includes(role))) {
       return res.status(403).json({ message: 'Access denied' });
     }
     next();
@@ -37,39 +47,37 @@ const authorize = (...allowedRoles) => {
 
 // ✅ Middleware: Only Country Admin
 const isCountryAdmin = (req, res, next) => {
-  const roles = req.user.roles || [req.user.role];
+  const roles = req.user?.roles || [req.user?.role];
   if (roles.includes('country_admin')) {
     return next();
-  } else {
-    return res.status(403).json({ message: 'Access denied: Country Admins only' });
   }
+  return res.status(403).json({ message: 'Access denied: Country Admins only' });
 };
 
 // ✅ Middleware: Only Global Admin
 const isGlobalAdmin = (req, res, next) => {
-  const roles = req.user.roles || [req.user.role];
+  const roles = req.user?.roles || [req.user?.role];
   if (roles.includes('global_admin')) {
     return next();
-  } else {
-    return res.status(403).json({ message: 'Access denied: Global Admins only' });
   }
+  return res.status(403).json({ message: 'Access denied: Global Admins only' });
 };
 
 // ✅ Smart middleware to restrict order visibility by country admin
-const filterOrdersByCountry = async (req, res, next) => {
-  const roles = req.user.roles || [req.user.role];
+const filterOrdersByCountry = (req, res, next) => {
+  const roles = req.user?.roles || [req.user?.role];
 
-  // If global or full admin, allow all orders
   if (roles.includes('admin') || roles.includes('global_admin')) {
-    req.countryFilter = {}; // no filter
+    req.countryFilter = {}; // full access
     return next();
   }
 
   if (roles.includes('country_admin')) {
     const country = req.user.country;
     if (!country) {
-      return res.status(403).json({ message: 'No country assigned to admin' });
+      return res.status(403).json({ message: 'No country assigned to this admin' });
     }
+
     req.countryFilter = {
       $or: [
         { 'shippingAddress.country': country },
@@ -88,5 +96,5 @@ module.exports = {
   isCountryAdmin,
   isGlobalAdmin,
   filterOrdersByCountry,
-  ensureAuth: protect // ✅ alias for consistent usage
+  ensureAuth: protect // alias for naming consistency
 };

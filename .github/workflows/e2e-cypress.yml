@@ -41,12 +41,12 @@ jobs:
           echo "🛆 Installing backend dependencies..."
           cd backend
           npm ci
-
-      - name: 🌱 Seed test database
+          
+      - name: 🌱 Seed test database (via API)
         run: |
-          echo "🌱 Seeding test database..."
+          echo "🌱 Seeding test database via /api/dev/seed..."
           cd backend
-          npm run test:seed
+          npm run seed:test
 
       - name: 🔧 Start backend (test mode)
         run: |

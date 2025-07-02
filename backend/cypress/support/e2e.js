@@ -1,17 +1,22 @@
 // ***********************************************************
-// This example support/e2e.js is processed and
-// loaded automatically before your test files.
-//
-// This is a great place to put global configuration and
-// behavior that modifies Cypress.
-//
-// You can change the location of this file or turn off
-// automatically serving support files with the
-// 'supportFile' configuration option.
-//
-// You can read more here:
-// https://on.cypress.io/configuration
+// This support file is loaded automatically before your test files.
+// Use this for global config, reusable hooks, or extensions.
 // ***********************************************************
 
-// Import commands.js using ES2015 syntax:
-import './commands'
+// Import custom commands
+import './commands';
+
+// ✅ Automatically seed DB before each spec if enabled
+before(() => {
+  if (Cypress.env('SEED_DB')) {
+    cy.task('db:seed');
+  }
+});
+
+// ✅ Optionally log the current test user email
+beforeEach(() => {
+  const email = Cypress.env('TEST_USER_EMAIL');
+  if (email) {
+    cy.log(`👤 Using test user: ${email}`);
+  }
+});

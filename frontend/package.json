@@ -2,16 +2,22 @@
   "name": "merkato-frontend",
   "version": "1.0.0",
   "description": "Frontend for Merkato Marketplace",
+  
   "scripts": {
     "dev": "craco start",
-    "start": "craco start",
+    "start": "craco start", 
     "build": "craco build",
-    "test": "craco test --env=jsdom --watchAll=false"
+    "test": "craco test --env=jsdom --watchAll=false",
+    "cypress": "cypress open",
+    "seed": "curl -X POST http://localhost:5000/api/dev/seed",
+    "test:manual": "npm run seed && npm start"
   },
+  
   "dependencies": {
     "axios": "^1.4.0",
     "chart.js": "^4.4.9",
     "html2pdf.js": "^0.10.3",
+    "lucide-react": "^0.525.0",
     "prop-types": "^15.8.1",
     "react": "^18.3.1",
     "react-chartjs-2": "^5.3.0",
@@ -26,7 +32,7 @@
   },
   "devDependencies": {
     "@babel/runtime": "^7.27.6",
-    "@craco/craco": "^7.1.0",
+    "@craco/craco": "^5.9.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",

@@ -8,29 +8,51 @@ const { sendPasswordResetEmail, resetRateLimiter } = require('../utils/sendEmail
 
 const router = express.Router();
 
-// Generate JWT token
+// 🔐 Generate JWT token
 const generateToken = (user) => {
   return jwt.sign({ id: user._id, roles: user.roles }, process.env.JWT_SECRET, {
     expiresIn: '7d'
   });
 };
 
-// --- /api/auth/verify endpoint ---
+// ✅ /api/auth/verify → used for frontend & Cypress
 router.get('/verify', (req, res) => {
   const authHeader = req.headers.authorization;
-  if (!authHeader) return res.json({ valid: false });
+  if (!authHeader) {
+    console.warn('🔒 /verify: No auth header received');
+    return res.status(200).json({ valid: false });
+  }
 
   const token = authHeader.split(' ')[1];
   try {
     jwt.verify(token, process.env.JWT_SECRET);
-    return res.json({ valid: true });
-  } catch {
-    return res.json({ valid: false });
+    return res.status(200).json({ valid: true });
+  } catch (err) {
+    console.warn('❌ /verify: Invalid token');
+    return res.status(200).json({ valid: false });
   }
 });
-// --- End /api/auth/verify ---
 
-// Register (supports roles[])
+// --- /api/auth/me ---
+router.get('/me', protect, (req, res) => {
+  if (!req.user) {
+    console.error('❌ /me failed: user not set on req');
+    return res.status(401).json({ message: 'User not found' });
+  }
+
+  const roles = req.user.roles || [req.user.role] || [];
+  res.json({
+    user: {
+      _id: req.user._id,
+      name: req.user.name,
+      email: req.user.email,
+      role: roles[0],
+      roles
+    }
+  });
+});
+
+// --- /api/auth/register ---
 router.post('/register', async (req, res) => {
   const { name, email, password, roles, country } = req.body;
   try {
@@ -52,19 +74,16 @@ router.post('/register', async (req, res) => {
       name: user.name,
       email: user.email,
       role: user.roles[0],
-      roles: user.roles, // <-- Add roles array here too for consistency
+      roles: user.roles,
       token: generateToken(user)
     });
   } catch (err) {
-    console.error('Registration failed:', {
-      error: err.message,
-      timestamp: new Date().toISOString()
-    });
+    console.error('Registration failed:', { error: err.message });
     res.status(500).json({ message: 'Registration failed. Please try again.' });
   }
 });
 
-// Login (returns both role and roles)
+// --- /api/auth/login ---
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
   try {
@@ -78,37 +97,21 @@ router.post('/login', async (req, res) => {
       name: user.name,
       email: user.email,
       role: user.roles[0],
-      roles: user.roles, // <-- Add this line!
+      roles: user.roles,
       token: generateToken(user)
     });
   } catch (err) {
-    console.error('Login failed:', {
-      error: err.message,
-      timestamp: new Date().toISOString()
-    });
+    console.error('Login failed:', { error: err.message });
     res.status(500).json({ message: 'Login failed. Please try again.' });
   }
 });
 
-// Get authenticated user data
-router.get('/me', protect, (req, res) => {
-  res.json({
-    user: {
-      _id: req.user._id,
-      name: req.user.name,
-      email: req.user.email,
-      role: req.user.roles[0],
-      roles: req.user.roles // <-- Add roles array here too for consistency
-    }
-  });
-});
-
-// Admin-only route
+// --- /api/auth/admin ---
 router.get('/admin', protect, authorize('admin'), (req, res) => {
   res.json({ message: `Hello Admin ${req.user.name}` });
 });
 
-// Create global admin (development only)
+// --- /api/auth/register-admin ---
 router.post('/register-admin', async (req, res) => {
   if (process.env.NODE_ENV === 'production') {
     return res.status(403).json({ message: 'Not available in production' });
@@ -133,115 +136,74 @@ router.post('/register-admin', async (req, res) => {
       message: 'Admin created successfully',
       email: user.email,
       role: user.roles[0],
-      roles: user.roles // <-- Add roles array here too for consistency
+      roles: user.roles
     });
   } catch (err) {
-    console.error('Admin creation failed:', {
-      error: err.message,
-      timestamp: new Date().toISOString()
-    });
+    console.error('Admin creation failed:', { error: err.message });
     res.status(500).json({ message: 'Failed to create admin' });
   }
 });
 
-// Enhanced Forgot Password with Rate Limiting
+// --- /api/auth/forgot-password ---
 router.post('/forgot-password', resetRateLimiter, async (req, res) => {
   const { email } = req.body;
   if (!email) {
     return res.status(400).json({ message: 'Email is required' });
   }
 
+  const genericMessage = 'If account exists, a reset link will be sent.';
   try {
-    // Security best practice - same response whether user exists or not
-    const genericMessage = 'If account exists, a reset link will be sent.';
-    
     const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(200).json({ message: genericMessage });
-    }
+    if (!user) return res.status(200).json({ message: genericMessage });
 
-    // Generate and hash token
     const token = crypto.randomBytes(32).toString('hex');
     const hashed = crypto.createHash('sha256').update(token).digest('hex');
 
-    // Clear existing tokens and create new one in parallel
     await Promise.all([
       ResetToken.deleteMany({ userId: user._id }),
       ResetToken.create({
         userId: user._id,
         token: hashed,
-        expiresAt: Date.now() + 3600000 // 1 hour
+        expiresAt: Date.now() + 3600000
       })
     ]);
 
-    // Send reset email
-    await sendPasswordResetEmail({ 
-      to: user.email, 
-      token 
-    });
-
-    console.log(`Password reset requested for user: ${user._id}`);
+    await sendPasswordResetEmail({ to: user.email, token });
     res.status(200).json({ message: genericMessage });
   } catch (err) {
-    console.error('Password reset request failed:', {
-      error: err.message,
-      timestamp: new Date().toISOString()
-    });
-    res.status(500).json({ 
-      message: 'Unable to process request. Please try again later.' 
-    });
+    console.error('Password reset error:', { error: err.message });
+    res.status(500).json({ message: 'Unable to process request' });
   }
 });
 
-// Enhanced Reset Password
+// --- /api/auth/reset-password ---
 router.post('/reset-password', async (req, res) => {
   const { token, password } = req.body;
-  
   if (!token || !password) {
-    return res.status(400).json({ 
-      message: 'Token and new password are required' 
-    });
+    return res.status(400).json({ message: 'Token and new password are required' });
   }
 
   try {
     const hashed = crypto.createHash('sha256').update(token).digest('hex');
-    
-    const reset = await ResetToken.findOne({ 
-      token: hashed, 
-      expiresAt: { $gt: Date.now() } 
-    });
+    const reset = await ResetToken.findOne({ token: hashed, expiresAt: { $gt: Date.now() } });
 
     if (!reset) {
-      return res.status(400).json({ 
-        message: 'Invalid or expired reset token' 
-      });
+      return res.status(400).json({ message: 'Invalid or expired reset token' });
     }
 
     const user = await User.findById(reset.userId).select('+password');
     if (!user) {
-      return res.status(404).json({ 
-        message: 'User not found' 
-      });
+      return res.status(404).json({ message: 'User not found' });
     }
 
-    user.password = password; // Will be hashed by User model pre-save middleware
+    user.password = password;
     await user.save();
-    
-    // Clean up all reset tokens
     await ResetToken.deleteMany({ userId: user._id });
 
-    console.log(`Password reset successful for user: ${user._id}`);
-    res.status(200).json({ 
-      message: 'Password has been reset successfully' 
-    });
+    res.status(200).json({ message: 'Password has been reset successfully' });
   } catch (err) {
-    console.error('Password reset failed:', {
-      error: err.message,
-      timestamp: new Date().toISOString()
-    });
-    res.status(500).json({ 
-      message: 'Unable to reset password. Please try again later.' 
-    });
+    console.error('Password reset failed:', { error: err.message });
+    res.status(500).json({ message: 'Unable to reset password' });
   }
 });
 

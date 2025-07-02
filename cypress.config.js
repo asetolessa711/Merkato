@@ -3,14 +3,24 @@ const axios = require('axios');
 
 module.exports = defineConfig({
   e2e: {
+    // Your frontend dev server (adjust if different)
     baseUrl: 'http://localhost:3000',
+
+    // Where Cypress looks for support logic
     supportFile: 'cypress/support/e2e.js',
+
+    // Where Cypress looks for test files
     specPattern: 'cypress/e2e/**/*.cy.{js,jsx}',
+
+    // Exclude example/specs or legacy files (optional)
+    excludeSpecPattern: ['**/examples/*'],
+
+    // Folder paths for fixtures/downloads
     fixturesFolder: 'cypress/fixtures',
     downloadsFolder: 'cypress/downloads',
 
+    // Custom tasks (e.g., DB seeding)
     setupNodeEvents(on, config) {
-      // Add the custom db:seed task
       on('task', {
         'db:seed': async () => {
           try {
@@ -27,21 +37,25 @@ module.exports = defineConfig({
       return config;
     },
 
+    // Custom env vars for reuse across tests
     env: {
       SEED_DB: true,
       API_URL: 'http://localhost:5000/api',
       TEST_USER_EMAIL: 'testuser@example.com',
-      TEST_USER_PASSWORD: 'Password123!'
+      TEST_USER_PASSWORD: 'Password123!',
     },
 
-   video: true,
+    // Behavior settings
+    video: true,
     screenshotOnRunFailure: true,
     trashAssetsBeforeRuns: true,
-    defaultCommandTimeout: 10000,
-    pageLoadTimeout: 90000,
+    defaultCommandTimeout: 10000, // Wait 10s for commands
+    pageLoadTimeout: 90000,       // Wait up to 90s for page loads
+
+    // Retry strategy
     retries: {
-      runMode: 2,
-      openMode: 0
+      runMode: 2,   // In CI
+      openMode: 0   // In interactive mode
     }
   }
 });

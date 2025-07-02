@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
-import AdminSidebar from './AdminSidebar';
+import SmartSidebar from '../components/SmartSidebar';
 
 const AdminLayout = ({ user }) => {
   const navigate = useNavigate();
@@ -60,14 +60,15 @@ const AdminLayout = ({ user }) => {
             <Link to="/account" style={{ color: '#0984e3', textDecoration: 'none' }}>👤 Customer Panel</Link>
           </nav>
         </div>
-        <button 
-          onClick={handleLogout} 
-          style={{ 
-            border: 'none', 
-            background: 'none', 
-            color: '#e74c3c', 
-            fontWeight: 'bold', 
-            cursor: 'pointer' 
+        <button
+          onClick={handleLogout}
+          data-cy="logout-button"
+          style={{
+            border: 'none',
+            background: 'none',
+            color: '#e74c3c',
+            fontWeight: 'bold',
+            cursor: 'pointer'
           }}
         >
           🚪 Logout
@@ -79,9 +80,26 @@ const AdminLayout = ({ user }) => {
 
       {/* Admin Layout: Sidebar + Main */}
       <div style={{ display: 'flex', flex: 1 }}>
-        <AdminSidebar />
+        <SmartSidebar />
         <main style={{ flex: 1, padding: '20px' }}>
-          <Outlet />  {/* ✅ This renders all nested child routes */}
+          <Outlet />
+          {/* Cypress logout button for test */}
+          <button
+            onClick={handleLogout}
+            data-cy="logout-button"
+            style={{
+              margin: '24px 0 0 0',
+              padding: '10px 24px',
+              background: '#e74c3c',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '6px',
+              fontWeight: 'bold',
+              cursor: 'pointer'
+            }}
+          >
+            Logout
+          </button>
         </main>
       </div>
     </div>

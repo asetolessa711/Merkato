@@ -68,91 +68,26 @@ import ReviewModeration from './components/admin/ReviewModeration';
 // UI Components
 import FeedbackPopup from './components/FeedbackPopup';
 import FloatingPromoButton from './components/FloatingPromoButton';
+import ProtectedRoute from './components/ProtectedRoute';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
-// Improved Protected Route Component
-const ProtectedRoute = ({ user, children, requiredRole }) => {
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const verifyAuth = async () => {
-      const token = localStorage.getItem('token');
-      if (!token) return setLoading(false);
-
-      try {
-        const response = await axios.get(`${API_BASE_URL}/api/auth/verify`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (response.data.valid) {
-          setLoading(false);
-        } else {
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-          setLoading(false);
-        }
-      } catch (err) {
-        console.error('Auth verification failed:', err);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        setLoading(false);
-      }
-    };
-
-    verifyAuth();
-  }, []);
-
-  if (loading) return <div className="flex items-center justify-center h-screen">Loading...</div>;
-
-  // 🧠 Prevent rendering if user is missing
-  if (!user) {
-    return <Navigate to="/login" replace />;
-  }
-
-  const roles = user.roles || [];
-
-  // Role-based access logic with dashboard redirect
-  if (requiredRole === "admin") {
-    const isAdmin = roles.includes("admin") || roles.includes("global_admin") || roles.includes("country_admin");
-    if (!isAdmin) {
-      // Redirect to user's dashboard if not admin
-      if (roles.includes("vendor")) return <Navigate to="/vendor" replace />;
-      if (roles.includes("customer")) return <Navigate to="/account/dashboard" replace />;
-      // fallback
-      return <Navigate to="/" replace />;
-    }
-  } else if (requiredRole && !roles.includes(requiredRole)) {
-    // Redirect to user's dashboard if not correct role
-    if (roles.includes("admin") || roles.includes("global_admin") || roles.includes("country_admin")) return <Navigate to="/admin/dashboard" replace />;
-    if (roles.includes("vendor")) return <Navigate to="/vendor" replace />;
-    if (roles.includes("customer")) return <Navigate to="/account/dashboard" replace />;
-    // fallback
-    return <Navigate to="/" replace />;
-  }
-
-  return children;
-};
-
-// Direct Chat Wrapper
 const DirectChatWrapper = () => {
   const { userId } = useParams();
   return <DirectChat selectedUser={{ _id: userId }} />;
 };
 
 function App() {
-  const { user, loading } = useUser();
+  const { user, loading, clearUser } = useUser();
   const [lang, setLang] = useState(() => localStorage.getItem('merkato-lang') || 'en');
   const [currency, setCurrency] = useState('USD');
   const [showFeedback, setShowFeedback] = useState(false);
   const rates = { USD: 1, ETB: 144, EUR: 0.91 };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    clearUser();
     window.location.href = '/';
   };
-
-  if (loading) return <div className="flex items-center justify-center h-screen">Loading...</div>;
 
   return (
     <BrowserRouter>
@@ -177,7 +112,7 @@ function App() {
         {/* Customer */}
         <Route path="/dashboard" element={<Navigate to="/account" replace />} />
         <Route path="/account" element={
-          <ProtectedRoute user={user} requiredRole="customer">
+          <ProtectedRoute user={user} loading={loading} requiredRole="customer">
             <CustomerLayout user={user} onLogout={handleLogout} lang={lang} />
           </ProtectedRoute>
         }>
@@ -188,12 +123,11 @@ function App() {
           <Route path="inbox" element={<CustomerInbox />} />
           <Route path="chat/:userId" element={<DirectChatWrapper />} />
           <Route path="addresses" element={<MyAddresses />} />
-          <Route path="*" element={<Navigate to="/account/dashboard" replace />} />
         </Route>
 
         {/* Vendor */}
         <Route path="/vendor" element={
-          <ProtectedRoute user={user} requiredRole="vendor">
+          <ProtectedRoute user={user} loading={loading} requiredRole="vendor">
             <VendorLayout user={user} onLogout={handleLogout} lang={lang} />
           </ProtectedRoute>
         }>
@@ -207,17 +141,15 @@ function App() {
           <Route path="chat/:userId" element={<DirectChatWrapper />} />
           <Route path="inbox" element={<VendorInbox />} />
           <Route path="questions" element={<VendorQuestions />} />
-          <Route path="*" element={<Navigate to="/vendor" replace />} />
         </Route>
         <Route path="/vendor/:id" element={<VendorStore />} />
 
         {/* Admin */}
         <Route path="/admin" element={
-          <ProtectedRoute user={user} requiredRole="admin">
+          <ProtectedRoute user={user} loading={loading} requiredRole="admin">
             <AdminLayout user={user} />
           </ProtectedRoute>
         }>
-           {/* Redirect /admin to /admin/dashboard */}
           <Route index element={<Navigate to="/admin/dashboard" replace />} />
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="promo-codes" element={<AdminPromoCodes />} />
@@ -234,7 +166,7 @@ function App() {
           <Route path="delivery-options" element={<AdminDeliveryOptions />} />
           <Route path="invoices/report" element={<InvoiceReport />} />
         </Route>
-        
+
         {/* 404 */}
         <Route path="*" element={
           <PublicLayout user={user} onLogout={handleLogout} lang={lang}>

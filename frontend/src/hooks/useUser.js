@@ -10,23 +10,35 @@ export default function useUser() {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (token) {
-      axios.get(`${API_BASE_URL}/api/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
+
+    if (!token) {
+      setUser(null);
+      setLoading(false);
+      return;
+    }
+
+    axios.get(`${API_BASE_URL}/api/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
       .then(res => {
         const data = res.data.user || res.data;
-        setUser(data);
+        if (!data || !data.roles || !data.email) {
+          console.warn('[useUser] Incomplete user data:', data);
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          setUser(null);
+        } else {
+          localStorage.setItem('user', JSON.stringify(data)); // 🔄 Ensure stored user is fresh
+          setUser(data);
+        }
       })
       .catch(err => {
-        console.error('Auth error:', err);
+        console.error('[useUser] Auth check failed:', err.message);
         localStorage.removeItem('token');
+        localStorage.removeItem('user');
         setUser(null);
       })
       .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
-    }
   }, []);
 
   return { user, loading };

@@ -4,8 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import styles from './LoginPage.module.css';
 
 function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  // Use a single form state for easier input handling
+  const [form, setForm] = useState({ email: '', password: '' });
   const [remember, setRemember] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [msg, setMsg] = useState('');
@@ -15,24 +15,49 @@ function LoginPage() {
   const navigate = useNavigate();
   const lang = localStorage.getItem('merkato-lang') || 'en';
 
+  // --- Enhanced useEffect for token check and debug ---
   useEffect(() => {
-    const storedUser = JSON.parse(localStorage.getItem('user'));
-    // Prefer roles[0] over role for consistency
-    const role = storedUser?.roles?.[0] || storedUser?.role;
-    if (storedUser && role) {
-      if (
-        storedUser.roles?.includes('admin') ||
-        storedUser.roles?.includes('global_admin') ||
-        storedUser.roles?.includes('country_admin')
-      ) {
-        navigate('/admin');
-      } else if (storedUser.roles?.includes('vendor') || role === 'vendor') {
-        navigate('/vendor');
-      } else {
-        navigate('/account/dashboard'); // Redirect customers to dashboard
+    try {
+      const storedUser = JSON.parse(localStorage.getItem('user'));
+      const token = localStorage.getItem('token');
+      if (!storedUser || !token) {
+        console.log('[Auto-Login] No stored user or token.');
+        return;
       }
+
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      console.log('[Auto-Login Check] Token:', token);
+      console.log('[Auto-Login Check] Decoded Payload:', payload);
+
+      if (payload.exp * 1000 < Date.now()) {
+        console.warn('[Auto-Login] Token has expired.');
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        return;
+      }
+
+      const role = storedUser?.roles?.[0] || storedUser?.role;
+
+      if (window.location.pathname === '/login') {
+        if (
+          storedUser.roles?.includes('admin') ||
+          storedUser.roles?.includes('global_admin') ||
+          storedUser.roles?.includes('country_admin')
+        ) {
+          navigate('/admin');
+        } else if (storedUser.roles?.includes('vendor') || role === 'vendor') {
+          navigate('/vendor');
+        } else {
+          navigate('/account/dashboard');
+        }
+      }
+    } catch (err) {
+      console.error('[Auto-Login Check] Error decoding token:', err);
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
     }
   }, [navigate]);
+  // --- End enhanced useEffect ---
 
   const labels = {
     en: {
@@ -52,13 +77,17 @@ function LoginPage() {
 
   const validateFields = () => {
     const errors = {};
-    if (!email || !/\S+@\S+\.\S+/.test(email)) {
+    if (!form.email || !/\S+@\S+\.\S+/.test(form.email)) {
       errors.email = 'Enter a valid email.';
     }
-    if (!password || password.length < 3) {
+    if (!form.password || form.password.length < 3) {
       errors.password = 'Password must be at least 3 characters.';
     }
     return errors;
+  };
+
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
@@ -76,7 +105,7 @@ function LoginPage() {
     }
 
     try {
-      const res = await axios.post('/api/auth/login', { email, password });
+      const res = await axios.post('/api/auth/login', { email: form.email, password: form.password });
       const token = res.data.token;
       // Prefer roles[0] over role for consistency
       const role = res.data.roles?.[0] || res.data.role;
@@ -123,11 +152,12 @@ function LoginPage() {
         <div className={styles.formGroup}>
           <label htmlFor="email" className={styles.label}>{t.email}</label>
           <input
+            data-cy="email-input"
             id="email"
             name="email"
             type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            value={form.email}
+            onChange={handleChange}
             className={`${styles.input} ${fieldError.email ? styles.inputError : ''}`}
             autoComplete="email"
             disabled={isLoading}
@@ -139,11 +169,12 @@ function LoginPage() {
           <label htmlFor="password" className={styles.label}>{t.password}</label>
           <div className={styles.passwordWrapper}>
             <input
+              data-cy="password-input"
               id="password"
               name="password"
               type={showPassword ? 'text' : 'password'}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              value={form.password}
+              onChange={handleChange}
               className={`${styles.input} ${fieldError.password ? styles.inputError : ''}`}
               autoComplete="current-password"
               disabled={isLoading}
@@ -174,6 +205,7 @@ function LoginPage() {
         </div>
 
         <button
+          data-cy="login-button"
           type="submit"
           className={styles.submitButton}
           disabled={isLoading}

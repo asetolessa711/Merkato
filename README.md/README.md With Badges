@@ -182,3 +182,6 @@ cd frontend && npx cypress open  # E2E GUI
 - [Pre-Deployment Checklist](docs/pre-deployment-checklist.md)
 - [Post-Deployment Checklist](docs/post-deployment-checklist.md)
 [📦 Latest Beta Release](https://github.com/asetolessa711/merkato/releases/tag/v1.0-beta)
+
+![Smoke Tests](https://github.com/<user>/<repo>/actions/workflows/cypress-smoke.yml/badge.svg)
+![Full Tests](https://github.com/<user>/<repo>/actions/workflows/cypress-full.yml/badge.svg)
