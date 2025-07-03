@@ -93,6 +93,9 @@ function AdminDashboard() {
   if (error) {
     return (
       <div style={{ padding: '40px', textAlign: 'center', fontFamily: 'Poppins, sans-serif' }}>
+        <h2 data-testid="admin-dashboard-title" style={{ fontWeight: 'bold', color: '#2c3e50' }}>
+          Admin Dashboard
+        </h2>
         <h2>🛡️ Admin Dashboard Access Issue</h2>
         <p style={{ color: 'red' }}>{msg}</p>
         <p>Please login again or contact support if issue persists.</p>

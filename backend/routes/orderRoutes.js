@@ -330,4 +330,27 @@ router.patch('/:orderId/status', protect, authorize('vendor', 'admin'), async (r
   }
 });
 
+/**
+ * @route   GET /api/orders/recent
+ * @desc    Get recent 5 orders for customer
+ * @access  Private - Customer only
+ */
+router.get('/recent', protect, authorize('customer'), async (req, res) => {
+  try {
+    console.log('[✅ /api/orders/recent] req.user:', req.user); // Log user info
+    if (!req.user || !req.user._id) {
+      console.error('[❌ /api/orders/recent] No user found on request');
+      return res.status(401).json({ message: 'Unauthorized: No user found' });
+    }
+    const orders = await Order.find({ buyer: req.user._id })
+      .sort({ createdAt: -1 })
+      .limit(5);
+
+    console.log('[✅ /api/orders/recent] Orders fetched:', orders.length);
+    return res.status(200).json(orders);
+  } catch (err) {
+    console.error('[❌ /api/orders/recent] Error:', err); // Full error log
+    return res.status(500).json({ message: 'Failed to fetch recent orders', error: err.message });
+  }
+});
 module.exports = router;

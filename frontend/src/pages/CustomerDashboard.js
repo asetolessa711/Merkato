@@ -139,6 +139,7 @@ function CustomerDashboard() {
   if (isLoading) {
     return (
       <div className={styles.container}>
+        <h1 data-testid="customer-dashboard-title">Welcome, Customer</h1>
         <div className={styles.loadingState}>
           <div className={styles.skeletonHeader}></div>
           <div className={styles.skeletonStats}>
@@ -158,6 +159,7 @@ function CustomerDashboard() {
   if (error) {
     return (
       <div className={styles.container}>
+        <h1 data-testid="customer-dashboard-title">Welcome, Customer</h1>
         <div className={styles.error}>
           <h2>⚠️ {error}</h2>
           <button onClick={fetchData} className={styles.retryButton}>
@@ -172,7 +174,7 @@ function CustomerDashboard() {
     <div className={styles.container}>
       {/* Updated dashboard-content for e2e testing */}
       <div data-cy="dashboard-content">
-        <h1>Welcome back, Customer</h1>
+        <h1 data-testid="customer-dashboard-title">Welcome, Customer</h1>
         {/* other content */}
         <header className={styles.welcomeHeader}>
           <h2 data-testid="customer-dashboard-title">Customer Dashboard</h2>

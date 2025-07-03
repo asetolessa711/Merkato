@@ -124,6 +124,7 @@ function VendorDashboard() {
             <>
               {!analytics && products.length === 0 && (
                 <div style={{ textAlign: 'center', color: '#e74c3c', marginBottom: '20px' }}>
+                  <h2 data-testid="vendor-dashboard-title">Vendor Dashboard</h2>
                   <p>⚠️ Something went wrong. Please try refreshing or logging in again.</p>
                 </div>
               )}
