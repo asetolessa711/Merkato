@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { uploadProductImage } from '../utils/uploadImage';
 
 function ProductUpload() {
   const [form, setForm] = useState({
@@ -22,8 +23,10 @@ function ProductUpload() {
   const [imageFile, setImageFile] = useState(null);
   const [previewImage, setPreviewImage] = useState(null);
   const [msg, setMsg] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
   const navigate = useNavigate();
-  const token = localStorage.getItem('token');
+
+  const token = localStorage.getItem('merkato-token'); // ✅ fixed
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -41,34 +44,31 @@ function ProductUpload() {
     }
   };
 
-  const handleImageUpload = async () => {
-    if (!imageFile) return null;
+  // ✅ Authenticated Image Upload Handler
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
     try {
-      const formData = new FormData();
-      formData.append('image', imageFile);
-
-      const res = await axios.post('/api/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          Authorization: `Bearer ${token}`
-        }
-      });
-
-      return res.data.imageUrl;
+      const response = await uploadProductImage(file, token);
+      setImageUrl(response.imageUrl || response);
+      setPreviewImage(URL.createObjectURL(file));
     } catch (err) {
-      console.error('Image upload failed:', err);
-      setMsg('Image upload failed. Please try again.');
-      return null;
+      console.error('Image upload failed:', err.response?.data?.message || err.message);
+      setMsg('Image upload failed');
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMsg('');
-    try {
-      const imageUrl = await handleImageUpload();
-      if (!imageUrl) return;
 
+    if (!imageUrl) {
+      setMsg('Please upload an image first.');
+      return;
+    }
+
+    try {
       const res = await axios.post(
         '/api/products',
         { ...form, image: imageUrl },
@@ -85,6 +85,8 @@ function ProductUpload() {
       });
       setImageFile(null);
       setPreviewImage(null);
+      setImageUrl('');
+
       setTimeout(() => navigate('/vendor'), 1000);
     } catch (err) {
       const error = err.response?.data?.message || 'Upload failed. Please try again.';
@@ -93,19 +95,11 @@ function ProductUpload() {
     }
   };
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    setImageFile(file);
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => setPreviewImage(reader.result);
-      reader.readAsDataURL(file);
-    }
-  };
-
   return (
     <div style={{ padding: '20px', maxWidth: '700px', margin: '0 auto', fontFamily: 'Poppins, sans-serif', color: '#333' }}>
-      <h1 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '20px', color: '#00B894' }}>Upload a New Product 🚀</h1>
+      <h1 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '20px', color: '#00B894' }}>
+        Upload a New Product 🚀
+      </h1>
 
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         <input name="name" placeholder="Product Name" value={form.name} onChange={handleChange} required />
@@ -155,19 +149,47 @@ function ProductUpload() {
           />
         )}
 
-        <label>Product Image:</label>
-        <input type="file" onChange={handleFileChange} accept="image/*" />
+        <label htmlFor="product-image">Product Image:</label>
+        <input
+          id="product-image"
+          data-testid="product-image-input"
+          type="file"
+          accept="image/*"
+          onChange={handleImageUpload}
+        />
 
         {previewImage && (
-          <img src={previewImage} alt="Preview" style={{ marginTop: '10px', width: '100%', borderRadius: '6px', objectFit: 'cover' }} />
+          <img
+            data-testid="image-preview"
+            src={previewImage}
+            alt="Preview"
+            style={{ marginTop: '10px', width: '100%', borderRadius: '6px', objectFit: 'cover' }}
+          />
         )}
 
-        <button type="submit" style={{ marginTop: '20px', backgroundColor: '#0984e3', color: 'white', padding: '12px 20px', border: 'none', borderRadius: '8px', fontWeight: 'bold' }}>
+        <button type="submit" style={{
+          marginTop: '20px',
+          backgroundColor: '#0984e3',
+          color: 'white',
+          padding: '12px 20px',
+          border: 'none',
+          borderRadius: '8px',
+          fontWeight: 'bold'
+        }}>
           Upload Product
         </button>
       </form>
 
-      {msg && <p style={{ marginTop: '20px', color: msg.includes('✅') ? 'green' : 'red' }}>{msg}</p>}
+      {msg && (
+        <p
+          data-testid="upload-msg"
+          role={msg.includes('✅') ? 'status' : 'alert'}
+          aria-live="polite"
+          style={{ marginTop: '20px', color: msg.includes('✅') ? 'green' : 'red' }}
+        >
+          {msg}
+        </p>
+      )}
     </div>
   );
 }

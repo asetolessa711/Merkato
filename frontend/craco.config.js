@@ -2,6 +2,15 @@ const webpack = require('webpack');
 const path = require('path');
 
 module.exports = {
+  jest: {
+    configure: (jestConfig) => {
+      jestConfig.roots = [
+        '<rootDir>/src',
+        '<rootDir>/tests'
+      ];
+      return jestConfig;
+    }
+  },
   webpack: {
     alias: {
       process: "process/browser",

@@ -28,7 +28,7 @@ export default function useUser() {
           localStorage.removeItem('user');
           setUser(null);
         } else {
-          localStorage.setItem('user', JSON.stringify(data)); // 🔄 Ensure stored user is fresh
+          localStorage.setItem('user', JSON.stringify(data));
           setUser(data);
         }
       })
@@ -41,5 +41,13 @@ export default function useUser() {
       .finally(() => setLoading(false));
   }, []);
 
-  return { user, loading };
+  // Logout function (alias for clearUser)
+  const logout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setUser(null);
+  };
+
+  // Return logout for use in components
+  return { user, setUser, logout, loading };
 }

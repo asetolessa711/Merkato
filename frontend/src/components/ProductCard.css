@@ -1,0 +1,149 @@
+.product-card {
+  width: 180px;
+  border-radius: 14px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+  transition: transform 0.2s, box-shadow 0.2s;
+  background: #fff;
+  cursor: pointer;
+  overflow: hidden;
+  position: relative;
+}
+
+.product-card:hover, .product-card.active {
+  transform: scale(1.07);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.13);
+  z-index: 2;
+}
+
+.product-image-wrapper {
+  position: relative;
+  width: 100%;
+  padding-top: 100%; /* 1:1 aspect ratio */
+  background: #f8f8f8;
+}
+
+.product-image-wrapper img {
+  position: absolute;
+  top: 10%;
+  left: 10%;
+  width: 80%;
+  height: 80%;
+  object-fit: contain;
+  border-radius: 10px;
+}
+
+.favorite-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(255,255,255,0.8);
+  border: none;
+  border-radius: 50%;
+  font-size: 1.1rem;
+  cursor: pointer;
+  color: #e17055;
+  transition: background 0.2s;
+}
+
+.favorite-btn:hover {
+  background: #ffeaa7;
+}
+
+.discount-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: #e74c3c;
+  color: #fff;
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 0.8rem;
+}
+
+.product-info {
+  padding: 10px 8px 14px 8px;
+  text-align: center;
+}
+
+.product-info h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0 0 4px 0;
+}
+
+.product-meta {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.price {
+  color: #00b894;
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.stars {
+  color: #f1c40f;
+  font-size: 0.95rem;
+}
+
+.shop-btn {
+  background: #0984e3;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.shop-btn:hover {
+  background: #00b894;
+}
+
+/* Sizes */
+.size-sm { width: 160px; font-size: 0.85rem; }
+.size-md { width: 220px; font-size: 1rem; }
+.size-lg { width: 280px; font-size: 1.1rem; }
+
+/* Color swatches */
+.color-preview {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.color-swatch {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid #ccc;
+}
+
+.color-swatch:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 4px rgba(0,0,0,0.2);
+}
+
+/* Universal Grid Layout for Product Cards */
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 24px;
+  margin-top: 24px;
+  padding: 10px 16px;
+  justify-content: center;
+  align-items: stretch;
+}
+
+@media (max-width: 600px) {
+  .products-grid {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 16px;
+    padding: 8px;
+  }
+}

@@ -1,8 +1,9 @@
+
 import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import useUser from '../hooks/useUser';
 
-const ProtectedRoute = ({ requiredRole }) => {
+const ProtectedRoute = ({ requiredRole, children }) => {
   const { user, loading } = useUser();
 
   if (loading) return <div>Loading...</div>;
@@ -13,7 +14,7 @@ const ProtectedRoute = ({ requiredRole }) => {
     return <Navigate to="/login" replace />;
   }
 
-  return <Outlet />;
+  return children;
 };
 
 export default ProtectedRoute;

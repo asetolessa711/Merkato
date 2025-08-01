@@ -1,28 +1,32 @@
+// src/layouts/PublicLayout.js
 import React from 'react';
 import PropTypes from 'prop-types';
+import { Outlet } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import styles from './PublicLayout.module.css';
 
-function PublicLayout({ children, user, onLogout, lang, onLangChange }) {
+function PublicLayout({ user, onLogout, lang, onLangChange }) {
   return (
-    <div className={styles.layout}>
+    <div className="public-layout">
+      {/* Navbar handles all top navigation */}
       <Navbar
         user={user}
         onLogout={onLogout}
         lang={lang}
         onLangChange={onLangChange}
       />
-      <main className={styles.container}>
-        {children}
+
+      {/* Main content area for pages like HomePage, Shop, etc. */}
+      <main>
+        <Outlet />
       </main>
     </div>
   );
 }
 
 PublicLayout.propTypes = {
-  children: PropTypes.node.isRequired,
   user: PropTypes.object,
-  onLogout: PropTypes.func.isRequired,
+  onLogout: PropTypes.func,
   lang: PropTypes.string,
   onLangChange: PropTypes.func
 };
@@ -33,4 +37,4 @@ PublicLayout.defaultProps = {
   onLangChange: () => {}
 };
 
-export default React.memo(PublicLayout);
+export default PublicLayout;

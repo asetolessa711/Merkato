@@ -4,12 +4,12 @@ import axios from 'axios';
 import styles from './RegisterPage.module.css';
 
 function RegisterPage() {
+  // Remove rerender workaround, not needed after refactor
   const navigate = useNavigate();
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const prefillRole = params.get('role');
-  const lang = localStorage.getItem('merkato-lang') || 'en';
-
+  const [lang] = useState('en');
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -36,9 +36,7 @@ function RegisterPage() {
       fail: 'Registration failed.',
       duplicate: 'Email already exists. Please log in.',
     }
-    // Extend for other languages
   };
-
   const t = labels[lang] || labels.en;
 
   useEffect(() => {
@@ -68,6 +66,8 @@ function RegisterPage() {
     } else {
       setForm({ ...form, [name]: value });
     }
+    // Clear only the error for the changed field
+    setFieldError((prev) => ({ ...prev, [name]: undefined }));
   };
 
   const handleSubmit = async (e) => {
@@ -78,6 +78,7 @@ function RegisterPage() {
     const errors = validate();
     if (Object.keys(errors).length > 0) {
       setFieldError(errors);
+      console.log('FIELD ERROR STATE:', errors);
       setIsLoading(false);
       return;
     }
@@ -118,10 +119,15 @@ function RegisterPage() {
       <h2 className={styles.title}>{t.title}</h2>
       {msg && <p className={`${styles.message} ${isError ? styles.error : styles.success}`}>{msg}</p>}
 
+      {/* DEBUG: Show fieldError.email for test visibility */}
+      <div data-testid="debug-email-error">{fieldError.email}</div>
+
       <form onSubmit={handleSubmit}>
+
         <div className={styles.formGroup}>
-          <label className={styles.label}>{t.name}</label>
+          <label className={styles.label} htmlFor="register-name">{t.name}</label>
           <input
+            id="register-name"
             type="text"
             name="name"
             value={form.name}
@@ -133,8 +139,9 @@ function RegisterPage() {
         </div>
 
         <div className={styles.formGroup}>
-          <label className={styles.label}>{t.email}</label>
+          <label className={styles.label} htmlFor="register-email">{t.email}</label>
           <input
+            id="register-email"
             type="email"
             name="email"
             value={form.email}
@@ -142,13 +149,16 @@ function RegisterPage() {
             className={`${styles.input} ${fieldError.email ? styles.inputError : ''}`}
             disabled={isLoading}
           />
-          {fieldError.email && <div className={styles.errorMsg}>{fieldError.email}</div>}
+          <div className={styles.errorMsg} data-testid="email-error">
+            {fieldError.email || ''}
+          </div>
         </div>
 
         <div className={styles.formGroup}>
-          <label className={styles.label}>{t.password}</label>
+          <label className={styles.label} htmlFor="register-password">{t.password}</label>
           <div className={styles.passwordWrapper}>
             <input
+              id="register-password"
               type={showPassword ? 'text' : 'password'}
               name="password"
               value={form.password}
@@ -169,8 +179,9 @@ function RegisterPage() {
         </div>
 
         <div className={styles.formGroup}>
-          <label className={styles.label}>{t.registerAs}</label>
+          <label className={styles.label} htmlFor="register-roles">{t.registerAs}</label>
           <select
+            id="register-roles"
             name="roles"
             value={form.roles[0] || ''}
             onChange={handleChange}
@@ -199,5 +210,4 @@ function RegisterPage() {
     </div>
   );
 }
-
 export default RegisterPage;

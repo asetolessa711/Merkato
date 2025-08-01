@@ -1,0 +1,48 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`🛍️ ProductCard Component matches snapshot 1`] = `
+<DocumentFragment>
+  <div
+    class="product-card theme-mint size-md  "
+  >
+    <img
+      alt="Test Product"
+      class="product-image"
+      src="test-product.jpg"
+    />
+    <div
+      class="product-info"
+    >
+      <h3
+        class="product-title"
+      >
+        Test Product
+      </h3>
+      <div
+        class="product-price"
+      >
+        <span>
+          $49.99
+        </span>
+      </div>
+      <div
+        class="product-description"
+      >
+        A nice product for testing
+      </div>
+      <button
+        aria-label="Add to Cart"
+        type="button"
+      >
+        Add to Cart
+      </button>
+      <a
+        class="btn-small"
+        href="/product/123"
+      >
+        Shop Now
+      </a>
+    </div>
+  </div>
+</DocumentFragment>
+`;

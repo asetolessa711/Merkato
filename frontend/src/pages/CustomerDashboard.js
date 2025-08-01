@@ -138,9 +138,10 @@ function CustomerDashboard() {
     }
   ];
 
-  if (isLoading) {
-    return (
-      <div className={styles.container}>
+  return (
+    <div className={styles.container}>
+      <h1>Customer Dashboard</h1>
+      {isLoading ? (
         <div className={styles.loadingState}>
           <div className={styles.skeletonHeader}></div>
           <div className={styles.skeletonStats}>
@@ -153,35 +154,26 @@ function CustomerDashboard() {
             ))}
           </div>
         </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className={styles.container}>
+      ) : error ? (
         <div className={styles.error}>
           <h2>⚠️ {error}</h2>
           <button onClick={fetchData} className={styles.retryButton}>
             🔄 Retry
           </button>
         </div>
-      </div>
-    );
-  }
-
-  return (
-  <div className={styles.container}>
-    <header className={styles.welcomeHeader}>
-      <h2>Customer Dashboard</h2> {/* <-- Add this line */}
-      <h1 className={styles.welcomeTitle}>
-        👋 Welcome back, {user?.name || 'Valued Customer'}
-      </h1>
-      <p className={styles.lastLogin}>
-        Last login: {user?.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'First time here'}
-      </p>
-    </header>
-    {/* ...rest of the code... */}
+      ) : (
+        <>
+          <header className={styles.welcomeHeader}>
+            <h2 className={styles.welcomeTitle}>
+              👋 Welcome back, {user?.name || 'Valued Customer'}
+            </h2>
+            <p className={styles.lastLogin}>
+              Last login: {user?.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'First time here'}
+            </p>
+          </header>
+          {/* ...rest of the code... */}
+        </>
+      )}
 
       <div className={styles.statsGrid}>
         {quickStats.map((stat, index) => (

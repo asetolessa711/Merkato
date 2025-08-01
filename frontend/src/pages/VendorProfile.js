@@ -1,85 +1,124 @@
+// src/pages/VendorProfile.js
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import VendorCard from '../components/VendorCard';
+import styles from '../layouts/VendorLayout.module.css';
 
 function VendorProfile() {
   const [vendor, setVendor] = useState(null);
-  const [avatar, setAvatar] = useState('');
-  const [preview, setPreview] = useState('');
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    logo: '',
+    storeDescription: '',
+    bio: '',
+    country: ''
+  });
   const [msg, setMsg] = useState('');
+  const [avatarFile, setAvatarFile] = useState(null);
   const token = localStorage.getItem('token');
   const headers = { Authorization: `Bearer ${token}` };
 
   useEffect(() => {
-    const fetchVendor = async () => {
+    const fetchProfile = async () => {
       try {
-        const res = await axios.get('/api/auth/me', { headers });
-        setVendor(res.data.user || res.data);
-        setAvatar(res.data.user?.avatar || '');
-        setPreview(res.data.user?.avatar || '');
+        const res = await axios.get('/api/vendor/profile/me', { headers });
+        const data = res.data;
+        setVendor(data);
+        setForm({
+          name: data.name || '',
+          email: data.email || '',
+          logo: data.logo || '',
+          storeDescription: data.storeDescription || '',
+          bio: data.bio || '',
+          country: data.country || ''
+        });
       } catch (err) {
-        setMsg('Could not load your profile.');
+        setMsg('Could not load profile.');
       }
     };
-    fetchVendor();
+    fetchProfile();
   }, []);
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    setAvatar(file);
-    setPreview(URL.createObjectURL(file));
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleUpload = async () => {
-    if (!avatar) return;
+  const handleAvatarFile = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setAvatarFile(file);
+      setForm({ ...form, logo: URL.createObjectURL(file) });
+    }
+  };
+
+  const handleUploadAvatar = async () => {
+    if (!avatarFile) return;
 
     const formData = new FormData();
-    formData.append('file', avatar);
-    formData.append('upload_preset', 'your_upload_preset'); // replace with Cloudinary preset
-
+    formData.append('file', avatarFile);
+    formData.append('upload_preset', 'your_upload_preset');
     try {
-      const cloudinaryRes = await axios.post(
+      const uploadRes = await axios.post(
         'https://api.cloudinary.com/v1_1/your_cloud_name/image/upload',
         formData
       );
-
-      const imageUrl = cloudinaryRes.data.secure_url;
-
-      // Save avatar to backend
-      await axios.put('/api/vendor/profile', { avatar: imageUrl }, { headers });
-      setMsg('Avatar uploaded and profile updated!');
+      const imageUrl = uploadRes.data.secure_url;
+      setForm({ ...form, logo: imageUrl });
+      setMsg('Avatar uploaded successfully.');
     } catch (err) {
       console.error(err);
-      setMsg('Failed to upload avatar.');
+      setMsg('Upload failed.');
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      await axios.put('/api/vendor/profile', form, { headers });
+      setMsg('Profile updated successfully.');
+    } catch (err) {
+      setMsg('Failed to update profile.');
     }
   };
 
   return (
-    <div style={{ padding: 20 }}>
-      <h2>Vendor Profile</h2>
-      {msg && <p>{msg}</p>}
+    <div className={styles.contentArea}>
+      <h2>🧑‍💼 Vendor Profile Editor</h2>
+      {msg && <p style={{ color: '#0984e3', fontWeight: 'bold' }}>{msg}</p>}
 
-      {vendor && (
-        <>
-          <p><strong>Name:</strong> {vendor.name}</p>
-          <p><strong>Email:</strong> {vendor.email}</p>
+      <div style={{ display: 'flex', gap: '40px', flexWrap: 'wrap' }}>
+        {/* === Live Preview Card === */}
+        <VendorCard vendor={form} size="md" theme="mint" />
 
-          <div style={{ marginTop: 20 }}>
-            <label><strong>Upload Avatar:</strong></label><br />
-            <input type="file" accept="image/*" onChange={handleFileChange} />
-            {preview && (
-              <img
-                src={preview}
-                alt="Avatar Preview"
-                style={{ width: 100, height: 100, borderRadius: '50%', marginTop: 10 }}
-              />
-            )}
-            <br />
-            <button onClick={handleUpload} style={{ marginTop: 10, padding: '8px 16px', backgroundColor: '#00B894', color: 'white', border: 'none', borderRadius: 5 }}>
-              Upload Avatar
-            </button>
-          </div>
-        </>
-      )}
+        {/* === Profile Edit Form === */}
+        <div style={{ flex: 1, minWidth: '300px' }}>
+          <label>Store Name</label>
+          <input name="name" value={form.name} onChange={handleChange} />
+
+          <label>Email</label>
+          <input name="email" value={form.email} onChange={handleChange} />
+
+          <label>Store Description</label>
+          <textarea name="storeDescription" value={form.storeDescription} onChange={handleChange} />
+
+          <label>Bio</label>
+          <textarea name="bio" value={form.bio} onChange={handleChange} />
+
+          <label>Country</label>
+          <input name="country" value={form.country} onChange={handleChange} />
+
+          <label>Logo Upload</label>
+          <input type="file" accept="image/*" onChange={handleAvatarFile} />
+          <button onClick={handleUploadAvatar} className="btn-secondary" style={{ marginTop: '10px' }}>
+            Upload Avatar
+          </button>
+
+          <br />
+          <button onClick={handleSave} className="btn-primary" style={{ marginTop: '20px' }}>
+            Save Profile
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

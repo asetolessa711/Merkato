@@ -1,6 +1,6 @@
 // cypress/support/e2e.js
 
-// Import custom commands (if any) from support/commands.js
+// Import commands.js using ES2015 syntax:
 import './commands';
 
 // Global setup: Seed DB once before all tests if enabled

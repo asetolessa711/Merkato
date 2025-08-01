@@ -23,3 +23,23 @@
 //
 // -- This will overwrite an existing command --
 // Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
+//
+// Custom command to log in a user by role
+Cypress.Commands.add('login', (role) => {
+  const credentials = {
+    admin: { email: 'admin@test.com', password: 'Password123!' },
+    customer: { email: 'customer@test.com', password: 'Password123!' },
+    vendor: { email: 'vendor@test.com', password: 'Password123!' },
+    'global-admin': { email: 'globaladmin@test.com', password: 'Password123!' },
+    'country-admin': { email: 'countryadmin@test.com', password: 'Password123!' },
+  };
+
+  const { email, password } = credentials[role];
+
+  cy.request('POST', 'http://localhost:5000/api/auth/login', { email, password })
+    .then((res) => {
+      const { token, user } = res.body;
+      window.localStorage.setItem('token', token);
+      window.localStorage.setItem('user', JSON.stringify(user));
+    });
+});

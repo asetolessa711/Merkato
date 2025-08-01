@@ -1,13 +1,12 @@
-// VendorLayout.js
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import VendorSidebar from '../components/VendorSidebar';
+import styles from './VendorLayout.module.css';
 
 function VendorLayout({ user, onLogout, lang, onLangChange }) {
   return (
-    <div style={{ backgroundColor: '#f9fdfb', minHeight: '100vh', fontFamily: 'Poppins, sans-serif' }}>
-      {/* Top Navbar */}
+    <div className={styles.container}>
       <Navbar
         user={user}
         onLogout={onLogout}
@@ -15,14 +14,10 @@ function VendorLayout({ user, onLogout, lang, onLangChange }) {
         onLangChange={onLangChange}
       />
 
-      {/* Layout: Sidebar + Content */}
-      <div style={{ display: 'flex', minHeight: 'calc(100vh - 60px)' }}>
-        {/* Sidebar */}
+      <div className={styles.mainContent}>
         <VendorSidebar />
-
-        {/* Main Content */}
-        <main style={{ flex: 1, padding: '30px', overflow: 'auto' }}>
-          <Outlet /> {/* ✅ Enables nested routing */}
+        <main className={styles.contentArea}>
+          <Outlet />
         </main>
       </div>
     </div>
@@ -30,4 +25,3 @@ function VendorLayout({ user, onLogout, lang, onLangChange }) {
 }
 
 export default VendorLayout;
-

@@ -24,7 +24,23 @@ export function setupMockAxios(defaults = []) {
  */
 export function mockUser(role = 'customer', name = 'Test User') {
   if (mock) {
-    mock.onGet(/\/api\/auth\/me/).reply(200, { user: { role, name } });
+    let rolesArr = [];
+    if (role === 'customer') rolesArr = ['customer'];
+    else if (role === 'vendor') rolesArr = ['vendor'];
+    else if (role === 'admin') rolesArr = ['admin'];
+    else rolesArr = [role];
+    mock.onGet(/\/api\/auth\/me/).reply(200, {
+      user: {
+        role,
+        roles: rolesArr,
+        email: 'test@example.com',
+        name
+      }
+    });
+    // Add required API mocks for dashboard
+    mock.onGet(/\/api\/favorites/).reply(200, []);
+    mock.onGet(/\/api\/orders\/recent/).reply(200, []);
+    mock.onGet(/\/api\/customer\/profile/).reply(200, { user: { name, email: 'test@example.com' } });
   }
 }
 

@@ -6,7 +6,7 @@ function CartPage() {
   const [cart, setCart] = useState([]);
   const [msg, setMsg] = useState('');
   const navigate = useNavigate();
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('merkato-token'); // ✅ Use consistent token key
 
   useEffect(() => {
     if (!token) {
@@ -118,6 +118,7 @@ function CartPage() {
 
       <div style={{ textAlign: 'right' }}>
         <button
+          data-testid="checkout-btn" // ✅ Add test id for Cypress
           onClick={handleCheckout}
           style={{
             backgroundColor: '#00B894',
@@ -148,4 +149,3 @@ const btn = {
 };
 
 export default CartPage;
-

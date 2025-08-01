@@ -41,18 +41,17 @@ const VendorManagement = () => {
   };
 
   const exportCSV = () => {
-    const headers = ['Name', 'Email', 'Country', 'Status', 'Products'];
+    const headers = ['Name', 'Email', 'Country', 'Status', 'Products', 'Subscription Plan'];
     const rows = vendors.map(v => [
       v.name,
       v.email,
       v.country,
       v.isActive ? 'Active' : 'Suspended',
-      v.productCount || 0
+      v.productCount || 0,
+      v.subscriptionPlan || 'Basic', // Assuming a subscription plan is part of the vendor model
     ]);
 
-    let csvContent = 'data:text/csv;charset=utf-8,'
-      + headers.join(',') + '\n'
-      + rows.map(e => e.join(',')).join('\n');
+    let csvContent = 'data:text/csv;charset=utf-8,' + headers.join(',') + '\n' + rows.map(e => e.join(',')).join('\n');
 
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
@@ -120,6 +119,7 @@ const VendorManagement = () => {
             <th className="p-2">Joined</th>
             <th className="p-2">Products</th>
             <th className="p-2">Status</th>
+            <th className="p-2">Subscription Plan</th>
             <th className="p-2">Ban Reason</th>
             <th className="p-2">Actions</th>
           </tr>
@@ -151,6 +151,7 @@ const VendorManagement = () => {
                 <td className="p-2">{new Date(v.createdAt).toLocaleDateString()}</td>
                 <td className="p-2">{v.productCount || 0}</td>
                 <td className="p-2">{v.isActive ? 'Active' : 'Suspended'}</td>
+                <td className="p-2">{v.subscriptionPlan || 'Basic'}</td>
                 <td className="p-2">{!v.isActive ? (v.banReason || '—') : '—'}</td>
                 <td className="p-2">
                   <button
