@@ -20,12 +20,6 @@ function CustomerDashboard() {
   const token = localStorage.getItem('token');
   const headers = { Authorization: `Bearer ${token}` };
 
-  // ✅ Redirect early if token missing
-  if (!token) {
-    window.location.href = '/login';
-    return null;
-  }
-
   const handleError = (err) => {
     console.error('API Error:', err);
     setError(err.response?.data?.message || 'Failed to load profile data');
@@ -36,6 +30,11 @@ function CustomerDashboard() {
   };
 
   const fetchData = useCallback(async () => {
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError('');
@@ -61,16 +60,18 @@ function CustomerDashboard() {
     } finally {
       setIsLoading(false);
     }
-  }, [headers, navigate]);
+  }, [headers, navigate, token]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
+  // Add tab focus refresh
   useEffect(() => {
     const handleFocus = () => {
       fetchData();
     };
+
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
   }, [fetchData]);
@@ -85,6 +86,7 @@ function CustomerDashboard() {
 
   const handleUpload = async () => {
     if (!avatar) return;
+
     try {
       const formData = new FormData();
       formData.append('file', avatar);
@@ -139,7 +141,6 @@ function CustomerDashboard() {
   if (isLoading) {
     return (
       <div className={styles.container}>
-        <h1 data-testid="customer-dashboard-title">Welcome, Customer</h1>
         <div className={styles.loadingState}>
           <div className={styles.skeletonHeader}></div>
           <div className={styles.skeletonStats}>
@@ -159,7 +160,6 @@ function CustomerDashboard() {
   if (error) {
     return (
       <div className={styles.container}>
-        <h1 data-testid="customer-dashboard-title">Welcome, Customer</h1>
         <div className={styles.error}>
           <h2>⚠️ {error}</h2>
           <button onClick={fetchData} className={styles.retryButton}>
@@ -170,117 +170,113 @@ function CustomerDashboard() {
     );
   }
 
-   return (
-    <div className={styles.container}>
-      {/* Updated dashboard-content for e2e testing */}
-      <div data-cy="dashboard-content">
-        <h1 data-testid="customer-dashboard-title">Welcome, Customer</h1>
-        {/* other content */}
-        <header className={styles.welcomeHeader}>
-          <h2 data-testid="customer-dashboard-title">Customer Dashboard</h2>
-          <h1 className={styles.welcomeTitle}>
-            👋 Welcome back, {user?.name || 'Valued Customer'}
-          </h1>
-          <p className={styles.lastLogin}>
-            Last login: {user?.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'First time here'}
-          </p>
-        </header>
+  return (
+  <div className={styles.container}>
+    <header className={styles.welcomeHeader}>
+      <h2>Customer Dashboard</h2> {/* <-- Add this line */}
+      <h1 className={styles.welcomeTitle}>
+        👋 Welcome back, {user?.name || 'Valued Customer'}
+      </h1>
+      <p className={styles.lastLogin}>
+        Last login: {user?.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'First time here'}
+      </p>
+    </header>
+    {/* ...rest of the code... */}
 
-        <div className={styles.statsGrid}>
-          {quickStats.map((stat, index) => (
-            <QuickStatCard key={index} {...stat} />
-          ))}
-        </div>
+      <div className={styles.statsGrid}>
+        {quickStats.map((stat, index) => (
+          <QuickStatCard key={index} {...stat} />
+        ))}
+      </div>
 
-        <section className={styles.accountSection}>
-          <h2 className={styles.sectionTitle}>My Account</h2>
-       
-          <div className={styles.cardGrid}>
-            <div className={styles.card}>
-              <h3>Profile Info</h3>
-              <div className={styles.profileContent}>
-                <div className={styles.avatarSection}>
-                  <img
-                    src={preview || '/default-avatar.png'}
-                    alt="Profile"
-                    className={styles.avatar}
-                  />
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    className={styles.fileInput}
-                    aria-label="Choose profile picture"
-                  />
-                  <button
-                    onClick={handleUpload}
-                    disabled={!avatar}
-                    className={styles.uploadButton}
-                  >
-                   Upload Avatar
-                  </button>
-                </div>
-                <div className={styles.profileDetails}>
-                  <p><strong>Name:</strong> {user?.name}</p>
-                  <p><strong>Email:</strong> {user?.email}</p>
-                  <p><strong>Member Since:</strong> {new Date(user?.createdAt).toLocaleDateString()}</p>
-                </div>
+      <section className={styles.accountSection}>
+        <h2 className={styles.sectionTitle}>My Account</h2>
+        
+        <div className={styles.cardGrid}>
+          <div className={styles.card}>
+            <h3>Profile Info</h3>
+            <div className={styles.profileContent}>
+              <div className={styles.avatarSection}>
+                <img
+                  src={preview || '/default-avatar.png'}
+                  alt="Profile"
+                  className={styles.avatar}
+                />
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className={styles.fileInput}
+                  aria-label="Choose profile picture"
+                />
+                <button
+                  onClick={handleUpload}
+                  disabled={!avatar}
+                  className={styles.uploadButton}
+                >
+                  Upload Avatar
+                </button>
+              </div>
+              <div className={styles.profileDetails}>
+                <p><strong>Name:</strong> {user?.name}</p>
+                <p><strong>Email:</strong> {user?.email}</p>
+                <p><strong>Member Since:</strong> {new Date(user?.createdAt).toLocaleDateString()}</p>
               </div>
             </div>
-
-            <div className={styles.card}>
-              <h3>Saved Products</h3>
-              {favorites.length === 0 ? (
-                <p className={styles.emptyState}>No saved products yet</p>
-              ) : (
-                <ul className={styles.productList}>
-                  {favorites.slice(0, 3).map((product) => (
-                    <li key={product._id} className={styles.productItem}>
-                      <img
-                        src={product.image}
-                        alt={product.name}
-                        className={styles.productImage}
-                      />
-                      <div className={styles.productInfo}>
-                        <h4>{product.name}</h4>
-                        <p>{product.currency} {product.price}</p>
-                        <p>Stock: {product.stock}</p>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {favorites.length > 3 && (
-                <Link to="/favorites" className={styles.viewAllButton}>
-                  View All Saved Products
-                </Link>
-              )}
-            </div>
-
-            <div className={styles.card}>
-              <h3>Recent Orders</h3>
-              {recentOrders.length === 0 ? (
-                <p className={styles.emptyState}>No recent orders</p>
-              ) : (
-                <ul className={styles.orderList}>
-                  {recentOrders.slice(0, 3).map((order) => (
-                    <li key={order._id} className={styles.orderItem}>
-                      <div className={styles.orderInfo}>
-                        <h4>Order #{order.orderNumber}</h4>
-                        <p>Status: {order.status}</p>
-                        <p>Total: {order.currency} {order.total}</p>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <Link to="/account/orders" className={styles.viewAllButton}>
-                📦 View All Orders
-              </Link>
-            </div>
           </div>
-        </section>
-      </div>
+
+          <div className={styles.card}>
+            <h3>Saved Products</h3>
+            {favorites.length === 0 ? (
+              <p className={styles.emptyState}>No saved products yet</p>
+            ) : (
+              <ul className={styles.productList}>
+                {favorites.slice(0, 3).map((product) => (
+                  <li key={product._id} className={styles.productItem}>
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className={styles.productImage}
+                    />
+                    <div className={styles.productInfo}>
+                      <h4>{product.name}</h4>
+                      <p>{product.currency} {product.price}</p>
+                      <p>Stock: {product.stock}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {favorites.length > 3 && (
+              <Link to="/favorites" className={styles.viewAllButton}>
+                View All Saved Products
+              </Link>
+            )}
+          </div>
+
+          <div className={styles.card}>
+            <h3>Recent Orders</h3>
+            {recentOrders.length === 0 ? (
+              <p className={styles.emptyState}>No recent orders</p>
+            ) : (
+              <ul className={styles.orderList}>
+                {recentOrders.slice(0, 3).map((order) => (
+                  <li key={order._id} className={styles.orderItem}>
+                    <div className={styles.orderInfo}>
+                      <h4>Order #{order.orderNumber}</h4>
+                      <p>Status: {order.status}</p>
+                      <p>Total: {order.currency} {order.total}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <Link to="/account/orders" className={styles.viewAllButton}>
+              📦 View All Orders
+            </Link>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
