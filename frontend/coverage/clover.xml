@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1754088224056" clover="3.2.0">
-  <project timestamp="1754088224056" name="All files">
-    <metrics statements="1953" coveredstatements="248" conditionals="1167" coveredconditionals="102" methods="597" coveredmethods="53" elements="3717" coveredelements="403" complexity="0" loc="1953" ncloc="1953" packages="8" files="66" classes="66"/>
+<coverage generated="1754114735144" clover="3.2.0">
+  <project timestamp="1754114735144" name="All files">
+    <metrics statements="1953" coveredstatements="135" conditionals="1167" coveredconditionals="58" methods="597" coveredmethods="31" elements="3717" coveredelements="224" complexity="0" loc="1953" ncloc="1953" packages="8" files="66" classes="66"/>
     <package name="src">
       <metrics statements="16" coveredstatements="9" conditionals="2" coveredconditionals="2" methods="6" coveredmethods="2"/>
       <file name="App.js" path="C:\Users\atdan\OneDrive\Desktop\Merkato\frontend\src\App.js">
@@ -9,84 +9,84 @@
         <line num="69" count="1" type="stmt"/>
         <line num="70" count="0" type="stmt"/>
         <line num="71" count="0" type="stmt"/>
-        <line num="75" count="20" type="stmt"/>
-        <line num="76" count="19" type="cond" truecount="2" falsecount="0"/>
-        <line num="77" count="19" type="stmt"/>
-        <line num="78" count="19" type="stmt"/>
-        <line num="80" count="19" type="stmt"/>
+        <line num="75" count="3" type="stmt"/>
+        <line num="76" count="2" type="cond" truecount="2" falsecount="0"/>
+        <line num="77" count="2" type="stmt"/>
+        <line num="78" count="2" type="stmt"/>
+        <line num="80" count="2" type="stmt"/>
         <line num="81" count="0" type="stmt"/>
         <line num="82" count="0" type="stmt"/>
-        <line num="85" count="19" type="stmt"/>
+        <line num="85" count="2" type="stmt"/>
         <line num="86" count="0" type="stmt"/>
         <line num="87" count="0" type="stmt"/>
-        <line num="90" count="19" type="stmt"/>
-        <line num="92" count="19" type="stmt"/>
+        <line num="90" count="2" type="stmt"/>
+        <line num="92" count="2" type="stmt"/>
         <line num="177" count="0" type="stmt"/>
       </file>
     </package>
     <package name="src.components">
-      <metrics statements="132" coveredstatements="74" conditionals="108" coveredconditionals="34" methods="48" coveredmethods="18"/>
+      <metrics statements="132" coveredstatements="60" conditionals="108" coveredconditionals="29" methods="48" coveredmethods="15"/>
       <file name="AdminLayout.js" path="C:\Users\atdan\OneDrive\Desktop\Merkato\frontend\src\components\AdminLayout.js">
-        <metrics statements="13" coveredstatements="8" conditionals="6" coveredconditionals="3" methods="2" coveredmethods="1"/>
+        <metrics statements="13" coveredstatements="1" conditionals="6" coveredconditionals="0" methods="2" coveredmethods="0"/>
         <line num="5" count="1" type="stmt"/>
-        <line num="6" count="2" type="stmt"/>
-        <line num="9" count="2" type="stmt"/>
-        <line num="11" count="2" type="stmt"/>
+        <line num="6" count="0" type="stmt"/>
+        <line num="9" count="0" type="stmt"/>
+        <line num="11" count="0" type="stmt"/>
         <line num="12" count="0" type="stmt"/>
         <line num="13" count="0" type="stmt"/>
         <line num="14" count="0" type="stmt"/>
-        <line num="18" count="2" type="stmt"/>
-        <line num="19" count="2" type="cond" truecount="1" falsecount="1"/>
+        <line num="18" count="0" type="stmt"/>
+        <line num="19" count="0" type="cond" truecount="0" falsecount="2"/>
         <line num="20" count="0" type="stmt"/>
-        <line num="25" count="2" type="cond" truecount="1" falsecount="1"/>
+        <line num="25" count="0" type="cond" truecount="0" falsecount="2"/>
         <line num="26" count="0" type="stmt"/>
-        <line num="33" count="2" type="stmt"/>
+        <line num="33" count="0" type="stmt"/>
       </file>
       <file name="AdminSidebar.js" path="C:\Users\atdan\OneDrive\Desktop\Merkato\frontend\src\components\AdminSidebar.js">
-        <metrics statements="4" coveredstatements="4" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="1"/>
+        <metrics statements="4" coveredstatements="1" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="0"/>
         <line num="4" count="1" type="stmt"/>
-        <line num="5" count="2" type="stmt"/>
-        <line num="14" count="2" type="stmt"/>
-        <line num="20" count="2" type="stmt"/>
+        <line num="5" count="0" type="stmt"/>
+        <line num="14" count="0" type="stmt"/>
+        <line num="20" count="0" type="stmt"/>
       </file>
       <file name="Breadcrumb.js" path="C:\Users\atdan\OneDrive\Desktop\Merkato\frontend\src\components\Breadcrumb.js">
         <metrics statements="28" coveredstatements="22" conditionals="11" coveredconditionals="9" methods="13" coveredmethods="8"/>
-        <line num="6" count="2" type="stmt"/>
+        <line num="6" count="1" type="stmt"/>
         <line num="9" count="0" type="stmt"/>
-        <line num="13" count="2" type="cond" truecount="1" falsecount="1"/>
+        <line num="13" count="1" type="cond" truecount="1" falsecount="1"/>
         <line num="14" count="0" type="stmt"/>
-        <line num="16" count="2" type="stmt"/>
+        <line num="16" count="1" type="stmt"/>
         <line num="20" count="1" type="cond" truecount="1" falsecount="0"/>
-        <line num="21" count="4" type="stmt"/>
-        <line num="22" count="4" type="stmt"/>
-        <line num="23" count="12" type="stmt"/>
-        <line num="26" count="4" type="stmt"/>
-        <line num="39" count="4" type="stmt"/>
-        <line num="40" count="2" type="stmt"/>
-        <line num="41" count="2" type="stmt"/>
-        <line num="44" count="4" type="cond" truecount="2" falsecount="0"/>
-        <line num="45" count="2" type="stmt"/>
-        <line num="52" count="2" type="stmt"/>
+        <line num="21" count="2" type="stmt"/>
+        <line num="22" count="2" type="stmt"/>
+        <line num="23" count="6" type="stmt"/>
+        <line num="26" count="2" type="stmt"/>
+        <line num="39" count="2" type="stmt"/>
+        <line num="40" count="1" type="stmt"/>
+        <line num="41" count="1" type="stmt"/>
+        <line num="44" count="2" type="cond" truecount="2" falsecount="0"/>
+        <line num="45" count="1" type="stmt"/>
+        <line num="52" count="1" type="stmt"/>
         <line num="78" count="0" type="stmt"/>
         <line num="79" count="0" type="stmt"/>
-        <line num="85" count="4" type="stmt"/>
-        <line num="86" count="4" type="stmt"/>
-        <line num="88" count="4" type="stmt"/>
+        <line num="85" count="2" type="stmt"/>
+        <line num="86" count="2" type="stmt"/>
+        <line num="88" count="2" type="stmt"/>
         <line num="113" count="0" type="stmt"/>
         <line num="114" count="0" type="stmt"/>
         <line num="128" count="1" type="stmt"/>
         <line num="136" count="1" type="stmt"/>
-        <line num="137" count="2" type="stmt"/>
-        <line num="139" count="2" type="stmt"/>
+        <line num="137" count="1" type="stmt"/>
+        <line num="139" count="1" type="stmt"/>
         <line num="143" count="1" type="stmt"/>
       </file>
       <file name="CustomerSidebar.js" path="C:\Users\atdan\OneDrive\Desktop\Merkato\frontend\src\components\CustomerSidebar.js">
         <metrics statements="13" coveredstatements="6" conditionals="8" coveredconditionals="6" methods="6" coveredmethods="2"/>
-        <line num="6" count="4" type="stmt"/>
-        <line num="8" count="4" type="stmt"/>
-        <line num="17" count="4" type="stmt"/>
-        <line num="33" count="24" type="stmt"/>
-        <line num="34" count="24" type="stmt"/>
+        <line num="6" count="3" type="stmt"/>
+        <line num="8" count="3" type="stmt"/>
+        <line num="17" count="3" type="stmt"/>
+        <line num="33" count="18" type="stmt"/>
+        <line num="34" count="18" type="stmt"/>
         <line num="51" count="0" type="stmt"/>
         <line num="52" count="0" type="stmt"/>
         <line num="55" count="0" type="cond" truecount="0" falsecount="2"/>
@@ -98,15 +98,15 @@
       </file>
       <file name="FeedbackPopup.js" path="C:\Users\atdan\OneDrive\Desktop\Merkato\frontend\src\components\FeedbackPopup.js">
         <metrics statements="18" coveredstatements="9" conditionals="8" coveredconditionals="2" methods="3" coveredmethods="1"/>
-        <line num="5" count="19" type="stmt"/>
-        <line num="10" count="19" type="stmt"/>
-        <line num="11" count="19" type="stmt"/>
-        <line num="12" count="19" type="stmt"/>
-        <line num="14" count="19" type="stmt"/>
-        <line num="65" count="19" type="cond" truecount="1" falsecount="1"/>
-        <line num="67" count="19" type="stmt"/>
+        <line num="5" count="2" type="stmt"/>
+        <line num="10" count="2" type="stmt"/>
+        <line num="11" count="2" type="stmt"/>
+        <line num="12" count="2" type="stmt"/>
+        <line num="14" count="2" type="stmt"/>
+        <line num="65" count="2" type="cond" truecount="1" falsecount="1"/>
+        <line num="67" count="2" type="stmt"/>
         <line num="68" count="0" type="stmt"/>
-        <line num="71" count="19" type="stmt"/>
+        <line num="71" count="2" type="stmt"/>
         <line num="72" count="0" type="stmt"/>
         <line num="73" count="0" type="cond" truecount="0" falsecount="2"/>
         <line num="75" count="0" type="stmt"/>
@@ -114,13 +114,13 @@
         <line num="77" count="0" type="stmt"/>
         <line num="78" count="0" type="stmt"/>
         <line num="80" count="0" type="stmt"/>
-        <line num="84" count="19" type="cond" truecount="1" falsecount="1"/>
+        <line num="84" count="2" type="cond" truecount="1" falsecount="1"/>
         <line num="86" count="0" type="stmt"/>
       </file>
       <file name="FloatingPromoButton.js" path="C:\Users\atdan\OneDrive\Desktop\Merkato\frontend\src\components\FloatingPromoButton.js">
         <metrics statements="4" coveredstatements="2" conditionals="0" coveredconditionals="0" methods="3" coveredmethods="1"/>
-        <line num="5" count="21" type="stmt"/>
-        <line num="7" count="21" type="stmt"/>
+        <line num="5" count="2" type="stmt"/>
+        <line num="7" count="2" type="stmt"/>
         <line num="18" count="0" type="stmt"/>
         <line num="36" count="0" type="stmt"/>
       </file>
@@ -139,17 +139,17 @@
         <metrics statements="4" coveredstatements="4" conditionals="3" coveredconditionals="3" methods="1" coveredmethods="1"/>
         <line num="6" count="1" type="stmt"/>
         <line num="8" count="1" type="cond" truecount="1" falsecount="0"/>
-        <line num="9" count="3" type="stmt"/>
+        <line num="9" count="1" type="stmt"/>
         <line num="59" count="1" type="stmt"/>
       </file>
       <file name="Navbar.js" path="C:\Users\atdan\OneDrive\Desktop\Merkato\frontend\src\components\Navbar.js">
         <metrics statements="14" coveredstatements="6" conditionals="4" coveredconditionals="2" methods="7" coveredmethods="1"/>
         <line num="5" count="1" type="stmt"/>
-        <line num="6" count="11" type="stmt"/>
-        <line num="7" count="11" type="stmt"/>
-        <line num="8" count="11" type="stmt"/>
-        <line num="9" count="11" type="stmt"/>
-        <line num="11" count="11" type="stmt"/>
+        <line num="6" count="3" type="stmt"/>
+        <line num="7" count="3" type="stmt"/>
+        <line num="8" count="3" type="stmt"/>
+        <line num="9" count="3" type="stmt"/>
+        <line num="11" count="3" type="stmt"/>
         <line num="37" count="0" type="stmt"/>
         <line num="38" count="0" type="stmt"/>
         <line num="41" count="0" type="stmt"/>
@@ -173,14 +173,14 @@
         <line num="74" count="1" type="stmt"/>
       </file>
       <file name="ProtectedRoute.js" path="C:\Users\atdan\OneDrive\Desktop\Merkato\frontend\src\components\ProtectedRoute.js">
-        <metrics statements="7" coveredstatements="7" conditionals="9" coveredconditionals="9" methods="1" coveredmethods="1"/>
+        <metrics statements="7" coveredstatements="6" conditionals="9" coveredconditionals="7" methods="1" coveredmethods="1"/>
         <line num="6" count="1" type="stmt"/>
-        <line num="7" count="11" type="stmt"/>
-        <line num="9" count="11" type="cond" truecount="2" falsecount="0"/>
-        <line num="11" count="5" type="cond" truecount="2" falsecount="0"/>
-        <line num="13" count="5" type="cond" truecount="5" falsecount="0"/>
-        <line num="14" count="1" type="stmt"/>
-        <line num="17" count="4" type="stmt"/>
+        <line num="7" count="3" type="stmt"/>
+        <line num="9" count="3" type="cond" truecount="2" falsecount="0"/>
+        <line num="11" count="2" type="cond" truecount="1" falsecount="1"/>
+        <line num="13" count="2" type="cond" truecount="4" falsecount="1"/>
+        <line num="14" count="0" type="stmt"/>
+        <line num="17" count="2" type="stmt"/>
       </file>
       <file name="VendorCard.js" path="C:\Users\atdan\OneDrive\Desktop\Merkato\frontend\src\components\VendorCard.js">
         <metrics statements="5" coveredstatements="1" conditionals="12" coveredconditionals="0" methods="1" coveredmethods="0"/>
@@ -191,22 +191,22 @@
         <line num="39" count="1" type="stmt"/>
       </file>
       <file name="VendorSidebar.js" path="C:\Users\atdan\OneDrive\Desktop\Merkato\frontend\src\components\VendorSidebar.js">
-        <metrics statements="4" coveredstatements="4" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="1"/>
+        <metrics statements="4" coveredstatements="1" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="0"/>
         <line num="5" count="1" type="stmt"/>
-        <line num="6" count="2" type="stmt"/>
-        <line num="16" count="2" type="stmt"/>
-        <line num="23" count="2" type="stmt"/>
+        <line num="6" count="0" type="stmt"/>
+        <line num="16" count="0" type="stmt"/>
+        <line num="23" count="0" type="stmt"/>
       </file>
     </package>
     <package name="src.components.QuickStatCard">
       <metrics statements="6" coveredstatements="3" conditionals="4" coveredconditionals="0" methods="2" coveredmethods="1"/>
       <file name="QuickStatCard.js" path="C:\Users\atdan\OneDrive\Desktop\Merkato\frontend\src\components\QuickStatCard\QuickStatCard.js">
         <metrics statements="6" coveredstatements="3" conditionals="4" coveredconditionals="0" methods="2" coveredmethods="1"/>
-        <line num="6" count="8" type="stmt"/>
+        <line num="6" count="4" type="stmt"/>
         <line num="7" count="0" type="cond" truecount="0" falsecount="4"/>
         <line num="8" count="0" type="stmt"/>
         <line num="9" count="0" type="stmt"/>
-        <line num="13" count="8" type="stmt"/>
+        <line num="13" count="4" type="stmt"/>
         <line num="29" count="1" type="stmt"/>
       </file>
     </package>
@@ -395,84 +395,84 @@
       </file>
     </package>
     <package name="src.hooks">
-      <metrics statements="28" coveredstatements="21" conditionals="11" coveredconditionals="9" methods="6" coveredmethods="5"/>
+      <metrics statements="28" coveredstatements="14" conditionals="11" coveredconditionals="8" methods="6" coveredmethods="4"/>
       <file name="useUser.js" path="C:\Users\atdan\OneDrive\Desktop\Merkato\frontend\src\hooks\useUser.js">
-        <metrics statements="28" coveredstatements="21" conditionals="11" coveredconditionals="9" methods="6" coveredmethods="5"/>
+        <metrics statements="28" coveredstatements="14" conditionals="11" coveredconditionals="8" methods="6" coveredmethods="4"/>
         <line num="5" count="1" type="cond" truecount="2" falsecount="0"/>
-        <line num="8" count="31" type="stmt"/>
-        <line num="9" count="30" type="stmt"/>
-        <line num="11" count="30" type="stmt"/>
-        <line num="12" count="16" type="stmt"/>
-        <line num="14" count="16" type="cond" truecount="2" falsecount="0"/>
-        <line num="15" count="6" type="stmt"/>
-        <line num="16" count="6" type="stmt"/>
-        <line num="17" count="6" type="stmt"/>
-        <line num="20" count="10" type="stmt"/>
-        <line num="24" count="8" type="cond" truecount="1" falsecount="1"/>
-        <line num="25" count="8" type="cond" truecount="4" falsecount="1"/>
+        <line num="8" count="6" type="stmt"/>
+        <line num="9" count="5" type="stmt"/>
+        <line num="11" count="5" type="stmt"/>
+        <line num="12" count="2" type="stmt"/>
+        <line num="14" count="2" type="cond" truecount="1" falsecount="1"/>
+        <line num="15" count="0" type="stmt"/>
+        <line num="16" count="0" type="stmt"/>
+        <line num="17" count="0" type="stmt"/>
+        <line num="20" count="2" type="stmt"/>
+        <line num="24" count="2" type="cond" truecount="1" falsecount="1"/>
+        <line num="25" count="2" type="cond" truecount="4" falsecount="1"/>
         <line num="26" count="0" type="stmt"/>
         <line num="27" count="0" type="stmt"/>
         <line num="28" count="0" type="stmt"/>
         <line num="29" count="0" type="stmt"/>
-        <line num="31" count="8" type="stmt"/>
-        <line num="32" count="8" type="stmt"/>
-        <line num="36" count="2" type="stmt"/>
-        <line num="37" count="2" type="stmt"/>
-        <line num="38" count="2" type="stmt"/>
-        <line num="39" count="2" type="stmt"/>
-        <line num="41" count="10" type="stmt"/>
-        <line num="45" count="30" type="stmt"/>
+        <line num="31" count="2" type="stmt"/>
+        <line num="32" count="2" type="stmt"/>
+        <line num="36" count="0" type="stmt"/>
+        <line num="37" count="0" type="stmt"/>
+        <line num="38" count="0" type="stmt"/>
+        <line num="39" count="0" type="stmt"/>
+        <line num="41" count="2" type="stmt"/>
+        <line num="45" count="5" type="stmt"/>
         <line num="46" count="0" type="stmt"/>
         <line num="47" count="0" type="stmt"/>
         <line num="48" count="0" type="stmt"/>
-        <line num="52" count="30" type="stmt"/>
+        <line num="52" count="5" type="stmt"/>
       </file>
     </package>
     <package name="src.layouts">
-      <metrics statements="48" coveredstatements="36" conditionals="28" coveredconditionals="21" methods="23" coveredmethods="13"/>
+      <metrics statements="48" coveredstatements="28" conditionals="28" coveredconditionals="17" methods="23" coveredmethods="9"/>
       <file name="AuthLayout.js" path="C:\Users\atdan\OneDrive\Desktop\Merkato\frontend\src\layouts\AuthLayout.js">
-        <metrics statements="7" coveredstatements="7" conditionals="6" coveredconditionals="5" methods="2" coveredmethods="2"/>
-        <line num="7" count="3" type="stmt"/>
-        <line num="8" count="3" type="stmt"/>
-        <line num="9" count="3" type="stmt"/>
-        <line num="10" count="3" type="stmt"/>
-        <line num="12" count="3" type="stmt"/>
-        <line num="18" count="21" type="stmt"/>
+        <metrics statements="7" coveredstatements="1" conditionals="6" coveredconditionals="0" methods="2" coveredmethods="0"/>
+        <line num="7" count="0" type="stmt"/>
+        <line num="8" count="0" type="stmt"/>
+        <line num="9" count="0" type="stmt"/>
+        <line num="10" count="0" type="stmt"/>
+        <line num="12" count="0" type="stmt"/>
+        <line num="18" count="0" type="stmt"/>
         <line num="64" count="1" type="stmt"/>
       </file>
       <file name="CustomerLayout.js" path="C:\Users\atdan\OneDrive\Desktop\Merkato\frontend\src\layouts\CustomerLayout.js">
-        <metrics statements="37" coveredstatements="25" conditionals="22" coveredconditionals="16" methods="18" coveredmethods="9"/>
+        <metrics statements="37" coveredstatements="25" conditionals="22" coveredconditionals="17" methods="18" coveredmethods="9"/>
         <line num="12" count="1" type="stmt"/>
         <line num="13" count="0" type="stmt"/>
         <line num="18" count="1" type="stmt"/>
         <line num="19" count="2" type="stmt"/>
         <line num="23" count="8" type="stmt"/>
-        <line num="30" count="4" type="stmt"/>
-        <line num="31" count="4" type="stmt"/>
-        <line num="32" count="4" type="stmt"/>
-        <line num="33" count="4" type="stmt"/>
-        <line num="36" count="4" type="stmt"/>
+        <line num="30" count="3" type="stmt"/>
+        <line num="31" count="3" type="stmt"/>
+        <line num="32" count="3" type="stmt"/>
+        <line num="33" count="3" type="stmt"/>
+        <line num="36" count="3" type="stmt"/>
         <line num="37" count="0" type="cond" truecount="2" falsecount="0"/>
         <line num="38" count="0" type="cond" truecount="2" falsecount="0"/>
         <line num="39" count="0" type="cond" truecount="2" falsecount="0"/>
         <line num="40" count="0" type="cond" truecount="2" falsecount="0"/>
-        <line num="44" count="4" type="stmt"/>
+        <line num="44" count="3" type="stmt"/>
         <line num="45" count="0" type="stmt"/>
-        <line num="48" count="4" type="stmt"/>
-        <line num="49" count="2" type="stmt"/>
-        <line num="50" count="2" type="stmt"/>
+        <line num="48" count="3" type="stmt"/>
+        <line num="49" count="1" type="stmt"/>
+        <line num="50" count="1" type="stmt"/>
         <line num="52" count="0" type="stmt"/>
-        <line num="56" count="4" type="stmt"/>
-        <line num="57" count="2" type="cond" truecount="1" falsecount="1"/>
-        <line num="60" count="4" type="cond" truecount="2" falsecount="0"/>
+        <line num="56" count="3" type="stmt"/>
+        <line num="57" count="2" type="cond" truecount="2" falsecount="0"/>
+        <line num="60" count="3" type="cond" truecount="2" falsecount="0"/>
         <line num="61" count="2" type="stmt"/>
-        <line num="74" count="2" type="cond" truecount="1" falsecount="1"/>
+        <line num="74" count="1" type="cond" truecount="1" falsecount="1"/>
         <line num="75" count="0" type="stmt"/>
         <line num="78" count="0" type="stmt"/>
-        <line num="85" count="2" type="stmt"/>
-        <line num="112" count="8" type="stmt"/>
+        <line num="85" count="1" type="stmt"/>
+        <line num="112" count="4" type="stmt"/>
         <line num="144" count="1" type="stmt"/>
-        <line num="161" count="2" type="stmt"/>
+        <line num="161" count="1" type="stmt"/>
         <line num="164" count="0" type="stmt"/>
         <line num="168" count="2" type="cond" truecount="1" falsecount="1"/>
         <line num="169" count="0" type="stmt"/>
@@ -481,18 +481,18 @@
         <line num="183" count="2" type="stmt"/>
       </file>
       <file name="PublicLayout.js" path="C:\Users\atdan\OneDrive\Desktop\Merkato\frontend\src\layouts\PublicLayout.js">
-        <metrics statements="3" coveredstatements="3" conditionals="0" coveredconditionals="0" methods="2" coveredmethods="1"/>
-        <line num="9" count="6" type="stmt"/>
+        <metrics statements="3" coveredstatements="2" conditionals="0" coveredconditionals="0" methods="2" coveredmethods="0"/>
+        <line num="9" count="0" type="stmt"/>
         <line num="27" count="1" type="stmt"/>
         <line num="34" count="1" type="stmt"/>
       </file>
       <file name="VendorLayout.js" path="C:\Users\atdan\OneDrive\Desktop\Merkato\frontend\src\layouts\VendorLayout.js">
-        <metrics statements="1" coveredstatements="1" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="1"/>
-        <line num="8" count="1" type="stmt"/>
+        <metrics statements="1" coveredstatements="0" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="0"/>
+        <line num="8" count="0" type="stmt"/>
       </file>
     </package>
     <package name="src.pages">
-      <metrics statements="1551" coveredstatements="98" conditionals="912" coveredconditionals="36" methods="443" coveredmethods="14"/>
+      <metrics statements="1551" coveredstatements="14" conditionals="912" coveredconditionals="2" methods="443" coveredmethods="0"/>
       <file name="AdminAnalytics.js" path="C:\Users\atdan\OneDrive\Desktop\Merkato\frontend\src\pages\AdminAnalytics.js">
         <metrics statements="38" coveredstatements="1" conditionals="4" coveredconditionals="0" methods="13" coveredmethods="0"/>
         <line num="15" count="1" type="stmt"/>
@@ -535,22 +535,22 @@
         <line num="123" count="0" type="stmt"/>
       </file>
       <file name="AdminDashboard.js" path="C:\Users\atdan\OneDrive\Desktop\Merkato\frontend\src\pages\AdminDashboard.js">
-        <metrics statements="41" coveredstatements="27" conditionals="25" coveredconditionals="11" methods="9" coveredmethods="4"/>
-        <line num="8" count="2" type="stmt"/>
-        <line num="9" count="2" type="stmt"/>
-        <line num="10" count="2" type="stmt"/>
-        <line num="11" count="2" type="stmt"/>
-        <line num="12" count="2" type="stmt"/>
-        <line num="13" count="2" type="stmt"/>
-        <line num="14" count="2" type="stmt"/>
-        <line num="15" count="2" type="stmt"/>
-        <line num="16" count="2" type="stmt"/>
-        <line num="18" count="2" type="stmt"/>
-        <line num="20" count="2" type="stmt"/>
-        <line num="21" count="1" type="stmt"/>
-        <line num="22" count="1" type="stmt"/>
-        <line num="23" count="1" type="stmt"/>
-        <line num="24" count="1" type="stmt"/>
+        <metrics statements="41" coveredstatements="0" conditionals="25" coveredconditionals="0" methods="9" coveredmethods="0"/>
+        <line num="8" count="0" type="stmt"/>
+        <line num="9" count="0" type="stmt"/>
+        <line num="10" count="0" type="stmt"/>
+        <line num="11" count="0" type="stmt"/>
+        <line num="12" count="0" type="stmt"/>
+        <line num="13" count="0" type="stmt"/>
+        <line num="14" count="0" type="stmt"/>
+        <line num="15" count="0" type="stmt"/>
+        <line num="16" count="0" type="stmt"/>
+        <line num="18" count="0" type="stmt"/>
+        <line num="20" count="0" type="stmt"/>
+        <line num="21" count="0" type="stmt"/>
+        <line num="22" count="0" type="stmt"/>
+        <line num="23" count="0" type="stmt"/>
+        <line num="24" count="0" type="stmt"/>
         <line num="26" count="0" type="cond" truecount="0" falsecount="2"/>
         <line num="27" count="0" type="stmt"/>
         <line num="28" count="0" type="stmt"/>
@@ -561,18 +561,18 @@
         <line num="42" count="0" type="stmt"/>
         <line num="43" count="0" type="stmt"/>
         <line num="44" count="0" type="stmt"/>
-        <line num="47" count="1" type="stmt"/>
-        <line num="48" count="1" type="stmt"/>
-        <line num="52" count="1" type="stmt"/>
-        <line num="55" count="2" type="stmt"/>
-        <line num="56" count="2" type="cond" truecount="2" falsecount="0"/>
-        <line num="57" count="2" type="stmt"/>
-        <line num="59" count="2" type="stmt"/>
-        <line num="60" count="5" type="stmt"/>
-        <line num="72" count="2" type="stmt"/>
-        <line num="79" count="2" type="cond" truecount="2" falsecount="0"/>
-        <line num="80" count="1" type="stmt"/>
-        <line num="89" count="1" type="stmt"/>
+        <line num="47" count="0" type="stmt"/>
+        <line num="48" count="0" type="stmt"/>
+        <line num="52" count="0" type="stmt"/>
+        <line num="55" count="0" type="stmt"/>
+        <line num="56" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="57" count="0" type="stmt"/>
+        <line num="59" count="0" type="stmt"/>
+        <line num="60" count="0" type="stmt"/>
+        <line num="72" count="0" type="stmt"/>
+        <line num="79" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="80" count="0" type="stmt"/>
+        <line num="89" count="0" type="stmt"/>
         <line num="124" count="0" type="stmt"/>
         <line num="134" count="0" type="stmt"/>
         <line num="145" count="0" type="stmt"/>
@@ -950,11 +950,11 @@
         <line num="131" count="0" type="stmt"/>
         <line num="137" count="0" type="stmt"/>
         <line num="141" count="0" type="stmt"/>
-        <line num="149" count="0" type="stmt"/>
-        <line num="180" count="0" type="stmt"/>
-        <line num="227" count="0" type="stmt"/>
-        <line num="256" count="0" type="stmt"/>
-        <line num="276" count="1" type="stmt"/>
+        <line num="150" count="0" type="stmt"/>
+        <line num="182" count="0" type="stmt"/>
+        <line num="229" count="0" type="stmt"/>
+        <line num="258" count="0" type="stmt"/>
+        <line num="278" count="1" type="stmt"/>
       </file>
       <file name="CustomerGuide.js" path="C:\Users\atdan\OneDrive\Desktop\Merkato\frontend\src\pages\CustomerGuide.js">
         <metrics statements="1" coveredstatements="0" conditionals="0" coveredconditionals="0" methods="1" coveredmethods="0"/>
@@ -1180,28 +1180,28 @@
         <line num="72" count="0" type="stmt"/>
       </file>
       <file name="HomePage.js" path="C:\Users\atdan\OneDrive\Desktop\Merkato\frontend\src\pages\HomePage.js">
-        <metrics statements="25" coveredstatements="14" conditionals="18" coveredconditionals="5" methods="12" coveredmethods="4"/>
+        <metrics statements="25" coveredstatements="1" conditionals="18" coveredconditionals="0" methods="12" coveredmethods="0"/>
         <line num="7" count="1" type="stmt"/>
-        <line num="14" count="4" type="stmt"/>
-        <line num="15" count="4" type="stmt"/>
-        <line num="16" count="4" type="stmt"/>
-        <line num="17" count="4" type="stmt"/>
-        <line num="19" count="4" type="stmt"/>
-        <line num="20" count="2" type="stmt"/>
-        <line num="21" count="2" type="stmt"/>
+        <line num="14" count="0" type="stmt"/>
+        <line num="15" count="0" type="stmt"/>
+        <line num="16" count="0" type="stmt"/>
+        <line num="17" count="0" type="stmt"/>
+        <line num="19" count="0" type="stmt"/>
+        <line num="20" count="0" type="stmt"/>
+        <line num="21" count="0" type="stmt"/>
         <line num="22" count="0" type="stmt"/>
-        <line num="24" count="2" type="stmt"/>
-        <line num="27" count="4" type="stmt"/>
+        <line num="24" count="0" type="stmt"/>
+        <line num="27" count="0" type="stmt"/>
         <line num="28" count="0" type="cond" truecount="0" falsecount="2"/>
-        <line num="31" count="4" type="stmt"/>
+        <line num="31" count="0" type="stmt"/>
         <line num="32" count="0" type="cond" truecount="0" falsecount="2"/>
-        <line num="35" count="4" type="stmt"/>
+        <line num="35" count="0" type="stmt"/>
         <line num="36" count="0" type="stmt"/>
         <line num="37" count="0" type="cond" truecount="0" falsecount="2"/>
         <line num="38" count="0" type="stmt"/>
-        <line num="42" count="4" type="stmt"/>
+        <line num="42" count="0" type="stmt"/>
         <line num="48" count="0" type="stmt"/>
-        <line num="52" count="56" type="stmt"/>
+        <line num="52" count="0" type="stmt"/>
         <line num="55" count="0" type="stmt"/>
         <line num="62" count="0" type="stmt"/>
         <line num="79" count="0" type="stmt"/>
@@ -1236,23 +1236,23 @@
         <line num="78" count="0" type="stmt"/>
       </file>
       <file name="LoginPage.js" path="C:\Users\atdan\OneDrive\Desktop\Merkato\frontend\src\pages\LoginPage.js">
-        <metrics statements="81" coveredstatements="22" conditionals="70" coveredconditionals="14" methods="8" coveredmethods="2"/>
-        <line num="8" count="3" type="stmt"/>
-        <line num="9" count="3" type="stmt"/>
-        <line num="10" count="3" type="stmt"/>
-        <line num="11" count="3" type="stmt"/>
-        <line num="12" count="3" type="stmt"/>
-        <line num="13" count="3" type="stmt"/>
-        <line num="14" count="3" type="stmt"/>
-        <line num="15" count="3" type="stmt"/>
-        <line num="16" count="3" type="cond" truecount="2" falsecount="0"/>
-        <line num="19" count="3" type="stmt"/>
-        <line num="20" count="2" type="stmt"/>
-        <line num="21" count="2" type="stmt"/>
-        <line num="22" count="2" type="stmt"/>
-        <line num="23" count="2" type="cond" truecount="2" falsecount="2"/>
-        <line num="24" count="2" type="stmt"/>
-        <line num="25" count="2" type="stmt"/>
+        <metrics statements="81" coveredstatements="0" conditionals="70" coveredconditionals="0" methods="8" coveredmethods="0"/>
+        <line num="8" count="0" type="stmt"/>
+        <line num="9" count="0" type="stmt"/>
+        <line num="10" count="0" type="stmt"/>
+        <line num="11" count="0" type="stmt"/>
+        <line num="12" count="0" type="stmt"/>
+        <line num="13" count="0" type="stmt"/>
+        <line num="14" count="0" type="stmt"/>
+        <line num="15" count="0" type="stmt"/>
+        <line num="16" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="19" count="0" type="stmt"/>
+        <line num="20" count="0" type="stmt"/>
+        <line num="21" count="0" type="stmt"/>
+        <line num="22" count="0" type="stmt"/>
+        <line num="23" count="0" type="cond" truecount="0" falsecount="4"/>
+        <line num="24" count="0" type="stmt"/>
+        <line num="25" count="0" type="stmt"/>
         <line num="28" count="0" type="stmt"/>
         <line num="29" count="0" type="stmt"/>
         <line num="30" count="0" type="stmt"/>
@@ -1271,18 +1271,18 @@
         <line num="55" count="0" type="stmt"/>
         <line num="56" count="0" type="stmt"/>
         <line num="57" count="0" type="stmt"/>
-        <line num="62" count="3" type="stmt"/>
-        <line num="76" count="3" type="cond" truecount="1" falsecount="1"/>
-        <line num="78" count="3" type="stmt"/>
+        <line num="62" count="0" type="stmt"/>
+        <line num="76" count="0" type="cond" truecount="0" falsecount="2"/>
+        <line num="78" count="0" type="stmt"/>
         <line num="79" count="0" type="stmt"/>
         <line num="80" count="0" type="cond" truecount="0" falsecount="4"/>
         <line num="81" count="0" type="stmt"/>
         <line num="83" count="0" type="cond" truecount="0" falsecount="4"/>
         <line num="84" count="0" type="stmt"/>
         <line num="86" count="0" type="stmt"/>
-        <line num="89" count="3" type="stmt"/>
+        <line num="89" count="0" type="stmt"/>
         <line num="90" count="0" type="stmt"/>
-        <line num="93" count="3" type="stmt"/>
+        <line num="93" count="0" type="stmt"/>
         <line num="94" count="0" type="stmt"/>
         <line num="95" count="0" type="stmt"/>
         <line num="96" count="0" type="stmt"/>
@@ -1315,7 +1315,7 @@
         <line num="140" count="0" type="stmt"/>
         <line num="141" count="0" type="stmt"/>
         <line num="143" count="0" type="stmt"/>
-        <line num="147" count="3" type="stmt"/>
+        <line num="147" count="0" type="stmt"/>
         <line num="184" count="0" type="stmt"/>
         <line num="199" count="0" type="stmt"/>
       </file>
@@ -1796,34 +1796,34 @@
         <line num="209" count="0" type="stmt"/>
       </file>
       <file name="VendorDashboard.js" path="C:\Users\atdan\OneDrive\Desktop\Merkato\frontend\src\pages\VendorDashboard.js">
-        <metrics statements="44" coveredstatements="22" conditionals="19" coveredconditionals="4" methods="10" coveredmethods="4"/>
-        <line num="12" count="1" type="stmt"/>
-        <line num="13" count="1" type="stmt"/>
-        <line num="14" count="1" type="stmt"/>
-        <line num="15" count="1" type="stmt"/>
-        <line num="16" count="1" type="stmt"/>
-        <line num="17" count="1" type="stmt"/>
-        <line num="18" count="1" type="stmt"/>
-        <line num="20" count="1" type="stmt"/>
-        <line num="21" count="1" type="stmt"/>
-        <line num="23" count="1" type="cond" truecount="1" falsecount="1"/>
+        <metrics statements="44" coveredstatements="0" conditionals="19" coveredconditionals="0" methods="10" coveredmethods="0"/>
+        <line num="12" count="0" type="stmt"/>
+        <line num="13" count="0" type="stmt"/>
+        <line num="14" count="0" type="stmt"/>
+        <line num="15" count="0" type="stmt"/>
+        <line num="16" count="0" type="stmt"/>
+        <line num="17" count="0" type="stmt"/>
+        <line num="18" count="0" type="stmt"/>
+        <line num="20" count="0" type="stmt"/>
+        <line num="21" count="0" type="stmt"/>
+        <line num="23" count="0" type="cond" truecount="0" falsecount="2"/>
         <line num="24" count="0" type="stmt"/>
         <line num="25" count="0" type="stmt"/>
-        <line num="28" count="1" type="stmt"/>
-        <line num="29" count="1" type="stmt"/>
-        <line num="32" count="1" type="stmt"/>
-        <line num="33" count="1" type="stmt"/>
-        <line num="34" count="1" type="stmt"/>
+        <line num="28" count="0" type="stmt"/>
+        <line num="29" count="0" type="stmt"/>
+        <line num="32" count="0" type="stmt"/>
+        <line num="33" count="0" type="stmt"/>
+        <line num="34" count="0" type="stmt"/>
         <line num="39" count="0" type="stmt"/>
         <line num="40" count="0" type="stmt"/>
         <line num="41" count="0" type="stmt"/>
-        <line num="43" count="1" type="stmt"/>
-        <line num="47" count="1" type="stmt"/>
+        <line num="43" count="0" type="stmt"/>
+        <line num="47" count="0" type="stmt"/>
         <line num="48" count="0" type="stmt"/>
         <line num="49" count="0" type="stmt"/>
-        <line num="52" count="1" type="stmt"/>
+        <line num="52" count="0" type="stmt"/>
         <line num="53" count="0" type="stmt"/>
-        <line num="56" count="1" type="stmt"/>
+        <line num="56" count="0" type="stmt"/>
         <line num="57" count="0" type="stmt"/>
         <line num="58" count="0" type="stmt"/>
         <line num="59" count="0" type="stmt"/>
@@ -1831,15 +1831,15 @@
         <line num="61" count="0" type="stmt"/>
         <line num="62" count="0" type="stmt"/>
         <line num="64" count="0" type="stmt"/>
-        <line num="68" count="1" type="stmt"/>
+        <line num="68" count="0" type="stmt"/>
         <line num="69" count="0" type="cond" truecount="0" falsecount="2"/>
         <line num="70" count="0" type="stmt"/>
         <line num="71" count="0" type="stmt"/>
         <line num="72" count="0" type="stmt"/>
         <line num="74" count="0" type="stmt"/>
-        <line num="79" count="1" type="stmt"/>
+        <line num="79" count="0" type="stmt"/>
         <line num="80" count="0" type="stmt"/>
-        <line num="92" count="1" type="stmt"/>
+        <line num="92" count="0" type="stmt"/>
         <line num="97" count="0" type="stmt"/>
       </file>
       <file name="VendorGuide.js" path="C:\Users\atdan\OneDrive\Desktop\Merkato\frontend\src\pages\VendorGuide.js">

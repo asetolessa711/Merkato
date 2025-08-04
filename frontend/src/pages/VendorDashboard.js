@@ -1,11 +1,15 @@
 // src/pages/VendorDashboard.js
 import React, { useEffect, useState } from 'react';
+// === MOCK MODE: Set to true to use mock data (no backend required) ===
+const USE_MOCK_VENDOR = true; // Set to false for real API
 import axios from 'axios';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend
 } from 'recharts';
 import MerkatoFooter from '../components/MerkatoFooter';
 import VendorCard from '../components/VendorCard';
+import ProductRowSection from '../components/ProductRowSection';
+import Card from '../components/Card';
 import styles from '../layouts/VendorLayout.module.css';
 
 function VendorDashboard() {
@@ -26,6 +30,18 @@ function VendorDashboard() {
   }
 
   useEffect(() => {
+    if (USE_MOCK_VENDOR) {
+      setTimeout(() => {
+        setProducts([
+          { _id: 'p1', name: 'Demo Product 1', price: 100, image: 'https://placehold.co/100x100?text=Demo+1', stock: 10 },
+          { _id: 'p2', name: 'Demo Product 2', price: 50, image: 'https://placehold.co/100x100?text=Demo+2', stock: 5 },
+        ]);
+        setVendorProfile({ name: 'Demo Vendor', email: 'vendor@demo.com' });
+        setAnalytics({ totalRevenue: 1200, successRate: '97%', bestProduct: 'Demo Product 1' });
+        setLoading(false);
+      }, 400);
+      return;
+    }
     fetchData().finally(() => setLoading(false));
   }, []);
 
@@ -61,56 +77,71 @@ function VendorDashboard() {
       setEditForm({});
       fetchData();
     } catch (err) {
-      alert('Update failed.');
+      // handle error
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this product?')) {
-      try {
-        await axios.delete(`/api/vendor/products/${id}`, { headers });
-        fetchData();
-      } catch (err) {
-        alert('Delete failed.');
-      }
-    }
-  };
-
-  const Card = ({ title, children }) => (
-    <div style={{
-      background: 'white',
-      padding: '16px',
-      borderRadius: '10px',
-      marginBottom: '24px',
-      boxShadow: '0 1px 5px rgba(0,0,0,0.1)'
-    }}>
-      <h3 style={{ color: '#00B894', marginBottom: '12px' }}>{title}</h3>
-      {children}
-    </div>
-  );
-
+  const [cardStyle, setCardStyle] = useState('mint');
+  const cardStyles = [
+    { value: 'mint', label: 'Mint (Default)' },
+    { value: 'navy', label: 'Navy' },
+    { value: 'purple', label: 'Purple' },
+    { value: 'gold', label: 'Gold' },
+    { value: 'rose', label: 'Rose' },
+  ];
   return (
     <div className={styles.contentArea}>
-      <div style={{ textAlign: 'center', marginBottom: 30 }}>
-        <h2 data-testid="vendor-dashboard-title">Vendor Dashboard</h2>
-        <button
-          onClick={() => window.location.href = '/upload'}
-          data-testid="vendor-upload-btn"
-          className="btn-primary"
-        >
-          06 Upload Product
-        </button>
+      <div style={{ textAlign: 'center', marginBottom: 30, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <select
+            value={cardStyle}
+            onChange={e => setCardStyle(e.target.value)}
+            style={{
+              padding: '8px 14px',
+              borderRadius: 8,
+              border: '1.5px solid #7c2ae8',
+              fontWeight: 600,
+              color: '#222b3a',
+              background: '#f6f9fc',
+              fontSize: '1rem',
+              outline: 'none',
+              boxShadow: '0 2px 8px rgba(124,42,232,0.07)'
+            }}
+          >
+            {cardStyles.map(opt => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
+          <button
+            onClick={() => window.location.href = `/upload?style=${cardStyle}`}
+            data-testid="vendor-upload-btn"
+            style={{
+              background: 'linear-gradient(90deg, #7c2ae8 0%, #00b894 100%)',
+              color: '#fff',
+              border: 'none',
+              borderRadius: 10,
+              fontWeight: 700,
+              fontSize: '1.1rem',
+              padding: '10px 28px',
+              cursor: 'pointer',
+              boxShadow: '0 4px 18px 0 rgba(124,42,232,0.10), 0 1.5px 8px 0 rgba(255,224,247,0.10)',
+              transition: 'background 0.18s',
+              marginLeft: 8
+            }}
+          >
+            + Upload Product
+          </button>
+        </div>
+        <span style={{ color: '#7c2ae8', fontWeight: 500, fontSize: '0.98rem', marginTop: 4 }}>
+          Choose a card style for your new product (matches Merkato's taste!)
+        </span>
       </div>
-
       <div data-cy="dashboard-content">
-        {/* h2 above is the unique heading for test targeting */}
-
         {vendorProfile && (
           <Card title="🛍️ Shop Profile Preview">
             <VendorCard vendor={vendorProfile} size="md" theme="mint" />
           </Card>
         )}
-
         {msg && (
           <div style={{
             marginBottom: '20px',
@@ -123,18 +154,15 @@ function VendorDashboard() {
             {msg}
           </div>
         )}
-
         {loading ? (
           <p>Loading dashboard...</p>
         ) : (
           <>
             {!analytics && products.length === 0 && (
               <div style={{ textAlign: 'center', color: '#e74c3c', marginBottom: '20px' }}>
-                <h2>Vendor Dashboard</h2>
                 <p>⚠️ Something went wrong. Please try refreshing or logging in again.</p>
               </div>
             )}
-
             {analytics && (
               <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', marginBottom: '24px' }}>
                 <Card title="💵 Monthly Revenue"><p><strong>${analytics.totalRevenue}</strong></p></Card>
@@ -142,13 +170,19 @@ function VendorDashboard() {
                 <Card title="🏆 Best-Selling Product"><p>{analytics.bestProduct || 'TBD'}</p></Card>
               </div>
             )}
-
-            {/* Charts and Product List remain unchanged */}
-
+            {/* Charts remain unchanged */}
+            <div style={{ margin: '32px 0 0 0' }}>
+              <ProductRowSection
+                title="Your Products"
+                products={products}
+                emptyText="No products to display."
+                type="standard"
+                size="md"
+              />
+            </div>
           </>
         )}
       </div>
-      <MerkatoFooter />
     </div>
   );
 }

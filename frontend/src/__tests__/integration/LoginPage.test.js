@@ -23,15 +23,15 @@ describe('\ud83d\udd10 Login Page', () => {
 
   test('renders login form inputs', () => {
     renderLogin();
-    expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /login/i })).toBeInTheDocument();
+    expect(screen.getByLabelText('Email')).toBeInTheDocument();
+    expect(screen.getByLabelText('Password')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument();
   });
 
   test('displays validation error if fields are empty', async () => {
     renderLogin();
-    fireEvent.click(screen.getByRole('button', { name: /login/i }));
-    expect(await screen.findByText(/email/i)).toBeInTheDocument(); // Adjust if form uses specific messages
+    fireEvent.click(screen.getByRole('button', { name: /sign in/i }));
+    expect(await screen.findByText(/enter a valid email/i)).toBeInTheDocument();
   });
 
   test('submits and logs in user with valid credentials', async () => {
@@ -43,10 +43,10 @@ describe('\ud83d\udd10 Login Page', () => {
     });
 
     renderLogin();
-    fireEvent.change(screen.getByLabelText(/email/i), {
+    fireEvent.change(screen.getByLabelText('Email'), {
       target: { value: 'test@example.com' }
     });
-    fireEvent.change(screen.getByLabelText(/password/i), {
+    fireEvent.change(screen.getByLabelText('Password'), {
       target: { value: 'Password123!' }
     });
     // ...rest of the test code...

@@ -55,6 +55,11 @@ router.get('/me', protect, (req, res) => {
 // --- /api/auth/register ---
 router.post('/register', async (req, res) => {
   const { name, email, password, roles, country } = req.body;
+  // Simple email format validation
+  const emailRegex = /[^@\s]+@[^@\s]+\.[^@\s]+/;
+  if (!email || !emailRegex.test(email)) {
+    return res.status(400).json({ message: 'Invalid email format' });
+  }
   try {
     const existing = await User.findOne({ email });
     if (existing) {

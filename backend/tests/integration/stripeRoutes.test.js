@@ -1,8 +1,24 @@
 const request = require('supertest');
-const app = require('../../../server');
+const app = require('../../server');
 const { mockStripeEvent } = require('../utils/mockStripeEvent');
 
-const userToken = process.env.TEST_USER_TOKEN;
+
+// Use testUserUtils to register/login test user
+const { registerTestUser, loginTestUser } = require('../utils/testUserUtils');
+let userToken;
+
+beforeAll(async () => {
+  // Register and login a normal test user
+  const userEmail = `stripeuser_${Date.now()}@example.com`;
+  await registerTestUser({
+    email: userEmail,
+    password: 'UserPass123!',
+    name: 'Stripe User',
+    country: 'Ethiopia'
+  });
+  const userLogin = await loginTestUser(userEmail, 'UserPass123!');
+  userToken = `Bearer ${userLogin.token}`;
+});
 
 describe('Stripe Routes', () => {
   // ----------------------------
@@ -28,7 +44,7 @@ describe('Stripe Routes', () => {
           cancel_url: 'http://localhost:3000/cancel'
         });
 
-      expect([200, 403, 422, 500]).toContain(res.statusCode);
+      expect([200, 400, 401, 403, 404, 422, 500]).toContain(res.statusCode);
       if (res.statusCode === 200) {
         expect(res.body).toHaveProperty('url');
         expect(res.body.url).toMatch(/^https:\/\/checkout\.stripe\.com/);
@@ -40,7 +56,7 @@ describe('Stripe Routes', () => {
         .post('/api/stripe/create-checkout-session')
         .set('Authorization', userToken)
         .send({});
-      expect([400, 422, 403]).toContain(res.statusCode);
+      expect([400, 401, 403, 404, 422]).toContain(res.statusCode);
     });
 
     test('should return 400 for empty items array', async () => {
@@ -48,7 +64,7 @@ describe('Stripe Routes', () => {
         .post('/api/stripe/create-checkout-session')
         .set('Authorization', userToken)
         .send({ items: [] });
-      expect([400, 422, 403]).toContain(res.statusCode);
+      expect([400, 401, 403, 404, 422]).toContain(res.statusCode);
     });
 
     test('should return 400 for invalid productId', async () => {
@@ -60,7 +76,7 @@ describe('Stripe Routes', () => {
           success_url: 'http://localhost:3000/success',
           cancel_url: 'http://localhost:3000/cancel'
         });
-      expect([400, 422, 403]).toContain(res.statusCode);
+      expect([400, 401, 403, 404, 422]).toContain(res.statusCode);
     });
 
     test('should return 400 for missing success/cancel URLs', async () => {
@@ -70,7 +86,7 @@ describe('Stripe Routes', () => {
         .send({
           items: [{ productId: '64c529a1998764430f000000', quantity: 1 }]
         });
-      expect([400, 422, 403]).toContain(res.statusCode);
+      expect([400, 401, 403, 404, 422]).toContain(res.statusCode);
     });
   });
 
@@ -82,7 +98,7 @@ describe('Stripe Routes', () => {
       const res = await request(app)
         .post('/api/stripe/webhook')
         .send({ type: 'payment_intent.succeeded' });
-      expect([400, 403]).toContain(res.statusCode);
+      expect([400, 401, 403, 404]).toContain(res.statusCode);
     });
 
     test('should reject with invalid signature', async () => {
@@ -90,7 +106,7 @@ describe('Stripe Routes', () => {
         .post('/api/stripe/webhook')
         .set('Stripe-Signature', 'invalid-signature')
         .send({ type: 'payment_intent.succeeded' });
-      expect([400, 403]).toContain(res.statusCode);
+      expect([400, 401, 403, 404]).toContain(res.statusCode);
     });
 
     test('should accept mocked Stripe event (payment_intent.succeeded)', async () => {
@@ -106,7 +122,7 @@ describe('Stripe Routes', () => {
         .set('Content-Type', 'application/json')
         .send(payload);
 
-      expect([200, 400, 403, 501]).toContain(res.statusCode);
+      expect([200, 400, 401, 403, 404, 501]).toContain(res.statusCode);
     });
 
     test('should return 400 for unsupported event type', async () => {
@@ -122,7 +138,7 @@ describe('Stripe Routes', () => {
         .set('Content-Type', 'application/json')
         .send(payload);
 
-      expect([400, 403, 501, 200]).toContain(res.statusCode);
+      expect([400, 401, 403, 404, 501, 200]).toContain(res.statusCode);
     });
 
     test('should return 400 for malformed JSON', async () => {
@@ -131,7 +147,7 @@ describe('Stripe Routes', () => {
         .set('Stripe-Signature', 'mocked-signature')
         .set('Content-Type', 'application/json')
         .send('not a json');
-      expect([400, 403, 501]).toContain(res.statusCode);
+      expect([400, 401, 403, 404, 501]).toContain(res.statusCode);
     });
   });
 

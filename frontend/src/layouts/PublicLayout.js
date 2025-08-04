@@ -2,24 +2,22 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Outlet } from 'react-router-dom';
-import Navbar from '../components/Navbar';
+import NavbarUniversal from '../components/NavbarUniversal';
+
 import styles from './PublicLayout.module.css';
+import MerkatoFooter from '../components/MerkatoFooter';
 
 function PublicLayout({ user, onLogout, lang, onLangChange }) {
   return (
     <div className="public-layout">
-      {/* Navbar handles all top navigation */}
-      <Navbar
-        user={user}
-        onLogout={onLogout}
-        lang={lang}
-        onLangChange={onLangChange}
-      />
+      {/* Universal Navbar */}
+      <NavbarUniversal />
 
       {/* Main content area for pages like HomePage, Shop, etc. */}
       <main>
         <Outlet />
       </main>
+      <MerkatoFooter />
     </div>
   );
 }

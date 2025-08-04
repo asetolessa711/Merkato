@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import AdminVideoUpload from '../components/AdminVideoUpload';
 import axios from 'axios';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
@@ -16,6 +17,8 @@ function AdminDashboard() {
   const [error, setError] = useState(false);
 
   const token = localStorage.getItem('token');
+  // For demo: store/retrieve promo video URL in localStorage
+  const [promoVideoUrl, setPromoVideoUrl] = useState(localStorage.getItem('promoVideoUrl') || '');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -79,7 +82,6 @@ function AdminDashboard() {
   if (error) {
     return (
       <div style={{ padding: '40px' }}>
-        <h1>🛡 Admin Dashboard Loaded</h1>
         <p>Welcome to your admin panel.</p>
         <p style={{ color: 'red' }}>{msg}</p>
       </div>
@@ -87,12 +89,23 @@ function AdminDashboard() {
   }
 
   return (
-    <div style={{ maxWidth: 1000, margin: '40px auto', fontFamily: 'Poppins, sans-serif' }}>
-      <div style={{ textAlign: 'center', marginBottom: 30 }}>
-        <h2 style={{ marginTop: 10, fontWeight: 'bold', color: '#2c3e50' }}>Admin Dashboard</h2>
-      </div>
-
+    <>
       {msg && <p>{msg}</p>}
+
+      {/* Admin Video Upload Section */}
+      <AdminVideoUpload
+        adminToken={token}
+        onUpload={url => {
+          setPromoVideoUrl(url);
+          localStorage.setItem('promoVideoUrl', url);
+        }}
+      />
+      {promoVideoUrl && (
+        <div style={{ margin: '1rem 0' }}>
+          <h4>Current Promotional Video</h4>
+          <video controls width="400" src={promoVideoUrl} />
+        </div>
+      )}
 
       <Card title="Financial Overview">
         <ResponsiveContainer width="100%" height={250}>
@@ -157,10 +170,10 @@ function AdminDashboard() {
                 </li>
               ))}
             </ul>
-              </Card>
+          </Card>
         </>
       )}
-    </div>
+    </>
   );
 }
 

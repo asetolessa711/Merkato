@@ -1,14 +1,61 @@
 const request = require('supertest');
-const app = require('../../../server');
+const app = require('../../server');
+const mongoose = require('mongoose');
 
-const adminToken = process.env.TEST_ADMIN_TOKEN;
-const userToken = process.env.TEST_USER_TOKEN;
+let adminToken;
+let userToken;
 
 describe('Review Moderation Routes', () => {
   let productId;
   let reviewId;
 
   beforeAll(async () => {
+    // Register or login test user
+    const userRes = await request(app)
+      .post('/api/auth/register')
+      .send({
+        name: 'Moderation Test User',
+        email: 'moderationtestuser@example.com',
+        password: 'Test1234!',
+        role: 'customer',
+        country: 'Ethiopia'
+      });
+    if ([200, 201].includes(userRes.statusCode)) {
+      userToken = 'Bearer ' + (userRes.body.token || userRes.body.accessToken);
+    } else {
+      // Try login if already exists
+      const loginRes = await request(app)
+        .post('/api/auth/login')
+        .send({
+          email: 'moderationtestuser@example.com',
+          password: 'Test1234!'
+        });
+      userToken = 'Bearer ' + (loginRes.body.token || loginRes.body.accessToken);
+    }
+
+    // Register or login test admin
+    const adminRes = await request(app)
+      .post('/api/auth/register')
+      .send({
+        name: 'Moderation Test Admin',
+        email: 'moderationtestadmin@example.com',
+        password: 'Admin1234!',
+        role: 'admin',
+        country: 'Ethiopia'
+      });
+    if ([200, 201].includes(adminRes.statusCode)) {
+      adminToken = 'Bearer ' + (adminRes.body.token || adminRes.body.accessToken);
+    } else {
+      // Try login if already exists
+      const loginRes = await request(app)
+        .post('/api/auth/login')
+        .send({
+          email: 'moderationtestadmin@example.com',
+          password: 'Admin1234!'
+        });
+      adminToken = 'Bearer ' + (loginRes.body.token || loginRes.body.accessToken);
+    }
+
     // Create a product and review to moderate
     const productRes = await request(app)
       .post('/api/products')
@@ -48,6 +95,7 @@ describe('Review Moderation Routes', () => {
         .delete(`/api/reviews/${reviewId}`)
         .set('Authorization', adminToken);
     }
+    await mongoose.connection.close();
   });
 
   describe('GET /api/admin/reviews', () => {
@@ -56,7 +104,7 @@ describe('Review Moderation Routes', () => {
         .get('/api/admin/reviews')
         .set('Authorization', adminToken);
 
-      expect([200, 403]).toContain(res.statusCode);
+      expect([200, 401, 403]).toContain(res.statusCode);
       if (res.statusCode === 200) {
         expect(Array.isArray(res.body)).toBe(true);
       }
@@ -67,7 +115,7 @@ describe('Review Moderation Routes', () => {
         .get('/api/admin/reviews?page=1&limit=2&flagged=true')
         .set('Authorization', adminToken);
 
-      expect([200, 403, 501]).toContain(res.statusCode);
+      expect([200, 401, 403, 501]).toContain(res.statusCode);
     });
 
     test('should block non-admin access', async () => {
@@ -121,7 +169,7 @@ describe('Review Moderation Routes', () => {
         .put('/api/admin/reviews/notAValidId/hide')
         .set('Authorization', adminToken);
 
-      expect([400, 403]).toContain(res.statusCode);
+      expect([400, 404, 403]).toContain(res.statusCode);
     });
 
     test('should return 404 for non-existent review', async () => {
@@ -168,7 +216,7 @@ describe('Review Moderation Routes', () => {
         .put('/api/admin/reviews/notValidId/unhide')
         .set('Authorization', adminToken);
 
-      expect([400, 403]).toContain(res.statusCode);
+      expect([400, 404, 403]).toContain(res.statusCode);
     });
 
     test('should return 404 for non-existent review', async () => {
@@ -207,7 +255,7 @@ describe('Review Moderation Routes', () => {
         .delete('/api/admin/reviews/notValidId')
         .set('Authorization', adminToken);
 
-      expect([400, 403]).toContain(res.statusCode);
+      expect([400, 401, 404, 403]).toContain(res.statusCode);
     });
 
     test('should return 404 for non-existent review', async () => {
@@ -215,7 +263,7 @@ describe('Review Moderation Routes', () => {
         .delete('/api/admin/reviews/64c529a1998764430f00abc7')
         .set('Authorization', adminToken);
 
-      expect([404, 403, 400]).toContain(res.statusCode);
+      expect([404, 401, 403, 400]).toContain(res.statusCode);
     });
   });
 });

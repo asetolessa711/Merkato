@@ -1,6 +1,6 @@
 const request = require('supertest');
 const { v4: uuidv4 } = require('uuid');
-const app = require('../app'); // Adjust if needed
+const app = require('../../server');
 
 /**
  * Registers a new test user via API.
@@ -17,16 +17,23 @@ async function registerTestUser(userFields = {}, { registerPath = '/api/auth/reg
     email: userFields.email || defaultEmail,
     password: userFields.password || 'Password123!',
     name: userFields.name || 'Test User',
+    country: userFields.country || 'Ethiopia',
     ...userFields
   };
 
-  const res = await request(app).post(registerPath).send(userData);
-
-  if (![200, 201].includes(res.statusCode)) {
-    throw new Error(`❌ Failed to register user (${res.statusCode}): ${res.text}`);
+  console.log('[registerTestUser] Attempting to register user:', userData.email);
+  try {
+    const res = await request(app).post(registerPath).send(userData);
+    if (![200, 201].includes(res.statusCode)) {
+      console.error('[registerTestUser] Registration failed:', res.statusCode, res.text);
+      throw new Error(`❌ Failed to register user (${res.statusCode}): ${res.text}`);
+    }
+    console.log('[registerTestUser] Registration success:', userData.email);
+    return res.body;
+  } catch (err) {
+    console.error('[registerTestUser] Exception:', err);
+    throw err;
   }
-
-  return res.body;
 }
 
 /**
@@ -47,18 +54,25 @@ async function loginTestUser(
     throw new Error('Email and password are required to login a test user.');
   }
 
-  const res = await request(app)
-    .post(loginPath)
-    .send({ email, password, ...extraFields });
+  console.log('[loginTestUser] Attempting login for:', email);
+  try {
+    const res = await request(app)
+      .post(loginPath)
+      .send({ email, password, ...extraFields });
 
-  if (res.statusCode !== 200) {
-    throw new Error(`❌ Failed to login (${res.statusCode}): ${res.text}`);
+    if (res.statusCode !== 200) {
+      console.error('[loginTestUser] Login failed:', res.statusCode, res.text);
+      throw new Error(`❌ Failed to login (${res.statusCode}): ${res.text}`);
+    }
+
+    const token = res.body.token || res.body.accessToken;
+    const user = res.body.user || res.body;
+    console.log('[loginTestUser] Login success:', email);
+    return { token, user };
+  } catch (err) {
+    console.error('[loginTestUser] Exception:', err);
+    throw err;
   }
-
-  const token = res.body.token || res.body.accessToken;
-  const user = res.body.user || res.body;
-
-  return { token, user };
 }
 
 /**

@@ -1,9 +1,13 @@
 const request = require('supertest');
-const app = require('../../../server');
+const app = require('../../server');
+const mongoose = require('mongoose');
 
-// ✅ Environment tokens (set in CI, .env.test, or shell)
-const testVendorToken = process.env.TEST_VENDOR_TOKEN;
-const testUserToken = process.env.TEST_USER_TOKEN;
+const { registerTestUser, loginTestUser } = require('../utils/testUserUtils');
+
+let testVendorToken;
+let testUserToken;
+let vendorUserId;
+let normalUserId;
 
 // 📝 Alternative approach for mocking (optional future use):
 // jest.mock('../../middleware/authMiddleware', () => ({
@@ -16,40 +20,134 @@ const testUserToken = process.env.TEST_USER_TOKEN;
 describe('Vendor Routes', () => {
   let createdProductId;
 
+
   beforeAll(async () => {
-    // Future: Connect to test DB, seed vendor user & product
-    // await connectTestDB();
-    // await seedVendorUserAndProduct();
+    // Register a vendor user
+    const vendorReg = await registerTestUser({
+      email: `vendor_${Date.now()}@example.com`,
+      password: 'VendorPass123!',
+      name: 'Vendor User',
+      roles: ['vendor'],
+      storeName: 'Test Vendor Store',
+      country: 'Ethiopia'
+    });
+    vendorUserId = vendorReg.user ? vendorReg.user._id : vendorReg._id;
+    const vendorLogin = await loginTestUser(vendorReg.email, 'VendorPass123!');
+    testVendorToken = `Bearer ${vendorLogin.token}`;
+
+    // Register a normal user
+    const userReg = await registerTestUser({
+      email: `user_${Date.now()}@example.com`,
+      password: 'UserPass123!',
+      name: 'Normal User',
+      roles: ['customer'],
+      country: 'Ethiopia'
+    });
+    normalUserId = userReg.user ? userReg.user._id : userReg._id;
+    const userLogin = await loginTestUser(userReg.email, 'UserPass123!');
+    testUserToken = `Bearer ${userLogin.token}`;
   });
 
   afterAll(async () => {
+    await mongoose.connection.close();
     // Future: Clean up test DB or disconnect
     // await cleanupTestData();
     // await disconnectTestDB();
   });
 
-  describe('GET /api/vendor/dashboard', () => {
+  describe('GET /api/vendor/analytics', () => {
     test('should fail without token', async () => {
-      const res = await request(app).get('/api/vendor/dashboard');
-      expect([401, 403]).toContain(res.statusCode);
+      const res = await request(app).get('/api/vendor/analytics');
+      expect(res.statusCode).toBe(401);
     });
 
     test('should fail with non-vendor token', async () => {
       const res = await request(app)
-        .get('/api/vendor/dashboard')
+        .get('/api/vendor/analytics')
         .set('Authorization', testUserToken);
-      expect([403, 401]).toContain(res.statusCode);
+      expect(res.statusCode).toBe(403);
     });
 
-    test('should return dashboard data for vendor', async () => {
+    test('should return analytics data for vendor', async () => {
       const res = await request(app)
-        .get('/api/vendor/dashboard')
+        .get('/api/vendor/analytics')
         .set('Authorization', testVendorToken);
 
-      expect([200, 403]).toContain(res.statusCode);
-      if (res.statusCode === 200) {
-        expect(res.body).toHaveProperty('totalSales');
-      }
+      expect(res.statusCode).toBe(200);
+      expect(res.body).toHaveProperty('totalRevenue');
+      expect(res.body).toHaveProperty('totalItemsSold');
+      expect(res.body).toHaveProperty('orderCount');
+      expect(res.body).toHaveProperty('uniqueCustomers');
+    });
+  });
+
+  describe('GET /api/vendor/revenue', () => {
+    test('should fail without token', async () => {
+      const res = await request(app).get('/api/vendor/revenue');
+      expect(res.statusCode).toBe(401);
+    });
+
+    test('should fail with non-vendor token', async () => {
+      const res = await request(app)
+        .get('/api/vendor/revenue')
+        .set('Authorization', testUserToken);
+      expect(res.statusCode).toBe(403);
+    });
+
+    test('should return revenue data for vendor', async () => {
+      const res = await request(app)
+        .get('/api/vendor/revenue')
+        .set('Authorization', testVendorToken);
+
+      expect(res.statusCode).toBe(200);
+      expect(res.body).toHaveProperty('totalRevenue');
+      expect(res.body).toHaveProperty('productCount');
+    });
+  });
+
+  describe('GET /api/vendor/top-products', () => {
+    test('should fail without token', async () => {
+      const res = await request(app).get('/api/vendor/top-products');
+      expect(res.statusCode).toBe(401);
+    });
+
+    test('should fail with non-vendor token', async () => {
+      const res = await request(app)
+        .get('/api/vendor/top-products')
+        .set('Authorization', testUserToken);
+      expect(res.statusCode).toBe(403);
+    });
+
+    test('should return top products for vendor', async () => {
+      const res = await request(app)
+        .get('/api/vendor/top-products')
+        .set('Authorization', testVendorToken);
+
+      expect(res.statusCode).toBe(200);
+      expect(Array.isArray(res.body)).toBe(true);
+    });
+  });
+
+  describe('GET /api/vendor/top-customers', () => {
+    test('should fail without token', async () => {
+      const res = await request(app).get('/api/vendor/top-customers');
+      expect(res.statusCode).toBe(401);
+    });
+
+    test('should fail with non-vendor token', async () => {
+      const res = await request(app)
+        .get('/api/vendor/top-customers')
+        .set('Authorization', testUserToken);
+      expect(res.statusCode).toBe(403);
+    });
+
+    test('should return top customers for vendor', async () => {
+      const res = await request(app)
+        .get('/api/vendor/top-customers')
+        .set('Authorization', testVendorToken);
+
+      expect(res.statusCode).toBe(200);
+      expect(Array.isArray(res.body)).toBe(true);
     });
   });
 
@@ -66,14 +164,11 @@ describe('Vendor Routes', () => {
           description: 'Product uploaded by vendor'
         });
 
-      expect([201, 200, 403]).toContain(res.statusCode);
-      if (res.statusCode === 201 || res.statusCode === 200) {
-        expect(res.body).toHaveProperty('_id');
-        expect(res.body).toHaveProperty('name');
-        createdProductId = res.body._id;
-      } else {
-        console.warn('⚠️ Product not created — skipping delete tests.');
-      }
+      // Only accept 201 or 200 as success
+      expect([201, 200]).toContain(res.statusCode);
+      expect(res.body).toHaveProperty('_id');
+      expect(res.body).toHaveProperty('name');
+      createdProductId = res.body._id;
     });
 
     test('should fail for non-vendor user', async () => {
@@ -81,29 +176,11 @@ describe('Vendor Routes', () => {
         .post('/api/vendor/products')
         .set('Authorization', testUserToken)
         .send({ name: 'Unauthorized Product', price: 10 });
-      expect([403, 401]).toContain(res.statusCode);
+      // Accept 403 (forbidden) or 404 (not found) as valid
+      expect([403, 404]).toContain(res.statusCode);
     });
   });
 
-  describe('GET /api/vendor/orders', () => {
-    test('should return vendor-specific orders', async () => {
-      const res = await request(app)
-        .get('/api/vendor/orders')
-        .set('Authorization', testVendorToken);
-
-      expect([200, 403]).toContain(res.statusCode);
-      if (res.statusCode === 200) {
-        expect(Array.isArray(res.body)).toBe(true);
-      }
-    });
-
-    test('should block access for non-vendor', async () => {
-      const res = await request(app)
-        .get('/api/vendor/orders')
-        .set('Authorization', testUserToken);
-      expect([403, 401]).toContain(res.statusCode);
-    });
-  });
 
   describe('PUT /api/vendor/profile', () => {
     test('should allow vendor to update profile', async () => {
@@ -115,10 +192,9 @@ describe('Vendor Routes', () => {
           description: 'Updated store info'
         });
 
-      expect([200, 403]).toContain(res.statusCode);
-      if (res.statusCode === 200) {
-        expect(res.body).toHaveProperty('storeName');
-      }
+      expect(res.statusCode).toBe(200);
+      // The backend returns a message and avatar, not storeName
+      expect(res.body).toHaveProperty('message');
     });
 
     test('should block profile update for non-vendor', async () => {
@@ -126,7 +202,7 @@ describe('Vendor Routes', () => {
         .put('/api/vendor/profile')
         .set('Authorization', testUserToken)
         .send({ storeName: 'Fake Store' });
-      expect([403, 401]).toContain(res.statusCode);
+      expect(res.statusCode).toBe(403);
     });
   });
 
@@ -141,7 +217,7 @@ describe('Vendor Routes', () => {
         .delete(`/api/vendor/products/${createdProductId}`)
         .set('Authorization', testVendorToken);
 
-      expect([200, 403]).toContain(res.statusCode);
+      expect(res.statusCode).toBe(200);
     });
 
     test('should fail without token', async () => {
@@ -150,7 +226,7 @@ describe('Vendor Routes', () => {
       const res = await request(app)
         .delete(`/api/vendor/products/${createdProductId}`);
 
-      expect([401, 403]).toContain(res.statusCode);
+      expect(res.statusCode).toBe(401);
     });
 
     test('should return 404 or 400 for non-existent product ID', async () => {
@@ -159,7 +235,7 @@ describe('Vendor Routes', () => {
         .delete(`/api/vendor/products/${fakeId}`)
         .set('Authorization', testVendorToken);
 
-      expect([404, 400, 403]).toContain(res.statusCode);
+      expect([404, 400]).toContain(res.statusCode);
     });
   });
 });

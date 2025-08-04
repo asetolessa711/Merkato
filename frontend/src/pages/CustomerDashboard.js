@@ -1,9 +1,12 @@
 import React, { useEffect, useState, useCallback } from 'react';
+// === MOCK MODE: Set to true to use mock data (no backend required) ===
+const USE_MOCK_CUSTOMER = true; // Set to false for real API
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import PropTypes from 'prop-types';
 import styles from './CustomerDashboard.module.css';
 import QuickStatCard from '../components/QuickStatCard/QuickStatCard';
+import ProductRowSection from '../components/ProductRowSection';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
@@ -63,6 +66,21 @@ function CustomerDashboard() {
   }, [headers, navigate, token]);
 
   useEffect(() => {
+    if (USE_MOCK_CUSTOMER) {
+      setTimeout(() => {
+        setUser({ name: 'Demo Customer', email: 'customer@demo.com', lastLogin: new Date(), createdAt: new Date(), credits: 100, points: 50 });
+        setFavorites([
+          { _id: 'f1', name: 'Favorite Product 1', image: 'https://placehold.co/100x100?text=Fav+1', price: 25, currency: '$', stock: 3 },
+          { _id: 'f2', name: 'Favorite Product 2', image: 'https://placehold.co/100x100?text=Fav+2', price: 40, currency: '$', stock: 7 },
+        ]);
+        setRecentOrders([
+          { _id: 'o1', orderNumber: '1001', status: 'Delivered', total: 120, currency: '$' },
+          { _id: 'o2', orderNumber: '1002', status: 'Shipped', total: 80, currency: '$' },
+        ]);
+        setIsLoading(false);
+      }, 400);
+      return;
+    }
     fetchData();
   }, [fetchData]);
 
@@ -139,8 +157,7 @@ function CustomerDashboard() {
   ];
 
   return (
-    <div className={styles.container}>
-      <h1>Customer Dashboard</h1>
+    <>
       {isLoading ? (
         <div className={styles.loadingState}>
           <div className={styles.skeletonHeader}></div>
@@ -171,105 +188,76 @@ function CustomerDashboard() {
               Last login: {user?.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'First time here'}
             </p>
           </header>
-          {/* ...rest of the code... */}
-        </>
-      )}
-
-      <div className={styles.statsGrid}>
-        {quickStats.map((stat, index) => (
-          <QuickStatCard key={index} {...stat} />
-        ))}
-      </div>
-
-      <section className={styles.accountSection}>
-        <h2 className={styles.sectionTitle}>My Account</h2>
-        
-        <div className={styles.cardGrid}>
-          <div className={styles.card}>
-            <h3>Profile Info</h3>
-            <div className={styles.profileContent}>
-              <div className={styles.avatarSection}>
-                <img
-                  src={preview || '/default-avatar.png'}
-                  alt="Profile"
-                  className={styles.avatar}
-                />
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className={styles.fileInput}
-                  aria-label="Choose profile picture"
-                />
-                <button
-                  onClick={handleUpload}
-                  disabled={!avatar}
-                  className={styles.uploadButton}
-                >
-                  Upload Avatar
-                </button>
-              </div>
-              <div className={styles.profileDetails}>
-                <p><strong>Name:</strong> {user?.name}</p>
-                <p><strong>Email:</strong> {user?.email}</p>
-                <p><strong>Member Since:</strong> {new Date(user?.createdAt).toLocaleDateString()}</p>
+          <div className={styles.statsGrid}>
+            {quickStats.map((stat, index) => (
+              <QuickStatCard key={index} {...stat} />
+            ))}
+          </div>
+          <section className={styles.accountSection}>
+            <h2 className={styles.sectionTitle}>My Account</h2>
+            <div className={styles.cardGrid}>
+              <div className={styles.card}>
+                <h3>Profile Info</h3>
+                <div className={styles.profileContent}>
+                  <div className={styles.avatarSection}>
+                    <img
+                      src={preview || '/default-avatar.png'}
+                      alt="Profile"
+                      className={styles.avatar}
+                    />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileChange}
+                      className={styles.fileInput}
+                      aria-label="Choose profile picture"
+                    />
+                    <button
+                      onClick={handleUpload}
+                      disabled={!avatar}
+                      className={styles.uploadButton}
+                    >
+                      Upload Avatar
+                    </button>
+                  </div>
+                  <div className={styles.profileDetails}>
+                    <p><strong>Name:</strong> {user?.name}</p>
+                    <p><strong>Email:</strong> {user?.email}</p>
+                    <p><strong>Member Since:</strong> {new Date(user?.createdAt).toLocaleDateString()}</p>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-
-          <div className={styles.card}>
-            <h3>Saved Products</h3>
-            {favorites.length === 0 ? (
-              <p className={styles.emptyState}>No saved products yet</p>
-            ) : (
-              <ul className={styles.productList}>
-                {favorites.slice(0, 3).map((product) => (
-                  <li key={product._id} className={styles.productItem}>
-                    <img
-                      src={product.image}
-                      alt={product.name}
-                      className={styles.productImage}
-                    />
-                    <div className={styles.productInfo}>
-                      <h4>{product.name}</h4>
-                      <p>{product.currency} {product.price}</p>
-                      <p>Stock: {product.stock}</p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-            {favorites.length > 3 && (
-              <Link to="/favorites" className={styles.viewAllButton}>
-                View All Saved Products
-              </Link>
-            )}
-          </div>
-
-          <div className={styles.card}>
-            <h3>Recent Orders</h3>
-            {recentOrders.length === 0 ? (
-              <p className={styles.emptyState}>No recent orders</p>
-            ) : (
-              <ul className={styles.orderList}>
-                {recentOrders.slice(0, 3).map((order) => (
-                  <li key={order._id} className={styles.orderItem}>
-                    <div className={styles.orderInfo}>
-                      <h4>Order #{order.orderNumber}</h4>
-                      <p>Status: {order.status}</p>
-                      <p>Total: {order.currency} {order.total}</p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <Link to="/account/orders" className={styles.viewAllButton}>
-              📦 View All Orders
-            </Link>
-          </div>
-        </div>
-      </section>
-    </div>
+            {/* Horizontally scrollable product rows for favorites and recent orders */}
+            <div style={{ margin: '32px 0 0 0' }}>
+              <ProductRowSection
+                title="Saved Products"
+                products={favorites}
+                emptyText="No saved products yet"
+                type="standard"
+                size="md"
+              />
+              <ProductRowSection
+                title="Recent Orders"
+                products={recentOrders.map(order => ({
+                  ...order,
+                  _id: order._id,
+                  name: `Order #${order.orderNumber}`,
+                  image: '/images/default-product.png',
+                  price: order.total,
+                  currency: order.currency || '$',
+                  stock: '',
+                  description: `Status: ${order.status}`
+                }))}
+                emptyText="No recent orders"
+                type="standard"
+                size="md"
+              />
+            </div>
+          </section>
+        </>
+      )}
+    </>
   );
 }
 

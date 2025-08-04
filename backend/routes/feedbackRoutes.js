@@ -16,6 +16,9 @@ router.post('/', protect, authorize('customer', 'vendor', 'admin'), async (req, 
     await feedback.save();
     res.status(201).json({ message: 'Feedback submitted' });
   } catch (err) {
+    if (err.name === 'ValidationError') {
+      return res.status(400).json({ message: 'Validation error', details: err.message });
+    }
     res.status(500).json({ message: 'Failed to submit feedback' });
   }
 });

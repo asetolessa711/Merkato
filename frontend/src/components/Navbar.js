@@ -8,6 +8,20 @@ const Navbar = () => {
   const [registerTimer, setRegisterTimer] = useState(null);
   const [shopTimer, setShopTimer] = useState(null);
 
+  // Determine user role from localStorage
+  let user = null;
+  try {
+    user = JSON.parse(localStorage.getItem('user'));
+  } catch (e) {}
+  const isLoggedIn = !!user;
+  const isCustomer = user?.role === 'customer';
+  const isVendor = user?.role === 'vendor';
+
+  function handleLogout() {
+    localStorage.clear();
+    window.location.href = '/';
+  }
+
   return (
     <header className="top-bar">
       <div className="top-bar-content">
@@ -29,7 +43,7 @@ const Navbar = () => {
         </div>
 
         {/* 🟣 Right: Nav + Selectors */}
-        <div className="top-right">
+        <nav className="top-right" role="navigation">
           {/* Register Dropdown */}
           <div
             className="dropdown"
@@ -51,7 +65,8 @@ const Navbar = () => {
             )}
           </div>
 
-          {/* Shop Dropdown */}
+
+          {/* Shop Dropdown and Direct Link */}
           <div
             className="dropdown"
             onMouseEnter={() => {
@@ -71,9 +86,19 @@ const Navbar = () => {
               </div>
             )}
           </div>
+          {/* Direct Shop Link for accessibility and tests */}
+          <Link to="/shop" className="top-link">Shop</Link>
 
           <Link to="/favorites" className="top-link">Favorites</Link>
-          <Link to="/login" className="top-link">Login</Link>
+
+          {/* Show dashboard and logout for logged-in users */}
+          {isCustomer && <Link to="/dashboard" className="top-link">Dashboard</Link>}
+          {isVendor && <Link to="/vendor/dashboard" className="top-link">Dashboard</Link>}
+          {isLoggedIn ? (
+            <button className="top-link" onClick={handleLogout}>Logout</button>
+          ) : (
+            <Link to="/login" className="top-link">Login</Link>
+          )}
 
           <select className="lang-toggle" defaultValue="EN">
             <option value="EN">EN</option>
@@ -86,7 +111,7 @@ const Navbar = () => {
             <option value="ETB">ETB</option>
             <option value="EUR">EUR</option>
           </select>
-        </div>
+        </nav>
       </div>
     </header>
   );

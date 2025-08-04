@@ -11,9 +11,14 @@ function StripeCheckoutButton({ items = [], onSuccess, onError }) {
     if (!items.length) return;
     setLoading(true);
     try {
-      await axios.post('/api/stripe/create-checkout-session', { items }, {});
+      const response = await axios.post('/api/stripe/create-checkout-session', { items }, {});
+      // eslint-disable-next-line no-console
+      console.log('StripeCheckoutButton axios response:', response);
+      const sessionId = response?.data?.id;
+      // eslint-disable-next-line no-console
+      console.log('StripeCheckoutButton sessionId:', sessionId);
       const stripe = await loadStripe('pk_test_dummy');
-      await stripe.redirectToCheckout({ sessionId: undefined });
+      await stripe.redirectToCheckout({ sessionId });
       if (onSuccess) onSuccess();
     } catch (err) {
       if (onError) onError(err);

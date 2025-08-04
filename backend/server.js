@@ -32,6 +32,9 @@ const testEmailRoute = require('./routes/testEmailRoute');
 // 🚀 Initialize Express App
 const app = express();
 
+// ✅ Enable trust proxy to support rate limiters, logging behind proxies
+app.set('trust proxy', 1); // This fixes the express-rate-limit warning
+
 // 🧩 Middleware
 app.use(express.json());
 app.use(cors());
@@ -69,45 +72,59 @@ app.get('/api', (req, res) => {
   res.status(200).json({ message: 'Backend is running ✅' });
 });
 
-// 🚦 Start Server (only if not in test mode)
-if (process.env.NODE_ENV !== 'test') {
-  if (!process.env.MONGO_URI) {
-    console.error('❌ MONGO_URI is not set in environment variables.');
-    process.exit(1);
-  }
+// 🚦 MongoDB Connection (always connect, only start HTTP server if not in test mode)
+if (!process.env.MONGO_URI) {
+  console.error('❌ MONGO_URI is not set in environment variables.');
+  process.exit(1);
+}
 
-  let server;
-  mongoose.connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-  }).then(() => {
-    console.log('✅ MongoDB connected');
+console.log(`🔍 [server.js] About to connect to MongoDB: ${process.env.MONGO_URI}`);
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+}).then(() => {
+  console.log('✅ [server.js] MongoDB connected');
 
+  if (require.main === module) {
     const PORT = process.env.PORT || 5000;
-    server = app.listen(PORT, () => {
+    const server = app.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
     });
-  }).catch((err) => {
-    console.error('❌ MongoDB connection failed:', err.message);
-    process.exit(1);
-  });
 
-  // 🔄 Graceful Shutdown Handling
-  const shutdown = () => {
-    console.log('\n🛑 Shutting down server...');
-    if (server) {
-      server.close(() => {
-        mongoose.connection.close(false, () => {
-          console.log('🛑 MongoDB connection closed.');
-          process.exit(0);
+    // 🔄 Graceful Shutdown Handling
+    const shutdown = () => {
+      console.log('\n🛑 Shutting down server...');
+      if (server) {
+        server.close(() => {
+          mongoose.connection.close(false, () => {
+            console.log('🛑 MongoDB connection closed.');
+            process.exit(0);
+          });
         });
-      });
-    }
-  };
+      }
+    };
 
-  process.on('SIGINT', shutdown);
-  process.on('SIGTERM', shutdown);
-}
+    process.on('SIGINT', shutdown);
+    process.on('SIGTERM', shutdown);
+  }
+}).catch((err) => {
+  console.error('❌ [server.js] MongoDB connection failed:', err.message);
+  process.exit(1);
+});
+
+// Always log when mongoose.connect is called (for test runner)
+mongoose.connection.on('connecting', () => {
+  console.log('🔄 [server.js] Mongoose is connecting...');
+});
+mongoose.connection.on('connected', () => {
+  console.log('✅ [server.js] Mongoose connected event fired');
+});
+mongoose.connection.on('error', (err) => {
+  console.error('❌ [server.js] Mongoose connection error:', err.message);
+});
+mongoose.connection.on('disconnected', () => {
+  console.log('🔌 [server.js] Mongoose disconnected');
+});
 
 // 🔁 Export app for testing with Supertest
 module.exports = app;

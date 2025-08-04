@@ -14,6 +14,7 @@ function RegisterPage() {
     name: '',
     email: '',
     password: '',
+    country: '',
     roles: prefillRole ? [prefillRole] : []
   });
   const [msg, setMsg] = useState('');
@@ -55,6 +56,7 @@ function RegisterPage() {
     if (!form.name) errors.name = 'Name is required.';
     if (!form.email || !/\S+@\S+\.\S+/.test(form.email)) errors.email = 'Valid email required.';
     if (!form.password || form.password.length < 6) errors.password = 'Password must be at least 6 characters.';
+    if (!form.country) errors.country = 'Country is required.';
     if (!form.roles.length) errors.roles = 'Please select a role.';
     return errors;
   };
@@ -62,6 +64,10 @@ function RegisterPage() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (name === 'roles') {
+      if (value === 'vendor') {
+        navigate('/vendor-register');
+        return;
+      }
       setForm({ ...form, roles: [value] });
     } else {
       setForm({ ...form, [name]: value });
@@ -193,6 +199,20 @@ function RegisterPage() {
             <option value="vendor">Vendor (Supplier)</option>
           </select>
           {fieldError.roles && <div className={styles.errorMsg}>{fieldError.roles}</div>}
+        </div>
+
+        <div className={styles.formGroup}>
+          <label className={styles.label} htmlFor="register-country">Country</label>
+          <input
+            id="register-country"
+            type="text"
+            name="country"
+            value={form.country}
+            onChange={handleChange}
+            className={`${styles.input} ${fieldError.country ? styles.inputError : ''}`}
+            disabled={isLoading}
+          />
+          {fieldError.country && <div className={styles.errorMsg}>{fieldError.country}</div>}
         </div>
 
         <button

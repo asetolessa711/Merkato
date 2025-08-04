@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">61.53% </span>
+                <span class="strong">7.69% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>8/13</span>
+                <span class='fraction'>1/13</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">50% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>3/6</span>
+                <span class='fraction'>0/6</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">50% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>1/2</span>
+                <span class='fraction'>0/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">61.53% </span>
+                <span class="strong">7.69% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>8/13</span>
+                <span class='fraction'>1/13</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line medium'></div>
+    <div class='status-line low'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -158,26 +158,26 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -185,7 +185,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -247,27 +247,27 @@
 import { Link, Outlet, useNavigate } from 'react-router-dom';
 import AdminSidebar from './AdminSidebar';
 &nbsp;
-const AdminLayout = ({ user }) =&gt; {
-  const navigate = useNavigate();
+const AdminLayout = <span class="fstat-no" title="function not covered" >({</span> user }) =&gt; {
+  const navigate = <span class="cstat-no" title="statement not covered" >useNavigate();</span>
 &nbsp;
   // Log when AdminLayout loads and show user info
-  console.log("🛠 AdminLayout loaded for user:", user);
+<span class="cstat-no" title="statement not covered" >  console.log("🛠 AdminLayout loaded for user:", user);</span>
 &nbsp;
-  const handleLogout = <span class="fstat-no" title="function not covered" >()</span> =&gt; {
+  const handleLogout = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    localStorage.removeItem('token');</span>
 <span class="cstat-no" title="statement not covered" >    localStorage.removeItem('user');</span>
 <span class="cstat-no" title="statement not covered" >    navigate('/login');</span>
   };
 &nbsp;
   // Role-based admin controls example
-  let adminNotice = null;
-  <span class="missing-if-branch" title="if path not taken" >I</span>if (user?.roles?.includes("global_admin")) {
+  let adminNotice = <span class="cstat-no" title="statement not covered" >null;</span>
+<span class="cstat-no" title="statement not covered" >  if (user?.roles?.includes("global_admin")) {</span>
 <span class="cstat-no" title="statement not covered" >    adminNotice = (</span>
       &lt;div style={{ color: '#0984e3', fontWeight: 'bold', marginBottom: 10 }}&gt;
         🌍 Global Admin: You have access to all global controls.
       &lt;/div&gt;
     );
-  } else <span class="missing-if-branch" title="if path not taken" >I</span>if (user?.roles?.includes("country_admin")) {
+  } else <span class="cstat-no" title="statement not covered" >if (user?.roles?.includes("country_admin")) {</span>
 <span class="cstat-no" title="statement not covered" >    adminNotice = (</span>
       &lt;div style={{ color: '#e67e22', fontWeight: 'bold', marginBottom: 10 }}&gt;
         🌎 Country Admin: You are limited to your country’s dashboard.
@@ -275,10 +275,10 @@ const AdminLayout = ({ user }) =&gt; {
     );
   }
 &nbsp;
-  return (
+<span class="cstat-no" title="statement not covered" >  return (</span>
     &lt;div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', fontFamily: 'Poppins, sans-serif' }}&gt;
       {/* Show warning if no user */}
-      {!user &amp;&amp; <span class="branch-1 cbranch-no" title="branch not covered" >&lt;p style={{ padding: '20px', color: 'red' }}&gt;⚠️ No user found.&lt;/p&gt;}</span>
+      {!user &amp;&amp; &lt;p style={{ padding: '20px', color: 'red' }}&gt;⚠️ No user found.&lt;/p&gt;}
 &nbsp;
       {/* Top Navigation with Logo */}
       &lt;div style={{
@@ -340,7 +340,7 @@ export default AdminLayout;</pre></td></tr></table></pre>
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-01T22:43:43.963Z
+                at 2025-08-02T06:05:35.032Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

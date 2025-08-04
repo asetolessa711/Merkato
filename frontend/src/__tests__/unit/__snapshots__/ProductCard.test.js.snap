@@ -1,15 +1,19 @@
-// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+// Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`🛍️ ProductCard Component matches snapshot 1`] = `
 <DocumentFragment>
   <div
     class="product-card theme-mint size-md  "
   >
-    <img
-      alt="Test Product"
-      class="product-image"
-      src="test-product.jpg"
-    />
+    <div
+      class="product-card-image-container"
+    >
+      <img
+        alt="Test Product"
+        loading="lazy"
+        src="test-product.jpg"
+      />
+    </div>
     <div
       class="product-info"
     >

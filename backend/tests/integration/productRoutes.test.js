@@ -1,19 +1,38 @@
+jest.setTimeout(20000);
 const request = require('supertest');
-const app = require('../../../server');
+const app = require('../../server');
+const mongoose = require('mongoose');
 
 describe('Product Routes', () => {
   let createdProductId;
 
-  // Future: Setup test DB, seed users, or connect to in-memory DB
+
+  // Register and login a test admin user before tests
+  const { registerTestUser, loginTestUser } = require('../utils/testUserUtils');
+  let adminToken;
+  let adminUser;
+
   beforeAll(async () => {
-    // await connectTestDB();
-    // await seedAdminUser();
+    // Register a test admin user
+    const uniqueEmail = `admin_${Date.now()}@example.com`;
+    const user = await registerTestUser({
+      email: uniqueEmail,
+      password: 'AdminPass123!',
+      name: 'Test Admin',
+      country: 'Ethiopia',
+      roles: ['admin']
+    });
+    adminUser = user;
+    // Login to get JWT
+    const login = await loginTestUser(uniqueEmail, 'AdminPass123!');
+    adminToken = `Bearer ${login.token}`;
   });
 
   // Future: Clean up test DB, disconnect, or drop created product
   afterAll(async () => {
     // await cleanupTestDB();
     // await disconnectTestDB();
+    await mongoose.connection.close();
   });
 
   describe('GET /api/products', () => {
@@ -24,18 +43,18 @@ describe('Product Routes', () => {
     });
   });
 
-  test('POST /api/products should create a new product (admin/vendor only)', async () => {
-    const mockToken = 'Bearer mock-admin-token'; // Future: replace with generated JWT
 
+  test('POST /api/products should create a new product (admin/vendor only)', async () => {
     const res = await request(app)
       .post('/api/products')
-      .set('Authorization', mockToken)
+      .set('Authorization', adminToken)
       .send({
         name: 'Test Product',
         price: 25.0,
         category: 'Electronics',
         stock: 50,
-        description: 'A test product'
+        description: 'A test product',
+        country: 'Ethiopia'
       });
 
     expect([201, 200, 403]).toContain(res.statusCode);
@@ -66,11 +85,9 @@ describe('Product Routes', () => {
       return;
     }
 
-    const mockToken = 'Bearer mock-admin-token';
-
     const res = await request(app)
       .put(`/api/products/${createdProductId}`)
-      .set('Authorization', mockToken)
+      .set('Authorization', adminToken)
       .send({ price: 30 });
 
     expect([200, 403]).toContain(res.statusCode);
@@ -82,11 +99,9 @@ describe('Product Routes', () => {
       return;
     }
 
-    const mockToken = 'Bearer mock-admin-token';
-
     const res = await request(app)
       .delete(`/api/products/${createdProductId}`)
-      .set('Authorization', mockToken);
+      .set('Authorization', adminToken);
 
     expect([200, 403]).toContain(res.statusCode);
   });

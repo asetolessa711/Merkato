@@ -1,6 +1,9 @@
+
 import React from 'react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
 import AdminSidebar from './AdminSidebar';
+import MerkatoFooter from '../components/MerkatoFooter';
+import styles from '../layouts/AdminLayout.module.css';
 
 const AdminLayout = ({ user }) => {
   const navigate = useNavigate();
@@ -31,18 +34,23 @@ const AdminLayout = ({ user }) => {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', fontFamily: 'Poppins, sans-serif' }}>
+    <div className={styles.container}>
       {/* Show warning if no user */}
       {!user && <p style={{ padding: '20px', color: 'red' }}>⚠️ No user found.</p>}
 
-      {/* Top Navigation with Logo */}
+      {/* Fixed Top Navigation with Logo */}
       <div style={{
         backgroundColor: '#f0f0f0',
         padding: '10px 20px',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        borderBottom: '1px solid #ccc'
+        borderBottom: '1px solid #ccc',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        zIndex: 1000
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           <Link to="/" style={{ textDecoration: 'none', fontSize: '1.6rem', fontWeight: 'bold' }}>
@@ -74,15 +82,21 @@ const AdminLayout = ({ user }) => {
         </button>
       </div>
 
-      {/* Admin Role Notice */}
-      {adminNotice}
-
-      {/* Admin Layout: Sidebar + Main */}
-      <div style={{ display: 'flex', flex: 1 }}>
+      {/* Main Content Area with Sidebar and Scrollable Main */}
+      <div className={styles.mainContent} style={{ marginTop: 60, flex: 1 }}>
         <AdminSidebar />
-        <main style={{ flex: 1, padding: '20px' }}>
-          <Outlet />  {/* ✅ This renders all nested child routes */}
+        <main className={styles.contentArea}>
+          {/* Admin Role Notice */}
+          {adminNotice}
+          {/* Heading for Admin Dashboard (deduplicated, only here) */}
+          <h2 style={{ marginTop: 0, fontWeight: 'bold', color: '#2c3e50', textAlign: 'center' }}>Admin Dashboard</h2>
+          <Outlet />
         </main>
+      </div>
+
+      {/* Fixed Footer */}
+      <div style={{ position: 'fixed', left: 0, bottom: 0, width: '100%', zIndex: 1000 }}>
+        <MerkatoFooter showSocials={false} />
       </div>
     </div>
   );

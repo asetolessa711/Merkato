@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+// === MOCK MODE: Set to true to use mock upload (no backend required) ===
+const USE_MOCK_UPLOAD = true; // Set to false for real API
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { uploadProductImage } from '../utils/uploadImage';
@@ -20,10 +22,10 @@ function ProductUpload() {
     }
   });
 
-  const [imageFile, setImageFile] = useState(null);
-  const [previewImage, setPreviewImage] = useState(null);
+  const [imageFiles, setImageFiles] = useState([]);
+  const [previewImages, setPreviewImages] = useState([]);
   const [msg, setMsg] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
+  const [imageUrls, setImageUrls] = useState([]);
   const navigate = useNavigate();
 
   const token = localStorage.getItem('merkato-token'); // ✅ fixed
@@ -46,13 +48,23 @@ function ProductUpload() {
 
   // ✅ Authenticated Image Upload Handler
   const handleImageUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+    setImageFiles(files);
+    setPreviewImages(files.map(file => URL.createObjectURL(file)));
+
+    if (USE_MOCK_UPLOAD) {
+      setTimeout(() => {
+        setImageUrls(files.map((_, i) => `https://placehold.co/400x400?text=Demo+Image+${i+1}`));
+        setMsg('✅ (Mock) Images uploaded!');
+      }, 600);
+      return;
+    }
 
     try {
-      const response = await uploadProductImage(file, token);
-      setImageUrl(response.imageUrl || response);
-      setPreviewImage(URL.createObjectURL(file));
+      const urls = await uploadProductImage(files, token);
+      setImageUrls(urls);
+      setMsg('✅ Images uploaded!');
     } catch (err) {
       console.error('Image upload failed:', err.response?.data?.message || err.message);
       setMsg('Image upload failed');
@@ -63,15 +75,31 @@ function ProductUpload() {
     e.preventDefault();
     setMsg('');
 
-    if (!imageUrl) {
-      setMsg('Please upload an image first.');
+    if (!imageUrls.length) {
+      setMsg('Please upload at least one image first.');
+      return;
+    }
+
+    if (USE_MOCK_UPLOAD) {
+      setTimeout(() => {
+        setMsg(`✅ (Mock) Product "${form.name}" uploaded successfully!`);
+        setForm({
+          name: '', description: '', price: '', stock: '', category: '',
+          gender: '', ageGroup: '', currency: 'USD', language: 'en',
+          promotion: { isPromoted: false, badgeText: '' }
+        });
+        setImageFiles([]);
+        setPreviewImages([]);
+        setImageUrls([]);
+        setTimeout(() => navigate('/vendor'), 1000);
+      }, 800);
       return;
     }
 
     try {
       const res = await axios.post(
         '/api/products',
-        { ...form, image: imageUrl },
+        { ...form, images: imageUrls },
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -83,9 +111,9 @@ function ProductUpload() {
         gender: '', ageGroup: '', currency: 'USD', language: 'en',
         promotion: { isPromoted: false, badgeText: '' }
       });
-      setImageFile(null);
-      setPreviewImage(null);
-      setImageUrl('');
+      setImageFiles([]);
+      setPreviewImages([]);
+      setImageUrls([]);
 
       setTimeout(() => navigate('/vendor'), 1000);
     } catch (err) {
@@ -149,22 +177,28 @@ function ProductUpload() {
           />
         )}
 
-        <label htmlFor="product-image">Product Image:</label>
+        <label htmlFor="product-image">Product Images:</label>
         <input
           id="product-image"
           data-testid="product-image-input"
           type="file"
           accept="image/*"
+          multiple
           onChange={handleImageUpload}
         />
 
-        {previewImage && (
-          <img
-            data-testid="image-preview"
-            src={previewImage}
-            alt="Preview"
-            style={{ marginTop: '10px', width: '100%', borderRadius: '6px', objectFit: 'cover' }}
-          />
+        {previewImages.length > 0 && (
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '10px' }}>
+            {previewImages.map((src, idx) => (
+              <img
+                key={idx}
+                data-testid={`image-preview-${idx}`}
+                src={src}
+                alt={`Preview ${idx + 1}`}
+                style={{ width: '120px', height: '120px', borderRadius: '6px', objectFit: 'cover', border: '1px solid #eee' }}
+              />
+            ))}
+          </div>
         )}
 
         <button type="submit" style={{

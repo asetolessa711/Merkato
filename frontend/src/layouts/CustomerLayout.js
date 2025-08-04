@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { useNavigate, useLocation } from 'react-router-dom';
 import styles from './CustomerLayout.module.css';
 
-import Navbar from '../components/Navbar';
+import NavbarUniversal from '../components/NavbarUniversal';
 import CustomerSidebar from '../components/CustomerSidebar';
 import MerkatoFooter from '../components/MerkatoFooter';
 import Breadcrumb from '../components/Breadcrumb';
@@ -60,7 +60,7 @@ function CustomerLayout({ children, user, onLogout, lang, onLangChange }) {
   if (isLoading) {
     return (
       <div className={styles.container}>
-        <Navbar user={null} onLogout={onLogout} lang={lang} onLangChange={onLangChange} />
+        <NavbarUniversal />
         <div className={styles.mainContent}>
           <CustomerSidebar user={null} activePath={location.pathname} />
           <main className={styles.contentArea}>
@@ -84,58 +84,18 @@ function CustomerLayout({ children, user, onLogout, lang, onLangChange }) {
 
   return (
     <div className={styles.container}>
-      <Navbar
-        user={user}
-        onLogout={onLogout}
-        lang={lang}
-        onLangChange={onLangChange}
-      />
-
-      <div className={styles.mainContent}>
+      <NavbarUniversal />
+      {/* Fixed heading at the top */}
+      <header className={styles.fixedHeader}>
+        <h1>Customer Dashboard</h1>
+      </header>
+      <div className={styles.mainContentScrollable}>
         <CustomerSidebar user={user} activePath={location.pathname} />
-
         <main className={styles.contentArea}>
-          <Breadcrumb />
-
-          <header className={styles.welcomeHeader}>
-            <h2 className={styles.welcomeTitle}>
-              👋 Welcome back, {user?.name || 'Valued Customer'}
-            </h2>
-            <p className={styles.lastLogin}>
-              Last login: {formatLastLogin(user?.lastLogin)}
-            </p>
-          </header>
-
-          <div className={styles.statsGrid}>
-            {quickStats.length > 0
-              ? quickStats.map((stat, index) => (
-                  <QuickStatCard key={index} {...stat} />
-                ))
-              : <EmptyState message="No stats available" />
-            }
-          </div>
-
-          {user?.hasNewNotifications && (
-            <div className={styles.notification}>
-              <div className={styles.notificationContent}>
-                <span>🔔</span>
-                <span>You have new notifications!</span>
-              </div>
-              <button
-                onClick={handleNotificationClick}
-                className={styles.notificationButton}
-              >
-                View All
-              </button>
-            </div>
-          )}
-
-          <div className={styles.childrenWrapper}>
-            {children}
-          </div>
+          {/* Only render children, no duplicate headings */}
+          <div className={styles.childrenWrapper}>{children}</div>
         </main>
       </div>
-
       <MerkatoFooter />
     </div>
   );

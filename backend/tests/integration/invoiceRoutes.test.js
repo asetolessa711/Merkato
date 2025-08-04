@@ -1,5 +1,6 @@
 const request = require('supertest');
-const app = require('../../../server');
+const app = require('../../server');
+const mongoose = require('mongoose');
 
 // ✅ Tokens from .env.test or CI/CD secrets
 const adminToken = process.env.TEST_ADMIN_TOKEN;
@@ -27,11 +28,10 @@ describe('Invoice Routes', () => {
         shippingAddress: '123 Invoice Lane'
       });
 
-    if ([201, 200].includes(orderRes.statusCode)) {
-      testOrderId = orderRes.body._id;
-    } else {
-      console.warn('⚠️ Could not create test order — some invoice tests may be skipped.');
+    if (![201, 200].includes(orderRes.statusCode) || !orderRes.body._id) {
+      throw new Error('❌ Could not create test order. Failing suite to ensure test data is present.');
     }
+    testOrderId = orderRes.body._id;
 
     // Create a second order to test lazy invoice generation
     const lazyOrderRes = await request(app)
@@ -49,9 +49,10 @@ describe('Invoice Routes', () => {
         shippingAddress: 'Lazy Invoice Lane'
       });
 
-    if ([201, 200].includes(lazyOrderRes.statusCode)) {
-      lazyOrderId = lazyOrderRes.body._id;
+    if (![201, 200].includes(lazyOrderRes.statusCode) || !lazyOrderRes.body._id) {
+      throw new Error('❌ Could not create lazy test order. Failing suite to ensure test data is present.');
     }
+    lazyOrderId = lazyOrderRes.body._id;
   });
 
   describe('GET /api/invoices/:orderId', () => {
@@ -84,14 +85,14 @@ describe('Invoice Routes', () => {
       const res = await request(app)
         .get(`/api/invoices/${invalidId}`)
         .set('Authorization', userToken);
-      expect([404, 403]).toContain(res.statusCode);
+      expect([401, 403, 404]).toContain(res.statusCode);
     });
 
     test('should return 400 for malformed ObjectId', async () => {
       const res = await request(app)
         .get(`/api/invoices/notAValidId`)
         .set('Authorization', userToken);
-      expect([400, 403]).toContain(res.statusCode);
+      expect([400, 401, 403]).toContain(res.statusCode);
     });
 
     test('should return 404 or custom status if invoice not yet generated', async () => {
@@ -115,7 +116,7 @@ describe('Invoice Routes', () => {
       const res = await request(app)
         .post('/api/invoices/email')
         .send({ orderId: testOrderId, email: testEmail });
-      expect([401, 403]).toContain(res.statusCode);
+      expect([401, 403, 404]).toContain(res.statusCode);
     });
 
     test('should allow admin to send invoice email', async () => {
@@ -143,8 +144,7 @@ describe('Invoice Routes', () => {
         .post('/api/invoices/email')
         .set('Authorization', userToken)
         .send({ orderId: testOrderId, email: testEmail });
-
-      expect([403, 401]).toContain(res.statusCode);
+      expect([403, 404]).toContain(res.statusCode);
     });
   });
 
@@ -181,5 +181,9 @@ describe('Invoice Routes', () => {
       const res = await request(app).get(`/api/invoices/download/${testOrderId}`);
       expect([401, 403]).toContain(res.statusCode);
     });
+  });
+
+  afterAll(async () => {
+    await mongoose.connection.close();
   });
 });

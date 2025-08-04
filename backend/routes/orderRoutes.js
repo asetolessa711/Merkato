@@ -174,7 +174,7 @@ router.post('/', protect, authorize('customer'), async (req, res) => {
       });
     }
 
-    // Create main order
+// ...existing code...
     const order = new Order({
       buyer: buyerId,
       vendors: vendorArray,
@@ -233,37 +233,6 @@ router.post('/', protect, authorize('customer'), async (req, res) => {
 });
 
 /**
- * @route   GET /api/orders/:id
- * @desc    Get single order by ID
- * @access  Private - Order owner or vendor
- */
-router.get('/:id', protect, async (req, res) => {
-  try {
-    const order = await Order.findById(req.params.id)
-      .populate('vendors.vendorId', 'name email')
-      .populate('vendors.products.product', 'name price images');
-    
-    if (!order) {
-      return res.status(404).json({ message: 'Order not found' });
-    }
-
-    // Check authorization
-    const isVendor = order.vendors.some(v => 
-      v.vendorId._id.toString() === req.user._id.toString()
-    );
-    const isBuyer = order.buyer.toString() === req.user._id.toString();
-    
-    if (!isVendor && !isBuyer && req.user.role !== 'admin') {
-      return res.status(403).json({ message: 'Not authorized' });
-    }
-
-    res.json({ success: true, order });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-/**
  * @route   GET /api/orders/my-orders
  * @desc    Get all orders for current customer
  * @access  Private - Customer
@@ -275,6 +244,37 @@ router.get('/my-orders', protect, authorize('customer'), async (req, res) => {
       .sort('-createdAt');
 
     res.json({ success: true, orders });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+/**
+ * @route   GET /api/orders/:id
+ * @desc    Get single order by ID
+ * @access  Private - Order owner or vendor
+ */
+router.get('/:id', protect, async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id)
+      .populate('vendors.vendorId', 'name email')
+      .populate({ path: 'vendors.products.product', select: 'name price images', options: { strictPopulate: false } });
+
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    // Check authorization
+    const isVendor = order.vendors.some(v => 
+      v.vendorId._id.toString() === req.user._id.toString()
+    );
+    const isBuyer = order.buyer.toString() === req.user._id.toString();
+
+    if (!isVendor && !isBuyer && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    res.json({ success: true, order });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

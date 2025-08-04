@@ -1,20 +1,29 @@
 // seedUsers.js
+
+const fs = require('fs');
+const path = require('path');
+const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-require('dotenv').config();
+// Load environment variables in priority: .env.test.local > .env.test > .env
+const envPaths = ['.env.test.local', '.env.test', '.env'];
+let loaded = false;
+for (const envFile of envPaths) {
+  const fullPath = path.join(__dirname, envFile);
+  if (fs.existsSync(fullPath)) {
+    dotenv.config({ path: fullPath });
+    loaded = true;
+    break;
+  }
+}
+if (!loaded) {
+  console.warn('⚠️  No .env file found. Please create one.');
+}
 
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/merkato';
+const MONGO_URI = process.env.MONGODB_URI || process.env.MONGO_URI || process.env.DB_URI || 'mongodb://localhost:27017/merkato';
 
-// Inline schema definition (if models/User.js isn't used)
-const userSchema = new mongoose.Schema({
-  name: String,
-  email: String,
-  password: String,
-  roles: [String],
-  country: { type: String, default: 'ET' }
-});
-
-const User = mongoose.model('User', userSchema);
+// Use the real User model so password hashing and methods work
+const User = require('./models/User');
 
 // Seed users with known password 'Password123!'
 const users = [

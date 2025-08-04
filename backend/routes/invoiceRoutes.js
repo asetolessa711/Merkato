@@ -101,4 +101,41 @@ router.get('/:id/download', ensureAuth, async (req, res) => {
   }
 });
 
+
+// GET /api/invoices/:orderId - Get invoice by orderId (with ObjectId validation)
+const mongoose = require('mongoose');
+router.get('/:orderId', ensureAuth, async (req, res) => {
+  const { orderId } = req.params;
+  if (!mongoose.Types.ObjectId.isValid(orderId)) {
+    return res.status(400).json({ message: 'Invalid order ID' });
+  }
+  try {
+    // Find invoice by order field
+    const invoice = await Invoice.findOne({ order: orderId })
+      .populate('customer', 'name email')
+      .populate('vendor', 'storeName name email');
+    if (!invoice) {
+      return res.status(404).json({ message: 'Invoice not found' });
+    }
+    // Restrict access to vendor who owns it (unless admin)
+    const isAdmin = req.user.role === 'admin' || req.user.role === 'global_admin';
+    if (!isAdmin && invoice.vendor?._id?.toString() !== req.user._id.toString() && invoice.customer?._id?.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+    // Respond with invoice details (minimal for test)
+    res.json({
+      _id: invoice._id,
+      invoiceNumber: invoice._id,
+      order: invoice.order,
+      vendor: invoice.vendor,
+      customer: invoice.customer,
+      total: invoice.total,
+      createdAt: invoice.createdAt
+    });
+  } catch (error) {
+    console.error('Invoice fetch error:', error);
+    res.status(500).json({ message: 'Failed to fetch invoice.' });
+  }
+});
+
 module.exports = router;

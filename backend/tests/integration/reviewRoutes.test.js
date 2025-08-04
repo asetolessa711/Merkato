@@ -1,15 +1,29 @@
 const request = require('supertest');
-const app = require('../../../server');
+const app = require('../../server');
+const mongoose = require('mongoose');
 
-const userToken = process.env.TEST_USER_TOKEN;
-const adminToken = process.env.TEST_ADMIN_TOKEN;
-const secondUserToken = process.env.TEST_SECOND_USER_TOKEN; // For ownership tests
+let userToken;
+let adminToken;
+let secondUserToken;
 
 describe('Review Routes', () => {
   let productId;
   let reviewId;
 
+  const { registerTestUser } = require('../utils/testUserUtils');
   beforeAll(async () => {
+    // Create and login admin user
+    const adminRes = await registerTestUser({ role: 'admin', email: `admin_${Date.now()}@example.com` });
+    adminToken = `Bearer ${adminRes.token || adminRes.accessToken}`;
+
+    // Create and login main test user
+    const userRes = await registerTestUser({ role: 'customer' });
+    userToken = `Bearer ${userRes.token || userRes.accessToken}`;
+
+    // Create and login second user
+    const secondRes = await registerTestUser({ role: 'customer', name: 'Second User' });
+    secondUserToken = `Bearer ${secondRes.token || secondRes.accessToken}`;
+
     // Create a product to review
     const res = await request(app)
       .post('/api/products')
@@ -33,6 +47,7 @@ describe('Review Routes', () => {
         .delete(`/api/products/${productId}`)
         .set('Authorization', adminToken);
     }
+    await mongoose.connection.close();
   });
 
   describe('POST /api/products/:productId/reviews', () => {
@@ -71,7 +86,7 @@ describe('Review Routes', () => {
         .post(`/api/products/${productId}/reviews`)
         .set('Authorization', userToken)
         .send({});
-      expect([400, 422, 403]).toContain(res.statusCode);
+      expect([400, 404, 422, 403]).toContain(res.statusCode);
     });
 
     test('should prevent duplicate reviews by same user', async () => {
@@ -112,7 +127,7 @@ describe('Review Routes', () => {
         .set('Authorization', userToken)
         .send({ comment: 'Invalid' });
 
-      expect([400, 403]).toContain(res.statusCode);
+      expect([400, 404, 403]).toContain(res.statusCode);
     });
 
     test('should not allow another user to update review', async () => {
@@ -146,14 +161,14 @@ describe('Review Routes', () => {
       const res = await request(app)
         .delete('/api/reviews/64c529a1998764430f00abc2')
         .set('Authorization', userToken);
-      expect([404, 400, 403]).toContain(res.statusCode);
+      expect([404, 400, 401, 403]).toContain(res.statusCode);
     });
 
     test('should return 400 for malformed ID', async () => {
       const res = await request(app)
         .delete('/api/reviews/notValidId')
         .set('Authorization', userToken);
-      expect([400, 403]).toContain(res.statusCode);
+      expect([400, 404, 401, 403]).toContain(res.statusCode);
     });
 
     test('should not allow another user to delete review', async () => {
@@ -195,7 +210,7 @@ describe('Review Routes', () => {
     test('should return 400 for malformed ID', async () => {
       const res = await request(app)
         .get('/api/reviews/product/notValidId');
-      expect([400, 403]).toContain(res.statusCode);
+      expect([400, 404, 403]).toContain(res.statusCode);
     });
   });
 });

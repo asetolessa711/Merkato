@@ -1,8 +1,13 @@
 import axios from 'axios';
 
-export const uploadProductImage = async (file, token) => {
+export const uploadProductImage = async (files, token) => {
   const formData = new FormData();
-  formData.append('image', file);
+  // Accepts array or single file
+  if (Array.isArray(files)) {
+    files.forEach(file => formData.append('images', file));
+  } else {
+    formData.append('images', files);
+  }
 
   const config = {
     headers: {
@@ -12,5 +17,6 @@ export const uploadProductImage = async (file, token) => {
   };
 
   const { data } = await axios.post('/api/upload', formData, config);
-  return data.imageUrl;
+  // Return array of URLs (backend returns { imageUrls })
+  return data.imageUrls || (data.imageUrl ? [data.imageUrl] : []);
 };

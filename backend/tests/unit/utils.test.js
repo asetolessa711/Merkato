@@ -1,24 +1,35 @@
+
+
+// Set dummy email credentials and mock nodemailer before any imports
+process.env.EMAIL_USER = 'dummy@example.com';
+process.env.EMAIL_PASS = 'dummy-password';
+
+
+// Setup nodemailer mock and expose mock functions for assertions
+const mockSendMail = jest.fn().mockResolvedValue({ accepted: ['user@example.com'] });
+const mockVerify = jest.fn().mockResolvedValue(true);
+jest.mock('nodemailer', () => ({
+  createTransport: jest.fn(() => ({
+    sendMail: mockSendMail,
+    verify: mockVerify
+  }))
+}));
+
 const nodemailer = require('nodemailer');
 const {
   sendOrderConfirmation,
   sendPasswordResetEmail,
   resetRateLimiter,
   testEmailConfig
-} = require('../../../src/utils/utils');
-
-// Mock nodemailer
-jest.mock('nodemailer');
+} = require('../../utils/sendEmail');
 
 describe('Email Utils', () => {
-  const mockSendMail = jest.fn().mockResolvedValue({ accepted: ['user@example.com'] });
-  const mockVerify = jest.fn().mockResolvedValue(true);
+
   const originalEnv = process.env.NODE_ENV;
 
   beforeEach(() => {
-    nodemailer.createTransport.mockReturnValue({
-      sendMail: mockSendMail,
-      verify: mockVerify
-    });
+    mockSendMail.mockClear();
+    mockVerify.mockClear();
   });
 
   afterEach(() => {
@@ -52,6 +63,7 @@ describe('Email Utils', () => {
   });
 
   test('sendOrderConfirmation handles sendMail error and throws descriptive error', async () => {
+
     mockSendMail.mockRejectedValueOnce(new Error('SMTP error'));
 
     await expect(sendOrderConfirmation({
@@ -82,6 +94,7 @@ describe('Email Utils', () => {
   });
 
   test('sendPasswordResetEmail handles sendMail error and throws descriptive error', async () => {
+
     mockSendMail.mockRejectedValueOnce(new Error('SMTP error'));
 
     await expect(sendPasswordResetEmail({

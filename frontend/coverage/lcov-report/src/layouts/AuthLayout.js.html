@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">14.28% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>7/7</span>
+                <span class='fraction'>1/7</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">83.33% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>5/6</span>
+                <span class='fraction'>0/6</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>2/2</span>
+                <span class='fraction'>0/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">14.28% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>7/7</span>
+                <span class='fraction'>1/7</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line high'></div>
+    <div class='status-line low'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -136,18 +136,18 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">21x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -202,19 +202,19 @@ import PropTypes from 'prop-types';
 import { Link, useLocation } from 'react-router-dom';
 import styles from './AuthLayout.module.css';
 &nbsp;
-function AuthLayout({ children }) {
-  const location = useLocation();
-  const isLoginPage = location.pathname === '/login';
-  const isForgotPassword = location.pathname === '/forgot-password';
-  const showToggle = !isForgotPassword;
+function <span class="fstat-no" title="function not covered" >AuthLayout(</span>{ children }) {
+  const location = <span class="cstat-no" title="statement not covered" >useLocation();</span>
+  const isLoginPage = <span class="cstat-no" title="statement not covered" >location.pathname === '/login';</span>
+  const isForgotPassword = <span class="cstat-no" title="statement not covered" >location.pathname === '/forgot-password';</span>
+  const showToggle = <span class="cstat-no" title="statement not covered" >!isForgotPassword;</span>
 &nbsp;
-  return (
+<span class="cstat-no" title="statement not covered" >  return (</span>
     &lt;div className={styles.authLayout}&gt;
       &lt;div className={styles.container}&gt;
         &lt;div className={styles.logo}&gt;
           &lt;Link to="/" className={styles.logoLink}&gt;
-            {['M', 'e', 'r', 'k', 'a', 't', 'o'].map((letter, index) =&gt; (
-              &lt;span 
+            {['M', 'e', 'r', 'k', 'a', 't', 'o'].map(<span class="fstat-no" title="function not covered" >(l</span>etter, index) =&gt; (
+<span class="cstat-no" title="statement not covered" >              &lt;span </span>
                 key={index} 
                 className={`${styles.logoChar} ${styles[`logoChar${index + 1}`]}`}
               &gt;
@@ -238,7 +238,7 @@ function AuthLayout({ children }) {
                 &lt;/Link&gt;
               &lt;/p&gt;
             ) : (
-<span class="branch-1 cbranch-no" title="branch not covered" >              &lt;p&gt;</span>
+              &lt;p&gt;
                 Already have an account?{' '}
                 &lt;Link to="/login" className={styles.toggleLink}&gt;
                   Sign in
@@ -271,7 +271,7 @@ export default AuthLayout;</pre></td></tr></table></pre>
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-01T22:43:43.963Z
+                at 2025-08-02T06:05:35.032Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

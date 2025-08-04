@@ -15,9 +15,13 @@ import AuthLayout from './layouts/AuthLayout';
 
 // Pages & Components
 import HomePage from './pages/HomePage';
+import CustomersPage from './pages/CustomersPage';
+import VendorsPage from './pages/VendorsPage';
+import VendorAccountPage from './pages/VendorAccountPage';
 import ShopPage from './pages/ShopPage';
 import FavoritesPage from './pages/FavoritesPage';
 import CheckoutSuccess from './pages/CheckoutSuccess';
+import OrderConfirmation from './pages/OrderConfirmation';
 import ProductDetail from './pages/ProductDetail';
 import Login from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
@@ -99,8 +103,11 @@ function App() {
           }>
             <Route index element={<HomePage />} />
             <Route path="shop" element={<ShopPage />} />
+            <Route path="customers" element={<CustomersPage />} />
+            <Route path="vendors" element={<VendorsPage />} />
             <Route path="favorites" element={<FavoritesPage />} />
             <Route path="checkout-success" element={<CheckoutSuccess />} />
+            <Route path="order-confirmation" element={<OrderConfirmation />} />
             <Route path="product/:id" element={<ProductDetail currency={currency} rates={rates} />} />
             <Route path="support" element={<SupportForm />} />
             <Route path="*" element={<h2>404 – Page Not Found</h2>} />
@@ -138,6 +145,7 @@ function App() {
             </ProtectedRoute>
           }>
             <Route index element={<VendorDashboard />} />
+            <Route path="account" element={<VendorAccountPage />} />
             <Route path="onboarding" element={<VendorOnboarding />} />
             <Route path="orders" element={<VendorOrders />} />
             <Route path="guide" element={<VendorGuide />} />

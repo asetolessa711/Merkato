@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './HomePage.css';
+import MerkatoFooter from '../components/MerkatoFooter';
 import ProductCard from '../components/ProductCard'; // ✅ Already imported
 
 const categories = [
@@ -10,11 +11,14 @@ const categories = [
   "Sports", "Gadgets", "Accessories", "More"
 ];
 
+
 function HomePage() {
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(categories[0]);
+  // Get promo video URL from localStorage (set by admin upload)
+  const [promoVideoUrl, setPromoVideoUrl] = useState(localStorage.getItem('promoVideoUrl') || '');
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -39,41 +43,38 @@ function HomePage() {
     }
   };
 
+  // Demo review cards (8+ for horizontal scroll)
+  const reviewDemoProducts = Array.from({ length: 8 }).map((_, i) => ({
+    _id: `demo${i+1}`,
+    name: `Demo Product ${i+1}`,
+    image: '/images/default-product.png',
+    price: 10 + i * 5.5,
+    discount: i % 2 === 0 ? 10 : 0,
+    theme: 'mint',
+    promotion: i % 3 === 0 ? { isPromoted: true, badgeText: 'Top Rated' } : {},
+    vendor: { name: `vendor${i+1}` },
+    stock: i % 4 === 0 ? 0 : 10 + i,
+    description: `Demo product #${i+1} for scroll test.`
+  }));
+
   return (
-    <>
-      {/* === Fixed Category Bar === */}
-      <div className="category-bar-fixed">
-        <div className="category-bar-outer">
-          <button className="scroll-btn left" onClick={() => {
-            document.querySelector('.category-bar').scrollBy({ left: -200, behavior: 'smooth' });
-          }}>&lt;</button>
-          <div className="category-bar" tabIndex={0}>
-            {categories.map(cat => (
-              <button
-                key={cat}
-                className={`category-btn${selectedCategory === cat ? ' active' : ''}`}
-                onClick={() => setSelectedCategory(cat)}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-          <button className="scroll-btn right" onClick={() => {
-            document.querySelector('.category-bar').scrollBy({ left: 200, behavior: 'smooth' });
-          }}>&gt;</button>
+    <div className="homepage-outer">
+      {/* Promotional Video (if available) */}
+      {promoVideoUrl && (
+        <div style={{ margin: '2rem auto', maxWidth: 600 }}>
+          <video controls width="100%" src={promoVideoUrl} />
         </div>
-      </div>
-
-      <div className="home-page">
-
-        {/* === Flash Deals Section (Modified) === */}
+      )}
+      {/* Main Content Scrollable (vertical) */}
+      <div className="homepage-main-scrollable">
+        {/* Flash Deals Row (Horizontal Scroll) */}
         {selectedCategory === "Flash Deals" && (
           <section className="flash-deals">
             <div className="section-header">
               <h2>🔥 Flash Deals</h2>
               <Link to="/shop?sort=deals" className="view-all-link">View All</Link>
             </div>
-            <div className="products-grid">
+            <div className="products-row-scroll">
               {flashDeals.length > 0 ? (
                 flashDeals.map(product => (
                   <ProductCard
@@ -81,7 +82,7 @@ function HomePage() {
                     product={product}
                     type="deal"
                     size="md"
-                    colorOptions={product.colors || []} // ✅ ADDED
+                    colorOptions={product.colors || []}
                   />
                 ))
               ) : (
@@ -90,27 +91,50 @@ function HomePage() {
             </div>
           </section>
         )}
-
-        {/* === General Category Products (Modified) === */}
-        {selectedCategory !== "Flash Deals" && (
-          <div className="products-grid">
-            {filteredProducts.map(product => (
-              <ProductCard
-                key={product._id}
-                product={product}
-                type="standard"
-                size="md"
-                colorOptions={product.colors || []} // ✅ ADDED
-              />
-            ))}
-          </div>
+        {/* General Category Products Row (Horizontal Scroll) */}
+        {selectedCategory !== "Flash Deals" && filteredProducts.length > 0 && (
+          <section className="best-sellers">
+            <div className="section-header">
+              <h2>Featured Products</h2>
+            </div>
+            <div className="products-row-scroll">
+              {filteredProducts.map(product => (
+                <ProductCard
+                  key={product._id}
+                  product={product}
+                  type="standard"
+                  size="md"
+                  colorOptions={product.colors || []}
+                />
+              ))}
+            </div>
+          </section>
         )}
 
-        {/* === Static Sections (Unchanged) === */}
-        {/* [snip: how-it-works, trust-signals, help-section, app-download, footer] */}
+
+        {/* 10 Demo Rows for Scroll Test */}
+        {[...Array(10)].map((_, rowIdx) => (
+          <section className="best-sellers" key={`demo-row-${rowIdx}`}>
+            <div className="section-header">
+              <h2>📝 Demo Row {rowIdx + 1}</h2>
+            </div>
+            <div className="products-row-scroll">
+              {reviewDemoProducts.map(product => (
+                <ProductCard
+                  key={product._id + '-row' + rowIdx}
+                  product={product}
+                  type="standard"
+                  size="md"
+                />
+              ))}
+            </div>
+          </section>
+        ))}
 
       </div>
-    </>
+      {/* Improved Footer with links */}
+      <MerkatoFooter showSocials={true} />
+    </div>
   );
 }
 

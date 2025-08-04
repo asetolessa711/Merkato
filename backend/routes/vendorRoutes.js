@@ -1,3 +1,4 @@
+
 // File: routes/vendorRoutes.js
 const express = require('express');
 const router = express.Router();
@@ -6,6 +7,29 @@ const User = require('../models/User');
 const Order = require('../models/Order');
 const { protect, authorize } = require('../middleware/authMiddleware');
 const { Parser } = require('json2csv');
+
+// Create a new product (vendor only)
+router.post('/products', protect, authorize('vendor'), async (req, res) => {
+  try {
+    const { name, price, image, stock, description, category } = req.body;
+    if (!name || !price) {
+      return res.status(400).json({ message: 'Name and price are required' });
+    }
+    const product = new Product({
+      name,
+      price,
+      image,
+      stock,
+      description,
+      category,
+      vendor: req.user._id
+    });
+    const saved = await product.save();
+    res.status(201).json(saved);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to create product', error: err.message });
+  }
+});
 
 // Get all products for the logged-in vendor
 router.get('/products', protect, authorize('vendor'), async (req, res) => {
@@ -34,8 +58,8 @@ router.get('/revenue', protect, authorize('vendor'), async (req, res) => {
 // Vendor analytics summary
 router.get('/analytics', protect, authorize('vendor'), async (req, res) => {
   try {
-    const orders = await Order.find({ 'products.product': { $exists: true } })
-      .populate('products.product')
+    const orders = await Order.find({ 'vendors.products.product': { $exists: true } })
+      .populate({ path: 'vendors.products.product', options: { strictPopulate: false } })
       .populate('buyer', 'name email');
 
     let totalRevenue = 0;
@@ -74,8 +98,8 @@ router.get('/analytics', protect, authorize('vendor'), async (req, res) => {
 // Top products sold by vendor
 router.get('/top-products', protect, authorize('vendor'), async (req, res) => {
   try {
-    const orders = await Order.find({ 'products.product': { $exists: true } })
-      .populate('products.product');
+    const orders = await Order.find({ 'vendors.products.product': { $exists: true } })
+      .populate({ path: 'vendors.products.product', options: { strictPopulate: false } });
 
     const productMap = {};
 
@@ -105,8 +129,8 @@ router.get('/top-products', protect, authorize('vendor'), async (req, res) => {
 // Top customers for vendor
 router.get('/top-customers', protect, authorize('vendor'), async (req, res) => {
   try {
-    const orders = await Order.find({ 'products.product': { $exists: true } })
-      .populate('products.product')
+    const orders = await Order.find({ 'vendors.products.product': { $exists: true } })
+      .populate({ path: 'vendors.products.product', options: { strictPopulate: false } })
       .populate('buyer');
 
     const customerMap = {};
@@ -186,7 +210,8 @@ router.get('/public', async (req, res) => {
 router.put('/profile', protect, authorize('vendor'), async (req, res) => {
   try {
     const vendor = await User.findById(req.user._id);
-    if (!vendor || vendor.role !== 'vendor') {
+
+    if (!vendor || !Array.isArray(vendor.roles) || !vendor.roles.includes('vendor')) {
       return res.status(403).json({ message: 'Unauthorized' });
     }
 

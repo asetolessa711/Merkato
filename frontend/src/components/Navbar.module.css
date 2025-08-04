@@ -2,7 +2,7 @@
 
 /* Base Navbar */
 .navbar {
-  background: #fff;
+  background: #001F54;
   padding: 10px 20px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   display: flex;
@@ -36,7 +36,7 @@
 .link {
   padding: 6px 10px;
   text-decoration: none;
-  color: #333;
+  color: #fff;
   font-size: 0.95rem;
   font-weight: 500;
   border-radius: 6px;
@@ -44,25 +44,21 @@
 }
 
 .link:hover {
-  background-color: #f5f5f5;
-  color: #00b894;
+  background-color: #003366;
+  color: #fff;
 }
 
+
 .activeLink {
-  background-color: #f0f9ff;
-  color: #00b894;
+  background-color: #00e676;
+  color: #001F54;
   font-weight: bold;
   position: relative;
+  box-shadow: 0 2px 8px rgba(0,230,118,0.15);
 }
 
 .activeLink::after {
-  content: "";
-  position: absolute;
-  bottom: -2px;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background-color: #00b894;
+  content: none;
 }
 
 /* Cart Icon - New Addition */
@@ -102,7 +98,7 @@
 .searchInput {
   padding: 8px 12px;
   font-size: 0.9rem;
-  border: 1px solid #ddd;
+  background: white;
   border-radius: 4px;
   transition: all 0.2s ease;
   min-width: 200px;
@@ -120,16 +116,18 @@
 
 .searchButton {
   padding: 8px 16px;
-  background: #00b894;
-  color: white;
+  background: #00e676;
+  color: #001F54;
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  font-weight: bold;
   transition: background 0.2s;
 }
 
 .searchButton:hover {
-  background: #009b7b;
+  background: #00c853;
+  color: #fff;
 }
 
 /* Language Select - Enhanced */
@@ -148,6 +146,8 @@
   cursor: pointer;
   transition: all 0.2s ease;
   background: white;
+  min-width: 70px;
+  width: 80px;
 }
 
 .langSelect:focus {

@@ -5,6 +5,17 @@ import '@testing-library/jest-dom';
 import { MemoryRouter } from 'react-router-dom';
 import axios from 'axios';
 
+// Manual mock for axios using CJS build to avoid ESM import error
+jest.mock('axios', () => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const actualAxios = require('axios/dist/node/axios.cjs');
+  return {
+    ...actualAxios,
+    post: jest.fn(),
+    create: () => actualAxios,
+  };
+});
+
 jest.mock('axios');
 
 describe('\ud83d\udd10 Login Page', () => {
@@ -19,9 +30,9 @@ describe('\ud83d\udd10 Login Page', () => {
         <LoginPage />
       </MemoryRouter>
     );
-    expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /login/i })).toBeInTheDocument();
+    expect(screen.getByLabelText('Email')).toBeInTheDocument();
+    expect(screen.getByLabelText('Password')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument();
   });
 
   test('shows error on empty submission', async () => {
@@ -30,8 +41,8 @@ describe('\ud83d\udd10 Login Page', () => {
         <LoginPage />
       </MemoryRouter>
     );
-    fireEvent.click(screen.getByRole('button', { name: /login/i }));
-    expect(await screen.findByText(/email is required/i)).toBeInTheDocument(); // adjust based on validation
+    fireEvent.click(screen.getByRole('button', { name: /sign in/i }));
+    expect(await screen.findByText(/enter a valid email/i)).toBeInTheDocument();
   });
 
   test('logs in with valid credentials', async () => {
@@ -45,7 +56,7 @@ describe('\ud83d\udd10 Login Page', () => {
       </MemoryRouter>
     );
 
-    fireEvent.change(screen.getByLabelText(/email/i), {
+    fireEvent.change(screen.getByLabelText('Email'), {
       target: { value: 'test@example.com' }
     });
     // ...rest of the test code...
