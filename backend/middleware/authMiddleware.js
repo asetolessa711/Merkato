@@ -12,10 +12,13 @@ const protect = async (req, res, next) => {
     try {
       token = req.headers.authorization.split(' ')[1];
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const user = await User.findById(decoded.id).select('-password');
+      console.log('[protect] Decoded JWT:', decoded);
+      const userId = decoded._id || decoded.id;
+      const user = await User.findById(userId).select('-password');
+      console.log('[protect] User lookup result for _id', userId, ':', user);
 
       if (!user) {
-        console.error('❌ protect: user not found for decoded id');
+        console.error('❌ protect: user not found for decoded id', userId);
         return res.status(401).json({ message: 'User not found' });
       }
 

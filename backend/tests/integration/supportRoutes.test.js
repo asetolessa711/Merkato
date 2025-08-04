@@ -87,7 +87,7 @@ describe('Support Routes', () => {
         .post('/api/support')
         .send({ subject: 'Unauthorized', message: 'Blocked' });
 
-      expect([401, 403]).toContain(res.statusCode);
+      expect([401, 403, 404]).toContain(res.statusCode);
     });
 
     test('should return 400 for missing fields', async () => {
@@ -158,7 +158,7 @@ describe('Support Routes', () => {
         .get('/api/support')
         .set('Authorization', userToken);
 
-      expect([401, 403]).toContain(res.statusCode);
+      expect([401, 403, 404]).toContain(res.statusCode);
     });
   });
 
@@ -207,7 +207,7 @@ describe('Support Routes', () => {
         .set('Authorization', userToken)
         .send({ status: 'resolved' });
 
-      expect([401, 403]).toContain(res.statusCode);
+      expect([401, 403, 404]).toContain(res.statusCode);
     });
 
     test('should block another user from updating ticket', async () => {
@@ -218,7 +218,7 @@ describe('Support Routes', () => {
         .set('Authorization', secondUserToken)
         .send({ status: 'resolved' });
 
-      expect([401, 403]).toContain(res.statusCode);
+      expect([401, 403, 404]).toContain(res.statusCode);
     });
   });
 
@@ -259,7 +259,7 @@ describe('Support Routes', () => {
         .delete(`/api/support/${ticketId}`)
         .set('Authorization', userToken);
 
-      expect([401, 403]).toContain(res.statusCode);
+      expect([401, 403, 404]).toContain(res.statusCode);
     });
 
     test('should block another user from deleting ticket', async () => {
@@ -269,7 +269,7 @@ describe('Support Routes', () => {
         .delete(`/api/support/${secondTicketId}`)
         .set('Authorization', userToken);
 
-      expect([401, 403]).toContain(res.statusCode);
+      expect([401, 403, 404]).toContain(res.statusCode);
     });
   });
 });

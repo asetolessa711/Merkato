@@ -45,7 +45,11 @@ router.post('/:productId', protect, authorize('customer', 'admin'), async (req, 
 // Delete a review (customer)
 router.delete('/:id', protect, authorize('customer', 'admin', 'global_admin'), async (req, res) => {
   try {
-    const review = await Review.findById(req.params.id);
+    const { id } = req.params;
+    if (!require('mongoose').Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: 'Invalid review ID' });
+    }
+    const review = await Review.findById(id);
 
     if (!review) return res.status(404).json({ message: 'Review not found' });
 

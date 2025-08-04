@@ -21,12 +21,12 @@ const storage = multer.diskStorage({
   },
   filename(req, file, cb) {
     const ext = path.extname(file.originalname);
+    // Check for directory traversal in the original filename
+    if (file.originalname.includes('..') || file.originalname.includes('/') || file.originalname.includes('\\')) {
+      return cb(new Error('Invalid filename: directory traversal detected'));
+    }
     // Sanitize base name: remove path separators and dangerous chars
     let base = path.basename(file.originalname, ext).replace(/[^a-zA-Z0-9-_]/g, '_');
-    // Prevent directory traversal by stripping any path
-    if (base.includes('..') || base.includes('/') || base.includes('\\')) {
-      base = 'file';
-    }
     cb(null, `${Date.now()}-${base}${ext}`);
   }
 });
@@ -70,7 +70,8 @@ const uploadVideo = multer({
 // @route   POST /api/upload
 // @desc    Upload product images (for vendor or admin) — now supports multiple files
 // @access  Private
-router.post('/', protect, authorize('vendor', 'admin'), (req, res, next) => {
+// Move protect/authorize before multer to prevent ECONNRESET on unauthenticated requests
+const uploadImagesHandler = async (req, res, next) => {
   let aborted = false;
   req.on('aborted', () => {
     aborted = true;
@@ -140,13 +141,16 @@ router.post('/', protect, authorize('vendor', 'admin'), (req, res, next) => {
       res.status(200).json({ message: 'Product images uploaded successfully', imageUrls });
     }
   });
-});
+};
+
+router.post('/', protect, authorize('vendor', 'admin'), uploadImagesHandler);
 
 
 // @route   POST /api/upload/video
 // @desc    Upload promotional video (admin only)
 // @access  Private (admin)
-router.post('/video', protect, authorize('admin'), (req, res, next) => {
+
+const uploadVideoHandler = (req, res, next) => {
   let aborted = false;
   req.on('aborted', () => {
     aborted = true;
@@ -193,6 +197,8 @@ router.post('/video', protect, authorize('admin'), (req, res, next) => {
       });
     });
   });
-});
+};
+
+router.post('/video', protect, authorize('admin'), uploadVideoHandler);
 
 module.exports = router;

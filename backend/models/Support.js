@@ -7,6 +7,9 @@ const supportSchema = new mongoose.Schema(
       ref: 'User',
       required: true
     },
+    subject: {
+      type: String
+    },
     category: {
       type: String,
       enum: ['general', 'product', 'vendor', 'account', 'other'],

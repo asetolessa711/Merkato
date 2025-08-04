@@ -58,9 +58,22 @@ app.use('/api/flags', flagRoutes);
 app.use('/api/admin/reviews', reviewModerationRoutes);
 app.use('/api/customer', customerRoutes);
 app.use('/api/email', emailInvoiceRoutes);
+
 app.use('/api/invoices', invoiceRoutes);
 app.use('/api/dev', devSeedRoute);
 app.use('/api/test-email', testEmailRoute);
+
+// Global error handler (must be after all routes)
+app.use((err, req, res, next) => {
+  console.error('[Global Error Handler]', err);
+  if (res.headersSent) {
+    return next(err);
+  }
+  res.status(err.status || 500).json({
+    message: err.message || 'Internal Server Error',
+    error: process.env.NODE_ENV === 'production' ? undefined : err.stack
+  });
+});
 
 // 🌐 Root Health Check
 app.get('/', (req, res) => {

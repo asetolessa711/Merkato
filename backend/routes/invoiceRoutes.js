@@ -23,7 +23,6 @@ router.get('/report', ensureAuth, async (req, res) => {
     }
 
     const invoices = await Invoice.find(query)
-      .populate('customer', 'name email')
       .sort({ createdAt: -1 });
 
     const totalRevenue = invoices.reduce((sum, inv) => sum + parseFloat(inv.total || 0), 0);
@@ -40,10 +39,9 @@ router.get('/report', ensureAuth, async (req, res) => {
 });
 
 // ✅ PDF DOWNLOAD ROUTE – Download a single invoice as PDF
-router.get('/:id/download', ensureAuth, async (req, res) => {
+router.get('/download/:id', ensureAuth, async (req, res) => {
   try {
     const invoice = await Invoice.findById(req.params.id)
-      .populate('customer', 'name email')
       .populate('vendor', 'storeName name email');
 
     if (!invoice) {
@@ -112,7 +110,6 @@ router.get('/:orderId', ensureAuth, async (req, res) => {
   try {
     // Find invoice by order field
     const invoice = await Invoice.findOne({ order: orderId })
-      .populate('customer', 'name email')
       .populate('vendor', 'storeName name email');
     if (!invoice) {
       return res.status(404).json({ message: 'Invoice not found' });

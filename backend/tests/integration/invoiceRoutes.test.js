@@ -1,58 +1,155 @@
+// Always load .env.test for test tokens
+const fs = require('fs');
+const envPath = require('path').resolve(__dirname, '..', '..', '.env.test');
+try {
+  const envRaw = fs.readFileSync(envPath, 'utf8');
+  console.log('[DEBUG] .env.test raw contents:\n', envRaw);
+} catch (e) {
+  console.error('[DEBUG] Could not read .env.test:', e.message);
+}
+// ...existing code...
+require('dotenv').config({ path: envPath });
+console.log('[DEBUG] (ABSOLUTE) TEST_ADMIN_TOKEN:', process.env.TEST_ADMIN_TOKEN);
+console.log('[DEBUG] (ABSOLUTE) TEST_USER_TOKEN:', process.env.TEST_USER_TOKEN);
+// Helper: Only set Authorization header if token is defined and non-empty
+function setAuth(req, token) {
+  if (token && token !== 'Bearer ') {
+    return req.set('Authorization', token);
+  }
+  return req;
+}
+console.log('[DEBUG] TEST_ADMIN_TOKEN:', process.env.TEST_ADMIN_TOKEN);
+console.log('[DEBUG] TEST_USER_TOKEN:', process.env.TEST_USER_TOKEN);
 const request = require('supertest');
 const app = require('../../server');
 const mongoose = require('mongoose');
 
 // ✅ Tokens from .env.test or CI/CD secrets
+
 const adminToken = process.env.TEST_ADMIN_TOKEN;
 const userToken = process.env.TEST_USER_TOKEN;
 
+// Fail early if tokens are missing to avoid undefined Authorization header
+beforeAll(() => {
+  if (!adminToken || !userToken || adminToken === 'Bearer ' || userToken === 'Bearer ') {
+    throw new Error(
+      '❌ TEST_ADMIN_TOKEN and/or TEST_USER_TOKEN are missing or empty in your .env.test file.\n' +
+      'Please ensure .env.test contains valid Bearer tokens for both.\n' +
+      `Current values: TEST_ADMIN_TOKEN="${adminToken}", TEST_USER_TOKEN="${userToken}"`
+    );
+  }
+});
 describe('Invoice Routes', () => {
   let testOrderId;
   let lazyOrderId;
+  let productId;
+  let invoiceId;
   const testEmail = 'test@example.com';
 
   beforeAll(async () => {
+    // Dynamically fetch a real product ID from the database
+    const Product = require('../../models/Product');
+    const User = require('../../models/User');
+    const product = await Product.findOne();
+    if (!product) {
+      throw new Error('❌ No products found in DB. Please seed products first.');
+    }
+    productId = product._id;
+    // Print product details for debugging
+    console.log('[DEBUG] Test Product:', {
+      _id: product._id,
+      name: product.name,
+      stock: product.stock,
+      vendor: product.vendor
+    });
+    // Fetch vendor details
+    const vendor = await User.findById(product.vendor);
+    console.log('[DEBUG] Test Product Vendor:', vendor ? {
+      _id: vendor._id,
+      name: vendor.name,
+      roles: vendor.roles,
+      email: vendor.email
+    } : 'Vendor not found');
+
+    // Print test user details
+    const decoded = require('jsonwebtoken').decode(userToken.split(' ')[1]);
+    const testUser = await User.findById(decoded._id || decoded.id);
+    console.log('[DEBUG] Test User:', testUser ? {
+      _id: testUser._id,
+      name: testUser.name,
+      roles: testUser.roles,
+      email: testUser.email
+    } : 'User not found');
+
     // Dynamically create a real order for invoice tests
     const orderRes = await request(app)
       .post('/api/orders')
       .set('Authorization', userToken)
       .send({
-        products: [
+        cartItems: [
           {
-            product: '64c529a1998764430f000000', // Replace with a valid seeded product ID
+            product: productId,
             quantity: 1
           }
         ],
-        total: 19.99,
-        currency: 'USD',
-        shippingAddress: '123 Invoice Lane'
+        shippingAddress: {
+          fullName: 'Test User',
+          city: 'Addis Ababa',
+          country: 'ET'
+        },
+        paymentMethod: 'cod',
+        deliveryOption: {
+          name: 'Standard',
+          cost: 10,
+          days: 3
+        }
       });
 
-    if (![201, 200].includes(orderRes.statusCode) || !orderRes.body._id) {
+    if (![201, 200].includes(orderRes.statusCode) || !orderRes.body.order || !orderRes.body.order._id) {
+      console.error('[TEST DEBUG] Order creation failed:', {
+        status: orderRes.statusCode,
+        body: orderRes.body
+      });
       throw new Error('❌ Could not create test order. Failing suite to ensure test data is present.');
     }
-    testOrderId = orderRes.body._id;
+    testOrderId = orderRes.body.order._id;
+
+    // Fetch the invoice for the created order
+    const Invoice = require('../../models/Invoice');
+    const invoice = await Invoice.findOne({ order: testOrderId });
+    if (!invoice) {
+      throw new Error('❌ Could not find invoice for created order.');
+    }
+    invoiceId = invoice._id;
 
     // Create a second order to test lazy invoice generation
     const lazyOrderRes = await request(app)
       .post('/api/orders')
       .set('Authorization', userToken)
       .send({
-        products: [
+        cartItems: [
           {
-            product: '64c529a1998764430f000000',
+            product: productId,
             quantity: 1
           }
         ],
-        total: 9.99,
-        currency: 'USD',
-        shippingAddress: 'Lazy Invoice Lane'
+        shippingAddress: {
+          fullName: 'Test User',
+          city: 'Addis Ababa',
+          country: 'ET'
+        },
+        paymentMethod: 'cod',
+        deliveryOption: {
+          name: 'Standard',
+          cost: 10,
+          days: 3
+        }
       });
 
-    if (![201, 200].includes(lazyOrderRes.statusCode) || !lazyOrderRes.body._id) {
+    if (![201, 200].includes(lazyOrderRes.statusCode) || !lazyOrderRes.body.order || !lazyOrderRes.body.order._id) {
       throw new Error('❌ Could not create lazy test order. Failing suite to ensure test data is present.');
     }
-    lazyOrderId = lazyOrderRes.body._id;
+    lazyOrderId = lazyOrderRes.body.order._id;
   });
 
   describe('GET /api/invoices/:orderId', () => {
@@ -121,7 +218,7 @@ describe('Invoice Routes', () => {
 
     test('should allow admin to send invoice email', async () => {
       if (!testOrderId) {
-        console.warn('⚠️ Skipping test — order not created.');
+        setAuth(request(app).post('/api/invoices/email'), adminToken)
         return;
       }
       const res = await request(app)
@@ -137,7 +234,7 @@ describe('Invoice Routes', () => {
 
     test('should block email attempt by non-admin user', async () => {
       if (!testOrderId) {
-        console.warn('⚠️ Skipping test — order not created.');
+        setAuth(request(app).post('/api/invoices/email'), userToken)
         return;
       }
       const res = await request(app)
@@ -150,13 +247,13 @@ describe('Invoice Routes', () => {
 
   describe('GET /api/invoices/download/:orderId', () => {
     test('should allow PDF invoice download if implemented', async () => {
-      if (!testOrderId) {
-        console.warn('⚠️ Skipping test — order not created.');
+      if (!invoiceId) {
+        console.warn('⚠️ Skipping test — invoice not found.');
         return;
       }
 
       const res = await request(app)
-        .get(`/api/invoices/download/${testOrderId}`)
+        .get(`/api/invoices/download/${invoiceId}`)
         .set('Authorization', userToken)
         .buffer()
         .parse((res, cb) => {
@@ -174,16 +271,16 @@ describe('Invoice Routes', () => {
     });
 
     test('should return 401/403 for missing token', async () => {
-      if (!testOrderId) {
-        console.warn('⚠️ Skipping test — order not created.');
+      if (!invoiceId) {
+        console.warn('⚠️ Skipping test — invoice not found.');
         return;
       }
-      const res = await request(app).get(`/api/invoices/download/${testOrderId}`);
+      const res = await request(app).get(`/api/invoices/download/${invoiceId}`);
       expect([401, 403]).toContain(res.statusCode);
     });
   });
 
   afterAll(async () => {
-    await mongoose.connection.close();
+      await mongoose.connection.close();
+    });
   });
-});

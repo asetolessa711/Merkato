@@ -186,7 +186,7 @@ router.post('/', protect, authorize('customer'), async (req, res) => {
       paymentMethod,
       shippingAddress,
       deliveryOption,
-      status: 'processing',
+      status: 'pending',
       orderDate: new Date()
     });
 

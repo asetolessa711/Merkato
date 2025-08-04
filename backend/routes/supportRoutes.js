@@ -4,17 +4,37 @@ const Support = require('../models/Support');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
 // Submit support message (customer/vendor)
+// Accepts subject and message, returns created ticket
 router.post('/', protect, authorize('customer', 'vendor', 'admin'), async (req, res) => {
   try {
+    const { subject, message, category } = req.body;
+    if (!message) {
+      return res.status(400).json({ message: 'Message is required' });
+    }
     const support = new Support({
       user: req.user._id,
-      category: req.body.category,
-      message: req.body.message
+      category: category || 'general',
+      message,
+      subject: subject || undefined
     });
+    // Ensure subject is included in the returned object
     await support.save();
-    res.status(201).json({ message: 'Support message submitted' });
+    // Return the created ticket (including _id)
+    res.status(201).json(support);
   } catch (err) {
     res.status(500).json({ message: 'Failed to submit support request' });
+  }
+});
+// Allow users to view their own tickets
+router.get('/user', protect, authorize('customer', 'vendor', 'admin'), async (req, res) => {
+  try {
+    const tickets = await Support.find({ user: req.user._id }).sort({ createdAt: -1 });
+    if (!tickets || tickets.length === 0) {
+      return res.status(404).json({ message: 'No tickets found' });
+    }
+    res.json(tickets);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to load user tickets' });
   }
 });
 

@@ -28,6 +28,7 @@ const User = require('./models/User');
 // Seed users with known password 'Password123!'
 const users = [
   {
+    _id: '000000000000000000000002',
     name: 'Customer One',
     email: 'customer@test.com',
     password: 'Password123!',
@@ -35,6 +36,7 @@ const users = [
     country: 'ET'
   },
   {
+    _id: '000000000000000000000003',
     name: 'Vendor One',
     email: 'vendor@test.com',
     password: 'Password123!',
@@ -42,6 +44,7 @@ const users = [
     country: 'ET'
   },
   {
+    _id: '000000000000000000000001',
     name: 'Admin One',
     email: 'admin@test.com',
     password: 'Password123!',
