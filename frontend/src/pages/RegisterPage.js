@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useMessage } from '../context/MessageContext';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import axios from 'axios';
 import styles from './RegisterPage.module.css';
 
 function RegisterPage() {
+  const { showMessage } = useMessage();
   // Remove rerender workaround, not needed after refactor
   const navigate = useNavigate();
   const location = useLocation();
@@ -17,9 +19,9 @@ function RegisterPage() {
     country: '',
     roles: prefillRole ? [prefillRole] : []
   });
-  const [msg, setMsg] = useState('');
   const [user, setUser] = useState(null);
   const [isError, setIsError] = useState(false);
+  const [msg, setMsg] = useState("");
   const [fieldError, setFieldError] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -34,8 +36,8 @@ function RegisterPage() {
       submit: 'Register',
       login: 'Already have an account? Sign in',
       success: 'Account created!',
-      fail: 'Registration failed.',
-      duplicate: 'Email already exists. Please log in.',
+      fail: 'We couldn’t create your account. Please try again.',
+      duplicate: 'This email is already registered. Please log in or use a different email.',
     }
   };
   const t = labels[lang] || labels.en;
@@ -53,11 +55,15 @@ function RegisterPage() {
 
   const validate = () => {
     const errors = {};
-    if (!form.name) errors.name = 'Name is required.';
-    if (!form.email || !/\S+@\S+\.\S+/.test(form.email)) errors.email = 'Valid email required.';
-    if (!form.password || form.password.length < 6) errors.password = 'Password must be at least 6 characters.';
-    if (!form.country) errors.country = 'Country is required.';
-    if (!form.roles.length) errors.roles = 'Please select a role.';
+    const name = form.name.trim();
+    const email = form.email.trim();
+    const password = form.password;
+    const country = form.country.trim();
+    if (!name) errors.name = 'Please enter your full name.';
+    if (!email || !/\S+@\S+\.\S+/.test(email)) errors.email = 'Please enter a valid email address (e.g., user@example.com).';
+    if (!password || password.trim().length < 6) errors.password = 'Your password must be at least 6 characters.';
+    if (!country) errors.country = 'Please enter your country.';
+    if (!form.roles.length) errors.roles = 'Please select your role.';
     return errors;
   };
 
@@ -79,8 +85,8 @@ function RegisterPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    setMsg('');
     setIsError(false);
+    setMsg("");
     const errors = validate();
     if (Object.keys(errors).length > 0) {
       setFieldError(errors);
@@ -93,10 +99,18 @@ function RegisterPage() {
       const res = await axios.post('/api/auth/register', form);
       localStorage.setItem('token', res.data.token);
       setUser(res.data.user || res.data);
+      // Optionally, show a global success message before redirecting
+      // setMsg(t.success);
+      // Reset form fields if not redirecting immediately
+      // setForm({ name: '', email: '', password: '', country: '', roles: [] });
       navigate('/');
     } catch (err) {
       if (err.response?.status === 409) {
         setMsg(t.duplicate);
+      } else if (err.response?.data?.errors) {
+        // Clear all field errors, then set backend errors only
+        setFieldError({ ...err.response.data.errors });
+        setMsg(t.fail);
       } else {
         setMsg(t.fail);
       }
@@ -105,6 +119,8 @@ function RegisterPage() {
       setIsLoading(false);
     }
   };
+
+  // msg and isError already declared above, do not redeclare
 
   if (user) {
     return (
@@ -123,7 +139,16 @@ function RegisterPage() {
   return (
     <div className={styles.registerContainer}>
       <h2 className={styles.title}>{t.title}</h2>
-      {msg && <p className={`${styles.message} ${isError ? styles.error : styles.success}`}>{msg}</p>}
+      {/* Global message system now handles feedback */}
+      {msg && (
+        <p
+          className={`${styles.message} ${isError ? styles.error : styles.success}`}
+          data-testid="global-message"
+          role="alert"
+        >
+          {msg}
+        </p>
+      )}
 
       {/* DEBUG: Show fieldError.email for test visibility */}
       <div data-testid="debug-email-error">{fieldError.email}</div>

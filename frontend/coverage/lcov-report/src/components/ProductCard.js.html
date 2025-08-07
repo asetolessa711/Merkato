@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">10% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>1/10</span>
+                <span class='fraction'>0/9</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/34</span>
+                <span class='fraction'>0/22</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/3</span>
+                <span class='fraction'>0/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">10% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>1/10</span>
+                <span class='fraction'>0/9</span>
             </div>
         
             
@@ -140,27 +140,7 @@
 <a name='L75'></a><a href='#L75'>75</a>
 <a name='L76'></a><a href='#L76'>76</a>
 <a name='L77'></a><a href='#L77'>77</a>
-<a name='L78'></a><a href='#L78'>78</a>
-<a name='L79'></a><a href='#L79'>79</a>
-<a name='L80'></a><a href='#L80'>80</a>
-<a name='L81'></a><a href='#L81'>81</a>
-<a name='L82'></a><a href='#L82'>82</a>
-<a name='L83'></a><a href='#L83'>83</a>
-<a name='L84'></a><a href='#L84'>84</a>
-<a name='L85'></a><a href='#L85'>85</a>
-<a name='L86'></a><a href='#L86'>86</a>
-<a name='L87'></a><a href='#L87'>87</a>
-<a name='L88'></a><a href='#L88'>88</a>
-<a name='L89'></a><a href='#L89'>89</a>
-<a name='L90'></a><a href='#L90'>90</a>
-<a name='L91'></a><a href='#L91'>91</a>
-<a name='L92'></a><a href='#L92'>92</a>
-<a name='L93'></a><a href='#L93'>93</a>
-<a name='L94'></a><a href='#L94'>94</a>
-<a name='L95'></a><a href='#L95'>95</a>
-<a name='L96'></a><a href='#L96'>96</a>
-<a name='L97'></a><a href='#L97'>97</a>
-<a name='L98'></a><a href='#L98'>98</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L78'></a><a href='#L78'>78</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -180,26 +160,6 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -233,7 +193,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -279,35 +239,15 @@ function <span class="fstat-no" title="function not covered" >ProductCard(</span
 <span class="cstat-no" title="statement not covered" >  return (</span>
     &lt;div className={`product-card theme-${theme} size-${size} ${isDeal ? 'deal-card' : ''} ${isOutOfStock ? 'out-of-stock-card' : ''}`}&gt;
       {/* Product Image */}
-      &lt;img src={imageSrc} alt={product.name} className="product-image" /&gt;
+      &lt;div className="product-card-image-container"&gt;
+        &lt;img src={imageSrc} alt={product.name} loading="lazy" /&gt;
+      &lt;/div&gt;
       {/* Product Info */}
       &lt;div className="product-info"&gt;
         &lt;h3 className="product-title"&gt;{product.name}&lt;/h3&gt;
         &lt;div className="product-price"&gt;
-          {isDeal &amp;&amp; &lt;span className="discount-text"&gt;{discountText}&lt;/span&gt;}
           &lt;span&gt;${finalPrice}&lt;/span&gt;
         &lt;/div&gt;
-        {colorOptions.length &gt; 0 &amp;&amp; (
-          &lt;div className="color-options"&gt;
-            {colorOptions.map(<span class="fstat-no" title="function not covered" >(c</span>olor, i) =&gt; (
-<span class="cstat-no" title="statement not covered" >              &lt;span key={i} className="color-swatch" style={{ backgroundColor: color }} title={color} /&gt;</span>
-            ))}
-          &lt;/div&gt;
-        )}
-        {/* Optional Promo Badge */}
-        {product.promotion?.badgeText &amp;&amp; (
-          &lt;div className="badge-text"&gt;{product.promotion.badgeText}&lt;/div&gt;
-        )}
-        {/* Deal Timer */}
-        {isDeal &amp;&amp; (
-          &lt;div className="deal-extra"&gt;
-            &lt;span className="deal-timer"&gt;⏱️ Limited Time Offer&lt;/span&gt;
-          &lt;/div&gt;
-        )}
-        {/* Stock Info */}
-        {isOutOfStock &amp;&amp; (
-          &lt;div className="stock-status"&gt;🚫 Out of Stock&lt;/div&gt;
-        )}
         {/* Product Description */}
         {product.description &amp;&amp; (
           &lt;div className="product-description"&gt;{product.description}&lt;/div&gt;
@@ -323,14 +263,14 @@ function <span class="fstat-no" title="function not covered" >ProductCard(</span
         &lt;/button&gt;
         {/* CTA */}
         &lt;Link to={`/product/${product._id}`} className="btn-small"&gt;
-          {isDeal ? 'Grab Deal' : 'Shop Now'}
+          Shop Now
         &lt;/Link&gt;
       &lt;/div&gt;
     &lt;/div&gt;
   );
 }
 &nbsp;
-ProductCard.propTypes = {
+<span class="cstat-no" title="statement not covered" >ProductCard.propTypes = {</span>
   product: PropTypes.shape({
     _id: PropTypes.string.isRequired,
     name: PropTypes.string.isRequired,
@@ -361,7 +301,7 @@ export default ProductCard;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-02T06:05:35.032Z
+                at 2025-08-05T15:56:23.799Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

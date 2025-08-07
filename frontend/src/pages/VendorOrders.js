@@ -9,15 +9,16 @@ import {
 import MerkatoFooter from '../components/MerkatoFooter';
 import { NavLink } from 'react-router-dom';
 import styles from '../layouts/VendorLayout.module.css'; // Make sure this path is correct
+import { useMessage } from '../context/MessageContext';
 
 function VendorOrders() {
   const [orders, setOrders] = useState([]);  
-  const [msg, setMsg] = useState('');
   const [buyerFilter, setBuyerFilter] = useState('');
   const [productFilter, setProductFilter] = useState('');
   const [stats, setStats] = useState(null);
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
+  const { showMessage } = useMessage();
 
   const token = localStorage.getItem('token');
   const headers = { Authorization: `Bearer ${token}` };
@@ -30,19 +31,20 @@ function VendorOrders() {
         setOrders(res.data.orders || res.data);
         if (res.data.stats) setStats(res.data.stats);
       } catch (err) {
-        setMsg('Failed to load your orders');
+        showMessage('Failed to load your orders', 'error');
       }
     };
     fetchOrders();
-  }, [token]);
+  }, [token, showMessage]);
 
   const markAsShipped = async (orderId) => {
     if (window.confirm('Mark this order as Shipped?')) {
       try {
         await axios.put(`/api/orders/${orderId}/mark-shipped`, {}, { headers });
+        showMessage('Order marked as shipped!', 'success');
         window.location.reload();
       } catch (err) {
-        alert('Failed to update order status');
+        showMessage('Failed to update order status', 'error');
       }
     }
   };
@@ -119,7 +121,7 @@ function VendorOrders() {
       <h2 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '20px', color: '#00B894' }}>
         Orders for My Products
       </h2>
-      {msg && <p style={{ color: '#e74c3c' }}>{msg}</p>}
+      {/* msg removed, global message used instead */}
       {stats && <p><strong>📊 Total Orders from {stats.country}:</strong> {stats.totalOrders}</p>}
 
       {/* Filter Options */}

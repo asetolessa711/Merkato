@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">46.15% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>6/13</span>
+                <span class='fraction'>0/13</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">75% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>6/8</span>
+                <span class='fraction'>0/8</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">33.33% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>2/6</span>
+                <span class='fraction'>0/6</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">46.15% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>6/13</span>
+                <span class='fraction'>0/13</span>
             </div>
         
             
@@ -166,20 +166,18 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -193,8 +191,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">18x</span>
-<span class="cline-any cline-yes">18x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -254,7 +254,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -263,10 +263,10 @@
 import { Link, useLocation } from 'react-router-dom';
 import PropTypes from 'prop-types';
 &nbsp;
-function CustomerSidebar({ user }) {
-  const location = useLocation();
+function <span class="fstat-no" title="function not covered" >CustomerSidebar(</span>{ user }) {
+  const location = <span class="cstat-no" title="statement not covered" >useLocation();</span>
 &nbsp;
-  const menuItems = [
+  const menuItems = <span class="cstat-no" title="statement not covered" >[</span>
     { path: '/account', icon: '👤', label: 'Dashboard' },
     { path: '/account/orders', icon: '📦', label: 'My Orders' },
     { path: '/favorites', icon: '❤️', label: 'Wishlist' },
@@ -275,7 +275,7 @@ function CustomerSidebar({ user }) {
     { path: '/account/guide', icon: '📖', label: 'Guide' }
   ];
 &nbsp;
-  return (
+<span class="cstat-no" title="statement not covered" >  return (</span>
     &lt;aside
       role="navigation"
       style={{
@@ -290,9 +290,9 @@ function CustomerSidebar({ user }) {
         zIndex: 1
       }}
     &gt;
-      {menuItems.map(item =&gt; {
-        const isActive = location.pathname.startsWith(item.path);
-        return (
+      {menuItems.map(<span class="fstat-no" title="function not covered" >it</span>em =&gt; {
+        const isActive = <span class="cstat-no" title="statement not covered" >location.pathname.startsWith(item.path);</span>
+<span class="cstat-no" title="statement not covered" >        return (</span>
           &lt;Link
             key={item.path}
             to={item.path}
@@ -352,7 +352,7 @@ function CustomerSidebar({ user }) {
   );
 }
 &nbsp;
-CustomerSidebar.propTypes = {
+<span class="cstat-no" title="statement not covered" >CustomerSidebar.propTypes = {</span>
   user: PropTypes.object
 };
 &nbsp;
@@ -364,7 +364,7 @@ export default CustomerSidebar;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-02T06:05:35.032Z
+                at 2025-08-05T15:56:23.799Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

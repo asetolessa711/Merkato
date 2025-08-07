@@ -1,0 +1,15 @@
+name: Performance Budget
+on:
+  pull_request:
+    branches: [ main ]
+jobs:
+  lighthouse:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Lighthouse CI
+        run: npm install -g @lhci/cli
+      - name: Run Lighthouse CI (example on localhost)
+        run: |
+          lhci autorun || echo "Performance budget exceeded or LHCI not configured"
+        continue-on-error: true

@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import VendorCard from '../components/VendorCard';
 import styles from '../layouts/VendorLayout.module.css';
+import { useMessage } from '../context/MessageContext';
 
 function VendorProfile() {
   const [vendor, setVendor] = useState(null);
@@ -14,10 +15,10 @@ function VendorProfile() {
     bio: '',
     country: ''
   });
-  const [msg, setMsg] = useState('');
   const [avatarFile, setAvatarFile] = useState(null);
   const token = localStorage.getItem('token');
   const headers = { Authorization: `Bearer ${token}` };
+  const { showMessage } = useMessage();
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -34,11 +35,11 @@ function VendorProfile() {
           country: data.country || ''
         });
       } catch (err) {
-        setMsg('Could not load profile.');
+        showMessage('Could not load profile.', 'error');
       }
     };
     fetchProfile();
-  }, []);
+  }, [showMessage]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -65,26 +66,24 @@ function VendorProfile() {
       );
       const imageUrl = uploadRes.data.secure_url;
       setForm({ ...form, logo: imageUrl });
-      setMsg('Avatar uploaded successfully.');
+      showMessage('Avatar uploaded successfully.', 'success');
     } catch (err) {
-      console.error(err);
-      setMsg('Upload failed.');
+      showMessage('Upload failed.', 'error');
     }
   };
 
   const handleSave = async () => {
     try {
       await axios.put('/api/vendor/profile', form, { headers });
-      setMsg('Profile updated successfully.');
+      showMessage('Profile updated successfully.', 'success');
     } catch (err) {
-      setMsg('Failed to update profile.');
+      showMessage('Failed to update profile.', 'error');
     }
   };
 
   return (
     <div className={styles.contentArea}>
       <h2>🧑‍💼 Vendor Profile Editor</h2>
-      {msg && <p style={{ color: '#0984e3', fontWeight: 'bold' }}>{msg}</p>}
 
       <div style={{ display: 'flex', gap: '40px', flexWrap: 'wrap' }}>
         {/* === Live Preview Card === */}

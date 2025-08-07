@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
+import { useMessage } from '../context/MessageContext';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 function CartPage() {
   const [cart, setCart] = useState([]);
-  const [msg, setMsg] = useState('');
+  const { showMessage } = useMessage();
   const navigate = useNavigate();
   const token = localStorage.getItem('merkato-token'); // ✅ Use consistent token key
 
@@ -29,24 +30,25 @@ function CartPage() {
     }
   }, [navigate, token]);
 
-  const updateAndSaveCart = (newCart) => {
+  const updateAndSaveCart = (newCart, actionMsg = null, type = 'success') => {
     setCart(newCart);
     localStorage.setItem('merkato-cart', JSON.stringify({
       items: newCart,
       timestamp: Date.now()
     }));
+    if (actionMsg) showMessage(actionMsg, type);
   };
 
   const updateQuantity = (index, amount) => {
     const updated = [...cart];
     updated[index].quantity += amount;
     if (updated[index].quantity < 1) updated[index].quantity = 1;
-    updateAndSaveCart(updated);
+    updateAndSaveCart(updated, 'Cart updated!', 'success');
   };
 
   const removeItem = (index) => {
     const updated = cart.filter((_, i) => i !== index);
-    updateAndSaveCart(updated);
+    updateAndSaveCart(updated, 'Item removed from cart.', 'success');
   };
 
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -114,7 +116,7 @@ function CartPage() {
 
       <h3 style={{ textAlign: 'right', marginTop: 20 }}>Total: ${total.toFixed(2)}</h3>
 
-      {msg && <p style={{ color: msg.includes('✅') ? 'green' : 'red', marginTop: 10 }}>{msg}</p>}
+      {/* Global message system now handles feedback */}
 
       <div style={{ textAlign: 'right' }}>
         <button

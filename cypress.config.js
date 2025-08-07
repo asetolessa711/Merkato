@@ -7,10 +7,10 @@ module.exports = defineConfig({
     baseUrl: 'http://localhost:3000',
 
     // Where Cypress looks for support logic
-    supportFile: 'cypress/support/e2e.js',
+    supportFile: 'frontend/cypress/support/e2e.js',
 
     // Where Cypress looks for test files
-    specPattern: 'cypress/e2e/**/*.cy.{js,jsx}',
+    specPattern: 'frontend/cypress/e2e/**/*.cy.{js,jsx}',
 
     // Exclude example/specs or legacy files (optional)
     excludeSpecPattern: ['**/examples/*'],

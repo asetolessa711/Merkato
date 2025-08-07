@@ -1,3 +1,4 @@
+import './commands';
 // cypress/support/e2e.js
 
 // Import commands.js using ES2015 syntax:

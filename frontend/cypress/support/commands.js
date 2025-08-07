@@ -1,3 +1,18 @@
+import 'cypress-file-upload';
+
+// Custom command to seed orders for tests
+Cypress.Commands.add('seedOrders', () => {
+  // Example: call backend test endpoint to seed orders
+  cy.request('POST', '/api/test/seed-orders');
+});
+// Custom command to log in as admin
+Cypress.Commands.add('loginAsAdmin', () => {
+  cy.visit('/login');
+  cy.get('input[name="email"]').type('admin@test.com');
+  cy.get('input[name="password"]').type('Password123!');
+  cy.get('button[type="submit"]').click();
+  cy.url().should('include', '/admin');
+});
 // ***********************************************
 // This example commands.js shows you how to
 // create various custom commands and overwrite

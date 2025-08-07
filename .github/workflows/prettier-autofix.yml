@@ -1,0 +1,28 @@
+# Prettier auto-fix workflow: formats code and creates a PR with fixes
+name: "Prettier Auto-Fix"
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+jobs:
+  autofix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - name: Install Prettier
+        run: npm install --global prettier
+      - name: Run Prettier auto-fix
+        run: |
+          prettier --write .
+      - name: Commit and push changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git diff --cached --quiet || git commit -m "chore: auto-fix code style with Prettier"
+          git push || echo "No changes to commit"

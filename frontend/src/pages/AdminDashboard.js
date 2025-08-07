@@ -59,6 +59,7 @@ function AdminDashboard() {
   const totalRevenue = parseFloat(revenue?.totalRevenue || 0);
   const profit = (totalRevenue - totalExpenses).toFixed(2);
 
+  const fallback = val => val === null || val === undefined || val === '' ? <span style={{ color: '#aaa' }}>Not provided</span> : val;
   const Card = ({ title, children }) => (
     <div style={{
       background: 'white',
@@ -67,7 +68,7 @@ function AdminDashboard() {
       marginBottom: '20px',
       boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
     }}>
-      <h3>{title}</h3>
+      <h3 role="heading" aria-level="3">{title}</h3>
       {children}
     </div>
   );
@@ -81,16 +82,16 @@ function AdminDashboard() {
   // Fallback UI if error or no data
   if (error) {
     return (
-      <div style={{ padding: '40px' }}>
+      <div style={{ padding: '40px' }} role="alert">
         <p>Welcome to your admin panel.</p>
-        <p style={{ color: 'red' }}>{msg}</p>
+        <p style={{ color: 'red' }}>{msg || 'Access denied or error fetching admin data.'}</p>
       </div>
     );
   }
 
   return (
     <>
-      {msg && <p>{msg}</p>}
+      {msg && <p role="status">{msg}</p>}
 
       {/* Admin Video Upload Section */}
       <AdminVideoUpload
@@ -102,14 +103,14 @@ function AdminDashboard() {
       />
       {promoVideoUrl && (
         <div style={{ margin: '1rem 0' }}>
-          <h4>Current Promotional Video</h4>
-          <video controls width="400" src={promoVideoUrl} />
+          <h4 role="heading" aria-level="4">Current Promotional Video</h4>
+          <video controls width="400" src={promoVideoUrl} aria-label="Promotional Video" />
         </div>
       )}
 
       <Card title="Financial Overview">
         <ResponsiveContainer width="100%" height={250}>
-          <BarChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 5 }}>
+          <BarChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 5 }} aria-label="Financial Chart">
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="name" />
             <YAxis />
@@ -122,30 +123,30 @@ function AdminDashboard() {
       {countryData ? (
         <Card title="Country Admin Summary">
           <ul>
-            <li><strong>Users:</strong> {countryData.totalUsers}</li>
-            <li><strong>Vendors:</strong> {countryData.totalVendors}</li>
-            <li><strong>Products:</strong> {countryData.totalProducts}</li>
-            <li><strong>Revenue:</strong> ${parseFloat(countryData.totalRevenue).toFixed(2)}</li>
+            <li><strong>Users:</strong> {fallback(countryData.totalUsers)}</li>
+            <li><strong>Vendors:</strong> {fallback(countryData.totalVendors)}</li>
+            <li><strong>Products:</strong> {fallback(countryData.totalProducts)}</li>
+            <li><strong>Revenue:</strong> ${countryData.totalRevenue !== undefined && countryData.totalRevenue !== null ? parseFloat(countryData.totalRevenue).toFixed(2) : <span style={{ color: '#aaa' }}>Not provided</span>}</li>
           </ul>
         </Card>
       ) : (
         <>
           <Card title="Flagged Products (AI Escalation)">
-            {flags.length === 0 ? <p>No issues found.</p> : (
+            {flags.length === 0 ? <p role="status">No issues found.</p> : (
               <ul>
                 {flags.map((f, i) => (
-                  <li key={i}>{f.name} – Reason: {f.reason}</li>
+                  <li key={i}>{fallback(f.name)} – Reason: {fallback(f.reason)}</li>
                 ))}
               </ul>
             )}
           </Card>
 
           <Card title="Flagged Reviews">
-            {reviews.length === 0 ? <p>No reviews flagged.</p> : (
+            {reviews.length === 0 ? <p role="status">No reviews flagged.</p> : (
               <ul>
                 {reviews.map((r, i) => (
                   <li key={i}>
-                    {r.product?.name || 'Product'} – "{r.comment}" ({r.status}) by {r.user?.name || 'User'}
+                    {fallback(r.product?.name)} – "{fallback(r.comment)}" ({fallback(r.status)}) by {fallback(r.user?.name)}
                   </li>
                 ))}
               </ul>
@@ -154,9 +155,9 @@ function AdminDashboard() {
 
           <Card title="All Users">
             <ul>
-              {users.map(u => (
+              {users.length === 0 ? <li role="status">No users found.</li> : users.map(u => (
                 <li key={u._id}>
-                  {u.name} ({u.role}) – {u.email} {u.country && `– ${u.country}`}
+                  {fallback(u.name)} ({fallback(u.role)}) – {fallback(u.email)} {u.country ? `– ${u.country}` : ''}
                 </li>
               ))}
             </ul>
@@ -164,9 +165,9 @@ function AdminDashboard() {
 
           <Card title="All Products">
             <ul>
-              {products.map(p => (
+              {products.length === 0 ? <li role="status">No products found.</li> : products.map(p => (
                 <li key={p._id}>
-                  {p.name} – ${p.price} – {p.category} by {p.vendor?.name || 'Vendor'}
+                  {fallback(p.name)} – ${p.price !== undefined && p.price !== null ? p.price : <span style={{ color: '#aaa' }}>Not provided</span>} – {fallback(p.category)} by {fallback(p.vendor?.name)}
                 </li>
               ))}
             </ul>

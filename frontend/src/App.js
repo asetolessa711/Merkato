@@ -69,6 +69,8 @@ import ReviewModeration from './components/admin/ReviewModeration';
 import FeedbackPopup from './components/FeedbackPopup';
 import FloatingPromoButton from './components/FloatingPromoButton';
 import ProtectedRoute from './components/ProtectedRoute';
+import { MessageProvider } from './context/MessageContext';
+import GlobalMessage from './components/GlobalMessage';
 
 const DirectChatWrapper = () => {
   const { userId } = useParams();
@@ -95,7 +97,8 @@ function App() {
 
   return (
     <BrowserRouter>
-      <>
+      <MessageProvider>
+        <GlobalMessage />
         <Routes>
           {/* Public Pages */}
           <Route path="/" element={
@@ -184,7 +187,7 @@ function App() {
 
         <FeedbackPopup visible={showFeedback} onClose={() => setShowFeedback(false)} lang={lang} />
         <FloatingPromoButton setShowFeedback={setShowFeedback} />
-      </>
+      </MessageProvider>
     </BrowserRouter>
   );
 }

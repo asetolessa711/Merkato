@@ -3,14 +3,15 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import MerkatoFooter from '../components/MerkatoFooter';
 import styles from '../layouts/VendorLayout.module.css';
+import { useMessage } from '../context/MessageContext';
 
 const VendorInvoices = () => {
   const [invoices, setInvoices] = useState([]);
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [msg, setMsg] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [search, setSearch] = useState('');
+  const { showMessage } = useMessage();
 
   const token = localStorage.getItem('token');
   const headers = { Authorization: `Bearer ${token}` };
@@ -23,14 +24,18 @@ const VendorInvoices = () => {
         setTotalRevenue(res.data.totalRevenue || 0);
         setLoading(false);
       } catch (err) {
-        setMsg('Error loading invoices.');
+        showMessage('Error loading invoices.', 'error');
         setLoading(false);
       }
     };
     fetchInvoices();
-  }, []);
+  }, [showMessage]);
 
   const exportCSV = () => {
+    if (!invoices.length) {
+      showMessage('No invoices to export.', 'error');
+      return;
+    }
     const csvRows = [['Invoice ID', 'Customer', 'Total', 'Commission', 'Net Earnings', 'Status', 'Created At']];
     invoices.forEach(inv => {
       csvRows.push([
@@ -51,6 +56,7 @@ const VendorInvoices = () => {
     a.download = 'vendor_invoices.csv';
     a.click();
     URL.revokeObjectURL(url);
+    showMessage('CSV exported!', 'success');
   };
 
   const downloadPDF = (invoiceId) => {
@@ -81,8 +87,6 @@ const VendorInvoices = () => {
   return (
     <div className={styles.contentArea}>
       <h2 style={{ color: '#00B894', fontWeight: 'bold' }}>🧾 My Invoices</h2>
-
-      {msg && <p style={{ color: '#e74c3c' }}>{msg}</p>}
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', margin: '20px 0' }}>
         <input

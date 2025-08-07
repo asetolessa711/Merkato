@@ -58,11 +58,34 @@ describe('Order Routes', () => {
   });
 
   describe('POST /api/orders', () => {
-    test('should fail without token', async () => {
+
+    test('should fail without token and missing guest info', async () => {
       const res = await request(app)
         .post('/api/orders')
         .send({ products: [], total: 10 });
-      expect([401, 403]).toContain(res.statusCode);
+      expect([401, 403, 400]).toContain(res.statusCode);
+    });
+
+    test('should allow guest checkout with required info and return confirmation message', async () => {
+      // Simulate guest checkout: no token, but provide guest info
+      const res = await request(app)
+        .post('/api/orders')
+        .send({
+          products: [{ product: testProductId, quantity: 1 }],
+          total: 24.99,
+          currency: 'USD',
+          shippingAddress: '123 Guest Street',
+          guest: {
+            name: 'Guest Buyer',
+            email: 'guest@example.com',
+            phone: '1234567890'
+          }
+        });
+      // Accept 201 or 200 as success
+      expect([201, 200]).toContain(res.statusCode);
+      expect(res.body).toHaveProperty('message');
+      // Optionally: check for order id or confirmation
+      // expect(res.body).toHaveProperty('_id');
     });
 
     test('should fail with invalid data', async () => {

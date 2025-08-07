@@ -12,6 +12,7 @@ const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const adminOrdersRoutes = require('./routes/adminOrders');
 const vendorRoutes = require('./routes/vendorRoutes');
 const vendorPromoRoutes = require('./routes/vendorPromoRoutes');
 const favoriteRoutes = require('./routes/favoriteRoutes');
@@ -28,6 +29,7 @@ const emailInvoiceRoutes = require('./routes/emailInvoiceRoutes');
 const invoiceRoutes = require('./routes/invoiceRoutes');
 const devSeedRoute = require('./routes/devSeedRoute');
 const testEmailRoute = require('./routes/testEmailRoute');
+const testSeedOrdersRoute = require('./routes/testSeedOrdersRoute');
 
 // 🚀 Initialize Express App
 const app = express();
@@ -39,12 +41,14 @@ app.set('trust proxy', 1); // This fixes the express-rate-limit warning
 app.use(express.json());
 app.use(cors());
 app.use('/uploads', express.static(path.join(__dirname, '/uploads')));
+app.use('/api', testSeedOrdersRoute);
 
 // 📦 API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/admin/orders', adminOrdersRoutes);
 app.use('/api/vendor', vendorRoutes);
 app.use('/api/vendor-promos', vendorPromoRoutes);
 app.use('/api/favorites', favoriteRoutes);

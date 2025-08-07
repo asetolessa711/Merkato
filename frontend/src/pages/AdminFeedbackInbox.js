@@ -1,12 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import axios from 'axios';
+
+import { MessageContext } from '../context/MessageContext';
 
 function AdminFeedbackInbox() {
   const [feedbacks, setFeedbacks] = useState([]);
   const [filtered, setFiltered] = useState([]);
-  const [msg, setMsg] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
+  const { showMessage } = useContext(MessageContext);
 
   const token = localStorage.getItem('token');
   const headers = { Authorization: `Bearer ${token}` };
@@ -18,10 +20,9 @@ function AdminFeedbackInbox() {
         setFeedbacks(res.data);
         setFiltered(res.data);
       } catch (err) {
-        setMsg('Access denied or something went wrong.');
+        showMessage('Access denied or something went wrong.', 'error');
       }
     };
-
     fetchFeedback();
   }, []);
 
@@ -55,7 +56,7 @@ function AdminFeedbackInbox() {
   return (
     <div style={{ padding: 20 }}>
       <h2>Feedback Inbox</h2>
-      {msg && <p>{msg}</p>}
+      {/* Error messages now shown globally */}
 
       {/* Filters */}
       <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>

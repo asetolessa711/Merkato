@@ -1,5 +1,4 @@
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { useMessage } from '../context/MessageContext';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
@@ -8,7 +7,7 @@ const VendorManagement = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [sortOption, setSortOption] = useState('name-asc');
-  const [msg, setMsg] = useState('');
+  const { showMessage } = useMessage();
   const token = localStorage.getItem('token');
 
   const fetchVendors = async () => {
@@ -18,7 +17,7 @@ const VendorManagement = () => {
       const vendorList = res.data.filter(u => u.role === 'vendor');
       setVendors(vendorList);
     } catch (err) {
-      setMsg('Failed to load vendors.');
+      showMessage('Failed to load vendors.', 'error');
     }
   };
 
@@ -32,11 +31,11 @@ const VendorManagement = () => {
       const headers = { Authorization: `Bearer ${token}` };
       await axios.put(`/api/users/${id}/status`, { isActive: !isActive, banReason }, { headers });
 
-      toast.success(`Vendor ${isActive ? 'suspended' : 'reactivated'} successfully`);
+      showMessage(`Vendor ${isActive ? 'suspended' : 'reactivated'} successfully`, 'success');
       fetchVendors();
     } catch (err) {
       console.error('Status update failed');
-      toast.error('Failed to update vendor status');
+      showMessage('Failed to update vendor status', 'error');
     }
   };
 
@@ -68,7 +67,7 @@ const VendorManagement = () => {
   return (
     <div className="p-6">
       <h2 className="text-xl font-semibold mb-4">Vendor Management</h2>
-      {msg && <p className="text-red-500">{msg}</p>}
+      {/* Global message system handles feedback */}
 
       <div className="flex flex-wrap gap-4 mb-4 items-center">
         <input
@@ -108,7 +107,7 @@ const VendorManagement = () => {
         </button>
       </div>
 
-      <ToastContainer position="bottom-right" autoClose={3000} />
+      {/* ToastContainer removed, using global message system */}
 
       <table className="w-full text-left border border-gray-200">
         <thead>

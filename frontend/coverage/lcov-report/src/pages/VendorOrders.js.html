@@ -25,14 +25,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/84</span>
+                <span class='fraction'>0/85</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/53</span>
+                <span class='fraction'>0/51</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/77</span>
+                <span class='fraction'>0/78</span>
             </div>
         
             
@@ -310,7 +310,9 @@
 <a name='L245'></a><a href='#L245'>245</a>
 <a name='L246'></a><a href='#L246'>246</a>
 <a name='L247'></a><a href='#L247'>247</a>
-<a name='L248'></a><a href='#L248'>248</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L248'></a><a href='#L248'>248</a>
+<a name='L249'></a><a href='#L249'>249</a>
+<a name='L250'></a><a href='#L250'>250</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -323,18 +325,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -343,11 +335,23 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -568,15 +572,16 @@ import {
 import MerkatoFooter from '../components/MerkatoFooter';
 import { NavLink } from 'react-router-dom';
 import styles from '../layouts/VendorLayout.module.css'; // Make sure this path is correct
+import { useMessage } from '../context/MessageContext';
 &nbsp;
 function <span class="fstat-no" title="function not covered" >VendorOrders(</span>) {
   const [orders, setOrders] = <span class="cstat-no" title="statement not covered" >useState([]);  </span>
-  const [msg, setMsg] = <span class="cstat-no" title="statement not covered" >useState('');</span>
   const [buyerFilter, setBuyerFilter] = <span class="cstat-no" title="statement not covered" >useState('');</span>
   const [productFilter, setProductFilter] = <span class="cstat-no" title="statement not covered" >useState('');</span>
   const [stats, setStats] = <span class="cstat-no" title="statement not covered" >useState(null);</span>
   const [startDate, setStartDate] = <span class="cstat-no" title="statement not covered" >useState(null);</span>
   const [endDate, setEndDate] = <span class="cstat-no" title="statement not covered" >useState(null);</span>
+  const { showMessage } = <span class="cstat-no" title="statement not covered" >useMessage();</span>
 &nbsp;
   const token = <span class="cstat-no" title="statement not covered" >localStorage.getItem('token');</span>
   const headers = <span class="cstat-no" title="statement not covered" >{ Authorization: `Bearer ${token}` };</span>
@@ -589,19 +594,20 @@ function <span class="fstat-no" title="function not covered" >VendorOrders(</spa
 <span class="cstat-no" title="statement not covered" >        setOrders(res.data.orders || res.data);</span>
 <span class="cstat-no" title="statement not covered" >        if (res.data.stats) <span class="cstat-no" title="statement not covered" >setStats(res.data.stats);</span></span>
       } catch (err) {
-<span class="cstat-no" title="statement not covered" >        setMsg('Failed to load your orders');</span>
+<span class="cstat-no" title="statement not covered" >        showMessage('Failed to load your orders', 'error');</span>
       }
     };
 <span class="cstat-no" title="statement not covered" >    fetchOrders();</span>
-  }, [token]);
+  }, [token, showMessage]);
 &nbsp;
   const markAsShipped = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >as</span>ync (orderId) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    if (window.confirm('Mark this order as Shipped?')) {</span>
 <span class="cstat-no" title="statement not covered" >      try {</span>
 <span class="cstat-no" title="statement not covered" >        await axios.put(`/api/orders/${orderId}/mark-shipped`, {}, { headers });</span>
+<span class="cstat-no" title="statement not covered" >        showMessage('Order marked as shipped!', 'success');</span>
 <span class="cstat-no" title="statement not covered" >        window.location.reload();</span>
       } catch (err) {
-<span class="cstat-no" title="statement not covered" >        alert('Failed to update order status');</span>
+<span class="cstat-no" title="statement not covered" >        showMessage('Failed to update order status', 'error');</span>
       }
     }
   };
@@ -678,7 +684,7 @@ function <span class="fstat-no" title="function not covered" >VendorOrders(</spa
       &lt;h2 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '20px', color: '#00B894' }}&gt;
         Orders for My Products
       &lt;/h2&gt;
-      {msg &amp;&amp; &lt;p style={{ color: '#e74c3c' }}&gt;{msg}&lt;/p&gt;}
+      {/* msg removed, global message used instead */}
       {stats &amp;&amp; &lt;p&gt;&lt;strong&gt;📊 Total Orders from {stats.country}:&lt;/strong&gt; {stats.totalOrders}&lt;/p&gt;}
 &nbsp;
       {/* Filter Options */}
@@ -811,7 +817,7 @@ export default VendorOrders;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-02T06:05:35.032Z
+                at 2025-08-05T15:56:23.799Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

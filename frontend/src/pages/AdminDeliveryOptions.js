@@ -1,5 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import axios from 'axios';
+
+import { MessageContext } from '../context/MessageContext';
 
 const AdminDeliveryOptions = () => {
   const [options, setOptions] = useState([]);
@@ -7,10 +9,15 @@ const AdminDeliveryOptions = () => {
   const [editingId, setEditingId] = useState(null);
   const token = localStorage.getItem('token');
   const headers = { Authorization: `Bearer ${token}` };
+  const { showMessage } = useContext(MessageContext);
 
   const fetchOptions = async () => {
-    const res = await axios.get('/api/admin/delivery-options', { headers });
-    setOptions(res.data);
+    try {
+      const res = await axios.get('/api/admin/delivery-options', { headers });
+      setOptions(res.data);
+    } catch (err) {
+      showMessage('Failed to fetch delivery options', 'error');
+    }
   };
 
   useEffect(() => {
@@ -22,14 +29,16 @@ const AdminDeliveryOptions = () => {
     try {
       if (editingId) {
         await axios.put(`/api/admin/delivery-options/${editingId}`, form, { headers });
+        showMessage('Delivery option updated successfully', 'success');
       } else {
         await axios.post('/api/admin/delivery-options', form, { headers });
+        showMessage('Delivery option added successfully', 'success');
       }
       fetchOptions();
       setForm({ name: '', description: '', days: '', cost: 0, isActive: true });
       setEditingId(null);
     } catch (err) {
-      alert('Failed to save delivery option');
+      showMessage('Failed to save delivery option', 'error');
     }
   };
 
@@ -40,8 +49,13 @@ const AdminDeliveryOptions = () => {
 
   const handleDelete = async (id) => {
     if (window.confirm('Delete this delivery option?')) {
-      await axios.delete(`/api/admin/delivery-options/${id}`, { headers });
-      fetchOptions();
+      try {
+        await axios.delete(`/api/admin/delivery-options/${id}`, { headers });
+        showMessage('Delivery option deleted', 'success');
+        fetchOptions();
+      } catch (err) {
+        showMessage('Failed to delete delivery option', 'error');
+      }
     }
   };
 

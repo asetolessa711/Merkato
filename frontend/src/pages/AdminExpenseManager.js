@@ -1,6 +1,8 @@
 // File: AdminExpenseManager.js
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import axios from 'axios';
+
+import { MessageContext } from '../context/MessageContext';
 
 function AdminExpenseManager() {
   const [expenses, setExpenses] = useState([]);
@@ -10,7 +12,7 @@ function AdminExpenseManager() {
     category: 'other',
     notes: ''
   });
-  const [msg, setMsg] = useState('');
+  const { showMessage } = useContext(MessageContext);
 
   const token = localStorage.getItem('token');
 
@@ -27,7 +29,7 @@ function AdminExpenseManager() {
       const res = await axios.get('/api/admin/expenses', { headers });
       setExpenses(res.data);
     } catch (err) {
-      setMsg('Failed to load expenses');
+      showMessage('Failed to load expenses', 'error');
     }
   };
 
@@ -39,11 +41,11 @@ function AdminExpenseManager() {
     e.preventDefault();
     try {
       await axios.post('/api/admin/expenses', form, { headers });
-      setMsg('Expense added successfully!');
+      showMessage('Expense added successfully!', 'success');
       setForm({ title: '', amount: '', category: 'other', notes: '' });
       fetchExpenses();
     } catch (err) {
-      setMsg('Failed to add expense');
+      showMessage('Failed to add expense', 'error');
     }
   };
 
@@ -83,7 +85,7 @@ function AdminExpenseManager() {
         <button type="submit">Add Expense</button>
       </form>
 
-      {msg && <p>{msg}</p>}
+      {/* Feedback now shown globally */}
 
       <h3>Recent Expenses</h3>
       <ul>

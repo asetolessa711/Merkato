@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/33</span>
+                <span class='fraction'>0/34</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/32</span>
+                <span class='fraction'>0/33</span>
             </div>
         
             
@@ -197,12 +197,16 @@
 <a name='L132'></a><a href='#L132'>132</a>
 <a name='L133'></a><a href='#L133'>133</a>
 <a name='L134'></a><a href='#L134'>134</a>
-<a name='L135'></a><a href='#L135'>135</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L135'></a><a href='#L135'>135</a>
+<a name='L136'></a><a href='#L136'>136</a>
+<a name='L137'></a><a href='#L137'>137</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -335,6 +339,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import styles from '../layouts/VendorLayout.module.css';
+import { useMessage } from '../context/MessageContext';
 &nbsp;
 function <span class="fstat-no" title="function not covered" >VendorInbox(</span>) {
   const [messages, setMessages] = <span class="cstat-no" title="statement not covered" >useState([]);</span>
@@ -344,6 +349,7 @@ function <span class="fstat-no" title="function not covered" >VendorInbox(</span
   const [unreadOnly, setUnreadOnly] = <span class="cstat-no" title="statement not covered" >useState(false);</span>
   const token = <span class="cstat-no" title="statement not covered" >localStorage.getItem('token');</span>
   const headers = <span class="cstat-no" title="statement not covered" >{ Authorization: `Bearer ${token}` };</span>
+  const { showMessage } = <span class="cstat-no" title="statement not covered" >useMessage();</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  useEffect(<span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
     const fetchMessages = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >as</span>ync () =&gt; {</span>
@@ -351,11 +357,11 @@ function <span class="fstat-no" title="function not covered" >VendorInbox(</span
         const res = <span class="cstat-no" title="statement not covered" >await axios.get('/api/messages/vendor', { headers });</span>
 <span class="cstat-no" title="statement not covered" >        setMessages(res.data);</span>
       } catch (err) {
-<span class="cstat-no" title="statement not covered" >        console.error('Failed to load messages.');</span>
+<span class="cstat-no" title="statement not covered" >        showMessage('Failed to load messages.', 'error');</span>
       }
     };
 <span class="cstat-no" title="statement not covered" >    fetchMessages();</span>
-  }, []);
+  }, [showMessage]);
 &nbsp;
   const filteredThreads = <span class="cstat-no" title="statement not covered" >messages.filter(<span class="fstat-no" title="function not covered" >ms</span>g =&gt; {</span>
     const matchesSearch = <span class="cstat-no" title="statement not covered" >msg.customerName.toLowerCase().includes(search.toLowerCase());</span>
@@ -368,9 +374,9 @@ function <span class="fstat-no" title="function not covered" >VendorInbox(</span
 <span class="cstat-no" title="statement not covered" >    try {</span>
 <span class="cstat-no" title="statement not covered" >      await axios.post(`/api/messages/${selectedThread._id}/reply`, { message: reply }, { headers });</span>
 <span class="cstat-no" title="statement not covered" >      setReply('');</span>
-<span class="cstat-no" title="statement not covered" >      alert('Reply sent');</span>
+<span class="cstat-no" title="statement not covered" >      showMessage('Reply sent', 'success');</span>
     } catch (err) {
-<span class="cstat-no" title="statement not covered" >      console.error('Reply failed');</span>
+<span class="cstat-no" title="statement not covered" >      showMessage('Reply failed', 'error');</span>
     }
   };
 &nbsp;
@@ -472,7 +478,7 @@ export default VendorInbox;</pre></td></tr></table></pre>
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-02T06:05:35.032Z
+                at 2025-08-05T15:56:23.799Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

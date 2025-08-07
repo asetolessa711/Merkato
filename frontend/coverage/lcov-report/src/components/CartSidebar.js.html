@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>10/10</span>
+                <span class='fraction'>0/10</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">85.71% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>6/7</span>
+                <span class='fraction'>0/7</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>4/4</span>
+                <span class='fraction'>0/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>8/8</span>
+                <span class='fraction'>0/8</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line high'></div>
+    <div class='status-line low'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -103,28 +103,28 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">5x</span>
-<span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">6x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -139,28 +139,28 @@
 &nbsp;
 import React from 'react';
 &nbsp;
-const CartSidebar = ({ isOpen, items = <span class="branch-0 cbranch-no" title="branch not covered" >[],</span> onClose, onRemove }) =&gt; {
-  if (!isOpen) return null;
-  if (!items.length) {
-    return (
+const CartSidebar = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >({</span> isOpen, items = <span class="branch-0 cbranch-no" title="branch not covered" >[],</span> onClose, onRemove }) =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >  if (!isOpen) <span class="cstat-no" title="statement not covered" >return null;</span></span>
+<span class="cstat-no" title="statement not covered" >  if (!items.length) {</span>
+<span class="cstat-no" title="statement not covered" >    return (</span>
       &lt;aside&gt;
         &lt;button onClick={onClose} aria-label="close"&gt;Close&lt;/button&gt;
         &lt;div&gt;Your cart is empty&lt;/div&gt;
       &lt;/aside&gt;
     );
   }
-  const total = items.reduce((sum, item) =&gt; sum + (item.price * item.quantity), 0);
-  return (
+  const total = <span class="cstat-no" title="statement not covered" >items.reduce(<span class="fstat-no" title="function not covered" >(s</span>um, item) =&gt; <span class="cstat-no" title="statement not covered" >sum + (item.price * item.quantity),</span> 0);</span>
+<span class="cstat-no" title="statement not covered" >  return (</span>
     &lt;aside&gt;
       &lt;button onClick={onClose} aria-label="close"&gt;Close&lt;/button&gt;
       &lt;ul&gt;
-        {items.map(item =&gt; (
-          &lt;li key={item.id}&gt;
+        {items.map(<span class="fstat-no" title="function not covered" >it</span>em =&gt; (
+<span class="cstat-no" title="statement not covered" >          &lt;li key={item.id}&gt;</span>
             &lt;span&gt;{item.name}&lt;/span&gt;
             &lt;span&gt;{item.quantity}&lt;/span&gt;
             &lt;span&gt;${item.price}&lt;/span&gt;
             {onRemove &amp;&amp; (
-              &lt;button onClick={() =&gt; onRemove(item.id)} aria-label={`remove ${item.name}`}&gt;Remove&lt;/button&gt;
+              &lt;button onClick={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >onRemove(item.id)}</span> aria-label={`remove ${item.name}`}&gt;Remove&lt;/button&gt;
             )}
           &lt;/li&gt;
         ))}
@@ -178,7 +178,7 @@ export default CartSidebar;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-01T22:35:49.229Z
+                at 2025-08-05T15:56:23.799Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

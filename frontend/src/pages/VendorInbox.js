@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import styles from '../layouts/VendorLayout.module.css';
+import { useMessage } from '../context/MessageContext';
 
 function VendorInbox() {
   const [messages, setMessages] = useState([]);
@@ -11,6 +12,7 @@ function VendorInbox() {
   const [unreadOnly, setUnreadOnly] = useState(false);
   const token = localStorage.getItem('token');
   const headers = { Authorization: `Bearer ${token}` };
+  const { showMessage } = useMessage();
 
   useEffect(() => {
     const fetchMessages = async () => {
@@ -18,11 +20,11 @@ function VendorInbox() {
         const res = await axios.get('/api/messages/vendor', { headers });
         setMessages(res.data);
       } catch (err) {
-        console.error('Failed to load messages.');
+        showMessage('Failed to load messages.', 'error');
       }
     };
     fetchMessages();
-  }, []);
+  }, [showMessage]);
 
   const filteredThreads = messages.filter(msg => {
     const matchesSearch = msg.customerName.toLowerCase().includes(search.toLowerCase());
@@ -35,9 +37,9 @@ function VendorInbox() {
     try {
       await axios.post(`/api/messages/${selectedThread._id}/reply`, { message: reply }, { headers });
       setReply('');
-      alert('Reply sent');
+      showMessage('Reply sent', 'success');
     } catch (err) {
-      console.error('Reply failed');
+      showMessage('Reply failed', 'error');
     }
   };
 

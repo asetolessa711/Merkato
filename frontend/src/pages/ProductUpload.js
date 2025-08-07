@@ -4,6 +4,7 @@ const USE_MOCK_UPLOAD = true; // Set to false for real API
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { uploadProductImage } from '../utils/uploadImage';
+import { useMessage } from '../context/MessageContext';
 
 function ProductUpload() {
   const [form, setForm] = useState({
@@ -24,9 +25,9 @@ function ProductUpload() {
 
   const [imageFiles, setImageFiles] = useState([]);
   const [previewImages, setPreviewImages] = useState([]);
-  const [msg, setMsg] = useState('');
   const [imageUrls, setImageUrls] = useState([]);
   const navigate = useNavigate();
+  const { showMessage } = useMessage();
 
   const token = localStorage.getItem('merkato-token'); // ✅ fixed
 
@@ -56,7 +57,7 @@ function ProductUpload() {
     if (USE_MOCK_UPLOAD) {
       setTimeout(() => {
         setImageUrls(files.map((_, i) => `https://placehold.co/400x400?text=Demo+Image+${i+1}`));
-        setMsg('✅ (Mock) Images uploaded!');
+        showMessage('(Mock) Images uploaded!', 'success');
       }, 600);
       return;
     }
@@ -64,25 +65,24 @@ function ProductUpload() {
     try {
       const urls = await uploadProductImage(files, token);
       setImageUrls(urls);
-      setMsg('✅ Images uploaded!');
+      showMessage('Images uploaded!', 'success');
     } catch (err) {
       console.error('Image upload failed:', err.response?.data?.message || err.message);
-      setMsg('Image upload failed');
+      showMessage('Image upload failed', 'error');
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMsg('');
 
     if (!imageUrls.length) {
-      setMsg('Please upload at least one image first.');
+      showMessage('Please upload at least one image first.', 'error');
       return;
     }
 
     if (USE_MOCK_UPLOAD) {
       setTimeout(() => {
-        setMsg(`✅ (Mock) Product "${form.name}" uploaded successfully!`);
+        showMessage(`(Mock) Product "${form.name}" uploaded successfully!`, 'success');
         setForm({
           name: '', description: '', price: '', stock: '', category: '',
           gender: '', ageGroup: '', currency: 'USD', language: 'en',
@@ -105,7 +105,7 @@ function ProductUpload() {
         }
       );
 
-      setMsg(`✅ Product "${res.data.name}" uploaded successfully!`);
+      showMessage(`Product "${res.data.name}" uploaded successfully!`, 'success');
       setForm({
         name: '', description: '', price: '', stock: '', category: '',
         gender: '', ageGroup: '', currency: 'USD', language: 'en',
@@ -119,7 +119,7 @@ function ProductUpload() {
     } catch (err) {
       const error = err.response?.data?.message || 'Upload failed. Please try again.';
       console.error('Product upload failed:', error);
-      setMsg(error);
+      showMessage(error, 'error');
     }
   };
 
@@ -213,17 +213,6 @@ function ProductUpload() {
           Upload Product
         </button>
       </form>
-
-      {msg && (
-        <p
-          data-testid="upload-msg"
-          role={msg.includes('✅') ? 'status' : 'alert'}
-          aria-live="polite"
-          style={{ marginTop: '20px', color: msg.includes('✅') ? 'green' : 'red' }}
-        >
-          {msg}
-        </p>
-      )}
     </div>
   );
 }

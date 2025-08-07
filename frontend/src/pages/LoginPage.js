@@ -68,7 +68,7 @@ function LoginPage() {
       remember: 'Remember Me',
       forgot: 'Forgot Password?',
       success: 'Logged in!',
-      fail: 'Invalid credentials.'
+      fail: 'We couldn’t log you in. Please check your email and password and try again.'
     },
     // Other languages omitted for brevity...
   };
@@ -77,11 +77,15 @@ function LoginPage() {
 
   const validateFields = () => {
     const errors = {};
-    if (!form.email || !/\S+@\S+\.\S+/.test(form.email)) {
-      errors.email = 'Enter a valid email.';
+    if (!form.email) {
+      errors.email = 'Please enter your email address.';
+    } else if (!/\S+@\S+\.\S+/.test(form.email)) {
+      errors.email = 'Please enter a valid email address (e.g., user@example.com).';
     }
-    if (!form.password || form.password.length < 3) {
-      errors.password = 'Password must be at least 3 characters.';
+    if (!form.password) {
+      errors.password = 'Please enter your password.';
+    } else if (form.password.length < 3) {
+      errors.password = 'Your password must be at least 3 characters.';
     }
     return errors;
   };

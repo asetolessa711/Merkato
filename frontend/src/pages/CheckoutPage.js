@@ -1,5 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
+import { useMessage } from '../context/MessageContext';
 import GuestCheckoutForm from '../components/GuestCheckoutForm';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -8,8 +9,7 @@ import { useNavigate } from 'react-router-dom';
 const CheckoutPage = () => {
   const navigate = useNavigate();
   const [cart, setCart] = useState([]);
-  const [orderMsg, setOrderMsg] = useState('');
-  const [orderError, setOrderError] = useState('');
+  const { showMessage } = useMessage();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [user, setUser] = useState(null);
   const [checkingUser, setCheckingUser] = useState(true);
@@ -45,8 +45,6 @@ const CheckoutPage = () => {
   // Handler for guest checkout form submit
   const handleGuestCheckout = async (guestInfo) => {
     setIsSubmitting(true);
-    setOrderMsg('');
-    setOrderError('');
     try {
       const payload = {
         items: cart,
@@ -58,12 +56,12 @@ const CheckoutPage = () => {
         total
       };
       const res = await axios.post('/api/orders', payload);
-      setOrderMsg('Order placed successfully!');
+      showMessage('Order placed successfully!', 'success');
       setCart([]);
       localStorage.removeItem('merkato-cart');
       setTimeout(() => navigate('/order-confirmation', { state: { order: res.data } }), 800);
     } catch (err) {
-      setOrderError(err.response?.data?.message || 'Order failed.');
+      showMessage(err.response?.data?.message || 'Order failed.', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -72,8 +70,6 @@ const CheckoutPage = () => {
   // Handler for logged-in user checkout
   const handleUserCheckout = async () => {
     setIsSubmitting(true);
-    setOrderMsg('');
-    setOrderError('');
     try {
       const token = localStorage.getItem('token');
       const payload = {
@@ -83,12 +79,12 @@ const CheckoutPage = () => {
       const res = await axios.post('/api/orders', payload, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setOrderMsg('Order placed successfully!');
+      showMessage('Order placed successfully!', 'success');
       setCart([]);
       localStorage.removeItem('merkato-cart');
       setTimeout(() => navigate('/order-confirmation', { state: { order: res.data } }), 800);
     } catch (err) {
-      setOrderError(err.response?.data?.message || 'Order failed.');
+      showMessage(err.response?.data?.message || 'Order failed.', 'error');
     } finally {
       setIsSubmitting(false);
     }
@@ -125,8 +121,7 @@ const CheckoutPage = () => {
           <GuestCheckoutForm onSubmit={handleGuestCheckout} isSubmitting={isSubmitting} />
         </>
       )}
-      {orderMsg && <div style={{ color: 'green', marginTop: 10 }}>{orderMsg}</div>}
-      {orderError && <div style={{ color: 'red', marginTop: 10 }}>{orderError}</div>}
+      {/* Global message system now handles feedback */}
     </div>
   );
 };

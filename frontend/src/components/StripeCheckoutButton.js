@@ -4,7 +4,8 @@ import PropTypes from 'prop-types';
 import axios from 'axios';
 import { loadStripe } from '@stripe/stripe-js';
 
-function StripeCheckoutButton({ items = [], onSuccess, onError }) {
+
+function StripeCheckoutButton({ items = [], onSuccess, onError, stripe: injectedStripe }) {
   const [loading, setLoading] = useState(false);
 
   const handleClick = async () => {
@@ -17,8 +18,10 @@ function StripeCheckoutButton({ items = [], onSuccess, onError }) {
       const sessionId = response?.data?.id;
       // eslint-disable-next-line no-console
       console.log('StripeCheckoutButton sessionId:', sessionId);
-      const stripe = await loadStripe('pk_test_dummy');
+      const stripe = injectedStripe || await loadStripe('pk_test_dummy');
       await stripe.redirectToCheckout({ sessionId });
+      // eslint-disable-next-line no-console
+      console.log('[TEST DEBUG] redirectToCheckout called');
       if (onSuccess) onSuccess();
     } catch (err) {
       if (onError) onError(err);

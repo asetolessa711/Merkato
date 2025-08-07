@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">7.69% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>1/13</span>
+                <span class='fraction'>0/13</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">7.69% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>1/13</span>
+                <span class='fraction'>0/13</span>
             </div>
         
             
@@ -153,11 +153,28 @@
 <a name='L88'></a><a href='#L88'>88</a>
 <a name='L89'></a><a href='#L89'>89</a>
 <a name='L90'></a><a href='#L90'>90</a>
-<a name='L91'></a><a href='#L91'>91</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L91'></a><a href='#L91'>91</a>
+<a name='L92'></a><a href='#L92'>92</a>
+<a name='L93'></a><a href='#L93'>93</a>
+<a name='L94'></a><a href='#L94'>94</a>
+<a name='L95'></a><a href='#L95'>95</a>
+<a name='L96'></a><a href='#L96'>96</a>
+<a name='L97'></a><a href='#L97'>97</a>
+<a name='L98'></a><a href='#L98'>98</a>
+<a name='L99'></a><a href='#L99'>99</a>
+<a name='L100'></a><a href='#L100'>100</a>
+<a name='L101'></a><a href='#L101'>101</a>
+<a name='L102'></a><a href='#L102'>102</a>
+<a name='L103'></a><a href='#L103'>103</a>
+<a name='L104'></a><a href='#L104'>104</a>
+<a name='L105'></a><a href='#L105'>105</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -243,11 +260,25 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import React from 'react';
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">&nbsp;
+import React from 'react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
 import AdminSidebar from './AdminSidebar';
+import MerkatoFooter from '../components/MerkatoFooter';
+import styles from '../layouts/AdminLayout.module.css';
 &nbsp;
-const AdminLayout = <span class="fstat-no" title="function not covered" >({</span> user }) =&gt; {
+const AdminLayout = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >({</span> user }) =&gt; {</span>
   const navigate = <span class="cstat-no" title="statement not covered" >useNavigate();</span>
 &nbsp;
   // Log when AdminLayout loads and show user info
@@ -276,18 +307,23 @@ const AdminLayout = <span class="fstat-no" title="function not covered" >({</spa
   }
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  return (</span>
-    &lt;div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', fontFamily: 'Poppins, sans-serif' }}&gt;
+    &lt;div className={styles.container}&gt;
       {/* Show warning if no user */}
       {!user &amp;&amp; &lt;p style={{ padding: '20px', color: 'red' }}&gt;⚠️ No user found.&lt;/p&gt;}
 &nbsp;
-      {/* Top Navigation with Logo */}
+      {/* Fixed Top Navigation with Logo */}
       &lt;div style={{
         backgroundColor: '#f0f0f0',
         padding: '10px 20px',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        borderBottom: '1px solid #ccc'
+        borderBottom: '1px solid #ccc',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        zIndex: 1000
       }}&gt;
         &lt;div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}&gt;
           &lt;Link to="/" style={{ textDecoration: 'none', fontSize: '1.6rem', fontWeight: 'bold' }}&gt;
@@ -319,15 +355,21 @@ const AdminLayout = <span class="fstat-no" title="function not covered" >({</spa
         &lt;/button&gt;
       &lt;/div&gt;
 &nbsp;
-      {/* Admin Role Notice */}
-      {adminNotice}
-&nbsp;
-      {/* Admin Layout: Sidebar + Main */}
-      &lt;div style={{ display: 'flex', flex: 1 }}&gt;
+      {/* Main Content Area with Sidebar and Scrollable Main */}
+      &lt;div className={styles.mainContent} style={{ marginTop: 60, flex: 1 }}&gt;
         &lt;AdminSidebar /&gt;
-        &lt;main style={{ flex: 1, padding: '20px' }}&gt;
-          &lt;Outlet /&gt;  {/* ✅ This renders all nested child routes */}
+        &lt;main className={styles.contentArea}&gt;
+          {/* Admin Role Notice */}
+          {adminNotice}
+          {/* Heading for Admin Dashboard (deduplicated, only here) */}
+          &lt;h2 style={{ marginTop: 0, fontWeight: 'bold', color: '#2c3e50', textAlign: 'center' }}&gt;Admin Dashboard&lt;/h2&gt;
+          &lt;Outlet /&gt;
         &lt;/main&gt;
+      &lt;/div&gt;
+&nbsp;
+      {/* Fixed Footer */}
+      &lt;div style={{ position: 'fixed', left: 0, bottom: 0, width: '100%', zIndex: 1000 }}&gt;
+        &lt;MerkatoFooter showSocials={false} /&gt;
       &lt;/div&gt;
     &lt;/div&gt;
   );
@@ -340,7 +382,7 @@ export default AdminLayout;</pre></td></tr></table></pre>
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-02T06:05:35.032Z
+                at 2025-08-05T15:56:23.799Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

@@ -1,0 +1,14 @@
+{
+  "name": "merkato-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test:frontend": "cd frontend && npm test",
+    "test:backend": "cd backend && npm test",
+    "test:all": "npm run test:frontend && npm run test:backend"
+  },
+  "devDependencies": {
+    "axios": "^1.11.0",
+    "cypress": "^14.5.3"
+  }
+}

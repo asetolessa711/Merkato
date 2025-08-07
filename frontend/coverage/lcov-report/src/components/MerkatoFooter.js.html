@@ -117,23 +117,15 @@
 <a name='L52'></a><a href='#L52'>52</a>
 <a name='L53'></a><a href='#L53'>53</a>
 <a name='L54'></a><a href='#L54'>54</a>
-<a name='L55'></a><a href='#L55'>55</a>
-<a name='L56'></a><a href='#L56'>56</a>
-<a name='L57'></a><a href='#L57'>57</a>
-<a name='L58'></a><a href='#L58'>58</a>
-<a name='L59'></a><a href='#L59'>59</a>
-<a name='L60'></a><a href='#L60'>60</a>
-<a name='L61'></a><a href='#L61'>61</a>
-<a name='L62'></a><a href='#L62'>62</a>
-<a name='L63'></a><a href='#L63'>63</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L55'></a><a href='#L55'>55</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">8x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -175,15 +167,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -197,50 +181,42 @@ const currentYear = new Date().getFullYear();
 const MerkatoFooter = ({ showSocials = true }) =&gt; (
   &lt;footer className={styles.footer}&gt;
     &lt;div className={styles.footerContent}&gt;
-      {showSocials &amp;&amp; (
-        &lt;div className={styles.socialLinks}&gt;
-          &lt;a 
-            href="https://twitter.com/merkato" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            aria-label="Follow us on Twitter"
-          &gt;
-            Twitter
-          &lt;/a&gt;
-          &lt;a 
-            href="https://facebook.com/merkato" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            aria-label="Follow us on Facebook"
-          &gt;
-            Facebook
-          &lt;/a&gt;
-          &lt;a 
-            href="https://instagram.com/merkato" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            aria-label="Follow us on Instagram"
-          &gt;
-            Instagram
-          &lt;/a&gt;
-        &lt;/div&gt;
-      )}
-      
-      &lt;div className={styles.footerLinks}&gt;
-        &lt;Link to="/about"&gt;About Us&lt;/Link&gt;
-        &lt;Link to="/terms"&gt;Terms&lt;/Link&gt;
-        &lt;Link to="/privacy"&gt;Privacy&lt;/Link&gt;
-        &lt;Link to="/contact"&gt;Contact&lt;/Link&gt;
-      &lt;/div&gt;
-&nbsp;
+      {/* Left: Powered by Merkato, year */}
       &lt;div className={styles.copyright}&gt;
         &lt;span&gt;
-          🔗 Powered by &lt;strong className={styles.brand}&gt;Merkato&lt;/strong&gt;
+          Powered by &lt;strong className={styles.brand}&gt;Merkato&lt;/strong&gt; &amp;copy; {currentYear}
         &lt;/span&gt;
         &lt;span className={styles.copyrightYear}&gt;
-          © {currentYear} Merkato. All rights reserved.
+          All rights reserved.
         &lt;/span&gt;
       &lt;/div&gt;
+      {/* Center: About, Terms, Privacy */}
+      &lt;div className={styles.footerLinks}&gt;
+        &lt;Link to="/about"&gt;About&lt;/Link&gt;
+        &lt;Link to="/terms"&gt;Terms&lt;/Link&gt;
+        &lt;Link to="/privacy"&gt;Privacy&lt;/Link&gt;
+      &lt;/div&gt;
+      {/* Right: Socials and Contact */}
+      {showSocials &amp;&amp; (
+        &lt;div className={styles.socialLinks}&gt;
+          &lt;a href="https://twitter.com/merkato" target="_blank" rel="noopener noreferrer" aria-label="Twitter"&gt;
+            Twitter
+          &lt;/a&gt;
+          &lt;a href="https://facebook.com/merkato" target="_blank" rel="noopener noreferrer" aria-label="Facebook"&gt;
+            Facebook
+          &lt;/a&gt;
+          &lt;a href="https://instagram.com/merkato" target="_blank" rel="noopener noreferrer" aria-label="Instagram"&gt;
+            Instagram
+          &lt;/a&gt;
+          &lt;a href="https://youtube.com/merkato" target="_blank" rel="noopener noreferrer" aria-label="YouTube"&gt;
+            YouTube
+          &lt;/a&gt;
+          &lt;a href="https://tiktok.com/@merkato" target="_blank" rel="noopener noreferrer" aria-label="TikTok"&gt;
+            TikTok
+          &lt;/a&gt;
+          &lt;Link to="/contact"&gt;Contact&lt;/Link&gt;
+        &lt;/div&gt;
+      )}
     &lt;/div&gt;
   &lt;/footer&gt;
 );
@@ -256,7 +232,7 @@ export default React.memo(MerkatoFooter);</pre></td></tr></table></pre>
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-02T06:05:35.032Z
+                at 2025-08-05T15:56:23.799Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

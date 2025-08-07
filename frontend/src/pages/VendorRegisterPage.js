@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import styles from './VendorRegisterPage.module.css';
+import { useMessage } from '../context/MessageContext';
 
 export default function VendorRegisterPage() {
   const [form, setForm] = useState({
@@ -19,8 +20,7 @@ export default function VendorRegisterPage() {
   });
   const [fieldError, setFieldError] = useState({});
   const [isLoading, setIsLoading] = useState(false);
-  const [msg, setMsg] = useState('');
-  const [isError, setIsError] = useState(false);
+  const { showMessage } = useMessage();
 
   const validate = () => {
     const errors = {};
@@ -48,8 +48,6 @@ export default function VendorRegisterPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    setMsg('');
-    setIsError(false);
     const errors = validate();
     if (Object.keys(errors).length > 0) {
       setFieldError(errors);
@@ -58,10 +56,9 @@ export default function VendorRegisterPage() {
     }
     try {
       await axios.post('/api/auth/register', form);
-      setMsg('Vendor registration submitted! Please check your email for verification or admin approval.');
+      showMessage('Vendor registration submitted! Please check your email for verification or admin approval.', 'success');
     } catch (err) {
-      setMsg('Registration failed.');
-      setIsError(true);
+      showMessage('Registration failed.', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -70,7 +67,6 @@ export default function VendorRegisterPage() {
   return (
     <div className={styles.vendorRegisterContainer}>
       <h2>Vendor Registration</h2>
-      {msg && <p className={isError ? styles.error : styles.success}>{msg}</p>}
       <form onSubmit={handleSubmit}>
         <div className={styles.formGroup}>
           <label>Business Name</label>

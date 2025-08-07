@@ -12,10 +12,13 @@ describe('\ud83d\udcdd Register Form Validation', () => {
     jest.clearAllMocks();
   });
 
+  // ...removed orphaned JSX and duplicate code...
   test('shows required field errors', async () => {
     render(
       <MemoryRouter>
-        <RegisterPage />
+        <MessageProvider>
+          <RegisterPage />
+        </MessageProvider>
       </MemoryRouter>
     );
     fireEvent.click(screen.getByRole('button', { name: /register/i }));
@@ -23,10 +26,13 @@ describe('\ud83d\udcdd Register Form Validation', () => {
   });
 
 
+  // ...removed orphaned JSX and duplicate code...
   test('validates email format', async () => {
     render(
       <MemoryRouter>
-        <RegisterPage />
+        <MessageProvider>
+          <RegisterPage />
+        </MessageProvider>
       </MemoryRouter>
     );
     fireEvent.change(screen.getByLabelText(/full name/i), {
@@ -47,10 +53,13 @@ describe('\ud83d\udcdd Register Form Validation', () => {
     });
   });
 
+  // ...removed orphaned JSX and duplicate code...
   test('validates password strength (if applied)', async () => {
     render(
       <MemoryRouter>
-        <RegisterPage />
+        <MessageProvider>
+          <RegisterPage />
+        </MessageProvider>
       </MemoryRouter>
     );
     fireEvent.change(screen.getByLabelText(/password/i, { selector: 'input' }), {

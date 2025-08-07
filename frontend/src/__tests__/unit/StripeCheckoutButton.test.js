@@ -1,10 +1,18 @@
 // Hoist all mocks to the very top
 const mockRedirectToCheckout = jest.fn(() => Promise.resolve({}));
-jest.mock('@stripe/stripe-js', () => ({
-  loadStripe: jest.fn(() => ({
-    redirectToCheckout: mockRedirectToCheckout
-  }))
-}));
+// Robust mock for @stripe/stripe-js
+jest.mock('@stripe/stripe-js', () => {
+  const loadStripe = jest.fn(() =>
+    Promise.resolve({
+      redirectToCheckout: mockRedirectToCheckout
+    })
+  );
+  return {
+    __esModule: true,
+    loadStripe,
+    default: loadStripe,
+  };
+});
 jest.mock('axios', () => {
   const mockAxios = {
     create: jest.fn(() => mockAxios),
@@ -18,7 +26,7 @@ jest.mock('axios', () => {
 });
 
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import StripeCheckoutButton from '../../components/StripeCheckoutButton';
 import '@testing-library/jest-dom';
 import axios from 'axios';
@@ -34,16 +42,24 @@ describe('\ud83d\udcb3 StripeCheckoutButton', () => {
   test('renders button and calls checkout on click', async () => {
     axios.post.mockResolvedValueOnce({ data: { id: 'test-session-id' } });
 
-    render(<StripeCheckoutButton items={mockItems} />);
+    // Inject the mock stripe instance directly
+    const mockStripe = { redirectToCheckout: mockRedirectToCheckout };
+    render(<StripeCheckoutButton items={mockItems} stripe={mockStripe} />);
     const button = screen.getByRole('button', { name: /checkout/i });
     expect(button).toBeInTheDocument();
 
-    // Use act to flush all effects
-    await (await import('react-dom/test-utils')).act(async () => {
-      fireEvent.click(button);
+    // Use act from @testing-library/react to flush all effects
+
+
+    await act(async () => {
+      await fireEvent.click(button);
     });
 
-    // Debug output
+    // Debug: print call count after click
+    // eslint-disable-next-line no-console
+    console.log('[TEST DEBUG] mockRedirectToCheckout call count:', mockRedirectToCheckout.mock.calls.length);
+
+    // Wait for axios.post to be called
     await waitFor(() => {
       expect(axios.post).toHaveBeenCalledWith(
         '/api/stripe/create-checkout-session',
@@ -51,10 +67,9 @@ describe('\ud83d\udcb3 StripeCheckoutButton', () => {
         expect.any(Object)
       );
     });
-    // Add debug log to see if redirectToCheckout is called
+
+    // Extra wait to ensure redirectToCheckout is called
     await waitFor(() => {
-      // eslint-disable-next-line no-console
-      console.log('mockRedirectToCheckout calls:', mockRedirectToCheckout.mock.calls);
       expect(mockRedirectToCheckout).toHaveBeenCalledWith({ sessionId: 'test-session-id' });
     });
   });

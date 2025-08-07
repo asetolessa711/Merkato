@@ -1,0 +1,11 @@
+name: "Commit Message Lint"
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+jobs:
+  commitlint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: wagoid/commitlint-github-action@v5
+        with:
+          failOnWarnings: false

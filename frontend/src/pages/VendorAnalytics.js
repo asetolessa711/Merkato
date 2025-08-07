@@ -13,15 +13,16 @@ import {
   Legend
 } from 'recharts';
 import MerkatoFooter from '../components/MerkatoFooter';
+import { useMessage } from '../context/MessageContext';
 
 function VendorAnalytics() {
   const [analytics, setAnalytics] = useState(null);
-  const [msg, setMsg] = useState('');
   const [timeRange, setTimeRange] = useState('weekly');
   const [chartType, setChartType] = useState('bar');
   const [chartData, setChartData] = useState([]);
   const [topProducts, setTopProducts] = useState([]);
   const [topCustomers, setTopCustomers] = useState([]);
+  const { showMessage } = useMessage();
 
   const token = localStorage.getItem('token');
   const headers = { Authorization: `Bearer ${token}` };
@@ -32,12 +33,11 @@ function VendorAnalytics() {
         const res = await axios.get('/api/orders/vendor/analytics', { headers });
         setAnalytics(res.data);
       } catch (err) {
-        console.error('Analytics fetch failed:', err.message);
-        setMsg('Failed to load vendor analytics');
+        showMessage('Failed to load vendor analytics', 'error');
       }
     };
     fetchAnalytics();
-  }, []);
+  }, [showMessage]);
 
   useEffect(() => {
     const fetchChartData = async () => {
@@ -45,12 +45,12 @@ function VendorAnalytics() {
         const res = await axios.get(`/api/orders/vendor/sales?range=${timeRange}`, { headers });
         setChartData(res.data);
       } catch (err) {
-        console.error('Chart data fetch failed:', err.message);
+        showMessage('Failed to load chart data', 'error');
         setChartData([]);
       }
     };
     fetchChartData();
-  }, [timeRange]);
+  }, [timeRange, showMessage]);
 
   useEffect(() => {
     const fetchTopMetrics = async () => {
@@ -62,14 +62,17 @@ function VendorAnalytics() {
         setTopProducts(productsRes.data);
         setTopCustomers(customersRes.data);
       } catch (err) {
-        console.error('Top metrics fetch failed:', err.message);
+        showMessage('Failed to load top metrics', 'error');
       }
     };
     fetchTopMetrics();
-  }, []);
+  }, [showMessage]);
 
   const exportCSV = () => {
-    if (!chartData.length) return;
+    if (!chartData.length) {
+      showMessage('No chart data to export.', 'error');
+      return;
+    }
     const header = Object.keys(chartData[0]).join(',');
     const csvContent = [header, ...chartData.map(row => Object.values(row).join(','))].join('\n');
 
@@ -81,6 +84,7 @@ function VendorAnalytics() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    showMessage('CSV exported!', 'success');
   };
 
   return (
@@ -96,7 +100,7 @@ function VendorAnalytics() {
       <div style={{ flex: 1 }}>
         <h2 style={{ fontSize: '2rem', color: '#00B894', marginBottom: 30 }}>📊 Vendor Dashboard</h2>
 
-        {msg && <p style={{ color: 'red' }}>{msg}</p>}
+        {/* msg removed, global message used instead */}
 
         {!analytics ? (
           <p>Loading your business insights...</p>

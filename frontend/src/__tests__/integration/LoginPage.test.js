@@ -1,11 +1,15 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import Login from '../../pages/LoginPage';
+import LoginPage from '../../pages/LoginPage';
 import '@testing-library/jest-dom';
 import { MemoryRouter } from 'react-router-dom';
 import axios from 'axios';
 
-jest.mock('axios');
+jest.mock('axios', () => ({
+  __esModule: true,
+  default: { post: jest.fn() },
+  post: jest.fn(),
+}));
 
 describe('\ud83d\udd10 Login Page', () => {
   beforeEach(() => {
@@ -16,7 +20,7 @@ describe('\ud83d\udd10 Login Page', () => {
   function renderLogin() {
     render(
       <MemoryRouter>
-        <Login />
+        <LoginPage />
       </MemoryRouter>
     );
   }
