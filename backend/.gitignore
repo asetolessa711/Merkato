@@ -1,0 +1,9 @@
+# Backend-specific ignores
+coverage/
+coverage-final.json
+lcov.info
+lcov-report/
+uploads/
+jest-results*.json
+test-results*.json
+scripts/

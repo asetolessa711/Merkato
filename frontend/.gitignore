@@ -1,0 +1,8 @@
+# Frontend-specific ignores
+coverage/
+build/
+*.map
+jest-results*.json
+test-results*.json
+cypress/screenshots/
+cypress/videos/

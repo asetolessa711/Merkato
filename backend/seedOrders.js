@@ -36,40 +36,20 @@ async function seedOrders() {
     console.log('🧹 Existing orders removed');
 
 
-    // Create test users if not exist
-    const admin = await User.findOneAndUpdate(
-      { email: 'admin@test.com' },
-      { $setOnInsert: { name: 'Admin', email: 'admin@test.com', password: 'admin123', roles: ['admin'] } },
-      { upsert: true, new: true }
-    );
-    const vendor = await User.findOneAndUpdate(
-      { email: 'vendor@test.com' },
-      { $setOnInsert: { name: 'Vendor', email: 'vendor@test.com', password: 'vendor123', roles: ['vendor'] } },
-      { upsert: true, new: true }
-    );
-    const customer = await User.findOneAndUpdate(
-      { email: 'customer@test.com' },
-      { $setOnInsert: { name: 'Customer', email: 'customer@test.com', password: 'customer123', roles: ['customer'] } },
-      { upsert: true, new: true }
-    );
+    // Find a customer and a vendor (roles is an array)
+    const customer = await User.findOne({ roles: { $in: ['customer'] } });
+    const vendor = await User.findOne({ roles: { $in: ['vendor'] } });
+    const product = await Product.findOne({});
+    if (!customer || !vendor || !product) throw new Error('Required user or product not found.');
 
-    // Create test product if not exist
-    const product = await Product.findOneAndUpdate(
-      { name: 'Widget' },
-      { $setOnInsert: { name: 'Widget', price: 10, vendor: vendor._id } },
-      { upsert: true, new: true }
-    );
 
-    if (!admin || !vendor || !customer || !product) throw new Error('Required test user or product not found or created.');
-
-    // Seed test orders
     const orders = [
       {
         buyer: customer._id,
         vendor: vendor._id,
         products: [{ product: product._id, quantity: 2 }],
         status: 'pending',
-        total: 20,
+        total: 99.99,
         createdAt: new Date(),
       },
       {
@@ -77,7 +57,7 @@ async function seedOrders() {
         vendor: vendor._id,
         products: [{ product: product._id, quantity: 1 }],
         status: 'shipped',
-        total: 10,
+        total: 49.99,
         createdAt: new Date(),
       },
     ];
@@ -88,25 +68,11 @@ async function seedOrders() {
     }
 
     console.log('🎉 Order seeding complete');
-
-    // Only exit if called from CLI
-    if (require.main === module) {
-      process.exit(0);
-    }
+    process.exit(0);
   } catch (err) {
     console.error('❌ Error seeding orders:', err);
-    if (require.main === module) {
-      process.exit(1);
-    } else {
-      throw err;
-    }
+    process.exit(1);
   }
 }
 
-// Export for Express route
-module.exports = seedOrders;
-
-// CLI support
-if (require.main === module) {
-  seedOrders();
-}
+seedOrders();

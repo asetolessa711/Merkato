@@ -4,16 +4,18 @@ module.exports = {
   rootDir: '.',
   testEnvironment: 'jsdom',
   roots: [
-    '<rootDir>/src',
-    '<rootDir>/tests'
+  '<rootDir>/src'
   ],
   testMatch: [
     '<rootDir>/src/**/__tests__/**/*.{js,jsx,ts,tsx}',
     '<rootDir>/src/**/*.{spec,test}.{js,jsx,ts,tsx}',
     '<rootDir>/tests/integration/**/*.{spec,test}.{js,jsx,ts,tsx}',
     '<rootDir>/tests/integration/**/*.test.js',
+    '<rootDir>/tests/unit/**/*.{spec,test}.{js,jsx,ts,tsx}',
+    '<rootDir>/tests/unit/**/*.test.js',
   ],
   setupFiles: [path.resolve(__dirname, './jest.env.setup.js')],
+  setupFilesAfterEnv: [path.resolve(__dirname, './jest.setup.js')],
   moduleFileExtensions: ['js', 'jsx', 'json'],
   moduleNameMapper: {
     '\\.(css|less|scss|sass|module\\.css)$': 'identity-obj-proxy',

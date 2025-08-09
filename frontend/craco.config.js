@@ -4,9 +4,11 @@ const path = require('path');
 module.exports = {
   jest: {
     configure: (jestConfig) => {
+      const fs = require('fs');
+      const hasExtraTestsDir = fs.existsSync(require('path').resolve(__dirname, 'tests'));
       jestConfig.roots = [
         '<rootDir>/src',
-        '<rootDir>/tests'
+        ...(hasExtraTestsDir ? ['<rootDir>/tests'] : [])
       ];
       return jestConfig;
     }

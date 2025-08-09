@@ -9,3 +9,11 @@ Thumbs.db
 *.cab 
 *.lnk 
 Documents/
+coverage/
+**/coverage/
+**/lcov-report/
+**/test-results*.json
+**/jest-results*.json
+**/uploads/
+frontend/build/
+
