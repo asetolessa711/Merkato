@@ -17,7 +17,9 @@
     "start:backend": "cd backend && node server.js",
   "start:frontend": "cd frontend && npm start",
   "dev": "node ./scripts/start-dev.js",
-  "dev:ps": "powershell -NoProfile -ExecutionPolicy Bypass -Command node ./scripts/start-dev.js"
+  "dev:ps": "powershell -NoProfile -ExecutionPolicy Bypass -Command node ./scripts/start-dev.js",
+  "doctor": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/dev-doctor.ps1",
+  "doctor:fix": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/dev-doctor.ps1 -FixFirewall"
   },
   "devDependencies": {
   "axios": "^1.11.0",
