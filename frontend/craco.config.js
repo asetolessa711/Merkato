@@ -87,10 +87,8 @@ module.exports = {
     cfg.allowedHosts = 'all'; // or ['localhost']
     cfg.host = process.env.HOST || 'localhost';
     if (process.env.PORT) cfg.port = Number(process.env.PORT);
-    // Auto-open browser on start unless user disables via BROWSER=none
-    if ((process.env.BROWSER || '').toLowerCase() !== 'none') {
-      cfg.open = true;
-    }
+  // Do not auto-open here; we'll open the browser after the server is ready via a script.
+  cfg.open = false;
     return cfg;
   },
   style: {
