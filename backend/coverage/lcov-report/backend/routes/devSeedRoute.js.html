@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">22.58% </span>
+                <span class="strong">14.28% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>7/31</span>
+                <span class='fraction'>6/42</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/4</span>
+                <span class='fraction'>0/8</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">23.33% </span>
+                <span class="strong">15.78% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>7/30</span>
+                <span class='fraction'>6/38</span>
             </div>
         
             
@@ -143,19 +143,42 @@
 <a name='L78'></a><a href='#L78'>78</a>
 <a name='L79'></a><a href='#L79'>79</a>
 <a name='L80'></a><a href='#L80'>80</a>
-<a name='L81'></a><a href='#L81'>81</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">14x</span>
-<span class="cline-any cline-yes">14x</span>
+<a name='L81'></a><a href='#L81'>81</a>
+<a name='L82'></a><a href='#L82'>82</a>
+<a name='L83'></a><a href='#L83'>83</a>
+<a name='L84'></a><a href='#L84'>84</a>
+<a name='L85'></a><a href='#L85'>85</a>
+<a name='L86'></a><a href='#L86'>86</a>
+<a name='L87'></a><a href='#L87'>87</a>
+<a name='L88'></a><a href='#L88'>88</a>
+<a name='L89'></a><a href='#L89'>89</a>
+<a name='L90'></a><a href='#L90'>90</a>
+<a name='L91'></a><a href='#L91'>91</a>
+<a name='L92'></a><a href='#L92'>92</a>
+<a name='L93'></a><a href='#L93'>93</a>
+<a name='L94'></a><a href='#L94'>94</a>
+<a name='L95'></a><a href='#L95'>95</a>
+<a name='L96'></a><a href='#L96'>96</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">14x</span>
 <span class="cline-any cline-yes">14x</span>
 <span class="cline-any cline-yes">14x</span>
 <span class="cline-any cline-yes">14x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">14x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -163,6 +186,13 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -227,26 +257,41 @@
 const router = express.Router();
 const Product = require('../models/Product');
 const User = require('../models/User');
-const bcrypt = require('bcryptjs');
+// Note: Do NOT pre-hash here; let User model pre-save hook hash once.
 &nbsp;
 // Seed test users and products for E2E (idempotent)
 router.post('/seed', <span class="fstat-no" title="function not covered" >as</span>ync (req, res) =&gt; {
 <span class="cstat-no" title="statement not covered" >  try {</span>
     const password = <span class="cstat-no" title="statement not covered" >'Password123!';</span>
     const ensureUser = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >as</span>ync (name, email, roles, country) =&gt; {</span>
-      let user = <span class="cstat-no" title="statement not covered" >await User.findOne({ email });</span>
+      let user = <span class="cstat-no" title="statement not covered" >await User.findOne({ email }).select('+password');</span>
 <span class="cstat-no" title="statement not covered" >      if (!user) {</span>
-        const hash = <span class="cstat-no" title="statement not covered" >await bcrypt.hash(password, 10);</span>
-<span class="cstat-no" title="statement not covered" >        user = await User.create({ name, email, password: hash, roles, country });</span>
+        // Create with plain password; schema pre-save will hash once.
+<span class="cstat-no" title="statement not covered" >        user = await User.create({ name, email, password, roles, country });</span>
+      } else {
+        // Ensure known password and roles for idempotent E2E runs
+        let changed = <span class="cstat-no" title="statement not covered" >false;</span>
+<span class="cstat-no" title="statement not covered" >        if (user.roles?.join(',') !== roles.join(',')) { <span class="cstat-no" title="statement not covered" >user.roles = roles; <span class="cstat-no" title="statement not covered" ></span>changed = true; </span>}</span>
+        // Reset password to known value so cy.login works even if a double-hash snuck in before
+<span class="cstat-no" title="statement not covered" >        user.password = password; </span>// pre-save will re-hash properly
+<span class="cstat-no" title="statement not covered" >        changed = true;</span>
+<span class="cstat-no" title="statement not covered" >        if (changed) <span class="cstat-no" title="statement not covered" >await user.save();</span></span>
       }
 <span class="cstat-no" title="statement not covered" >      return user;</span>
     };
 &nbsp;
-    const customer = <span class="cstat-no" title="statement not covered" >await ensureUser('Customer One', 'customer@test.com', ['customer'], 'US');</span>
-    const vendor = <span class="cstat-no" title="statement not covered" >await ensureUser('Vendor One', 'vendor@test.com', ['vendor'], 'US');</span>
-<span class="cstat-no" title="statement not covered" >    await ensureUser('Admin One', 'admin@test.com', ['admin'], 'US');</span>
-<span class="cstat-no" title="statement not covered" >    await ensureUser('Global Admin', 'global_admin@test.com', ['admin', 'global_admin'], 'US');</span>
-<span class="cstat-no" title="statement not covered" >    await ensureUser('Country Admin', 'country_admin@test.com', ['admin', 'country_admin'], 'US');</span>
+  const customer = <span class="cstat-no" title="statement not covered" >await ensureUser('Customer One', 'customer@test.com', ['customer'], 'US');</span>
+  const vendor = <span class="cstat-no" title="statement not covered" >await ensureUser('Vendor One', 'vendor@test.com', ['vendor'], 'US');</span>
+<span class="cstat-no" title="statement not covered" >  await ensureUser('Admin One', 'admin@test.com', ['admin'], 'US');</span>
+  // Example.com aliases used by smoke test
+<span class="cstat-no" title="statement not covered" >  await ensureUser('Customer Example', 'testuser@example.com', ['customer'], 'US');</span>
+<span class="cstat-no" title="statement not covered" >  await ensureUser('Vendor Example', 'vendor@example.com', ['vendor'], 'US');</span>
+<span class="cstat-no" title="statement not covered" >  await ensureUser('Admin Example', 'admin@example.com', ['admin'], 'US');</span>
+  // Create both underscore and non-underscore variants used across tests
+<span class="cstat-no" title="statement not covered" >  await ensureUser('Global Admin', 'global_admin@test.com', ['admin', 'global_admin'], 'US');</span>
+<span class="cstat-no" title="statement not covered" >  await ensureUser('Global Admin', 'globaladmin@test.com', ['admin', 'global_admin'], 'US');</span>
+<span class="cstat-no" title="statement not covered" >  await ensureUser('Country Admin', 'country_admin@test.com', ['admin', 'country_admin'], 'US');</span>
+<span class="cstat-no" title="statement not covered" >  await ensureUser('Country Admin', 'countryadmin@test.com', ['admin', 'country_admin'], 'US');</span>
 &nbsp;
     const ensureProduct = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >as</span>ync (doc) =&gt; {</span>
       let p = <span class="cstat-no" title="statement not covered" >await Product.findOne({ name: doc.name });</span>
@@ -310,7 +355,7 @@ module.exports = router;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-09-04T09:56:34.473Z
+                at 2025-09-04T16:13:26.154Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
