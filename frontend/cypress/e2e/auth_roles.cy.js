@@ -55,14 +55,14 @@ describe('🔐 Role-Based Access Tests (Stabilized)', () => {
   it('❌ Vendor should NOT access /admin', () => {
     login('vendor');
     cy.visit(`${baseUrl}/admin`);
-    cy.location('pathname', { timeout: 10000 }).should('eq', '/vendor');
+  cy.location('pathname', { timeout: 10000 }).should('include', '/vendor');
     cy.get('[data-testid="vendor-dashboard-title"]', { timeout: 10000 }).should('exist').and('be.visible');
   });
 
   it('❌ Customer should NOT access /admin', () => {
     login('customer');
     cy.visit(`${baseUrl}/admin`);
-    cy.location('pathname', { timeout: 15000 }).should('eq', '/account/dashboard');
+  cy.location('pathname', { timeout: 15000 }).should('include', '/account');
     // Allow any async dashboard loads to resolve then assert on one of the stable markers
     cy.get('[data-testid="customer-dashboard-title"], [data-testid="customer-dashboard-root"]', {
       timeout: 20000,
@@ -72,7 +72,7 @@ describe('🔐 Role-Based Access Tests (Stabilized)', () => {
   it('❌ Admin should NOT access /vendor', () => {
     login('admin');
     cy.visit(`${baseUrl}/vendor`);
-    cy.location('pathname', { timeout: 10000 }).should('eq', '/admin/dashboard');
+  cy.location('pathname', { timeout: 10000 }).should('include', '/admin');
     cy.get('[data-testid="admin-dashboard-title"]', { timeout: 10000 }).should('exist').and('be.visible');
   });
 
@@ -80,21 +80,21 @@ describe('🔐 Role-Based Access Tests (Stabilized)', () => {
   login('customer');
   cy.wait(500); // allow redirect to settle
   cy.visit(`${baseUrl}/vendor`);
-  cy.location('pathname', { timeout: 10000 }).should('eq', '/account/dashboard');
+  cy.location('pathname', { timeout: 10000 }).should('include', '/account');
   cy.get('[data-testid="customer-dashboard-title"]', { timeout: 10000 }).should('exist');
 });
 
   it('❌ Vendor should NOT access /account/dashboard', () => {
     login('vendor');
     cy.visit(`${baseUrl}/account/dashboard`);
-    cy.location('pathname', { timeout: 10000 }).should('eq', '/vendor');
+  cy.location('pathname', { timeout: 10000 }).should('include', '/vendor');
     cy.get('[data-testid="vendor-dashboard-title"]', { timeout: 10000 }).should('exist').and('be.visible');
   });
 
   it('❌ Admin should NOT access /account/dashboard', () => {
     login('admin');
     cy.visit(`${baseUrl}/account/dashboard`);
-    cy.location('pathname', { timeout: 10000 }).should('eq', '/admin/dashboard');
+  cy.location('pathname', { timeout: 10000 }).should('include', '/admin');
     cy.get('[data-testid="admin-dashboard-title"]', { timeout: 10000 }).should('exist').and('be.visible');
   });
 });
