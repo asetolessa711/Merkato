@@ -4,11 +4,11 @@
   color: #fff;
   font-family: 'Poppins', sans-serif;
   border-top: 1px solid #e2e8f0;
-  position: fixed;
-  left: 0;
+  /* Prefer sticky/static footer to avoid overlapping action targets in tests */
+  position: sticky;
   bottom: 0;
   width: 100vw;
-  z-index: 1000;
+  z-index: 5;
   padding: 0.2rem 0.5rem 0.2rem 0.5rem;
   margin-top: 0;
   box-shadow: 0 -2px 8px rgba(0,0,0,0.04);

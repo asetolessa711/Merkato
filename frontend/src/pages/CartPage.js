@@ -2,40 +2,30 @@ import React, { useEffect, useState } from 'react';
 import { useMessage } from '../context/MessageContext';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { loadCart, saveCart, isCartExpired } from '../utils/cartStorage';
 
 function CartPage() {
   const [cart, setCart] = useState([]);
   const { showMessage } = useMessage();
   const navigate = useNavigate();
-  const token = localStorage.getItem('merkato-token'); // ✅ Use consistent token key
+  // Allow guests to view cart; token only needed later at order time
+  const token = localStorage.getItem('token') || localStorage.getItem('merkato-token');
 
   useEffect(() => {
-    if (!token) {
-      navigate('/login');
+    const authed = Boolean(token);
+    if (isCartExpired(authed)) {
+      localStorage.removeItem('merkato-cart');
+  localStorage.removeItem('merkato-cart-ttl');
+      setCart([]);
       return;
     }
-
-    const saved = localStorage.getItem('merkato-cart');
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      const ninetyDays = 90 * 24 * 60 * 60 * 1000;
-      const isExpired = Date.now() - (parsed.timestamp || 0) > ninetyDays;
-
-      if (isExpired) {
-        localStorage.removeItem('merkato-cart');
-        setCart([]);
-      } else {
-        setCart(parsed.items || []);
-      }
-    }
+    const { items } = loadCart();
+    setCart(items || []);
   }, [navigate, token]);
 
   const updateAndSaveCart = (newCart, actionMsg = null, type = 'success') => {
     setCart(newCart);
-    localStorage.setItem('merkato-cart', JSON.stringify({
-      items: newCart,
-      timestamp: Date.now()
-    }));
+    saveCart(newCart, Boolean(token));
     if (actionMsg) showMessage(actionMsg, type);
   };
 
@@ -54,11 +44,8 @@ function CartPage() {
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   const handleCheckout = () => {
-    if (!token) {
-      navigate('/login');
-      return;
-    }
-    navigate('/checkout'); // ✅ Redirect to proper checkout page
+    // Allow guest checkout flow to proceed to /checkout as well
+    navigate('/checkout');
   };
 
   if (cart.length === 0) {

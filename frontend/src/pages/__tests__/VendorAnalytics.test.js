@@ -5,6 +5,8 @@ beforeAll(() => {
     unobserve() {}
     disconnect() {}
   };
+  // Mock URL.createObjectURL for jsdom
+  global.URL.createObjectURL = jest.fn(() => 'mock-url');
 });
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
@@ -54,12 +56,22 @@ describe('VendorAnalytics', () => {
   });
 
   it('shows success on CSV export', async () => {
-    axios.get.mockResolvedValueOnce({ data: { sales: 1000, orders: 50 } });
-    axios.get.mockResolvedValueOnce({ data: { sales: 1000, orders: 50, revenue: 1000, itemsSold: 50, uniqueCustomers: 10, topProducts: [], topCustomers: [] } });
-    axios.get.mockResolvedValueOnce({ data: 'csv-content' });
+    // 1. analytics
+    axios.get.mockResolvedValueOnce({ data: { totalRevenue: 1000, totalItemsSold: 50, orderCount: 20, uniqueCustomers: 10 } });
+    // 2. chart data (non-empty array)
+    axios.get.mockResolvedValueOnce({ data: [
+      { label: 'Week 1', revenue: 500 },
+      { label: 'Week 2', revenue: 500 }
+    ] });
+    // 3. top-products
+    axios.get.mockResolvedValueOnce({ data: [] });
+    // 4. top-customers
+    axios.get.mockResolvedValueOnce({ data: [] });
     renderWithContext(<VendorAnalytics />);
     await screen.findByText(/Vendor Dashboard/i);
-    fireEvent.click(screen.getByRole('button', { name: /export csv/i }));
+    // Wait for the export button to be enabled (after data loads)
+    const exportBtn = await screen.findByRole('button', { name: /export csv/i });
+    fireEvent.click(exportBtn);
     await waitFor(() => {
       expect(mockShowMessage).toHaveBeenCalledWith('CSV exported successfully', 'success');
     });

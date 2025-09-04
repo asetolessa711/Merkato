@@ -10,8 +10,9 @@ const PDFDocument = require('pdfkit');
 router.get('/report', ensureAuth, async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
-    const isAdmin = req.user.role === 'admin' || req.user.role === 'global_admin';
-    const vendorId = req.user._id;
+  const roles = req.user.roles || [];
+  const isAdmin = roles.includes('admin') || roles.includes('global_admin');
+  const vendorId = req.user._id;
 
     const query = isAdmin ? {} : { vendor: vendorId };
 
@@ -22,7 +23,7 @@ router.get('/report', ensureAuth, async (req, res) => {
       };
     }
 
-    const invoices = await Invoice.find(query)
+  const invoices = await Invoice.find(query)
       .sort({ createdAt: -1 });
 
     const totalRevenue = invoices.reduce((sum, inv) => sum + parseFloat(inv.total || 0), 0);

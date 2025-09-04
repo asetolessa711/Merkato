@@ -6,6 +6,8 @@ import { MessageProvider } from '../../src/context/MessageContext';
 import ReviewModeration from '../../src/components/admin/ReviewModeration';
 
 jest.mock('axios');
+// Ensure axios.patch is a mock function for hide/unhide actions
+axios.patch = jest.fn();
 
 const mockReviews = [
   { _id: '1', product: { name: 'Test Product' }, user: { name: 'User' }, rating: 2, comment: 'Needs moderation', flagged: true, hidden: false },
@@ -40,7 +42,7 @@ describe('AdminReviewModeration (E2E)', () => {
 
   it('can hide a review and shows success message', async () => {
     axios.get.mockResolvedValueOnce({ data: mockReviews });
-    axios.put.mockResolvedValueOnce({ data: { ...mockReviews[0], hidden: true } });
+    axios.patch.mockResolvedValueOnce({ data: { ...mockReviews[0], hidden: true } });
     setup();
     fireEvent.click(await screen.findByRole('button', { name: /hide/i }));
     await waitFor(() => {
@@ -50,7 +52,7 @@ describe('AdminReviewModeration (E2E)', () => {
 
   it('shows error if hide fails', async () => {
     axios.get.mockResolvedValueOnce({ data: mockReviews });
-    axios.put.mockRejectedValueOnce(new Error('fail'));
+    axios.patch.mockRejectedValueOnce(new Error('fail'));
     setup();
     fireEvent.click(await screen.findByRole('button', { name: /hide/i }));
     await waitFor(() => {
@@ -60,7 +62,7 @@ describe('AdminReviewModeration (E2E)', () => {
 
   it('can unhide a review and shows success message', async () => {
     axios.get.mockResolvedValueOnce({ data: [{ ...mockReviews[0], hidden: true }] });
-    axios.put.mockResolvedValueOnce({ data: { ...mockReviews[0], hidden: false } });
+    axios.patch.mockResolvedValueOnce({ data: { ...mockReviews[0], hidden: false } });
     setup();
     fireEvent.click(await screen.findByRole('button', { name: /unhide/i }));
     await waitFor(() => {
@@ -70,7 +72,7 @@ describe('AdminReviewModeration (E2E)', () => {
 
   it('shows error if unhide fails', async () => {
     axios.get.mockResolvedValueOnce({ data: [{ ...mockReviews[0], hidden: true }] });
-    axios.put.mockRejectedValueOnce(new Error('fail'));
+    axios.patch.mockRejectedValueOnce(new Error('fail'));
     setup();
     fireEvent.click(await screen.findByRole('button', { name: /unhide/i }));
     await waitFor(() => {

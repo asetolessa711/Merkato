@@ -1,17 +1,31 @@
 import 'cypress-file-upload';
 
+const API_URL = Cypress.env('API_URL') || 'http://localhost:5051';
+
 // Custom command to seed orders for tests
-Cypress.Commands.add('seedOrders', () => {
-  // Example: call backend test endpoint to seed orders
-  cy.request('POST', '/api/test/seed-orders');
+// Accepts an optional payload (ignored by backend route, but kept for API-compat)
+Cypress.Commands.add('seedOrders', (payload) => {
+  // Use token from localStorage to authorize the test seed endpoint
+  cy.window().then((win) => {
+    const token = win.localStorage.getItem('token');
+    // Persist payload for UI-level injection as a fallback (AdminOrders reads e2e-orders)
+    if (payload) {
+      try { win.localStorage.setItem('e2e-orders', JSON.stringify(payload)); } catch {}
+    }
+    cy.request({
+      method: 'POST',
+      url: `${API_URL}/api/test/seed-orders`,
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: payload || {},
+      failOnStatusCode: false
+    });
+    // Ensure the UI reflects the seeded data immediately
+    cy.reload();
+  });
 });
-// Custom command to log in as admin
+// Custom command to log in as admin via API for stability
 Cypress.Commands.add('loginAsAdmin', () => {
-  cy.visit('/login');
-  cy.get('input[name="email"]').type('admin@test.com');
-  cy.get('input[name="password"]').type('Password123!');
-  cy.get('button[type="submit"]').click();
-  cy.url().should('include', '/admin');
+  cy.login('admin');
 });
 // ***********************************************
 // This example commands.js shows you how to
@@ -51,10 +65,19 @@ Cypress.Commands.add('login', (role) => {
 
   const { email, password } = credentials[role];
 
-  cy.request('POST', 'http://localhost:5000/api/auth/login', { email, password })
+  cy.request('POST', `${API_URL}/api/auth/login`, { email, password })
     .then((res) => {
-      const { token, user } = res.body;
-      window.localStorage.setItem('token', token);
+      const body = res.body || {};
+      const token = body.token;
+      // Normalize user object for app consumption
+      const user = body.user || {
+        _id: body._id,
+        name: body.name,
+        email: body.email,
+        role: body.role || (Array.isArray(body.roles) ? body.roles[0] : undefined),
+        roles: body.roles || (body.role ? [body.role] : [])
+      };
+      window.localStorage.setItem('token', token || '');
       window.localStorage.setItem('user', JSON.stringify(user));
     });
 });

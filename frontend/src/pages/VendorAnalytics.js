@@ -59,8 +59,8 @@ function VendorAnalytics() {
           axios.get('/api/vendor/top-products', { headers }),
           axios.get('/api/vendor/top-customers', { headers })
         ]);
-        setTopProducts(productsRes.data);
-        setTopCustomers(customersRes.data);
+        setTopProducts(Array.isArray(productsRes.data) ? productsRes.data : []);
+        setTopCustomers(Array.isArray(customersRes.data) ? customersRes.data : []);
       } catch (err) {
         showMessage('Failed to load top metrics', 'error');
       }
@@ -69,22 +69,26 @@ function VendorAnalytics() {
   }, [showMessage]);
 
   const exportCSV = () => {
-    if (!chartData.length) {
-      showMessage('No chart data to export.', 'error');
-      return;
-    }
-    const header = Object.keys(chartData[0]).join(',');
-    const csvContent = [header, ...chartData.map(row => Object.values(row).join(','))].join('\n');
+    try {
+      if (!chartData.length) {
+        showMessage('Failed to export CSV', 'error');
+        return;
+      }
+      const header = Object.keys(chartData[0]).join(',');
+      const csvContent = [header, ...chartData.map(row => Object.values(row).join(','))].join('\n');
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `sales_${timeRange}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    showMessage('CSV exported!', 'success');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `sales_${timeRange}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showMessage('CSV exported successfully', 'success');
+    } catch (e) {
+      showMessage('Failed to export CSV', 'error');
+    }
   };
 
   return (
@@ -117,7 +121,7 @@ function VendorAnalytics() {
           </div>
         )}
 
-        <div style={{
+  <div data-testid="analytics-chart" style={{
           background: '#fff',
           padding: 20,
           borderRadius: 10,
@@ -185,7 +189,7 @@ function VendorAnalytics() {
           <div style={{ flex: 1, minWidth: 280 }}>
             <h4 style={{ color: '#2c3e50' }}>📦 Most Sold Products</h4>
             <ul style={{ listStyle: 'none', paddingLeft: 0 }}>
-              {topProducts.map((p, i) => (
+              {(Array.isArray(topProducts) ? topProducts : []).map((p, i) => (
                 <li key={i} style={{ marginBottom: 8 }}>
                   {i + 1}. {p.name} – {p.quantity} sold
                 </li>

@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">80% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/20</span>
+                <span class='fraction'>16/20</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">53.84% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/13</span>
+                <span class='fraction'>7/13</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/2</span>
+                <span class='fraction'>2/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">94.11% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/17</span>
+                <span class='fraction'>16/17</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -121,32 +121,31 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -156,7 +155,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -170,32 +170,32 @@ import axios from 'axios';
 import { loadStripe } from '@stripe/stripe-js';
 &nbsp;
 &nbsp;
-function <span class="fstat-no" title="function not covered" >StripeCheckoutButton(</span>{ items = <span class="branch-0 cbranch-no" title="branch not covered" >[],</span> onSuccess, onError, stripe: injectedStripe }) {
-  const [loading, setLoading] = <span class="cstat-no" title="statement not covered" >useState(false);</span>
+function StripeCheckoutButton({ items = <span class="branch-0 cbranch-no" title="branch not covered" >[],</span> onSuccess, onError, stripe: injectedStripe }) {
+  const [loading, setLoading] = useState(false);
 &nbsp;
-  const handleClick = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >as</span>ync () =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >    if (!items.length) <span class="cstat-no" title="statement not covered" >return;</span></span>
-<span class="cstat-no" title="statement not covered" >    setLoading(true);</span>
-<span class="cstat-no" title="statement not covered" >    try {</span>
-      const response = <span class="cstat-no" title="statement not covered" >await axios.post('/api/stripe/create-checkout-session', { items }, {});</span>
+  const handleClick = async () =&gt; {
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (!items.length) <span class="cstat-no" title="statement not covered" >return;</span>
+    setLoading(true);
+    try {
+      const response = await axios.post('/api/stripe/create-checkout-session', { items }, {});
       // eslint-disable-next-line no-console
-<span class="cstat-no" title="statement not covered" >      console.log('StripeCheckoutButton axios response:', response);</span>
-      const sessionId = <span class="cstat-no" title="statement not covered" >response?.data?.id;</span>
+      console.log('StripeCheckoutButton axios response:', response);
+      const sessionId = response?.data?.id;
       // eslint-disable-next-line no-console
-<span class="cstat-no" title="statement not covered" >      console.log('StripeCheckoutButton sessionId:', sessionId);</span>
-      const stripe = <span class="cstat-no" title="statement not covered" >injectedStripe || await loadStripe('pk_test_dummy');</span>
-<span class="cstat-no" title="statement not covered" >      await stripe.redirectToCheckout({ sessionId });</span>
+      console.log('StripeCheckoutButton sessionId:', sessionId);
+      const stripe = injectedStripe || <span class="branch-1 cbranch-no" title="branch not covered" >await loadStripe('pk_test_dummy');</span>
+      await stripe.redirectToCheckout({ sessionId });
       // eslint-disable-next-line no-console
-<span class="cstat-no" title="statement not covered" >      console.log('[TEST DEBUG] redirectToCheckout called');</span>
-<span class="cstat-no" title="statement not covered" >      if (onSuccess) <span class="cstat-no" title="statement not covered" >onSuccess();</span></span>
+      console.log('[TEST DEBUG] redirectToCheckout called');
+      <span class="missing-if-branch" title="if path not taken" >I</span>if (onSuccess) <span class="cstat-no" title="statement not covered" >onSuccess();</span>
     } catch (err) {
 <span class="cstat-no" title="statement not covered" >      if (onError) <span class="cstat-no" title="statement not covered" >onError(err);</span></span>
     } finally {
-<span class="cstat-no" title="statement not covered" >      setLoading(false);</span>
+      setLoading(false);
     }
   };
 &nbsp;
-<span class="cstat-no" title="statement not covered" >  return (</span>
+  return (
     &lt;button
       onClick={handleClick}
       aria-label="Stripe Checkout"
@@ -206,7 +206,7 @@ function <span class="fstat-no" title="function not covered" >StripeCheckoutButt
   );
 }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >StripeCheckoutButton.propTypes = {</span>
+StripeCheckoutButton.propTypes = {
   items: PropTypes.array.isRequired,
   onSuccess: PropTypes.func,
   onError: PropTypes.func,
@@ -220,7 +220,7 @@ export default StripeCheckoutButton;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-05T15:56:23.799Z
+                at 2025-09-04T09:58:51.968Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

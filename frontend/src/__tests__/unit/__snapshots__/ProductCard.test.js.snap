@@ -4,6 +4,7 @@ exports[`🛍️ ProductCard Component matches snapshot 1`] = `
 <DocumentFragment>
   <div
     class="product-card theme-mint size-md  "
+    data-testid="product-card"
   >
     <div
       class="product-card-image-container"
@@ -20,7 +21,11 @@ exports[`🛍️ ProductCard Component matches snapshot 1`] = `
       <h3
         class="product-title"
       >
-        Test Product
+        <a
+          href="/product/123"
+        >
+          Test Product
+        </a>
       </h3>
       <div
         class="product-price"
@@ -36,6 +41,7 @@ exports[`🛍️ ProductCard Component matches snapshot 1`] = `
       </div>
       <button
         aria-label="Add to Cart"
+        data-testid="add-to-cart-btn"
         type="button"
       >
         Add to Cart

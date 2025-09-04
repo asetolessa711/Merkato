@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+// Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`🧾 OrderConfirmation Page matches snapshot 1`] = `
 <DocumentFragment>
@@ -48,7 +48,7 @@ exports[`🧾 OrderConfirmation Page matches snapshot 1`] = `
       style="display: flex; gap: 32px; margin-bottom: 24px;"
     >
       <div
-        style="flex: 1 1 0%;"
+        style="flex: 1;"
       >
         <h4
           aria-level="4"
@@ -71,7 +71,7 @@ exports[`🧾 OrderConfirmation Page matches snapshot 1`] = `
         </div>
       </div>
       <div
-        style="flex: 1 1 0%;"
+        style="flex: 1;"
       >
         <h4
           aria-level="4"
@@ -240,7 +240,7 @@ exports[`🧾 OrderConfirmation Page matches snapshot with different data 1`] = 
       style="display: flex; gap: 32px; margin-bottom: 24px;"
     >
       <div
-        style="flex: 1 1 0%;"
+        style="flex: 1;"
       >
         <h4
           aria-level="4"
@@ -263,7 +263,7 @@ exports[`🧾 OrderConfirmation Page matches snapshot with different data 1`] = 
         </div>
       </div>
       <div
-        style="flex: 1 1 0%;"
+        style="flex: 1;"
       >
         <h4
           aria-level="4"

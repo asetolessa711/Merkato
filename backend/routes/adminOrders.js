@@ -21,7 +21,8 @@ router.get('/', protect, authorize('admin', 'global_admin'), async (req, res) =>
       emailLog: {}
     }];
   }
-  res.json({ orders });
+  // Return array directly to align with tests expecting an array response
+  res.json(orders);
 });
 
 module.exports = router;

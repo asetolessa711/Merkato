@@ -1,23 +1,28 @@
 const { defineConfig } = require("cypress");
+const axios = require('axios');
 
 module.exports = defineConfig({
   e2e: {
-    baseUrl: 'http://localhost:3000', // ✅ This is what was missing
+    baseUrl: 'http://localhost:3000',
+    env: {
+      API_URL: process.env.CYPRESS_API_URL || 'http://localhost:5051'
+    },
     setupNodeEvents(on, config) {
-      // Register custom db:seed task for E2E tests
+      const apiBase = process.env.CYPRESS_API_URL || config.env.API_URL || 'http://localhost:5051';
+      config.env = { ...config.env, API_URL: apiBase };
+
+      // Register custom db:seed task for E2E tests via HTTP
       on('task', {
         async 'db:seed'() {
-          const { exec } = require('child_process');
-          return new Promise((resolve, reject) => {
-            exec('node "../backend/seedOrders.js"', (error, stdout, stderr) => {
-              if (error) {
-                console.error(stderr);
-                return reject(error);
-              }
-              console.log(stdout);
-              resolve(true);
-            });
-          });
+          try {
+            const url = `${apiBase.replace(/\/$/, '')}/api/dev/seed`;
+            await axios.post(url);
+            console.log(`✅ Seeded via ${url}`);
+            return true;
+          } catch (e) {
+            console.error('❌ Seed failed', e.message);
+            return false;
+          }
         }
       });
       return config;

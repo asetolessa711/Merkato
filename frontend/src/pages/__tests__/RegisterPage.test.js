@@ -37,12 +37,11 @@ describe('RegisterPage (customer)', () => {
   it('shows error message for missing fields', async () => {
     setup();
     fireEvent.click(screen.getByRole('button', { name: /register/i }));
-    expect(await screen.findByText(/name is required/i)).toBeInTheDocument();
-    // Use getAllByText for duplicate error messages
-    expect((await screen.findAllByText(/valid email required/i)).length).toBeGreaterThan(0);
-    expect((await screen.findAllByText(/password must be at least 6/i)).length).toBeGreaterThan(0);
-    expect((await screen.findAllByText(/country is required/i)).length).toBeGreaterThan(0);
-    expect((await screen.findAllByText(/please select a role/i)).length).toBeGreaterThan(0);
+    expect(await screen.findByText('Please enter your full name.')).toBeInTheDocument();
+    expect((await screen.findAllByText('Please enter a valid email address (e.g., user@example.com).')).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText('Your password must be at least 6 characters.')).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText('Please enter your country.')).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText('Please select your role.')).length).toBeGreaterThan(0);
   });
 
   it('shows global error message if registration fails', async () => {
@@ -54,7 +53,7 @@ describe('RegisterPage (customer)', () => {
     fireEvent.change(screen.getByLabelText(/country/i), { target: { value: 'Ethiopia' } });
     fireEvent.change(screen.getByLabelText(/register as/i), { target: { value: 'customer' } });
     fireEvent.click(screen.getByRole('button', { name: /register/i }));
-    expect(await screen.findByTestId('global-message')).toHaveTextContent(/registration failed/i);
+    expect(await screen.findByTestId('global-message')).toHaveTextContent('We couldn’t create your account. Please try again.');
   });
 
   it('shows global duplicate message if email exists', async () => {
@@ -66,7 +65,7 @@ describe('RegisterPage (customer)', () => {
     fireEvent.change(screen.getByLabelText(/country/i), { target: { value: 'Ethiopia' } });
     fireEvent.change(screen.getByLabelText(/register as/i), { target: { value: 'customer' } });
     fireEvent.click(screen.getByRole('button', { name: /register/i }));
-    expect(await screen.findByTestId('global-message')).toHaveTextContent(/email already exists/i);
+    expect(await screen.findByTestId('global-message')).toHaveTextContent('This email is already registered. Please log in or use a different email.');
   });
 
   it('navigates on successful registration', async () => {
@@ -138,10 +137,10 @@ describe('RegisterPage (customer)', () => {
     fireEvent.change(screen.getByLabelText('Password', { selector: 'input' }), { target: { value: '   ' } });
     fireEvent.change(screen.getByLabelText(/country/i), { target: { value: '   ' } });
     fireEvent.click(screen.getByRole('button', { name: /register/i }));
-    expect(await screen.findByText(/name is required/i)).toBeInTheDocument();
-    expect((await screen.findAllByText(/valid email required/i)).length).toBeGreaterThan(0);
-    expect(await screen.findByText(/password must be at least 6/i)).toBeInTheDocument();
-    expect(await screen.findByText(/country is required/i)).toBeInTheDocument();
+    expect(await screen.findByText('Please enter your full name.')).toBeInTheDocument();
+    expect((await screen.findAllByText('Please enter a valid email address (e.g., user@example.com).')).length).toBeGreaterThan(0);
+    expect(await screen.findByText('Your password must be at least 6 characters.')).toBeInTheDocument();
+    expect(await screen.findByText('Please enter your country.')).toBeInTheDocument();
   });
 
   it('prevents double submit (only one request sent)', async () => {

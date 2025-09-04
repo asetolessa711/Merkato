@@ -86,8 +86,11 @@ const Navbar = () => {
               </div>
             )}
           </div>
-          {/* Direct Shop Link for accessibility and tests */}
+          {/* Direct Shop Link for accessibility */}
           <Link to="/shop" className="top-link">Shop</Link>
+
+          {/* Cart link */}
+          <Link to="/cart" className="top-link" data-testid="cart-link">Cart</Link>
 
           <Link to="/favorites" className="top-link">Favorites</Link>
 

@@ -1,0 +1,64 @@
+Suites: total=17 passed=15 failed=2
+Tests: total=197 passed=184 failed=13
+
+Suite: C:\Users\atdan\OneDrive\Desktop\Merkato\backend\tests\unit\utils.test.js
+  - Email Utils sendOrderConfirmation sends a formatted email
+    Error: expect(jest.fn()).toHaveBeenCalled()
+    
+    Expected number of calls: >= 1
+    Received number of calls:    0
+        at Object.toHaveBeenCalled (C:\Users\atdan\OneDrive\Desktop\Merkato\backend\tests\unit\utils.test.js:56:24)
+  - Email Utils sendPasswordResetEmail sends a reset email with token link
+    Error: expect(jest.fn()).toHaveBeenCalled()
+    
+    Expected number of calls: >= 1
+    Received number of calls:    0
+        at Object.toHaveBeenCalled (C:\Users\atdan\OneDrive\Desktop\Merkato\backend\tests\unit\utils.test.js:87:24)
+  - Email Utils testEmailConfig logs success in dev environment
+    Error: expect(jest.fn()).toHaveBeenCalled()
+    
+    Expected number of calls: >= 1
+    Received number of calls:    0
+        at Object.toHaveBeenCalled (C:\Users\atdan\OneDrive\Desktop\Merkato\backend\tests\unit\utils.test.js:111:24)
+
+Suite: C:\Users\atdan\OneDrive\Desktop\Merkato\backend\tests\integration\invoiceRoutes.test.js
+  - Invoice Routes GET /api/invoices/:orderId should fail without token
+    Error: ❌ Could not create lazy test order. Failing suite to ensure test data is present.
+        at Object.<anonymous> (C:\Users\atdan\OneDrive\Desktop\Merkato\backend\tests\integration\invoiceRoutes.test.js:163:13)
+        at processTicksAndRejections (node:internal/process/task_queues:95:5)
+  - Invoice Routes GET /api/invoices/:orderId should return invoice for valid order (user)
+    Error: ❌ Could not create lazy test order. Failing suite to ensure test data is present.
+        at Object.<anonymous> (C:\Users\atdan\OneDrive\Desktop\Merkato\backend\tests\integration\invoiceRoutes.test.js:163:13)
+        at processTicksAndRejections (node:internal/process/task_queues:95:5)
+  - Invoice Routes GET /api/invoices/:orderId should return 404 or 403 for non-existent or unauthorized order
+    Error: ❌ Could not create lazy test order. Failing suite to ensure test data is present.
+        at Object.<anonymous> (C:\Users\atdan\OneDrive\Desktop\Merkato\backend\tests\integration\invoiceRoutes.test.js:163:13)
+        at processTicksAndRejections (node:internal/process/task_queues:95:5)
+  - Invoice Routes GET /api/invoices/:orderId should return 400 for malformed ObjectId
+    Error: ❌ Could not create lazy test order. Failing suite to ensure test data is present.
+        at Object.<anonymous> (C:\Users\atdan\OneDrive\Desktop\Merkato\backend\tests\integration\invoiceRoutes.test.js:163:13)
+        at processTicksAndRejections (node:internal/process/task_queues:95:5)
+  - Invoice Routes GET /api/invoices/:orderId should return 404 or custom status if invoice not yet generated
+    Error: ❌ Could not create lazy test order. Failing suite to ensure test data is present.
+        at Object.<anonymous> (C:\Users\atdan\OneDrive\Desktop\Merkato\backend\tests\integration\invoiceRoutes.test.js:163:13)
+        at processTicksAndRejections (node:internal/process/task_queues:95:5)
+  - Invoice Routes POST /api/invoices/email should fail without token
+    Error: ❌ Could not create lazy test order. Failing suite to ensure test data is present.
+        at Object.<anonymous> (C:\Users\atdan\OneDrive\Desktop\Merkato\backend\tests\integration\invoiceRoutes.test.js:163:13)
+        at processTicksAndRejections (node:internal/process/task_queues:95:5)
+  - Invoice Routes POST /api/invoices/email should allow admin to send invoice email
+    Error: ❌ Could not create lazy test order. Failing suite to ensure test data is present.
+        at Object.<anonymous> (C:\Users\atdan\OneDrive\Desktop\Merkato\backend\tests\integration\invoiceRoutes.test.js:163:13)
+        at processTicksAndRejections (node:internal/process/task_queues:95:5)
+  - Invoice Routes POST /api/invoices/email should block email attempt by non-admin user
+    Error: ❌ Could not create lazy test order. Failing suite to ensure test data is present.
+        at Object.<anonymous> (C:\Users\atdan\OneDrive\Desktop\Merkato\backend\tests\integration\invoiceRoutes.test.js:163:13)
+        at processTicksAndRejections (node:internal/process/task_queues:95:5)
+  - Invoice Routes GET /api/invoices/download/:orderId should allow PDF invoice download if implemented
+    Error: ❌ Could not create lazy test order. Failing suite to ensure test data is present.
+        at Object.<anonymous> (C:\Users\atdan\OneDrive\Desktop\Merkato\backend\tests\integration\invoiceRoutes.test.js:163:13)
+        at processTicksAndRejections (node:internal/process/task_queues:95:5)
+  - Invoice Routes GET /api/invoices/download/:orderId should return 401/403 for missing token
+    Error: ❌ Could not create lazy test order. Failing suite to ensure test data is present.
+        at Object.<anonymous> (C:\Users\atdan\OneDrive\Desktop\Merkato\backend\tests\integration\invoiceRoutes.test.js:163:13)
+        at processTicksAndRejections (node:internal/process/task_queues:95:5)

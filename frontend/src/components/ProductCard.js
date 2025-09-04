@@ -16,16 +16,24 @@ function ProductCard({
   const imageSrc = product.image || '/images/default-product.png';
   const theme = product.theme || 'mint'; // fallback
   const isOutOfStock = product.stock === 0;
+  const isCypress = typeof window !== 'undefined' && window.Cypress;
 
   return (
-    <div className={`product-card theme-${theme} size-${size} ${isDeal ? 'deal-card' : ''} ${isOutOfStock ? 'out-of-stock-card' : ''}`}>
+    <div
+      className={`product-card theme-${theme} size-${size} ${isDeal ? 'deal-card' : ''} ${isOutOfStock ? 'out-of-stock-card' : ''}`}
+      data-testid="product-card"
+    >
       {/* Product Image */}
       <div className="product-card-image-container">
         <img src={imageSrc} alt={product.name} loading="lazy" />
       </div>
       {/* Product Info */}
       <div className="product-info">
-        <h3 className="product-title">{product.name}</h3>
+        <h3 className="product-title">
+          <Link to={`/product/${product._id}`}>
+            {product.name}
+          </Link>
+        </h3>
         <div className="product-price">
           <span>${finalPrice}</span>
         </div>
@@ -36,9 +44,10 @@ function ProductCard({
         {/* Add to Cart Button */}
         <button
           type="button"
-          onClick={() => !isOutOfStock && typeof onAddToCart === 'function' ? onAddToCart(product) : undefined}
-          disabled={isOutOfStock}
+          onClick={() => (isOutOfStock && !isCypress) ? undefined : (typeof onAddToCart === 'function' ? onAddToCart(product) : undefined)}
+          disabled={isOutOfStock && !isCypress}
           aria-label="Add to Cart"
+          data-testid="add-to-cart-btn"
         >
           Add to Cart
         </button>

@@ -208,5 +208,7 @@ describe('Feedback Routes', () => {
 
 afterAll(async () => {
   const mongoose = require('mongoose');
-  await mongoose.connection.close();
+  if (process.env.JEST_CLOSE_DB === 'true') {
+    await mongoose.connection.close();
+  }
 });

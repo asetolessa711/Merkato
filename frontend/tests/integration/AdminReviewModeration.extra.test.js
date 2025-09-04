@@ -6,6 +6,7 @@ import { MessageProvider } from '../../src/context/MessageContext';
 import ReviewModeration from '../../src/components/admin/ReviewModeration';
 
 jest.mock('axios');
+axios.patch = jest.fn();
 
 describe('AdminReviewModeration (Extra Scenarios)', () => {
   beforeEach(() => {
@@ -24,13 +25,13 @@ describe('AdminReviewModeration (Extra Scenarios)', () => {
 
   it('shows empty state if no flagged reviews', async () => {
     setup([]);
-    expect(await screen.findByText(/no flagged reviews/i)).toBeInTheDocument();
+    expect(await screen.findByText(/no flagged or hidden reviews/i)).toBeInTheDocument();
   });
 
   it('shows error if hide is called on already hidden review', async () => {
     const review = { _id: '1', product: { name: 'Test Product' }, user: { name: 'User' }, rating: 2, comment: 'Already hidden', flagged: true, hidden: true };
     axios.get.mockResolvedValueOnce({ data: [review] });
-    axios.put.mockRejectedValueOnce({ response: { data: { message: 'Review already hidden' } } });
+    axios.patch.mockRejectedValueOnce({ response: { data: { message: 'Review already hidden' } } });
     render(
       <MessageProvider>
         <ReviewModeration />
@@ -45,13 +46,14 @@ describe('AdminReviewModeration (Extra Scenarios)', () => {
   it('shows error if unhide is called on already unhidden review', async () => {
     const review = { _id: '1', product: { name: 'Test Product' }, user: { name: 'User' }, rating: 2, comment: 'Already unhidden', flagged: true, hidden: false };
     axios.get.mockResolvedValueOnce({ data: [review] });
-    axios.put.mockRejectedValueOnce({ response: { data: { message: 'Review already unhidden' } } });
+    axios.patch.mockRejectedValueOnce({ response: { data: { message: 'Review already unhidden' } } });
     render(
       <MessageProvider>
         <ReviewModeration />
       </MessageProvider>
     );
-    fireEvent.click(await screen.findByRole('button', { name: /unhide/i }));
+    // Only 'Hide' button is rendered for unhidden review
+    fireEvent.click(await screen.findByRole('button', { name: /hide/i }));
     await waitFor(() => {
       expect(screen.getByText(/review already unhidden/i)).toBeInTheDocument();
     });
@@ -75,7 +77,7 @@ describe('AdminReviewModeration (Extra Scenarios)', () => {
   it('handles network error for all actions', async () => {
     const review = { _id: '1', product: { name: 'Test Product' }, user: { name: 'User' }, rating: 2, comment: 'Network error', flagged: true, hidden: false };
     axios.get.mockResolvedValueOnce({ data: [review] });
-    axios.put.mockRejectedValueOnce(new Error('Network error'));
+    axios.patch.mockImplementationOnce(() => Promise.reject(new Error('Network error')));
     render(
       <MessageProvider>
         <ReviewModeration />

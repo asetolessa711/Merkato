@@ -1,4 +1,3 @@
-
 // Force axios to CJS build for axios-mock-adapter compatibility
 jest.mock('axios', () => require('axios/dist/node/axios.cjs'));
 
@@ -33,6 +32,7 @@ jest.mock('react-modal', () => {
     setAppElement: () => {},
   };
 });
+
 
 function renderWithRoute(route = '/') {
   window.history.pushState({}, '', route);

@@ -57,11 +57,11 @@ function Invoice({ order }) {
             <tbody>
               {vendor.products.map((item, index) => (
                 <tr key={index}>
-                  <td>{item.name}</td>
+                  <td>{item.name || (item.product && item.product.name) || 'Product'}</td>
                   <td>{item.quantity}</td>
-                  <td>{currency} {item.price.toFixed(2)}</td>
-                  <td>{currency} {item.tax.toFixed(2)}</td>
-                  <td>{currency} {item.subtotal.toFixed(2)}</td>
+                  <td>{currency} {(item.price ?? item.product?.price ?? 0).toFixed(2)}</td>
+                  <td>{currency} {(item.tax ?? 0).toFixed(2)}</td>
+                  <td>{currency} {(item.subtotal ?? (item.product?.price || 0) * item.quantity).toFixed(2)}</td>
                 </tr>
               ))}
               <tr className="vendor-summary">

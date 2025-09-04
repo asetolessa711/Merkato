@@ -54,7 +54,9 @@ describe('Order Routes', () => {
     jest.setTimeout(30000); // 30 seconds
     await Product.deleteOne({ _id: testProductId });
     // Optionally: delete test users if needed
-    await mongoose.connection.close();
+    if (process.env.JEST_CLOSE_DB === 'true') {
+      await mongoose.connection.close();
+    }
   });
 
   describe('POST /api/orders', () => {

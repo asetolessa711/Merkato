@@ -32,7 +32,9 @@ describe('Product Routes', () => {
   afterAll(async () => {
     // await cleanupTestDB();
     // await disconnectTestDB();
-    await mongoose.connection.close();
+    if (process.env.JEST_CLOSE_DB === 'true') {
+      await mongoose.connection.close();
+    }
   });
 
   describe('GET /api/products', () => {

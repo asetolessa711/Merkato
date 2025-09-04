@@ -42,7 +42,8 @@ describe('\ud83d\udd10 Login Page', () => {
       </MemoryRouter>
     );
     fireEvent.click(screen.getByRole('button', { name: /sign in/i }));
-    expect(await screen.findByText(/enter a valid email/i)).toBeInTheDocument();
+    // The UI shows 'Please enter your email address.' for empty email
+    expect(await screen.findByText(/please enter your email address/i)).toBeInTheDocument();
   });
 
   test('logs in with valid credentials', async () => {

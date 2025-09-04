@@ -95,7 +95,9 @@ describe('Review Moderation Routes', () => {
         .delete(`/api/reviews/${reviewId}`)
         .set('Authorization', adminToken);
     }
-    await mongoose.connection.close();
+    if (process.env.JEST_CLOSE_DB === 'true') {
+      await mongoose.connection.close();
+    }
   });
 
   describe('GET /api/admin/reviews', () => {

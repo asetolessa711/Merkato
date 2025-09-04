@@ -2,6 +2,10 @@ const webpack = require('webpack');
 const path = require('path');
 
 module.exports = {
+  // Disable built-in ESLint in dev to speed up startup and avoid loader noise
+  eslint: {
+    enable: false,
+  },
   jest: {
     configure: (jestConfig) => {
       const fs = require('fs');
@@ -19,13 +23,19 @@ module.exports = {
       crypto: "crypto-browserify"
     },
     configure: (webpackConfig) => {
-      // Source map configuration
-      webpackConfig.module.rules.push({
-        test: /\.js$/,
-        enforce: 'pre',
-        use: ['source-map-loader'],
-        exclude: [/node_modules\/react-datepicker/]
-      });
+      const isDev = process.env.NODE_ENV !== 'production';
+      // Prefer faster, lighter devtool in development to speed startup
+      if (isDev) {
+        webpackConfig.devtool = 'eval-cheap-module-source-map';
+      } else {
+        // Only process source maps in production builds, and ignore all node_modules maps
+        webpackConfig.module.rules.push({
+          test: /\.js$/,
+          enforce: 'pre',
+          use: ['source-map-loader'],
+          exclude: [/node_modules/]
+        });
+      }
 
       // Simplified module resolution
       webpackConfig.resolve.fallback = {
@@ -48,26 +58,40 @@ module.exports = {
         })
       ];
 
-      // Development server configuration
+      // Silence known third-party source map warnings in dev
+      webpackConfig.ignoreWarnings = [
+        /Failed to parse source map/,
+        /source map loader/,
+      ];
+
+      // Let CRA manage devServer; sanitize any problematic keys if present
       if (webpackConfig.devServer) {
-        webpackConfig.devServer = {
-          ...webpackConfig.devServer,
-          client: {
-            ...webpackConfig.devServer.client,
-            webSocketURL: {
-              hostname: 'localhost'
+        try {
+          delete webpackConfig.devServer.allowedHosts;
+          if (webpackConfig.devServer.client) {
+            delete webpackConfig.devServer.client.webSocketURL;
+            // Reduce overlay noise in dev while keeping errors visible in console
+            if (isDev && typeof webpackConfig.devServer.client === 'object') {
+              webpackConfig.devServer.client.overlay = { errors: true, warnings: false };
             }
-          },
-          headers: {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
-            'Access-Control-Allow-Headers': 'X-Requested-With, content-type, Authorization'
           }
-        };
+        } catch (_) {}
       }
 
       return webpackConfig;
     }
+  },
+  // Ensure webpack-dev-server options conform to schema
+  devServer: (devServerConfig) => {
+    const cfg = { ...devServerConfig };
+    cfg.allowedHosts = 'all'; // or ['localhost']
+    cfg.host = process.env.HOST || 'localhost';
+    if (process.env.PORT) cfg.port = Number(process.env.PORT);
+    // Auto-open browser on start unless user disables via BROWSER=none
+    if ((process.env.BROWSER || '').toLowerCase() !== 'none') {
+      cfg.open = true;
+    }
+    return cfg;
   },
   style: {
     postcss: {

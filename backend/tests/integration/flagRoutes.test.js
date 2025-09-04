@@ -262,6 +262,8 @@ describe('Flag Routes', () => {
   });
 
   afterAll(async () => {
-    await mongoose.connection.close();
+    if (process.env.JEST_CLOSE_DB === 'true') {
+      await mongoose.connection.close();
+    }
   });
 });

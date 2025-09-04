@@ -62,7 +62,9 @@ describe('Customer Routes', () => {
       await deleteTestUser(testUser._id, authToken);
     }
 
-    await mongoose.connection.close();
+    if (process.env.JEST_CLOSE_DB === 'true') {
+      await mongoose.connection.close();
+    }
   });
 
   // --------- Tests continue below with authToken instead of userToken ---------

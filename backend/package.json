@@ -4,14 +4,21 @@
   "description": "Backend for Merkato Marketplace",
   "main": "server.js",
   "scripts": {
-    "dev": "cross-env NODE_ENV=test nodemon server.js",
+  "dev": "cross-env NODE_ENV=development nodemon server.js",
+  "dev:5001": "cross-env NODE_ENV=development PORT=5001 nodemon server.js",
+  "start:5001": "cross-env NODE_ENV=development PORT=5001 node server.js",
+  "start:5051": "cross-env NODE_ENV=development PORT=5051 node server.js",
     "start": "node server.js",
     "test:seed": "node tests/utils/seedTestData.js",
     "test:seed:utils": "node tests/utils/seedTestData.js",
     "seed:test": "curl -X POST http://localhost:5000/api/dev/seed",
-    "test": "jest --runInBand --detectOpenHandles --forceExit",
+  "test": "jest --config=./jest.config.backend.js --runInBand",
+  "test:debug": "jest --config=./jest.config.backend.js --runInBand --detectOpenHandles",
     "test:backend": "jest --config=./jest.config.backend.js",
-    "pretest": "node seedUsers.js && node seedFeedback.js"
+  "pretest": "node seedUsers.js && node seedProducts.js && node seedFeedback.js",
+    "test:baseline:record": "node tests/utils/recordBaseline.js",
+  "test:baseline:verify": "node tests/utils/verifyBaseline.js",
+  "test:baseline:record:stable": "node tests/utils/recordStableBaseline.js"
   },
   "jest": {
     "globalSetup": "./tests/restoreTestImage.js"

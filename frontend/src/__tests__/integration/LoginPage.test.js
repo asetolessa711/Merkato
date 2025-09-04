@@ -35,7 +35,8 @@ describe('\ud83d\udd10 Login Page', () => {
   test('displays validation error if fields are empty', async () => {
     renderLogin();
     fireEvent.click(screen.getByRole('button', { name: /sign in/i }));
-    expect(await screen.findByText(/enter a valid email/i)).toBeInTheDocument();
+    // The UI shows 'Please enter your email address.' for empty email
+    expect(await screen.findByText(/please enter your email address/i)).toBeInTheDocument();
   });
 
   test('submits and logs in user with valid credentials', async () => {

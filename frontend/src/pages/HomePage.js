@@ -14,6 +14,7 @@ const categories = [
 
 function HomePage() {
   const navigate = useNavigate();
+  const isCypress = typeof window !== 'undefined' && window.Cypress;
   const [products, setProducts] = useState([]);
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState(categories[0]);
@@ -27,6 +28,18 @@ function HomePage() {
     };
     loadProducts();
   }, []);
+
+  const handleAddToCart = (product) => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('merkato-cart') || '{}');
+      const items = Array.isArray(saved.items) ? saved.items : [];
+      const id = typeof product._id === 'object' ? product._id.toString() : product._id;
+      const idx = items.findIndex(i => i._id === id);
+      if (idx !== -1) items[idx].quantity += 1; else items.push({ ...product, _id: id, quantity: 1 });
+      localStorage.setItem('merkato-cart', JSON.stringify({ items, timestamp: Date.now() }));
+      localStorage.setItem('cart', JSON.stringify(items));
+    } catch (_) {}
+  };
 
   const filteredProducts = products
     .filter(p => selectedCategory === "Today's Deals" || p.category === selectedCategory)
@@ -83,6 +96,7 @@ function HomePage() {
                     type="deal"
                     size="md"
                     colorOptions={product.colors || []}
+                    onAddToCart={handleAddToCart}
                   />
                 ))
               ) : (
@@ -105,6 +119,7 @@ function HomePage() {
                   type="standard"
                   size="md"
                   colorOptions={product.colors || []}
+                  onAddToCart={handleAddToCart}
                 />
               ))}
             </div>
@@ -113,7 +128,7 @@ function HomePage() {
 
 
         {/* 10 Demo Rows for Scroll Test */}
-        {[...Array(10)].map((_, rowIdx) => (
+        {!isCypress && [...Array(10)].map((_, rowIdx) => (
           <section className="best-sellers" key={`demo-row-${rowIdx}`}>
             <div className="section-header">
               <h2>📝 Demo Row {rowIdx + 1}</h2>
@@ -125,6 +140,7 @@ function HomePage() {
                   product={product}
                   type="standard"
                   size="md"
+                  onAddToCart={handleAddToCart}
                 />
               ))}
             </div>

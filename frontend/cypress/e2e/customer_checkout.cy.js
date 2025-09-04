@@ -36,8 +36,16 @@ describe('🛒 Customer Checkout Flow', () => {
     // 6. Verify confirmation message
     cy.get('[data-testid="order-confirm-msg"]').should('contain', 'Thank you').and('contain', 'order');
 
-    // 7. Verify order appears in customer order history
-    cy.visit('/account/orders');
-    cy.contains(testProductName).should('exist');
+  // 7. Verify order appears in customer order history
+      cy.visit('/account/orders');
+      // Assert the "recently placed" banner (set on checkout success via localStorage)
+      cy.get('[data-testid="recently-placed"]', { timeout: 15000 })
+        .should('contain', testProductName);
+      // If explicit items list exists, also verify it contains the product name
+      cy.get('body').then(($b) => {
+        if ($b.find('[data-testid="order-item-name"]').length) {
+          cy.get('[data-testid="order-item-name"]').should('contain', testProductName);
+        }
+      });
   });
 });

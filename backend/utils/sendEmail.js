@@ -2,27 +2,33 @@ const nodemailer = require('nodemailer');
 const rateLimit = require('express-rate-limit');
 
 // Environment variables with validation
+const IS_TEST = process.env.NODE_ENV === 'test' || !!process.env.JEST_WORKER_ID;
 const {
   EMAIL_USER = process.env.EMAIL_USER,
   EMAIL_PASS = process.env.EMAIL_PASS,
-  BASE_URL = process.env.CLIENT_URL || 'http://localhost:3000',
-  EMAIL_FROM = `Merkato <${EMAIL_USER}>`
+  BASE_URL = process.env.CLIENT_URL || 'http://localhost:3000'
 } = process.env;
+// In tests, avoid depending on EMAIL_USER/PASS and use a stable fallback
+const EMAIL_FROM = IS_TEST
+  ? 'Merkato <no-reply@merkato.local>'
+  : `Merkato <${EMAIL_USER}>`;
 
-// Validate required environment variables
-if (!EMAIL_USER || !EMAIL_PASS) {
+// Validate required environment variables (skip in tests to avoid flakiness)
+if (!IS_TEST && (!EMAIL_USER || !EMAIL_PASS)) {
   throw new Error('❌ EMAIL_USER and EMAIL_PASS must be set in environment variables');
 }
 
-// Enhanced transporter with TLS
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: { user: EMAIL_USER, pass: EMAIL_PASS },
-  tls: {
-    rejectUnauthorized: true,
-    minVersion: "TLSv1.2"
-  }
-});
+// Enhanced transporter with TLS (use JSON transport in tests to avoid network)
+const transporter = IS_TEST
+  ? nodemailer.createTransport({ jsonTransport: true })
+  : nodemailer.createTransport({
+      service: 'gmail',
+      auth: { user: EMAIL_USER, pass: EMAIL_PASS },
+      tls: {
+        rejectUnauthorized: true,
+        minVersion: 'TLSv1.2'
+      }
+    });
 
 // Email Templates
 const templates = {
@@ -64,7 +70,10 @@ const templates = {
 // Send Email with HTML + plain text fallback
 async function sendEmail(options) {
   try {
-    await transporter.verify();
+    // Always call verify if available; tests mock nodemailer so this is fast
+    if (typeof transporter.verify === 'function') {
+      await transporter.verify();
+    }
 
     const result = await transporter.sendMail({
       ...options,
@@ -72,7 +81,7 @@ async function sendEmail(options) {
       text: options.text || options.html.replace(/<[^>]+>/g, '') // ✅ Plaintext fallback
     });
 
-    console.log(`📨 Email sent successfully to ${options.to}`);
+  console.log(`📨 Email sent successfully to ${options.to}`);
     return result;
   } catch (err) {
     console.error(`❌ Email send failed:`, {
@@ -134,7 +143,9 @@ const resetRateLimiter = rateLimit({
 const testEmailConfig = async () => {
   if (process.env.NODE_ENV !== 'production') {
     try {
-      await transporter.verify();
+      if (typeof transporter.verify === 'function') {
+        await transporter.verify();
+      }
       console.log('✅ Email configuration verified successfully');
     } catch (err) {
       console.error('❌ Email configuration error:', err.message);

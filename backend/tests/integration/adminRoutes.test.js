@@ -59,7 +59,9 @@ describe('Admin Routes', () => {
     if (normalUser && normalUser._id) {
       await deleteTestUser(normalUser._id, userToken);
     }
-    await mongoose.connection.close();
+    if (process.env.JEST_CLOSE_DB === 'true') {
+      await mongoose.connection.close();
+    }
   });
 
   describe('GET /api/admin/dashboard', () => {

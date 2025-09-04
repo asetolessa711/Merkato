@@ -3,6 +3,7 @@
 
 export const universalLinks = [
   { to: '/', label: 'Home' },
+  { to: '/shop', label: 'Shop' },
   { to: '/vendors', label: 'Vendors' },
   { to: '/customers', label: 'Customers' },
   { to: '/categories', label: 'Categories', dropdown: true },
@@ -24,7 +25,6 @@ export const roleLinks = {
         { to: '/logout', label: 'Logout', isLogout: true },
       ]
     },
-    { to: '/cart', label: 'Cart', icon: '🛒' },
   ],
   vendor: [
     {
@@ -41,7 +41,6 @@ export const roleLinks = {
         { to: '/logout', label: 'Logout', isLogout: true },
       ]
     },
-    { to: '/cart', label: 'Cart', icon: '🛒' },
   ],
   admin: [
     {
@@ -57,7 +56,6 @@ export const roleLinks = {
         { to: '/logout', label: 'Logout', isLogout: true },
       ]
     },
-    { to: '/cart', label: 'Cart', icon: '🛒' },
   ],
 };
 

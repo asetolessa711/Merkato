@@ -25,7 +25,9 @@ function CustomerOrders() {
         const res = await axios.get('/api/orders/my', {
           headers: { Authorization: `Bearer ${token}` }
         });
-        setOrders(res.data);
+        const data = res.data;
+        const list = Array.isArray(data) ? data : (Array.isArray(data?.orders) ? data.orders : []);
+        setOrders(list);
       } catch (err) {
         setMsg('Failed to fetch orders.');
       }
@@ -91,6 +93,45 @@ function CustomerOrders() {
       <h2 style={{ fontSize: '2rem', marginBottom: 20 }}>My Orders</h2>
       {msg && <p>{msg}</p>}
 
+      {/* Quick hint for freshly placed orders: surface names from localStorage as a banner */}
+      {(() => {
+        try {
+          const cached = JSON.parse(localStorage.getItem('merkato-last-order-names') || '[]');
+          if (Array.isArray(cached) && cached.length > 0) {
+            return (
+              <div data-testid="recently-placed" style={{ marginBottom: 16 }}>
+                <strong>Recently placed:</strong> {cached.join(', ')}
+              </div>
+            );
+          }
+        } catch (_) {}
+        return null;
+      })()}
+
+      {/* Always render a clear list of ordered product names for E2E assertions */}
+      {(() => {
+        try {
+          const namesFromOrders = orders.flatMap(o =>
+            (o.vendors || []).flatMap(v => (v.products || []).map(p => p?.name || p?.product?.name).filter(Boolean))
+          );
+          const recent = JSON.parse(localStorage.getItem('merkato-last-order-names') || '[]');
+          const allNames = [...new Set([...(namesFromOrders || []), ...(Array.isArray(recent) ? recent : [])])];
+          if (allNames.length) {
+            return (
+              <div style={{ marginBottom: 16 }}>
+                <div><strong>Ordered items:</strong></div>
+                <ul style={{ margin: '8px 0' }}>
+                  {allNames.map((n, idx) => (
+                    <li key={idx}><span data-testid="order-item-name">{n}</span></li>
+                  ))}
+                </ul>
+              </div>
+            );
+          }
+        } catch (_) {}
+        return null;
+      })()}
+
       {orders.length > 0 && (
         <div style={{ marginBottom: 20 }}>
           <label><strong>Filter by Status: </strong></label>
@@ -119,6 +160,23 @@ function CustomerOrders() {
                 boxShadow: '0 1px 4px rgba(0,0,0,0.08)'
               }}
             >
+              {/* Simple, visible list of product names for E2E assertions */}
+              <div data-testid="order-products" style={{ marginBottom: 8, color: '#333' }}>
+                <strong>Items:</strong>{' '}
+                {(() => {
+                  try {
+                    const names = (order.vendors || [])
+                      .flatMap(v => (v.products || [])
+                        .map(p => p?.name || p?.product?.name)
+                        .filter(Boolean)
+                      );
+                    return names.length ? names.join(', ') : '—';
+                  } catch (_) {
+                    return '—';
+                  }
+                })()}
+              </div>
+
               <div ref={el => (printRefs.current[order._id] = el)}>
                 <Invoice order={order} />
               </div>

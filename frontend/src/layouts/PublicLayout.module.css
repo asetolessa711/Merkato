@@ -5,6 +5,8 @@
 
 .container {
   padding: 20px;
+  /* Prevent fixed/sticky headers from overlapping content when navigating to top */
+  padding-top: 80px;
   max-width: 1200px;     /* Content width control */
   margin: 0 auto;        /* Center the layout horizontally */
 }

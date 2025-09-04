@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">31.57% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/19</span>
+                <span class='fraction'>6/19</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">20% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/10</span>
+                <span class='fraction'>2/10</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">33.33% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/3</span>
+                <span class='fraction'>1/3</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">35.29% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/17</span>
+                <span class='fraction'>6/17</span>
             </div>
         
             
@@ -115,35 +115,35 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -162,16 +162,16 @@
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import React, { useState } from 'react';
 import axios from 'axios';
 &nbsp;
-function <span class="fstat-no" title="function not covered" >AdminVideoUpload(</span>{ adminToken, onUpload }) {
-  const [video, setVideo] = <span class="cstat-no" title="statement not covered" >useState(null);</span>
-  const [uploadStatus, setUploadStatus] = <span class="cstat-no" title="statement not covered" >useState('');</span>
-  const [videoUrl, setVideoUrl] = <span class="cstat-no" title="statement not covered" >useState('');</span>
+function AdminVideoUpload({ adminToken, onUpload }) {
+  const [video, setVideo] = useState(null);
+  const [uploadStatus, setUploadStatus] = useState('');
+  const [videoUrl, setVideoUrl] = useState('');
 &nbsp;
-  const handleFileChange = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(e</span>) =&gt; {</span>
+  const handleFileChange = <span class="fstat-no" title="function not covered" >(e</span>) =&gt; {
 <span class="cstat-no" title="statement not covered" >    setVideo(e.target.files[0]);</span>
   };
 &nbsp;
-  const handleUpload = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >as</span>ync (e) =&gt; {</span>
+  const handleUpload = <span class="fstat-no" title="function not covered" >as</span>ync (e) =&gt; {
 <span class="cstat-no" title="statement not covered" >    e.preventDefault();</span>
 <span class="cstat-no" title="statement not covered" >    if (!video) <span class="cstat-no" title="statement not covered" >return;</span></span>
     const formData = <span class="cstat-no" title="statement not covered" >new FormData();</span>
@@ -191,16 +191,16 @@ function <span class="fstat-no" title="function not covered" >AdminVideoUpload(<
     }
   };
 &nbsp;
-<span class="cstat-no" title="statement not covered" >  return (</span>
+  return (
     &lt;div style={{ margin: '2rem 0' }}&gt;
       &lt;h3&gt;Upload Promotional Video (Admin Only)&lt;/h3&gt;
       &lt;form onSubmit={handleUpload}&gt;
         &lt;input type="file" accept="video/mp4,video/webm" onChange={handleFileChange} /&gt;
         &lt;button type="submit"&gt;Upload&lt;/button&gt;
       &lt;/form&gt;
-      {uploadStatus &amp;&amp; &lt;p&gt;{uploadStatus}&lt;/p&gt;}
+      {uploadStatus &amp;&amp; <span class="branch-1 cbranch-no" title="branch not covered" >&lt;p&gt;{uploadStatus}&lt;/p&gt;}</span>
       {videoUrl &amp;&amp; (
-        &lt;video controls width="400" src={videoUrl} style={{ marginTop: 10 }} /&gt;
+<span class="branch-1 cbranch-no" title="branch not covered" >        &lt;video controls width="400" src={videoUrl} style={{ marginTop: 10 }} /&gt;</span>
       )}
     &lt;/div&gt;
   );
@@ -214,7 +214,7 @@ export default AdminVideoUpload;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-05T15:56:23.799Z
+                at 2025-09-04T09:58:51.968Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

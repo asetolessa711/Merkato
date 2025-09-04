@@ -58,6 +58,7 @@ router.get('/revenue', protect, authorize('vendor'), async (req, res) => {
 // Vendor analytics summary
 router.get('/analytics', protect, authorize('vendor'), async (req, res) => {
   try {
+    const vendorId = req.user._id?.toString();
     const orders = await Order.find({ 'vendors.products.product': { $exists: true } })
       .populate({ path: 'vendors.products.product', options: { strictPopulate: false } })
       .populate('buyer', 'name email');
@@ -68,20 +69,24 @@ router.get('/analytics', protect, authorize('vendor'), async (req, res) => {
     const uniqueBuyers = new Set();
 
     orders.forEach(order => {
-      const vendorItems = order.products.filter(p => {
-        const vendor = p.product?.vendor;
-        return vendor?.toString() === req.user._id.toString();
-      });
+      if (!Array.isArray(order.vendors)) return;
 
-      if (vendorItems.length > 0) {
-        orderCount += 1;
-        uniqueBuyers.add(order.buyer?._id?.toString());
+      // Find the vendor segment(s) belonging to this vendor in the order
+      const vendorSegments = order.vendors.filter(v => v.vendorId?.toString() === vendorId);
+      if (vendorSegments.length === 0) return;
 
-        vendorItems.forEach(item => {
-          totalRevenue += item.quantity * (item.product?.price || 0);
-          totalItemsSold += item.quantity;
+      orderCount += 1;
+      if (order.buyer?._id) uniqueBuyers.add(order.buyer._id.toString());
+
+      vendorSegments.forEach(vs => {
+        if (!Array.isArray(vs.products)) return;
+        vs.products.forEach(item => {
+          const price = item.product?.price || 0;
+          const qty = item.quantity || 0;
+          totalRevenue += qty * price;
+          totalItemsSold += qty;
         });
-      }
+      });
     });
 
     res.json({
@@ -98,21 +103,28 @@ router.get('/analytics', protect, authorize('vendor'), async (req, res) => {
 // Top products sold by vendor
 router.get('/top-products', protect, authorize('vendor'), async (req, res) => {
   try {
+    const vendorId = req.user._id?.toString();
     const orders = await Order.find({ 'vendors.products.product': { $exists: true } })
       .populate({ path: 'vendors.products.product', options: { strictPopulate: false } });
 
     const productMap = {};
 
     orders.forEach(order => {
-      order.products.forEach(p => {
-        if (p.product?.vendor?.toString() === req.user._id.toString()) {
-          const key = p.product._id;
-          if (!productMap[key]) {
-            productMap[key] = { name: p.product.name, quantity: 0 };
-          }
-          productMap[key].quantity += p.quantity;
-        }
-      });
+      if (!Array.isArray(order.vendors)) return;
+      order.vendors
+        .filter(v => v.vendorId?.toString() === vendorId)
+        .forEach(v => {
+          if (!Array.isArray(v.products)) return;
+          v.products.forEach(p => {
+            const prod = p.product;
+            if (!prod?._id) return;
+            const key = prod._id.toString();
+            if (!productMap[key]) {
+              productMap[key] = { name: prod.name, quantity: 0 };
+            }
+            productMap[key].quantity += (p.quantity || 0);
+          });
+        });
     });
 
     const topProducts = Object.values(productMap)
@@ -129,6 +141,7 @@ router.get('/top-products', protect, authorize('vendor'), async (req, res) => {
 // Top customers for vendor
 router.get('/top-customers', protect, authorize('vendor'), async (req, res) => {
   try {
+    const vendorId = req.user._id?.toString();
     const orders = await Order.find({ 'vendors.products.product': { $exists: true } })
       .populate({ path: 'vendors.products.product', options: { strictPopulate: false } })
       .populate('buyer');
@@ -136,15 +149,22 @@ router.get('/top-customers', protect, authorize('vendor'), async (req, res) => {
     const customerMap = {};
 
     orders.forEach(order => {
-      let totalForVendor = 0;
-      order.products.forEach(p => {
-        if (p.product?.vendor?.toString() === req.user._id.toString()) {
-          totalForVendor += (p.quantity * (p.product.price || 0));
-        }
-      });
+      if (!Array.isArray(order.vendors)) return;
 
-      if (totalForVendor > 0 && order.buyer) {
-        const key = order.buyer._id;
+      let totalForVendor = 0;
+      order.vendors
+        .filter(v => v.vendorId?.toString() === vendorId)
+        .forEach(v => {
+          if (!Array.isArray(v.products)) return;
+          v.products.forEach(p => {
+            const price = p.product?.price || 0;
+            const qty = p.quantity || 0;
+            totalForVendor += qty * price;
+          });
+        });
+
+      if (totalForVendor > 0 && order.buyer?._id) {
+        const key = order.buyer._id.toString();
         if (!customerMap[key]) {
           customerMap[key] = {
             name: order.buyer.name,

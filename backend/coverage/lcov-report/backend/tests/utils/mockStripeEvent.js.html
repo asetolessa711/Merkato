@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">22.22% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>2/9</span>
+                <span class='fraction'>9/9</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">75% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/12</span>
+                <span class='fraction'>9/12</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/2</span>
+                <span class='fraction'>2/2</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">22.22% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>2/9</span>
+                <span class='fraction'>9/9</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -135,25 +135,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -163,8 +147,24 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
@@ -184,14 +184,14 @@
  * @param {Object} [options.extraFields] - Extra fields to include in event payload.
  * @returns {{ payload: string, signature: string }} JSON payload and Stripe-Signature header.
  */
-function <span class="fstat-no" title="function not covered" >mockStripeEvent(</span>event = <span class="branch-0 cbranch-no" title="branch not covered" >null,</span> type = <span class="branch-0 cbranch-no" title="branch not covered" >'payment_intent.succeeded',</span> data = <span class="branch-0 cbranch-no" title="branch not covered" >{},</span> options = <span class="branch-0 cbranch-no" title="branch not covered" >{})</span> {
+function mockStripeEvent(event = <span class="branch-0 cbranch-no" title="branch not covered" >null,</span> type = 'payment_intent.succeeded', data = {}, options = {}) {
   const {
-    timestamp = <span class="branch-0 cbranch-no" title="branch not covered" >Math.floor(Date.now() / 1000),</span>
-    secret = <span class="branch-0 cbranch-no" title="branch not covered" >null,</span>
-    extraFields = <span class="branch-0 cbranch-no" title="branch not covered" >{}</span>
-  } = <span class="cstat-no" title="statement not covered" >options;</span>
+    timestamp = Math.floor(Date.now() / 1000),
+    secret = null,
+    extraFields = {}
+  } = options;
 &nbsp;
-  const eventPayload = <span class="cstat-no" title="statement not covered" >event || {</span>
+  const eventPayload = event || {
     id: `evt_${timestamp}`,
     object: 'event',
     type,
@@ -201,13 +201,13 @@ function <span class="fstat-no" title="function not covered" >mockStripeEvent(</
     ...extraFields
   };
 &nbsp;
-  const payloadString = <span class="cstat-no" title="statement not covered" >JSON.stringify(eventPayload);</span>
+  const payloadString = JSON.stringify(eventPayload);
 &nbsp;
-  const signature = <span class="cstat-no" title="statement not covered" >secret</span>
-    ? stripe.webhooks.generateTestHeaderString({ payload: payloadString, secret, timestamp })
+  const signature = secret
+    ? <span class="branch-0 cbranch-no" title="branch not covered" >stripe.webhooks.generateTestHeaderString({ payload: payloadString, secret, timestamp })</span>
     : generateSignatureHeader(payloadString, timestamp);
 &nbsp;
-<span class="cstat-no" title="statement not covered" >  return { payload: payloadString, signature };</span>
+  return { payload: payloadString, signature };
 }
 &nbsp;
 /**
@@ -216,9 +216,9 @@ function <span class="fstat-no" title="function not covered" >mockStripeEvent(</
  * @param {number} [timestamp]
  * @returns {string} Fake Stripe-Signature header.
  */
-function <span class="fstat-no" title="function not covered" >generateSignatureHeader(</span>payload, timestamp = <span class="branch-0 cbranch-no" title="branch not covered" >Math.floor(Date.now() / 1000))</span> {
-  const fakeSignature = <span class="cstat-no" title="statement not covered" >'abcdef1234567890';</span>
-<span class="cstat-no" title="statement not covered" >  return `t=${timestamp}, v1=${fakeSignature}, v0=${fakeSignature}`;</span>
+function generateSignatureHeader(payload, timestamp = <span class="branch-0 cbranch-no" title="branch not covered" >Math.floor(Date.now() / 1000))</span> {
+  const fakeSignature = 'abcdef1234567890';
+  return `t=${timestamp}, v1=${fakeSignature}, v0=${fakeSignature}`;
 }
 &nbsp;
 module.exports = {
@@ -232,7 +232,7 @@ module.exports = {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-04T09:43:52.836Z
+                at 2025-09-04T09:56:34.473Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

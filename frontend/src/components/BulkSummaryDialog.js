@@ -16,9 +16,9 @@ function BulkSummaryDialog({ summary, onClose, onRetryStatus, onRetryEmail }) {
       style={{
         position: 'fixed', top: 80, left: '50%', transform: 'translateX(-50%)', background: '#fff', borderRadius: 10, boxShadow: '0 2px 16px rgba(0,0,0,0.15)', padding: 32, zIndex: 9999, minWidth: 400
       }}
-      data-testid="bulk-export-header"
+      data-testid="bulk-summary-dialog"
     >
-      <h2 data-testid="bulk-summary-header">Bulk Action Summary</h2>
+  <h2 data-testid="bulk-action-summary-header">Bulk Action Summary</h2>
       <div style={{ marginBottom: 16 }}>
         <strong>Action:</strong> {summary.actionType || 'Bulk'}
       </div>
@@ -33,7 +33,7 @@ function BulkSummaryDialog({ summary, onClose, onRetryStatus, onRetryEmail }) {
         )}
       </div>
       <div style={{ marginBottom: 16 }}>
-        <strong>Failed:</strong> {summary.failed?.length || 0}
+        <strong id="bulk-summary-failed-label">Failed:</strong> <span data-testid="bulk-summary-failed-count">{summary.failed?.length || 0}</span>
         {summary.failed?.length > 0 && (
           <ul style={{ color: 'red' }}>
             {summary.failed.map((id, i) => (
@@ -53,7 +53,10 @@ function BulkSummaryDialog({ summary, onClose, onRetryStatus, onRetryEmail }) {
             Retry Email
           </button>
         )}
-        <button onClick={onClose} style={{ background: '#ccc', color: '#333', borderRadius: 6, padding: '8px 16px' }}>
+        <button onClick={onClose} data-testid="bulk-summary-confirm" style={{ background: '#007bff', color: '#fff', borderRadius: 6, padding: '8px 16px', marginRight: 8 }}>
+          Confirm
+        </button>
+        <button onClick={onClose} data-testid="bulk-summary-close" style={{ background: '#ccc', color: '#333', borderRadius: 6, padding: '8px 16px' }}>
           Close
         </button>
       </div>

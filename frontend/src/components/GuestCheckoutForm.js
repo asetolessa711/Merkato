@@ -42,28 +42,28 @@ export default function GuestCheckoutForm({ onSubmit, isSubmitting }) {
     <form className={styles.guestCheckoutForm} onSubmit={handleSubmit}>
       <h2>Guest Checkout</h2>
       <div className={styles.formGroup}>
-        <label>Full Name</label>
-        <input name="name" value={form.name} onChange={handleChange} />
+        <label htmlFor="guest-name">Full Name</label>
+        <input id="guest-name" name="name" value={form.name} onChange={handleChange} />
         {fieldError.name && <div className={styles.errorMsg}>{fieldError.name}</div>}
       </div>
       <div className={styles.formGroup}>
-        <label>Email</label>
-        <input name="email" type="email" value={form.email} onChange={handleChange} />
+        <label htmlFor="guest-email">Email</label>
+        <input id="guest-email" name="email" type="email" value={form.email} onChange={handleChange} />
         {fieldError.email && <div className={styles.errorMsg}>{fieldError.email}</div>}
       </div>
       <div className={styles.formGroup}>
-        <label>Phone</label>
-        <input name="phone" value={form.phone} onChange={handleChange} />
+        <label htmlFor="guest-phone">Phone</label>
+        <input id="guest-phone" name="phone" value={form.phone} onChange={handleChange} />
         {fieldError.phone && <div className={styles.errorMsg}>{fieldError.phone}</div>}
       </div>
       <div className={styles.formGroup}>
-        <label>Shipping Address</label>
-        <input name="address" value={form.address} onChange={handleChange} />
+        <label htmlFor="guest-address">Shipping Address</label>
+        <input id="guest-address" name="address" value={form.address} onChange={handleChange} />
         {fieldError.address && <div className={styles.errorMsg}>{fieldError.address}</div>}
       </div>
       <div className={styles.formGroup}>
-        <label>Country</label>
-        <input name="country" value={form.country} onChange={handleChange} />
+        <label htmlFor="guest-country">Country</label>
+        <input id="guest-country" name="country" value={form.country} onChange={handleChange} />
         {fieldError.country && <div className={styles.errorMsg}>{fieldError.country}</div>}
       </div>
       <button type="submit" className={styles.submitButton} disabled={isSubmitting}>

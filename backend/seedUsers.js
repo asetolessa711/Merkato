@@ -20,7 +20,8 @@ if (!loaded) {
   console.warn('⚠️  No .env file found. Please create one.');
 }
 
-const MONGO_URI = process.env.MONGODB_URI || process.env.MONGO_URI || process.env.DB_URI || 'mongodb://localhost:27017/merkato';
+// Prefer local Mongo when available to avoid SRV/DNS issues in test/CI
+const MONGO_URI = process.env.MONGO_URI || process.env.MONGODB_URI || process.env.DB_URI || 'mongodb://127.0.0.1:27017/merkato';
 
 // Use the real User model so password hashing and methods work
 const User = require('./models/User');
@@ -69,7 +70,10 @@ const users = [
 
 async function seed() {
   try {
-    await mongoose.connect(MONGO_URI);
+    await mongoose.connect(MONGO_URI, {
+      // Fail fast if server is unreachable (stability for CI/test)
+      serverSelectionTimeoutMS: 5000
+    });
     console.log('✅ Connected to MongoDB');
 
     await User.deleteMany({});

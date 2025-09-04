@@ -1,12 +1,19 @@
-// routes/testEmailRoutes.js
+// routes/testEmailRoute.js
 const express = require('express');
 const router = express.Router();
 const { sendEmail } = require('../utils/sendEmail'); // <-- Use destructuring
 
 router.get('/', async (req, res) => {
   try {
+  // Don’t expose this route in production
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(404).json({ success: false, message: 'Not found' });
+  }
+  // Official contact address for the ecosystem; safe fallback in non-prod and tests
+  // Precedence: explicit override via MERKATO_TEST_EMAIL_TO, otherwise official fallback
+  const to = (process.env.MERKATO_TEST_EMAIL_TO && process.env.MERKATO_TEST_EMAIL_TO.trim()) || 'qa@merkato.test';
     await sendEmail({
-      to: 'waliinkanasefa2025@gmail.com',
+      to,
       subject: '📧 Test Email from Merkato',
       text: '✅ This is a test email sent from the Merkato backend.'
     });

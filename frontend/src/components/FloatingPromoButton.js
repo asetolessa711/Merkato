@@ -5,7 +5,7 @@ function FloatingPromoButton({ setShowFeedback }) {
   const navigate = useNavigate();
 
   return (
-    <div style={{
+  <div data-testid="floating-ui" style={{
       position: 'fixed',
       bottom: 30,
       right: 30,

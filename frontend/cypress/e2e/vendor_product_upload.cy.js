@@ -49,7 +49,7 @@ describe('🛍️ Vendor Product Upload Flow', () => {
     cy.get('button[type=submit]').click();
 
     // 6. Confirm upload success and check vendor product list
-    cy.get('[data-testid="upload-msg"]').should('contain', 'Product').and('contain', 'successfully');
+  cy.get('[data-testid="upload-msg"]').should('contain', 'Product').and('contain', 'successfully');
 
     // 7. Visit vendor products page to confirm the product exists
     cy.visit('/vendor/products');

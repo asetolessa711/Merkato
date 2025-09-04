@@ -20,3 +20,29 @@ envFiles.forEach((envPath) => {
 if (!loadedAny) {
   console.warn('⚠️ No .env.test or .env.test.local file found in backend directory.');
 }
+
+// Normalize timezone in tests for deterministic date behavior across machines
+process.env.TZ = 'UTC';
+
+// Final safety: ensure mongoose is closed when Jest finishes the test run in this process
+const maybeAddTeardown = () => {
+  try {
+    const mongoose = require('mongoose');
+    if (mongoose && typeof afterAll === 'function') {
+      afterAll(async () => {
+        try {
+          if (mongoose.connection && mongoose.connection.readyState !== 0) {
+            await mongoose.connection.close(false);
+          }
+        } catch (_) {}
+      });
+    }
+  } catch (_) {}
+};
+
+maybeAddTeardown();
+
+// Ensure NODE_ENV is 'test' for server.js gating
+if (!process.env.NODE_ENV || process.env.NODE_ENV !== 'test') {
+  process.env.NODE_ENV = 'test';
+}

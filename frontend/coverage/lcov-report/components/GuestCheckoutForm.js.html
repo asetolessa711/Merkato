@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">79.31% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>23/29</span>
+                <span class='fraction'>29/29</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">64.28% </span>
+                <span class="strong">92.85% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>18/28</span>
+                <span class='fraction'>26/28</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">60% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>3/5</span>
+                <span class='fraction'>5/5</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">81.81% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>18/22</span>
+                <span class='fraction'>22/22</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line medium'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -141,43 +141,43 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">26x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">26x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">26x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">26x</span>
+<span class="cline-any cline-yes">15x</span>
+<span class="cline-any cline-yes">15x</span>
+<span class="cline-any cline-yes">15x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">26x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">8x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">8x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-yes">1x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">8x</span>
+<span class="cline-any cline-yes">26x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -227,56 +227,56 @@ export default function GuestCheckoutForm({ onSubmit, isSubmitting }) {
 &nbsp;
   const validate = () =&gt; {
     const errors = {};
-    <span class="missing-if-branch" title="else path not taken" >E</span>if (!form.name) errors.name = 'Name is required.';
-    <span class="missing-if-branch" title="else path not taken" >E</span>if (!form.email || <span class="branch-1 cbranch-no" title="branch not covered" >!/\S+@\S+\.\S+/.test(form.email))</span> errors.email = 'Valid email required.';
-    <span class="missing-if-branch" title="else path not taken" >E</span>if (!form.phone) errors.phone = 'Phone is required.';
-    <span class="missing-if-branch" title="else path not taken" >E</span>if (!form.address) errors.address = 'Shipping address is required.';
-    <span class="missing-if-branch" title="else path not taken" >E</span>if (!form.country) errors.country = 'Country is required.';
+    if (!form.name) errors.name = 'Name is required.';
+    if (!form.email || !/\S+@\S+\.\S+/.test(form.email)) errors.email = 'Valid email required.';
+    if (!form.phone) errors.phone = 'Phone is required.';
+    if (!form.address) errors.address = 'Shipping address is required.';
+    if (!form.country) errors.country = 'Country is required.';
     return errors;
   };
 &nbsp;
-  const handleChange = <span class="fstat-no" title="function not covered" >(e</span>) =&gt; {
-    const { name, value } = <span class="cstat-no" title="statement not covered" >e.target;</span>
-<span class="cstat-no" title="statement not covered" >    setForm({ ...form, [name]: value });</span>
-<span class="cstat-no" title="statement not covered" >    setFieldError(<span class="fstat-no" title="function not covered" >(p</span>rev) =&gt; (<span class="cstat-no" title="statement not covered" >{ ...prev, [name]: undefined })</span>);</span>
+  const handleChange = (e) =&gt; {
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
+    setFieldError((prev) =&gt; ({ ...prev, [name]: undefined }));
   };
 &nbsp;
   const handleSubmit = (e) =&gt; {
     e.preventDefault();
     const errors = validate();
-    <span class="missing-if-branch" title="else path not taken" >E</span>if (Object.keys(errors).length &gt; 0) {
+    if (Object.keys(errors).length &gt; 0) {
       setFieldError(errors);
       return;
     }
-<span class="cstat-no" title="statement not covered" >    if (onSubmit) <span class="cstat-no" title="statement not covered" >onSubmit(form);</span></span>
+    <span class="missing-if-branch" title="else path not taken" >E</span>if (onSubmit) onSubmit(form);
   };
 &nbsp;
   return (
     &lt;form className={styles.guestCheckoutForm} onSubmit={handleSubmit}&gt;
       &lt;h2&gt;Guest Checkout&lt;/h2&gt;
       &lt;div className={styles.formGroup}&gt;
-        &lt;label&gt;Full Name&lt;/label&gt;
-        &lt;input name="name" value={form.name} onChange={handleChange} /&gt;
+        &lt;label htmlFor="guest-name"&gt;Full Name&lt;/label&gt;
+        &lt;input id="guest-name" name="name" value={form.name} onChange={handleChange} /&gt;
         {fieldError.name &amp;&amp; &lt;div className={styles.errorMsg}&gt;{fieldError.name}&lt;/div&gt;}
       &lt;/div&gt;
       &lt;div className={styles.formGroup}&gt;
-        &lt;label&gt;Email&lt;/label&gt;
-        &lt;input name="email" type="email" value={form.email} onChange={handleChange} /&gt;
+        &lt;label htmlFor="guest-email"&gt;Email&lt;/label&gt;
+        &lt;input id="guest-email" name="email" type="email" value={form.email} onChange={handleChange} /&gt;
         {fieldError.email &amp;&amp; &lt;div className={styles.errorMsg}&gt;{fieldError.email}&lt;/div&gt;}
       &lt;/div&gt;
       &lt;div className={styles.formGroup}&gt;
-        &lt;label&gt;Phone&lt;/label&gt;
-        &lt;input name="phone" value={form.phone} onChange={handleChange} /&gt;
+        &lt;label htmlFor="guest-phone"&gt;Phone&lt;/label&gt;
+        &lt;input id="guest-phone" name="phone" value={form.phone} onChange={handleChange} /&gt;
         {fieldError.phone &amp;&amp; &lt;div className={styles.errorMsg}&gt;{fieldError.phone}&lt;/div&gt;}
       &lt;/div&gt;
       &lt;div className={styles.formGroup}&gt;
-        &lt;label&gt;Shipping Address&lt;/label&gt;
-        &lt;input name="address" value={form.address} onChange={handleChange} /&gt;
+        &lt;label htmlFor="guest-address"&gt;Shipping Address&lt;/label&gt;
+        &lt;input id="guest-address" name="address" value={form.address} onChange={handleChange} /&gt;
         {fieldError.address &amp;&amp; &lt;div className={styles.errorMsg}&gt;{fieldError.address}&lt;/div&gt;}
       &lt;/div&gt;
       &lt;div className={styles.formGroup}&gt;
-        &lt;label&gt;Country&lt;/label&gt;
-        &lt;input name="country" value={form.country} onChange={handleChange} /&gt;
+        &lt;label htmlFor="guest-country"&gt;Country&lt;/label&gt;
+        &lt;input id="guest-country" name="country" value={form.country} onChange={handleChange} /&gt;
         {fieldError.country &amp;&amp; &lt;div className={styles.errorMsg}&gt;{fieldError.country}&lt;/div&gt;}
       &lt;/div&gt;
       &lt;button type="submit" className={styles.submitButton} disabled={isSubmitting}&gt;
@@ -292,7 +292,7 @@ export default function GuestCheckoutForm({ onSubmit, isSubmitting }) {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-05T17:25:01.783Z
+                at 2025-08-07T20:57:17.971Z
             </div>
         <script src="../prettify.js"></script>
         <script>

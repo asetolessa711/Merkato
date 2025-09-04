@@ -8,9 +8,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  position: sticky;
-  top: 0;
-  z-index: 1000;
+  /* Avoid covering elements for Cypress interactions */
+  position: relative;
+  z-index: 2000; /* high to remain on top when needed */
 }
 
 /* Navigation */
@@ -18,6 +18,9 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  /* Ensure links are visible and not clipped in E2E */
+  overflow: visible;
+  flex-wrap: wrap;
 }
 
 /* Logo */
@@ -41,6 +44,9 @@
   font-weight: 500;
   border-radius: 6px;
   transition: all 0.2s ease;
+  display: inline-block;
+  position: relative;
+  z-index: 1;
 }
 
 .link:hover {

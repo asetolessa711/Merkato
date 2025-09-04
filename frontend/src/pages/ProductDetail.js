@@ -55,10 +55,16 @@ const handleAddToCart = () => {
     cart.push({ ...product, quantity: 1 });
   }
 
+  const now = Date.now();
   localStorage.setItem('merkato-cart', JSON.stringify({
     items: cart,
-    timestamp: Date.now()
+    timestamp: now
   }));
+  // Mirror legacy key and update TTL metadata
+  localStorage.setItem('cart', JSON.stringify(cart));
+  const token = localStorage.getItem('token') || localStorage.getItem('merkato-token');
+  const isAuthed = Boolean(token);
+  localStorage.setItem('merkato-cart-ttl', JSON.stringify({ ts: now, maxAge: isAuthed ? 90 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000 }));
 
   alert('🛒 Product added to cart!');
 };
@@ -136,7 +142,7 @@ const submitReview = async (e) => {
             <h2>{product.name}</h2>
             <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#00B894' }}>{getDisplayPrice(product)}</p>
 
-            <button onClick={handleAddToCart} style={{ marginBottom: 20, backgroundColor: '#00B894', color: 'white', padding: 10, border: 'none', borderRadius: 6 }}>
+            <button data-testid="add-to-cart-btn" onClick={handleAddToCart} style={{ marginBottom: 20, backgroundColor: '#00B894', color: 'white', padding: 10, border: 'none', borderRadius: 6 }}>
               🛒 Add to Cart
             </button>
 

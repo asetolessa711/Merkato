@@ -1,6 +1,8 @@
 .global-message {
   position: fixed;
-  top: 20px;
+  /* Move to bottom so it never overlays the navbar or top links */
+  top: auto;
+  bottom: 20px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 9999;
@@ -10,6 +12,8 @@
   font-size: 1rem;
   box-shadow: 0 2px 8px rgba(0,0,0,0.15);
   animation: fadeInOut 4s linear;
+  /* Ensure this toast never blocks clicks on underlying elements (Cypress visibility) */
+  pointer-events: none;
 }
 .global-message.success {
   background: #4caf50;

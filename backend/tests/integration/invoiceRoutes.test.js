@@ -1,10 +1,23 @@
 // Always load .env.test for test tokens
+const fs = require('fs');
 const envPath = require('path').resolve(__dirname, '..', '..', '.env.test');
+try {
+  const envRaw = fs.readFileSync(envPath, 'utf8');
+  console.log('[DEBUG] .env.test raw contents:\n', envRaw);
+} catch (e) {
+  console.error('[DEBUG] Could not read .env.test:', e.message);
+}
+// ...existing code...
 require('dotenv').config({ path: envPath });
+console.log('[DEBUG] (ABSOLUTE) TEST_ADMIN_TOKEN:', process.env.TEST_ADMIN_TOKEN);
+console.log('[DEBUG] (ABSOLUTE) TEST_USER_TOKEN:', process.env.TEST_USER_TOKEN);
 
-// Hard fail if tokens are missing or empty (avoid logging secret values)
+// Hard fail and debug if tokens are missing or empty
 if (!process.env.TEST_ADMIN_TOKEN || !process.env.TEST_USER_TOKEN || process.env.TEST_ADMIN_TOKEN === 'Bearer ' || process.env.TEST_USER_TOKEN === 'Bearer ') {
-  throw new Error('[FATAL] TEST_ADMIN_TOKEN and/or TEST_USER_TOKEN are missing or empty in .env.test.');
+  console.error('[FATAL] TEST_ADMIN_TOKEN or TEST_USER_TOKEN is missing or empty at file load time.');
+  console.error('[FATAL] TEST_ADMIN_TOKEN:', process.env.TEST_ADMIN_TOKEN);
+  console.error('[FATAL] TEST_USER_TOKEN:', process.env.TEST_USER_TOKEN);
+  throw new Error('[FATAL] TEST_ADMIN_TOKEN and/or TEST_USER_TOKEN are missing or empty in .env.test.\nPlease ensure .env.test contains valid Bearer tokens for both.');
 }
 // Helper: Only set Authorization header if token is defined and non-empty
 function setAuth(req, token) {
@@ -13,6 +26,8 @@ function setAuth(req, token) {
   }
   return req;
 }
+console.log('[DEBUG] TEST_ADMIN_TOKEN:', process.env.TEST_ADMIN_TOKEN);
+console.log('[DEBUG] TEST_USER_TOKEN:', process.env.TEST_USER_TOKEN);
 const request = require('supertest');
 const app = require('../../server');
 const mongoose = require('mongoose');
@@ -25,7 +40,11 @@ const userToken = process.env.TEST_USER_TOKEN;
 // Fail early if tokens are missing to avoid undefined Authorization header
 beforeAll(() => {
   if (!adminToken || !userToken || adminToken === 'Bearer ' || userToken === 'Bearer ') {
-    throw new Error('❌ TEST_ADMIN_TOKEN and/or TEST_USER_TOKEN are missing or empty in your .env.test file.');
+    throw new Error(
+      '❌ TEST_ADMIN_TOKEN and/or TEST_USER_TOKEN are missing or empty in your .env.test file.\n' +
+      'Please ensure .env.test contains valid Bearer tokens for both.\n' +
+      `Current values: TEST_ADMIN_TOKEN="${adminToken}", TEST_USER_TOKEN="${userToken}"`
+    );
   }
 });
 describe('Invoice Routes', () => {
@@ -36,44 +55,44 @@ describe('Invoice Routes', () => {
   const testEmail = 'test@example.com';
 
   beforeAll(async () => {
-    // Dynamically fetch a real product ID from the database (prefer stock >= 1)
+    // Dynamically fetch a real product ID from the database
     const Product = require('../../models/Product');
     const User = require('../../models/User');
-    let product = await Product.findOne({ stock: { $gte: 1 } });
-
-    // If none exists, create a simple test product using admin token
+    let product = await Product.findOne();
     if (!product) {
-      if (!adminToken || adminToken === 'Bearer ') {
-        throw new Error('❌ No in-stock products and no admin token to create one.');
-      }
-      const createRes = await setAuth(request(app).post('/api/products'), adminToken).send({
-        name: `Invoice Test Product ${Date.now()}`,
-        price: 10,
-        category: 'test',
-        stock: 5,
-        description: 'Autocreated for invoice tests',
-        country: 'Ethiopia'
-      });
-      if (![201, 200].includes(createRes.statusCode) || !createRes.body?._id) {
-        console.error('[TEST DEBUG] Failed to create test product:', {
-          status: createRes.statusCode,
-          body: createRes.body
-        });
-        throw new Error('❌ Could not create test product.');
-      }
-      product = await Product.findById(createRes.body._id);
+      throw new Error('❌ No products found in DB. Please seed products first.');
     }
-
+    // Ensure the product is orderable (stock > 0) for this test suite
+    if (!product.stock || product.stock < 1) {
+      await Product.updateOne({ _id: product._id }, { $set: { stock: 5 } });
+      product = await Product.findById(product._id);
+    }
     productId = product._id;
-  // Minimal product info (no sensitive logs)
+    // Print product details for debugging
+    console.log('[DEBUG] Test Product:', {
+      _id: product._id,
+      name: product.name,
+      stock: product.stock,
+      vendor: product.vendor
+    });
     // Fetch vendor details
     const vendor = await User.findById(product.vendor);
-  // Minimal vendor presence check
+    console.log('[DEBUG] Test Product Vendor:', vendor ? {
+      _id: vendor._id,
+      name: vendor.name,
+      roles: vendor.roles,
+      email: vendor.email
+    } : 'Vendor not found');
 
     // Print test user details
     const decoded = require('jsonwebtoken').decode(userToken.split(' ')[1]);
     const testUser = await User.findById(decoded._id || decoded.id);
-  // Minimal user presence check
+    console.log('[DEBUG] Test User:', testUser ? {
+      _id: testUser._id,
+      name: testUser.name,
+      roles: testUser.roles,
+      email: testUser.email
+    } : 'User not found');
 
     // Dynamically create a real order for invoice tests
     const orderRes = await request(app)
@@ -100,7 +119,10 @@ describe('Invoice Routes', () => {
       });
 
     if (![201, 200].includes(orderRes.statusCode) || !orderRes.body.order || !orderRes.body.order._id) {
-  // Avoid logging sensitive details
+      console.error('[TEST DEBUG] Order creation failed:', {
+        status: orderRes.statusCode,
+        body: orderRes.body
+      });
       throw new Error('❌ Could not create test order. Failing suite to ensure test data is present.');
     }
     testOrderId = orderRes.body.order._id;
@@ -163,7 +185,7 @@ describe('Invoice Routes', () => {
         console.warn('⚠️ Skipping test — userToken missing.');
         return;
       }
-  // token intentionally not logged
+      console.log('[TEST DEBUG] Using userToken:', userToken);
       const res = await setAuth(request(app).get(`/api/invoices/${testOrderId}`), userToken);
       expect([200, 403, 404]).toContain(res.statusCode);
       if (res.statusCode === 200) {
@@ -177,7 +199,7 @@ describe('Invoice Routes', () => {
         console.warn('⚠️ Skipping test — userToken missing.');
         return;
       }
-  // token intentionally not logged
+      console.log('[TEST DEBUG] Using userToken:', userToken);
       const res = await setAuth(request(app).get(`/api/invoices/${invalidId}`), userToken);
       expect([401, 403, 404]).toContain(res.statusCode);
     });
@@ -187,7 +209,7 @@ describe('Invoice Routes', () => {
         console.warn('⚠️ Skipping test — userToken missing.');
         return;
       }
-  // token intentionally not logged
+      console.log('[TEST DEBUG] Using userToken:', userToken);
       const res = await setAuth(request(app).get(`/api/invoices/notAValidId`), userToken);
       expect([400, 401, 403]).toContain(res.statusCode);
     });
@@ -201,7 +223,7 @@ describe('Invoice Routes', () => {
         console.warn('⚠️ Skipping test — userToken missing.');
         return;
       }
-  // token intentionally not logged
+      console.log('[TEST DEBUG] Using userToken:', userToken);
       const res = await setAuth(request(app).get(`/api/invoices/${lazyOrderId}`), userToken);
       expect([404, 403, 400]).toContain(res.statusCode);
     });
@@ -229,7 +251,7 @@ describe('Invoice Routes', () => {
         console.warn('⚠️ Skipping test — adminToken missing.');
         return;
       }
-  // token intentionally not logged
+      console.log('[TEST DEBUG] Using adminToken:', adminToken);
       const res = await setAuth(request(app).post('/api/invoices/email'), adminToken)
         .send({ orderId: testOrderId, email: testEmail });
 
@@ -248,7 +270,7 @@ describe('Invoice Routes', () => {
         console.warn('⚠️ Skipping test — userToken missing.');
         return;
       }
-  // token intentionally not logged
+      console.log('[TEST DEBUG] Using userToken:', userToken);
       const res = await setAuth(request(app).post('/api/invoices/email'), userToken)
         .send({ orderId: testOrderId, email: testEmail });
       expect([403, 404]).toContain(res.statusCode);
@@ -261,7 +283,7 @@ describe('Invoice Routes', () => {
         console.warn('⚠️ Skipping test — invoice not found.');
         return;
       }
-  // token intentionally not logged
+      console.log('[TEST DEBUG] Using userToken:', userToken);
       const res = await setAuth(request(app)
         .get(`/api/invoices/download/${invoiceId}`), userToken)
         .buffer()

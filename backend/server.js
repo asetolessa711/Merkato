@@ -6,12 +6,17 @@ require('dotenv').config();
 
 // 🛠 Mongoose Config
 mongoose.set('strictQuery', false);
+const IS_TEST = !!process.env.JEST_WORKER_ID || process.env.NODE_ENV === 'test';
+const tlog = (...args) => { if (!IS_TEST) console.log(...args); };
+const terror = (...args) => { if (!IS_TEST) console.error(...args); };
 
 // 🔀 Route Imports
+const codexRoutes = require("./routes/codex");
 const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const adminOrdersRoutes = require('./routes/adminOrders');
 const vendorRoutes = require('./routes/vendorRoutes');
 const vendorPromoRoutes = require('./routes/vendorPromoRoutes');
 const favoriteRoutes = require('./routes/favoriteRoutes');
@@ -26,8 +31,13 @@ const reviewModerationRoutes = require('./routes/reviewModerationRoutes');
 const customerRoutes = require('./routes/customerRoutes');
 const emailInvoiceRoutes = require('./routes/emailInvoiceRoutes');
 const invoiceRoutes = require('./routes/invoiceRoutes');
+const behaviorRoutes = require('./routes/behaviorRoutes');
+const rewardsRoutes = require('./routes/rewardsRoutes');
 const devSeedRoute = require('./routes/devSeedRoute');
+const testSeedOrdersRoute = require('./routes/testSeedOrdersRoute');
+const testSeedInvoicesRoute = require('./routes/testSeedInvoicesRoute');
 const testEmailRoute = require('./routes/testEmailRoute');
+const taskRoutes = require('./routes/taskRoutes');
 
 // 🚀 Initialize Express App
 const app = express();
@@ -41,10 +51,13 @@ app.use(cors());
 app.use('/uploads', express.static(path.join(__dirname, '/uploads')));
 
 // 📦 API Routes
+app.use('/api', codexRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/admin', adminRoutes);
+// Mount dedicated Admin Orders routes under /api/admin/orders
+app.use('/api/admin/orders', adminOrdersRoutes);
 app.use('/api/vendor', vendorRoutes);
 app.use('/api/vendor-promos', vendorPromoRoutes);
 app.use('/api/favorites', favoriteRoutes);
@@ -60,8 +73,13 @@ app.use('/api/customer', customerRoutes);
 app.use('/api/email', emailInvoiceRoutes);
 
 app.use('/api/invoices', invoiceRoutes);
+app.use('/api/behavior', behaviorRoutes);
+app.use('/api/rewards', rewardsRoutes);
 app.use('/api/dev', devSeedRoute);
+app.use('/api', testSeedOrdersRoute);
+app.use('/api', testSeedInvoicesRoute);
 app.use('/api/test-email', testEmailRoute);
+app.use('/api', taskRoutes);
 
 // Global error handler (must be after all routes)
 app.use((err, req, res, next) => {
@@ -91,12 +109,12 @@ if (!process.env.MONGO_URI) {
   process.exit(1);
 }
 
-console.log(`🔍 [server.js] About to connect to MongoDB: ${process.env.MONGO_URI}`);
+if (!IS_TEST) console.log(`🔍 [server.js] About to connect to MongoDB: ${process.env.MONGO_URI}`);
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
 }).then(() => {
-  console.log('✅ [server.js] MongoDB connected');
+  tlog('✅ [server.js] MongoDB connected');
 
   if (require.main === module) {
     const PORT = process.env.PORT || 5000;
@@ -121,23 +139,25 @@ mongoose.connect(process.env.MONGO_URI, {
     process.on('SIGTERM', shutdown);
   }
 }).catch((err) => {
-  console.error('❌ [server.js] MongoDB connection failed:', err.message);
+  terror('❌ [server.js] MongoDB connection failed:', err.message);
   process.exit(1);
 });
 
-// Always log when mongoose.connect is called (for test runner)
-mongoose.connection.on('connecting', () => {
-  console.log('🔄 [server.js] Mongoose is connecting...');
-});
-mongoose.connection.on('connected', () => {
-  console.log('✅ [server.js] Mongoose connected event fired');
-});
-mongoose.connection.on('error', (err) => {
-  console.error('❌ [server.js] Mongoose connection error:', err.message);
-});
-mongoose.connection.on('disconnected', () => {
-  console.log('🔌 [server.js] Mongoose disconnected');
-});
+  // Attach mongoose connection logs only outside of test environment to avoid noisy post-run logs
+  if (process.env.NODE_ENV !== 'test') {
+    mongoose.connection.on('connecting', () => {
+      tlog('🔄 [server.js] Mongoose is connecting...');
+    });
+    mongoose.connection.on('connected', () => {
+      tlog('✅ [server.js] Mongoose connected event fired');
+    });
+    mongoose.connection.on('error', (err) => {
+      terror('❌ [server.js] Mongoose connection error:', err.message);
+    });
+    mongoose.connection.on('disconnected', () => {
+      tlog('🔌 [server.js] Mongoose disconnected');
+    });
+  }
 
 // 🔁 Export app for testing with Supertest
 module.exports = app;

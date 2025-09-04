@@ -1,9 +1,11 @@
+
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import RegisterPage from '../../pages/RegisterPage';
 import { MemoryRouter } from 'react-router-dom';
 import '@testing-library/jest-dom';
 import axios from 'axios';
+import { MessageProvider } from '../../context/MessageContext';
 
 jest.mock('axios');
 
@@ -22,7 +24,14 @@ describe('\ud83d\udcdd Register Form Validation', () => {
       </MemoryRouter>
     );
     fireEvent.click(screen.getByRole('button', { name: /register/i }));
-    expect(await screen.findAllByText(/required/i)).not.toHaveLength(0);
+    // Check for the actual error messages rendered by the form
+    expect(await screen.findByText('Please enter your full name.')).toBeInTheDocument();
+    // There may be multiple elements with this error message (debug + actual error)
+    const emailErrors = await screen.findAllByText('Please enter a valid email address (e.g., user@example.com).');
+    expect(emailErrors.length).toBeGreaterThanOrEqual(1);
+    expect(await screen.findByText('Your password must be at least 6 characters.')).toBeInTheDocument();
+    expect(await screen.findByText('Please enter your country.')).toBeInTheDocument();
+    expect(await screen.findByText('Please select your role.')).toBeInTheDocument();
   });
 
 
@@ -49,7 +58,7 @@ describe('\ud83d\udcdd Register Form Validation', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: /register/i }));
     await waitFor(() => {
-      expect(screen.getByTestId('email-error').textContent).toMatch(/valid email required/i);
+      expect(screen.getByTestId('email-error').textContent).toMatch(/valid email address/i);
     });
   });
 

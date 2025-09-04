@@ -7,7 +7,15 @@ module.exports = {
     '**/tests/unit/**/*.test.js',
     '**/tests/integration/**/*.test.js'
   ],
-  setupFiles: [path.resolve(__dirname, './jest.env.setup.js')],
+  setupFiles: [
+    path.resolve(__dirname, './jest.env.setup.js'),
+    path.resolve(__dirname, './tests/setupFiles/ensureTestImage.js')
+  ],
+  setupFilesAfterEnv: [
+    path.resolve(__dirname, './jest.afterEnv.setup.js'),
+  ],
+  // Ensure we always close DB/socket handles after the test suite completes
+  globalTeardown: path.resolve(__dirname, './jest.globalTeardown.js'),
   moduleFileExtensions: ['js', 'json'],
   collectCoverage: true,
   coverageDirectory: path.join(__dirname, 'coverage'),
@@ -24,5 +32,7 @@ module.exports = {
   ],
   clearMocks: true,
   verbose: true,
-  // testTimeout: 20000, // Uncomment if you have slow integration tests
+  testTimeout: 30000, // Increase default timeout for slower integration tests
+  // Ensure Jest process exits even if libraries leave open handles (CI/Windows stability)
+  forceExit: true,
 };

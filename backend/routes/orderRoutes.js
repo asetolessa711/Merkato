@@ -5,8 +5,9 @@ const Order = require('../models/Order');
 const Product = require('../models/Product');
 const PromoCode = require('../models/PromoCode');
 const Invoice = require('../models/Invoice');
-const User = require('../models/User');
 const { protect, authorize } = require('../middleware/authMiddleware');
+const { FEATURE_GAMIFICATION } = require('../utils/flags');
+const RewardPointLedger = require('../models/RewardPointLedger');
 
 /**
  * @route   POST /api/orders
@@ -102,22 +103,28 @@ router.post('/', protect, authorize('customer'), async (req, res) => {
         { session, new: true }
       );
 
-      const vendorId = product.vendor._id.toString();
+      // Support both populated vendor doc and raw ObjectId; fallback to buyer as last resort
+      const vendorIdObj = (product.vendor && product.vendor._id)
+        ? product.vendor._id
+        : (product.vendor || req.user._id);
+      const vendorId = vendorIdObj.toString();
+      const vendorName = (product.vendor && product.vendor.name) ? product.vendor.name : 'Vendor';
+      const vendorEmail = (product.vendor && product.vendor.email) ? product.vendor.email : '';
       const itemTotal = product.price * item.quantity;
       const itemTax = itemTotal * 0.15; // 15% tax rate
 
       if (!vendorMap[vendorId]) {
         vendorMap[vendorId] = {
-          vendorId: product.vendor._id,
-          vendorName: product.vendor.name,
-          vendorEmail: product.vendor.email,
+          vendorId: vendorIdObj,
+          vendorName,
+          vendorEmail,
           products: [],
           subtotal: 0,
           tax: 0,
           shipping: 0,
           discount: 0,
           total: 0,
-          commissionRate: product.vendor.commission || 0.1,
+          commissionRate: (product.vendor && product.vendor.commission) || 0.1,
           commissionAmount: 0,
           netEarnings: 0,
           currency: 'USD',
@@ -143,7 +150,7 @@ router.post('/', protect, authorize('customer'), async (req, res) => {
     // Create invoices and calculate vendor totals
     const vendorArray = await Promise.all(Object.values(vendorMap).map(async (v) => {
       v.total = v.subtotal + v.tax + v.shipping - v.discount;
-      v.commissionAmount = v.subtotal * v.commissionRate;
+      v.commissionAmount = v.subtotal * (v.commissionRate || 0.1);
       v.netEarnings = v.total - v.commissionAmount;
 
       const invoice = new Invoice({
@@ -202,6 +209,36 @@ router.post('/', protect, authorize('customer'), async (req, res) => {
 
     await session.commitTransaction();
 
+    // Rewards: award points (flagged)
+    if (FEATURE_GAMIFICATION) {
+      try {
+        const amountUsd = orderTotal || 0; // server-side computed USD
+        const base = Math.floor(amountUsd); // 1 point per $1
+        if (base > 0) {
+          await RewardPointLedger.create({
+            user: buyerId,
+            type: 'earn',
+            points: base,
+            reason: 'purchase',
+            metadata: { orderId: savedOrder._id.toString(), amountUsd },
+          });
+        }
+        // First-purchase bonus: detect via existing orders count
+        const priorCount = await Order.countDocuments({ buyer: buyerId, _id: { $ne: savedOrder._id } });
+        if (priorCount === 0) {
+          await RewardPointLedger.create({
+            user: buyerId,
+            type: 'earn',
+            points: 50,
+            reason: 'first_purchase_bonus',
+            metadata: { orderId: savedOrder._id.toString() },
+          });
+        }
+      } catch (e) {
+        console.error('[rewards] failed to record purchase rewards:', e.message);
+      }
+    }
+
     res.status(201).json({
       success: true,
       message: 'Order placed successfully',
@@ -234,213 +271,64 @@ router.post('/', protect, authorize('customer'), async (req, res) => {
 });
 
 /**
- * @route   POST /api/orders/guest
- * @desc    Create order as guest (no auth). Will create or reuse a user by email.
- * @access  Public
- */
-router.post('/guest', async (req, res) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
-  try {
-    const {
-      email,
-      fullName,
-      cartItems,
-      shippingAddress,
-      paymentMethod,
-      deliveryOption
-    } = req.body || {};
-
-    // Basic guest validations (requirements differ from registered users)
-    if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
-      return res.status(400).json({ message: 'Valid email is required for guest checkout' });
-    }
-    if (!fullName && !shippingAddress?.fullName) {
-      return res.status(400).json({ message: 'Full name is required' });
-    }
-    if (!cartItems?.length) {
-      return res.status(400).json({ message: 'No products selected' });
-    }
-    if (!cartItems.every(item => item.quantity > 0)) {
-      return res.status(400).json({ message: 'Invalid item quantity' });
-    }
-    if (!shippingAddress?.city || !shippingAddress?.country) {
-      return res.status(400).json({ message: 'Shipping address is incomplete' });
-    }
-    // For guests, restrict to COD by default
-    if (!paymentMethod || paymentMethod !== 'cod') {
-      return res.status(400).json({ message: 'Guests can only use cash on delivery (COD)' });
-    }
-    if (!deliveryOption?.name || !deliveryOption?.cost || !deliveryOption?.days) {
-      return res.status(400).json({ message: 'Delivery option is missing' });
-    }
-
-    // Find or create a lightweight customer user for this guest email
-    let buyer = await User.findOne({ email }).session(session);
-    if (!buyer) {
-      const randomPwd = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
-      buyer = new User({
-        name: fullName || shippingAddress.fullName || 'Guest User',
-        email,
-        password: randomPwd,
-        roles: ['customer'],
-        country: shippingAddress.country || 'ET'
-      });
-      await buyer.save({ session });
-    }
-
-    // Reuse core of order creation logic
-    const productIds = cartItems.map(item => item.productId || item.product);
-    const productsFromDB = await Product.find({ _id: { $in: productIds } })
-      .populate('vendor', 'name email commission')
-      .session(session);
-
-    for (const item of cartItems) {
-      const product = productsFromDB.find(p =>
-        p._id.toString() === (item.productId || item.product).toString()
-      );
-      if (!product) {
-        await session.abortTransaction();
-        return res.status(400).json({ message: `Product not found: ${item.productId || item.product}` });
-      }
-      if (product.stock < item.quantity) {
-        await session.abortTransaction();
-        return res.status(400).json({ message: `Insufficient stock for ${product.name}. Available: ${product.stock}` });
-      }
-    }
-
-    const totalItemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-    const vendorMap = {};
-    for (const item of cartItems) {
-      const product = productsFromDB.find(p =>
-        p._id.toString() === (item.productId || item.product).toString()
-      );
-
-      await Product.findByIdAndUpdate(
-        product._id,
-        { $inc: { stock: -item.quantity } },
-        { session, new: true }
-      );
-
-      const vendorId = product.vendor._id.toString();
-      const itemTotal = product.price * item.quantity;
-      const itemTax = itemTotal * 0.15;
-
-      if (!vendorMap[vendorId]) {
-        vendorMap[vendorId] = {
-          vendorId: product.vendor._id,
-          vendorName: product.vendor.name,
-          vendorEmail: product.vendor.email,
-          products: [],
-          subtotal: 0,
-          tax: 0,
-          shipping: 0,
-          discount: 0,
-          total: 0,
-          commissionRate: product.vendor.commission || 0.1,
-          commissionAmount: 0,
-          netEarnings: 0,
-          currency: 'USD',
-          status: 'pending',
-          deliveryStatus: 'processing'
-        };
-      }
-
-      vendorMap[vendorId].products.push({
-        product: product._id,
-        name: product.name,
-        quantity: item.quantity,
-        price: product.price,
-        subtotal: itemTotal,
-        tax: itemTax
-      });
-
-      vendorMap[vendorId].subtotal += itemTotal;
-      vendorMap[vendorId].tax += itemTax;
-      vendorMap[vendorId].shipping += (item.quantity / totalItemCount) * deliveryOption.cost;
-    }
-
-    const vendorArray = await Promise.all(Object.values(vendorMap).map(async (v) => {
-      v.total = v.subtotal + v.tax + v.shipping - v.discount;
-      v.commissionAmount = v.subtotal * v.commissionRate;
-      v.netEarnings = v.total - v.commissionAmount;
-
-      const invoice = new Invoice({
-        vendor: v.vendorId,
-        items: v.products,
-        subtotal: v.subtotal,
-        tax: v.tax,
-        shipping: v.shipping,
-        discount: v.discount,
-        commission: v.commissionAmount,
-        total: v.total,
-        netAmount: v.netEarnings,
-        currency: v.currency,
-        dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-      });
-
-      const savedInvoice = await invoice.save({ session });
-      v.invoiceId = savedInvoice._id;
-      return v;
-    }));
-
-    const orderTotal = vendorArray.reduce((sum, v) => sum + v.total, 0);
-
-    const order = new Order({
-      buyer: buyer._id,
-      vendors: vendorArray,
-      total: orderTotal,
-      totalAfterDiscount: orderTotal,
-      discount: 0,
-      promoCode: null,
-      currency: 'USD',
-      paymentMethod,
-      shippingAddress: { ...shippingAddress, fullName: fullName || shippingAddress.fullName },
-      deliveryOption,
-      status: 'pending',
-      orderDate: new Date()
-    });
-
-    const savedOrder = await order.save({ session });
-
-    await Invoice.updateMany(
-      { _id: { $in: vendorArray.map(v => v.invoiceId) } },
-      { order: savedOrder._id },
-      { session }
-    );
-
-    await session.commitTransaction();
-
-    res.status(201).json({
-      success: true,
-      message: 'Guest order placed successfully',
-      order: savedOrder,
-      invoices: vendorArray.map(v => ({
-        vendorId: v.vendorId,
-        invoiceId: v.invoiceId,
-        amount: v.total
-      }))
-    });
-  } catch (err) {
-    await session.abortTransaction();
-    console.error('Guest order creation error:', err);
-    res.status(500).json({ success: false, message: 'Failed to place guest order', error: err.message });
-  } finally {
-    session.endSession();
-  }
-});
-
-/**
  * @route   GET /api/orders/my-orders
  * @desc    Get all orders for current customer
  * @access  Private - Customer
  */
 router.get('/my-orders', protect, authorize('customer'), async (req, res) => {
   try {
-    const orders = await Order.find({ buyer: req.user._id })
+    let orders = await Order.find({ buyer: req.user._id })
       .populate('vendors.vendorId', 'name')
+      .populate({ path: 'vendors.products.product', select: 'name price images', options: { strictPopulate: false } })
       .sort('-createdAt');
+
+    // Ensure each line item carries a plain `name` for frontend display and tests
+    orders = orders.map((doc) => {
+      const o = doc.toObject({ virtuals: true });
+      if (Array.isArray(o.vendors)) {
+        o.vendors.forEach((v) => {
+          if (Array.isArray(v.products)) {
+            v.products.forEach((p) => {
+              if (!p.name && p.product && p.product.name) {
+                p.name = p.product.name;
+              }
+            });
+          }
+        });
+      }
+      return o;
+    });
+
+    res.json({ success: true, orders });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Alias for frontend compatibility: /api/orders/my
+router.get('/my', protect, authorize('customer'), async (req, res) => {
+  try {
+    let orders = await Order.find({ buyer: req.user._id })
+      .populate('vendors.vendorId', 'name')
+      .populate({ path: 'vendors.products.product', select: 'name price images', options: { strictPopulate: false } })
+      .sort('-createdAt');
+
+    // Ensure each line item carries a plain `name` for frontend display and tests
+    orders = orders.map((doc) => {
+      const o = doc.toObject({ virtuals: true });
+      if (Array.isArray(o.vendors)) {
+        o.vendors.forEach((v) => {
+          if (Array.isArray(v.products)) {
+            v.products.forEach((p) => {
+              if (!p.name && p.product && p.product.name) {
+                p.name = p.product.name;
+              }
+            });
+          }
+        });
+      }
+      return o;
+    });
 
     res.json({ success: true, orders });
   } catch (err) {
