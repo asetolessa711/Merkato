@@ -16,10 +16,11 @@ function tryExec(cmd) {
 }
 
 async function openWindows(u) {
-  // Try PowerShell (robust), then Explorer, then cmd start
+  // Try PowerShell (robust), then Explorer, cmd start, and Edge protocol
   if (await tryExec(`powershell -NoProfile -NonInteractive -Command Start-Process \"${u}\"`)) return true;
   if (await tryExec(`explorer.exe "${u}"`)) return true;
   if (await tryExec(`cmd /c start "" "${u}"`)) return true;
+  if (await tryExec(`cmd /c start microsoft-edge:"${u}"`)) return true;
   return false;
 }
 function openMac(u) { return tryExec(`open "${u}"`); }
@@ -52,19 +53,34 @@ async function waitForPort() {
 
 (async () => {
   console.log(`[open-when-ready] Waiting for dev server on port ${port} ...`);
-  const ok = await waitForPort();
-  if (!ok) {
-    console.error(`[open-when-ready] Dev server not reachable at ${url} within timeout.`);
-    // Do not kill the dev server; just exit opener so the server keeps running
-    process.exit(0);
-  }
-  console.log(`[open-when-ready] Opening ${url} ...`);
-  const platform = process.platform;
   let opened = false;
-  if (platform === 'win32') opened = await openWindows(url);
-  else if (platform === 'darwin') opened = await openMac(url);
-  else opened = await openLinux(url);
+
+  // Fallback: open after 10 seconds even if port check is flaky
+  const fallback = (async () => {
+    await sleep(10000);
+    if (opened) return;
+    console.log(`[open-when-ready] Fallback opening ${url} ...`);
+    const platform = process.platform;
+    if (platform === 'win32') opened = await openWindows(url);
+    else if (platform === 'darwin') opened = await openMac(url);
+    else opened = await openLinux(url);
+  })();
+
+  // Preferred: open as soon as port is reachable
+  const ready = (async () => {
+    const ok = await waitForPort();
+    if (!ok || opened) return;
+    console.log(`[open-when-ready] Opening ${url} ...`);
+    const platform = process.platform;
+    if (platform === 'win32') opened = await openWindows(url);
+    else if (platform === 'darwin') opened = await openMac(url);
+    else opened = await openLinux(url);
+  })();
+
+  await Promise.race([fallback, ready]);
   if (!opened) {
-    console.warn('[open-when-ready] Failed to auto-open browser; please open:', url);
+    console.warn('[open-when-ready] Could not auto-open; please open:', url);
   }
+  // Exit quietly; don't terminate CRA
+  process.exit(0);
 })();
