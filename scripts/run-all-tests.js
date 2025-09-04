@@ -1,5 +1,45 @@
 #!/usr/bin/env node
 const { spawn } = require('child_process');
+const path = require('path');
+const fs = require('fs');
+
+// Preload backend test env so guard has local DB + MERKATO_* keys
+(() => {
+  const candidates = [
+    path.resolve(__dirname, '..', 'backend', '.env.test.local'),
+    path.resolve(__dirname, '..', 'backend', '.env.test')
+  ];
+  const parseLine = (line) => {
+    // ignore comments and blanks
+    if (!line || /^\s*#/.test(line)) return null;
+    const idx = line.indexOf('=');
+    if (idx === -1) return null;
+    const key = line.slice(0, idx).trim();
+    let val = line.slice(idx + 1).trim();
+    if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+      val = val.slice(1, -1);
+    }
+    return [key, val];
+  };
+  for (const p of candidates) {
+    if (!fs.existsSync(p)) continue;
+    try {
+      const txt = fs.readFileSync(p, 'utf8');
+      let loaded = 0;
+      for (const raw of txt.split(/\r?\n/)) {
+        const kv = parseLine(raw);
+        if (!kv) continue;
+        const [k, v] = kv;
+        process.env[k] = v; // override intentionally for tests
+        loaded++;
+      }
+      console.log(`[env] Loaded ${loaded} entries from ${p}`);
+    } catch (e) {
+      console.warn(`[env] Failed to load ${p}:`, e.message);
+    }
+  }
+})();
+
 // Enforce workspace boundary before running any tests
 try {
   require('./guard-boundaries').guard({ phase: 'tests' });
@@ -29,6 +69,9 @@ function run(cmd, args, opts = {}) {
   const args = process.argv.slice(2);
   const specIdx = args.findIndex(a => a === '--spec' || a.startsWith('--spec='));
   const e2eEnv = { ...process.env };
+  if (!e2eEnv.MERKATO_TEST_EMAIL_TO) {
+    e2eEnv.MERKATO_TEST_EMAIL_TO = process.env.MERKATO_TEST_EMAIL_TO || 'qa@merkato.test';
+  }
   delete e2eEnv.CYPRESS_spec; delete e2eEnv.CYPRESS_SPEC; delete e2eEnv.E2E_SPEC; delete e2eEnv.SPEC;
   const e2eArgs = ['run', 'test:e2e'];
   if (specIdx !== -1) {

@@ -37,6 +37,7 @@ async function main() {
     // Provide a safe default local MongoDB URI if not set in the environment (useful for CI/local dev)
     MONGO_URI: process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/merkato?directConnection=true'
   };
+  if (!backendEnv.MERKATO_TEST_EMAIL_TO) backendEnv.MERKATO_TEST_EMAIL_TO = process.env.MERKATO_TEST_EMAIL_TO || 'qa@merkato.test';
   let backend = run('node', ['server.js'], { cwd: backendDir, env: backendEnv });
 
   let frontend = null;
@@ -68,6 +69,7 @@ async function main() {
   console.log(`[e2e] Building frontend with REACT_APP_API_URL=${apiUrl} ...`);
   const preferredBuildDir = path.join(frontendDir, `build-e2e-${backendPort}-${Date.now()}`);
   const buildEnv = { ...process.env, REACT_APP_API_URL: apiUrl, BUILD_PATH: preferredBuildDir };
+  if (!buildEnv.MERKATO_TEST_EMAIL_TO) buildEnv.MERKATO_TEST_EMAIL_TO = process.env.MERKATO_TEST_EMAIL_TO || 'qa@merkato.test';
   const build = run('npm', ['run', 'build'], { cwd: frontendDir, env: buildEnv });
   const buildCode = await new Promise((resolve) => build.on('close', resolve));
   if (buildCode !== 0) {
@@ -97,6 +99,7 @@ async function main() {
 
   console.log('[e2e] Running Cypress...');
   const cyEnv = { ...process.env, CYPRESS_API_URL: apiUrl, CYPRESS_video: 'false' };
+  if (!cyEnv.MERKATO_TEST_EMAIL_TO) cyEnv.MERKATO_TEST_EMAIL_TO = process.env.MERKATO_TEST_EMAIL_TO || 'qa@merkato.test';
   // Clear stray spec overrides that can force single-spec runs
   delete cyEnv.CYPRESS_spec; // common accidental override
   delete cyEnv.CYPRESS_SPEC;
