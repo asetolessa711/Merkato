@@ -12,3 +12,6 @@ Thumbs.db
 Documents/
 frontend/build/
 frontend/build-e2e-*/
+backend/coverage/
+backend/jest-results*.json
+
