@@ -90,7 +90,19 @@ async function main() {
 
   console.log('[e2e] Running Cypress...');
   const cyEnv = { ...process.env, CYPRESS_API_URL: apiUrl, CYPRESS_video: 'false' };
-  const specArg = process.env.E2E_SPEC ? ['--spec', process.env.E2E_SPEC] : [];
+  // Clear stray spec overrides that can force single-spec runs
+  delete cyEnv.CYPRESS_spec; // common accidental override
+  delete cyEnv.CYPRESS_SPEC;
+  delete cyEnv.E2E_SPEC;
+  delete cyEnv.SPEC;
+  // Prefer an explicit --spec CLI flag; ignore stray env like E2E_SPEC to avoid accidental single-spec runs
+  const argvSpec = parseArg('--spec');
+  const specArg = argvSpec ? ['--spec', argvSpec] : [];
+  if (argvSpec) {
+    console.log(`[e2e] Spec override via --spec: ${argvSpec}`);
+  } else {
+    console.log('[e2e] No spec override provided; running full Cypress suite (sanitized env).');
+  }
   const cyArgs = ['cypress', 'run', '--config', `baseUrl=http://localhost:${frontendPort}`, ...specArg];
   const cy = run('npx', cyArgs, { cwd: frontendDir, env: cyEnv });
   const cyCode = await new Promise((resolve) => cy.on('close', resolve));
@@ -209,4 +221,15 @@ function mimeType(ext) {
     case '.txt': return 'text/plain; charset=utf-8';
     default: return 'application/octet-stream';
   }
+}
+
+// Simple argv parser for flags like --spec "file1,file2"
+function parseArg(name) {
+  const idx = process.argv.findIndex((a) => a === name || a.startsWith(name + '='));
+  if (idx === -1) return '';
+  const token = process.argv[idx];
+  if (token.includes('=')) return token.split('=').slice(1).join('=');
+  const next = process.argv[idx + 1];
+  if (!next || next.startsWith('--')) return '';
+  return next;
 }

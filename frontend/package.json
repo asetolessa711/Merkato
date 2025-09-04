@@ -17,9 +17,9 @@
   "start:e2e": "node scripts/start-e2e.js",
   "e2e:run": "node ./scripts/run-e2e.js",
   "cy:run": "node ./scripts/run-e2e.js",
-  "e2e:checkout": "cross-env E2E_SPEC=cypress/e2e/checkout_payment.cy.js,cypress/e2e/customer_checkout.cy.js,cypress/e2e/guest_checkout.cy.js node ./scripts/run-e2e.js",
-  "e2e:core": "cross-env E2E_SPEC=cypress/e2e/basic_navigation.cy.js,cypress/e2e/shop_visibility.cy.js,cypress/e2e/cart_checkout_button.cy.js,cypress/e2e/login_error.cy.js,cypress/e2e/product_detail_add_to_cart.cy.js,cypress/e2e/checkout_payment.cy.js,cypress/e2e/guest_checkout.cy.js node ./scripts/run-e2e.js",
-  "e2e:nav-bulk": "cross-env E2E_SPEC=cypress/e2e/adminOrdersBulkDialogs.cy.js,cypress/e2e/basic_navigation.cy.js node ./scripts/run-e2e.js",
+  "e2e:checkout": "node ./scripts/run-e2e.js --spec cypress/e2e/checkout_payment.cy.js,cypress/e2e/customer_checkout.cy.js,cypress/e2e/guest_checkout.cy.js",
+  "e2e:core": "node ./scripts/run-e2e.js --spec cypress/e2e/basic_navigation.cy.js,cypress/e2e/shop_visibility.cy.js,cypress/e2e/cart_checkout_button.cy.js,cypress/e2e/login_error.cy.js,cypress/e2e/product_detail_add_to_cart.cy.js,cypress/e2e/checkout_payment.cy.js,cypress/e2e/guest_checkout.cy.js",
+  "e2e:nav-bulk": "node ./scripts/run-e2e.js --spec cypress/e2e/adminOrdersBulkDialogs.cy.js,cypress/e2e/basic_navigation.cy.js",
     "seed": "curl -X POST http://localhost:5000/api/dev/seed",
     "test:manual": "npm run seed && npm start",
     "serve:prod": "npm run build && serve -s build -l 3000"

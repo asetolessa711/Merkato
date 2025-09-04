@@ -9,3 +9,5 @@ Thumbs.db
 *.cab 
 *.lnk 
 Documents/
+frontend/build/
+frontend/build-e2e-*/
