@@ -84,9 +84,9 @@ module.exports = {
   // Ensure webpack-dev-server options conform to schema
   devServer: (devServerConfig) => {
     const cfg = { ...devServerConfig };
-    cfg.allowedHosts = 'all'; // or ['localhost']
-    cfg.host = process.env.HOST || 'localhost';
-    if (process.env.PORT) cfg.port = Number(process.env.PORT);
+  cfg.allowedHosts = 'all';
+  cfg.host = 'localhost';
+  cfg.port = Number(process.env.PORT || 3000);
   // Do not auto-open here; we'll open the browser after the server is ready via a script.
   cfg.open = false;
     return cfg;

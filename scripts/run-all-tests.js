@@ -50,8 +50,15 @@ try {
 
 function run(cmd, args, opts = {}) {
   return new Promise((resolve) => {
-    const p = spawn(cmd, args, { stdio: 'inherit', shell: true, ...opts });
-    p.on('close', (code) => resolve(code ?? 1));
+    const child = spawn(cmd, args, { stdio: 'inherit', shell: true, ...opts });
+    const onSigint = () => {
+      try { process.kill(child.pid); } catch (_) {}
+    };
+    process.once('SIGINT', onSigint);
+    child.on('close', (code) => {
+      process.removeListener('SIGINT', onSigint);
+      resolve(code ?? 1);
+    });
   });
 }
 
