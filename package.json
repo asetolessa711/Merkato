@@ -15,7 +15,9 @@
   "test:frontend:baseline:record": "cd frontend && npm run test:baseline:record",
     "test:e2e": "npm --prefix frontend run cy:run",
     "start:backend": "cd backend && node server.js",
-    "start:frontend": "cd frontend && npm start"
+  "start:frontend": "cd frontend && npm start",
+  "dev": "node ./scripts/start-dev.js",
+  "dev:ps": "powershell -NoProfile -ExecutionPolicy Bypass -Command node ./scripts/start-dev.js"
   },
   "devDependencies": {
   "axios": "^1.11.0",
