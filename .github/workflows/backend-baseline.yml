@@ -42,4 +42,6 @@ jobs:
           JEST_CLOSE_DB: 'true'
           # Force local Mongo instead of any values in .env.test
           MONGO_URI: mongodb://127.0.0.1:27017/merkato
+          MERKATO_PROJECT: merkato
+          MERKATO_TEST_EMAIL_TO: test+ci@merkato.local
         run: npm run test:baseline:verify

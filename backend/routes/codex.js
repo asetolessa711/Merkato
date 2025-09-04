@@ -8,7 +8,8 @@ router.post("/codex", async (req, res) => {
     const result = await runCodex(prompt);
     res.json({ result });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+  const status = err && err.status ? err.status : 500;
+  res.status(status).json({ error: err.message || 'Codex error' });
   }
 });
 

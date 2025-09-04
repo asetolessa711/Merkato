@@ -1,6 +1,6 @@
 # Labeler configuration: Map file globs to labels
-backend/**: [backend]
-frontend/**: [frontend]
-docs/**: [documentation]
-**/*.md: [documentation]
-**/test*/*: [tests]
+"backend/**": ["backend"]
+"frontend/**": ["frontend"]
+"docs/**": ["documentation"]
+"**/*.md": ["documentation"]
+"**/test*/*": ["tests"]

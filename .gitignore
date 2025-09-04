@@ -14,4 +14,6 @@ frontend/build/
 frontend/build-e2e-*/
 backend/coverage/
 backend/jest-results*.json
+frontend/cypress/screenshots/
+frontend/cypress/videos/
 

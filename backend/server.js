@@ -19,6 +19,9 @@ const terror = (...args) => { if (!IS_TEST) console.error(...args); };
 
 // 🔀 Route Imports
 const codexRoutes = require("./routes/codex");
+const { isConfigured: codexAvailable } = (() => {
+  try { return require('./utils/codexAgent'); } catch (_) { return { isConfigured: false }; }
+})();
 const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
@@ -58,7 +61,14 @@ app.use(cors());
 app.use('/uploads', express.static(path.join(__dirname, '/uploads')));
 
 // 📦 API Routes
-app.use('/api', codexRoutes);
+// Mount codex route only if OpenAI is configured; otherwise expose a stub
+if (codexAvailable) {
+  app.use('/api', codexRoutes);
+} else {
+  app.post('/api/codex', (req, res) => {
+    return res.status(503).json({ error: 'Codex service unavailable' });
+  });
+}
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/upload', uploadRoutes);

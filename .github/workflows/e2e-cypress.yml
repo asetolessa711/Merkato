@@ -50,11 +50,14 @@ jobs:
         env:
           # Use the local Mongo service provided above
           MONGO_URI: mongodb://localhost:27017/merkato?directConnection=true
+          NODE_ENV: test
           JWT_SECRET: ${{ secrets.JWT_SECRET || 'e2e-test-secret' }}
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY || 'sk_test_123' }}
           STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET || 'whsec_test' }}
           EMAIL_USER: ${{ secrets.EMAIL_USER || 'test@example.com' }}
           EMAIL_PASS: ${{ secrets.EMAIL_PASS || 'password' }}
+          MERKATO_PROJECT: merkato
+          MERKATO_TEST_EMAIL_TO: test+ci@merkato.local
 
       - name: ⏳ Wait for backend
         run: |
@@ -76,6 +79,8 @@ jobs:
         env:
           # REACT_APP_* must be set at build time for CRA
           REACT_APP_API_URL: http://localhost:5000
+          MERKATO_PROJECT: merkato
+          MERKATO_TEST_EMAIL_TO: test+ci@merkato.local
 
       - name: 📂 List frontend build directory
         run: |
@@ -114,6 +119,8 @@ jobs:
         env:
           # Cypress config reads CYPRESS_API_URL and appends /api internally
           CYPRESS_API_URL: http://localhost:5000
+          MERKATO_PROJECT: merkato
+          MERKATO_TEST_EMAIL_TO: test+ci@merkato.local
 
       - name: 📘 Upload backend log on failure
         if: failure()
