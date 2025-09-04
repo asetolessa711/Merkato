@@ -85,7 +85,7 @@ module.exports = {
   devServer: (devServerConfig) => {
     const cfg = { ...devServerConfig };
   cfg.allowedHosts = 'all';
-  cfg.host = '0.0.0.0'; // bind IPv4 to ensure localhost (127.0.0.1) works on Windows
+  cfg.host = '127.0.0.1'; // bind to loopback only to avoid corporate firewall on LAN interface
   cfg.port = Number(process.env.PORT || 3000);
   // Do not auto-open here; we'll open the browser after the server is ready via a script.
   cfg.open = false;
