@@ -1,5 +1,12 @@
 #!/usr/bin/env node
 const { spawn } = require('child_process');
+// Enforce workspace boundary before running any tests
+try {
+  require('./guard-boundaries').guard({ phase: 'tests' });
+} catch (e) {
+  console.error('[Pre-test] Boundary guard failed:', e.message || e);
+  process.exit(1);
+}
 
 function run(cmd, args, opts = {}) {
   return new Promise((resolve) => {

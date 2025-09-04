@@ -12,3 +12,12 @@ Suggested env keys for Merkato
 - MERKATO_TEST_EMAIL_TO
 - REACT_APP_FEATURE_GAMIFICATION
 - REACT_APP_FEATURE_BEHAVIORAL_PROMOS
+
+## Automated boundary guard
+
+- A guard runs at backend startup, in the unified test runner, and before E2E runs:
+	- Script: `scripts/guard-boundaries.js`
+	- Blocks env leaks like `WALIIN_*` or values containing "waliin" in critical keys.
+	- In tests/CI, requires local DB URIs (no mongodb+srv / remote hosts).
+	- Warns on real email provider config unless `MERKATO_TEST_EMAIL_TO` is set.
+	- Fails fast to prevent cross-environment contamination.

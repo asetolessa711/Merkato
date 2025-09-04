@@ -25,6 +25,9 @@ module.exports = {
     '/__mocks__/',
     '/public/'
   ],
+  // Avoid JSON coverage reporter to prevent write errors on some Windows/OneDrive setups
+  // (which attempt to write coverage-final.json). Keep text/lcov/clover for CI and local use.
+  coverageReporters: ['text', 'lcov', 'clover'],
   testPathIgnorePatterns: [
     '/node_modules/',
     '/dist/',

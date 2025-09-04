@@ -2,6 +2,13 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
+// Boundary guard: prevent cross-environment contamination
+try {
+  require('../scripts/guard-boundaries').guard({ phase: process.env.NODE_ENV === 'test' ? 'tests' : 'runtime' });
+} catch (e) {
+  console.error('[Startup] Boundary guard failed:', e.message || e);
+  process.exit(1);
+}
 require('dotenv').config();
 
 // 🛠 Mongoose Config

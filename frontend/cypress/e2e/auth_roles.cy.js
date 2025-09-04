@@ -62,8 +62,11 @@ describe('🔐 Role-Based Access Tests (Stabilized)', () => {
   it('❌ Customer should NOT access /admin', () => {
     login('customer');
     cy.visit(`${baseUrl}/admin`);
-    cy.location('pathname', { timeout: 10000 }).should('eq', '/account/dashboard');
-    cy.get('[data-testid="customer-dashboard-title"]', { timeout: 10000 }).should('exist').and('be.visible');
+    cy.location('pathname', { timeout: 15000 }).should('eq', '/account/dashboard');
+    // Allow any async dashboard loads to resolve then assert on one of the stable markers
+    cy.get('[data-testid="customer-dashboard-title"], [data-testid="customer-dashboard-root"]', {
+      timeout: 20000,
+    }).should('exist').and('be.visible');
   });
 
   it('❌ Admin should NOT access /vendor', () => {

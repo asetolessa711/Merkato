@@ -6,6 +6,13 @@ const os = require('os');
 const { spawn, execSync } = require('child_process');
 const waitOn = require('wait-on');
 const net = require('net');
+// Boundary guard: fail fast if environment looks contaminated
+try {
+  require('../../scripts/guard-boundaries').guard({ phase: 'tests' });
+} catch (e) {
+  console.error('[e2e] Boundary guard failed:', e.message || e);
+  process.exit(1);
+}
 
 function run(cmd, args, opts = {}) {
   const child = spawn(cmd, args, { stdio: 'inherit', shell: true, ...opts });
