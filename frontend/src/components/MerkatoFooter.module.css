@@ -1,0 +1,191 @@
+/* MerkatoFooter Styles */
+.footer {
+  background: #001F54;
+  color: #fff;
+  font-family: 'Poppins', sans-serif;
+  border-top: 1px solid #e2e8f0;
+  /* Prefer sticky/static footer to avoid overlapping action targets in tests */
+  position: sticky;
+  bottom: 0;
+  width: 100vw;
+  z-index: 5;
+  padding: 0.2rem 0.5rem 0.2rem 0.5rem;
+  margin-top: 0;
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.04);
+}
+
+.footerContent {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 20px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 38px;
+}
+
+.footerSections {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  gap: 3rem;
+  margin-bottom: 2rem;
+}
+
+.column {
+  flex: 1;
+  min-width: 180px;
+}
+
+.column h4 {
+  margin-bottom: 1rem;
+  font-weight: bold;
+  color: #2d3748;
+  font-size: clamp(1.1rem, 1.2vw, 1.25rem);
+}
+
+.column ul {
+  list-style: none;
+  padding: 0;
+}
+
+.column ul li {
+  margin-bottom: 0.5rem;
+}
+
+.socialLinks {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 1.1rem;
+  margin-bottom: 0;
+}
+
+.socialLinks a {
+  color: #fff;
+  text-decoration: none;
+  transition: all 0.2s ease-in-out;
+  font-size: 1.1rem;
+}
+
+.socialLinks a:hover,
+.socialLinks a:focus {
+  color: #00B894;
+  text-decoration: underline;
+}
+
+.socialLinks a:focus {
+  outline: 2px solid #00B894;
+  outline-offset: 2px;
+}
+
+.footerLinks {
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1.2rem;
+}
+
+.footerLinks a {
+  color: #fff;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 1rem;
+  transition: all 0.2s ease-in-out;
+}
+
+.footerLinks a:hover,
+.footerLinks a:focus {
+  color: #00B894;
+  text-decoration: underline;
+}
+
+.footerLinks a:focus {
+  outline: 2px solid #00B894;
+  outline-offset: 2px;
+}
+
+.downloadBtn {
+  display: inline-block;
+  background: #00B894;
+  color: white;
+  padding: 0.5rem 1rem;
+  margin-top: 0.5rem;
+  border-radius: 4px;
+  font-size: clamp(0.85rem, 1vw, 1rem);
+  text-decoration: none;
+  transition: all 0.2s ease-in-out;
+}
+
+.downloadBtn:hover,
+.downloadBtn:focus {
+  background: #009b7b;
+}
+
+.downloadBtn:focus {
+  outline: 2px solid #00B894;
+  outline-offset: 2px;
+}
+
+.legalSection {
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+  width: 100%;
+}
+
+.copyright {
+  text-align: left;
+  margin: 0;
+  padding: 0;
+  border-top: none;
+  font-size: 0.95rem;
+  color: #fff;
+}
+
+.brand {
+  color: #FFD700;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.copyright span {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: clamp(0.85rem, 1vw, 1rem);
+}
+
+.copyrightYear {
+  display: block;
+  margin-top: 5px;
+  color: #fff;
+}
+
+@media (max-width: 768px) {
+  .footerContent {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .footerSections {
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .footerLinks {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .socialLinks {
+    justify-content: center;
+    margin: 1.5rem 0;
+  }
+
+  .column {
+    min-width: 100%;
+  }
+}

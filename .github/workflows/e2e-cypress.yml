@@ -1,0 +1,131 @@
+﻿name: âœ¨ E2E Cypress Tests
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main, dev ]
+
+jobs:
+  cypress-run:
+    runs-on: ubuntu-latest
+
+    services:
+      mongo:
+        image: mongo:5
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd="mongosh --eval 'db.runCommand({ ping: 1 })'"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: ðŸ“‚ Checkout code
+        uses: actions/checkout@v3
+
+      - name: ðŸ›† Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+
+      - name: ðŸ“‚ Install frontend dependencies
+        run: |
+          echo "ðŸ›† Installing frontend dependencies..."
+          cd frontend
+          npm ci
+
+      - name: ðŸ“‚ Install backend dependencies
+        run: |
+          echo "ðŸ›† Installing backend dependencies..."
+          cd backend
+          npm ci
+          
+      - name: ðŸŒ± Seed test database (via API)
+        run: |
+          echo "ðŸŒ± Seeding test database via /api/dev/seed..."
+          cd backend
+          npm run seed:test
+
+      - name: ðŸ”§ Start backend (test mode)
+        run: |
+          echo "ðŸ”§ Starting backend on port 5000..."
+          cd backend
+          nohup npm run dev > backend.log 2>&1 &
+        env:
+          MONGO_URI: ${{ secrets.TEST_MONGO_URI }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+          EMAIL_USER: ${{ secrets.EMAIL_USER }}
+          EMAIL_PASS: ${{ secrets.EMAIL_PASS }}
+
+      - name: â³ Wait for backend
+        run: |
+          echo "â³ Waiting for backend /api to respond..."
+          npx wait-on --timeout=120000 http://localhost:5000/api
+
+      - name: ðŸ““ Show backend log (on failure)
+        if: failure()
+        working-directory: backend
+        run: |
+          echo "ðŸš¨ Backend log (if backend failed to start):"
+          cat backend.log || echo "âš ï¸ backend.log not found"
+
+      - name: ðŸ§± Build frontend
+        run: |
+          echo "ðŸ§± Building frontend..."
+          cd frontend
+          npm run build
+
+      - name: ðŸ“‚ List frontend build directory
+        run: |
+          echo "ðŸ“‚ Listing frontend/build directory:"
+          ls -l frontend/build || echo "âš ï¸ No build directory found"
+
+      - name: ðŸš€ Serve frontend (React SPA)
+        run: |
+          echo "ðŸš€ Serving frontend on port 3000..."
+          nohup npx serve build -l 3000 --single > serve.log 2>&1 &
+          sleep 5
+          if ! pgrep -f "serve build -l 3000 --single"; then
+            echo "âŒ Serve process not running!"
+            cat serve.log || echo "âš ï¸ serve.log not found"
+            exit 1
+          fi
+        working-directory: frontend
+
+      - name: ðŸ““ Show frontend serve log
+        working-directory: frontend
+        run: |
+          echo "ðŸš¨ Frontend serve log:"
+          cat serve.log || echo "âš ï¸ serve.log not found"
+
+      - name: ðŸ”Ž Check if frontend server is running
+        run: |
+          sudo lsof -i :3000 || echo "âš ï¸ Nothing running on port 3000"
+
+      - name: ðŸ¥ª Run Cypress tests
+        uses: cypress-io/github-action@v5
+        with:
+          working-directory: frontend
+          wait-on: 'http://localhost:3000'
+          wait-on-timeout: 120
+          browser: chrome
+        env:
+          REACT_APP_API_URL: http://localhost:5000/api
+
+      - name: ðŸ“˜ Upload Cypress screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-screenshots
+          path: frontend/cypress/screenshots
+          retention-days: 7
+
+      - name: ðŸ“˜ Upload Cypress videos
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-videos
+          path: frontend/cypress/videos
+          retention-days: 7

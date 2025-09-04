@@ -1,0 +1,24 @@
+/* VendorLayout.module.css */
+
+.container {
+  background-color: #f9fdfb;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Poppins', sans-serif;
+}
+
+.mainContent {
+  display: flex;
+  flex-grow: 1;
+  min-height: calc(100vh - 60px); /* Adjust if navbar height differs */
+}
+
+.contentArea {
+  flex: 1;
+  padding: 30px;
+  overflow-y: auto;
+  background-color: #ffffff;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+  border-left: 1px solid #e2e8f0;
+}

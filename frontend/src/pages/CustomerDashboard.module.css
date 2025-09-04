@@ -1,0 +1,349 @@
+/* Variables */
+:root {
+  --primary-color: #00b894;
+  --primary-hover: #00a38d;
+  --text-primary: #2d3436;
+  --text-secondary: #636e72;
+  --bg-light: #f8f9fa;
+  --border-light: #f1f2f6;
+  --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* Container */
+.container {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Welcome Header */
+.welcomeHeader {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.welcomeTitle {
+  font-size: 2rem;
+  color: #0984e3;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.lastLogin {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+/* Stats Grid */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+/* Account Section */
+.accountSection {
+  margin-top: 40px;
+}
+
+.sectionTitle {
+  font-size: 1.5rem;
+  color: var(--text-primary);
+  margin-bottom: 24px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--border-light);
+}
+
+/* Card Grid and Cards */
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.2s ease;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.card h3 {
+  color: var(--text-primary);
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--border-light);
+}
+
+/* Profile Section */
+.profileContent {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 24px;
+}
+
+.avatarSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--border-light);
+  transition: transform 0.2s ease;
+}
+
+.avatar:hover {
+  transform: scale(1.05);
+}
+
+.fileInput {
+  width: 100%;
+  max-width: 200px;
+}
+
+/* Buttons */
+.uploadButton,
+.viewAllButton,
+.retryButton {
+  padding: 8px 16px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+}
+
+.uploadButton:hover:not(:disabled),
+.viewAllButton:hover,
+.retryButton:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.uploadButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Profile Details */
+.profileDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.profileDetails p {
+  color: var(--text-secondary);
+}
+
+/* Product List */
+.productList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.productItem {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 16px;
+  padding: 12px;
+  border-radius: 8px;
+  background-color: var(--bg-light);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.productItem:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.productImage {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.productInfo h4 {
+  margin: 0 0 8px 0;
+  color: var(--text-primary);
+}
+
+.productInfo p {
+  margin: 4px 0;
+  color: var(--text-secondary);
+}
+
+/* States */
+.emptyState {
+  text-align: center;
+  color: #666;
+  padding: 24px;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+}
+
+.error {
+  text-align: center;
+  padding: 40px;
+  color: #e74c3c;
+}
+
+/* Skeleton Loading */
+.loadingState {
+  padding: 24px;
+}
+
+.skeletonHeader {
+  height: 80px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+  margin-bottom: 24px;
+}
+
+.skeletonStats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.skeletonCard {
+  height: 120px;
+  background: var(--border-light);
+  border-radius: 8px;
+  animation: pulse 1.5s infinite;
+  padding: 16px;
+}
+
+.skeletonIcon,
+.skeletonText,
+.skeletonValue {
+  height: 16px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+  margin: 8px 0;
+}
+
+.skeletonIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+.skeletonText {
+  width: 70%;
+}
+
+.skeletonValue {
+  width: 30%;
+}
+
+/* Animations */
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes pulse {
+  0% { background-color: var(--border-light); }
+  50% { background-color: #eaecef; }
+  100% { background-color: var(--border-light); }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .container {
+    padding: 16px;
+  }
+
+  .welcomeTitle {
+    font-size: 1.5rem;
+  }
+
+  .profileContent {
+    grid-template-columns: 1fr;
+  }
+
+  .cardGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .productItem {
+    grid-template-columns: 60px 1fr;
+  }
+
+  .productImage {
+    width: 60px;
+    height: 60px;
+  }
+
+  .skeletonStats {
+    grid-template-columns: 1fr;
+  }
+
+  .skeletonHeader {
+    height: 60px;
+  }
+}
+
+/* Large Screen Breakpoint */
+@media (min-width: 1200px) {
+  .container {
+    padding: 32px;
+  }
+
+  .cardGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .statsGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .welcomeTitle {
+    font-size: 2.5rem;
+  }
+
+  .card {
+    padding: 32px;
+  }
+
+  .productList {
+    gap: 20px;
+  }
+
+  .skeletonStats {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}

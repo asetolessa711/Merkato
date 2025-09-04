@@ -1,0 +1,14 @@
+﻿name: Commit Message Lint
+on:
+  pull_request:
+    branches: [ main ]
+jobs:
+  commitlint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lint commit messages
+        uses: wagoid/commitlint-github-action@v5
+        with:
+          configFile: commitlint.config.js
+        continue-on-error: true

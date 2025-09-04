@@ -1,0 +1,21 @@
+{
+  "name": "merkato-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test:frontend": "cd frontend && npm test",
+    "test:backend": "cd backend && npm test",
+    "test:all": "node ./scripts/run-all-tests.js",
+    "test:all:ps": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/run-all-tests.ps1",
+    "test:e2e": "npm --prefix frontend run cy:run",
+    "start:backend": "cd backend && node server.js",
+    "start:frontend": "cd frontend && npm start"
+  },
+  "devDependencies": {
+    "axios": "^1.11.0",
+    "cypress": "^14.5.3"
+  },
+  "dependencies": {
+    "openai": "^5.16.0"
+  }
+}
