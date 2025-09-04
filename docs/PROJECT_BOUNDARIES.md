@@ -21,3 +21,9 @@ Suggested env keys for Merkato
 	- In tests/CI, requires local DB URIs (no mongodb+srv / remote hosts).
 	- Warns on real email provider config unless `MERKATO_TEST_EMAIL_TO` is set.
 	- Fails fast to prevent cross-environment contamination.
+
+### Notes
+
+- During local tests/CI you may see: `[Boundary Guard] Warnings:` and `No MERKATO_* env vars detected.`
+	- This is informational and safe to ignore unless you intend to use project-scoped env keys.
+	- Set `MERKATO_TEST_EMAIL_TO` (and any other required `MERKATO_*` keys) to silence the warning.
