@@ -1,0 +1,102 @@
+name: E2E Cypress Tests (local env)
+
+on:
+  push:
+    branches: [ main, dev, feat/** ]
+  workflow_dispatch:
+
+jobs:
+  cypress-run:
+    runs-on: ubuntu-latest
+
+    services:
+      mongo:
+        image: mongo:5
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd="mongosh --eval 'db.runCommand({ ping: 1 })'"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Install backend dependencies
+        run: |
+          cd backend
+          npm ci
+
+      - name: Load backend test env
+        run: |
+          cp backend/.env.test backend/.env
+          echo "Loaded backend/.env from backend/.env.test"
+
+      - name: Seed test database (via API)
+        run: |
+          cd backend
+          npm run seed:test
+
+      - name: Start backend (test mode)
+        run: |
+          cd backend
+          nohup npm run dev > backend.log 2>&1 &
+
+      - name: Wait for backend
+        run: |
+          npx wait-on --timeout=120000 http://localhost:5000/api
+
+      - name: Show backend log (on failure)
+        if: failure()
+        working-directory: backend
+        run: |
+          cat backend.log || echo "backend.log not found"
+
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm run build
+
+      - name: Serve frontend (React SPA)
+        working-directory: frontend
+        run: |
+          nohup npx serve build -l 3000 --single > serve.log 2>&1 &
+          sleep 5
+          pgrep -f "serve build -l 3000 --single" || (cat serve.log && exit 1)
+
+      - name: Run Cypress tests
+        uses: cypress-io/github-action@v6
+        with:
+          working-directory: frontend
+          wait-on: 'http://localhost:3000'
+          wait-on-timeout: 120
+          browser: chrome
+        env:
+          REACT_APP_API_URL: http://localhost:5000/api
+
+      - name: Upload Cypress screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-screenshots
+          path: frontend/cypress/screenshots
+          retention-days: 7
+
+      - name: Upload Cypress videos
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-videos
+          path: frontend/cypress/videos
+          retention-days: 7
+
