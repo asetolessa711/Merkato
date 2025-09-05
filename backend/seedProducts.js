@@ -22,7 +22,7 @@ if (!loaded) {
 const Product = require('./models/Product');
 const User = require('./models/User');
 
-const MONGO_URI = process.env.MONGODB_URI || process.env.MONGO_URI || process.env.DB_URI || 'mongodb://localhost:27017/merkato';
+const MONGO_URI = process.env.MONGODB_URI || process.env.MONGO_URI || process.env.DB_URI || 'mongodb://127.0.0.1:27017/merkato';
 
 async function seedProducts() {
   try {

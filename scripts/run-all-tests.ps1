@@ -1,5 +1,10 @@
 $ErrorActionPreference = 'Stop'
 
+# Ensure backend tests point to local MongoDB (IPv4) to avoid ::1 issues on Windows
+if (-not $env:MONGO_URI) {
+  $env:MONGO_URI = 'mongodb://127.0.0.1:27017/merkato_test'
+}
+
 # Run frontend tests
 Write-Host 'Running frontend tests...'
 npm run test:frontend
