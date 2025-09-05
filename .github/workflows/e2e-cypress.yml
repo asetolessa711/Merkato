@@ -46,6 +46,7 @@ jobs:
         run: |
           echo "Loading backend/.env.test into backend/.env"
           cp backend/.env.test backend/.env
+          echo "MONGO_URI=mongodb://localhost:27017/merkato_test" >> backend/.env
       - name: 🌱 Seed test database (via API)
         run: |
           echo "🌱 Seeding test database via /api/dev/seed..."
