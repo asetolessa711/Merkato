@@ -1,4 +1,4 @@
-name: ✨ E2E Cypress Tests
+﻿name: ✨ E2E Cypress Tests
 
 on:
   push:
@@ -41,23 +41,22 @@ jobs:
           echo "🛆 Installing backend dependencies..."
           cd backend
           npm ci
-          
+
+      - name: Load backend test env
+        run: |
+          echo "Loading backend/.env.test into backend/.env"
+          cp backend/.env.test backend/.env
+      - name: 🌱 Seed test database (via API)
+        run: |
+          echo "🌱 Seeding test database via /api/dev/seed..."
+          cd backend
+          npm run seed:test
+
       - name: 🔧 Start backend (test mode)
         run: |
           echo "🔧 Starting backend on port 5000..."
           cd backend
           nohup npm run dev > backend.log 2>&1 &
-        env:
-          # Use the local Mongo service provided above
-          MONGO_URI: mongodb://localhost:27017/merkato?directConnection=true
-          NODE_ENV: test
-          JWT_SECRET: ${{ secrets.JWT_SECRET || 'e2e-test-secret' }}
-          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY || 'sk_test_123' }}
-          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET || 'whsec_test' }}
-          EMAIL_USER: ${{ secrets.EMAIL_USER || 'test@example.com' }}
-          EMAIL_PASS: ${{ secrets.EMAIL_PASS || 'password' }}
-          MERKATO_PROJECT: merkato
-          MERKATO_TEST_EMAIL_TO: test+ci@merkato.local
 
       - name: ⏳ Wait for backend
         run: |
@@ -71,16 +70,11 @@ jobs:
           echo "🚨 Backend log (if backend failed to start):"
           cat backend.log || echo "⚠️ backend.log not found"
 
-      - name: 🧱 Build frontend (API baked at build time)
+      - name: 🧱 Build frontend
         run: |
           echo "🧱 Building frontend..."
           cd frontend
           npm run build
-        env:
-          # REACT_APP_* must be set at build time for CRA
-          REACT_APP_API_URL: http://localhost:5000
-          MERKATO_PROJECT: merkato
-          MERKATO_TEST_EMAIL_TO: test+ci@merkato.local
 
       - name: 📂 List frontend build directory
         run: |
@@ -117,18 +111,7 @@ jobs:
           wait-on-timeout: 120
           browser: chrome
         env:
-          # Cypress config reads CYPRESS_API_URL and appends /api internally
-          CYPRESS_API_URL: http://localhost:5000
-          MERKATO_PROJECT: merkato
-          MERKATO_TEST_EMAIL_TO: test+ci@merkato.local
-
-      - name: 📘 Upload backend log on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: backend-log
-          path: backend/backend.log
-          retention-days: 7
+          REACT_APP_API_URL: http://localhost:5000/api
 
       - name: 📘 Upload Cypress screenshots
         uses: actions/upload-artifact@v4
