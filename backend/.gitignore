@@ -1,2 +1,3 @@
-uploads/
-
+# Ignore runtime env and uploads
+/.env
+/uploads/
