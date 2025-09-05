@@ -63,3 +63,4 @@
 | 14.2 | Compliance & Accessibility        | Basic accessibility (color contrast, alt text)                              |             |                     |
 | 14.3 | Compliance & Accessibility        | Mobile navigation doesn't break on devices                                  |             |                     |
 | 14.4 | Compliance & Accessibility        | GDPR/data deletion support (if required)                                    |             |                     |
+

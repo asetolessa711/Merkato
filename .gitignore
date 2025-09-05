@@ -12,3 +12,16 @@ Documents/
 .cache/
 frontend/build/
 backend/coverage/
+backend/jest-failures-summary.txt
+
+# E2E/CI artifacts
+frontend/build-e2e-*/
+cypress/screenshots/
+cypress/videos/
+cypress/downloads/
+frontend/cypress/screenshots/
+frontend/cypress/videos/
+frontend/cypress/downloads/
+
+# Uploaded test files
+backend/uploads/
