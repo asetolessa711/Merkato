@@ -46,3 +46,12 @@
 - Make sure backend is running before running Cypress E2E tests.
 - Ensure `.env.test` files exist for backend tests if needed.
 - For manual test seeding and running, see scripts in each `package.json`.
+
+## E2E via Docker (Windows-safe, isolated)
+- Prereq: Docker Desktop installed and running.
+- Run headless E2E with Dockerized Cypress (no local binary):
+  ```sh
+  # From repo root; script starts backend + serves frontend, then runs Cypress in Docker
+  npm --prefix frontend run cy:run:docker
+  ```
+  The script mounts only the `frontend/` folder into the Cypress container and targets your locally served app via `host.docker.internal`. This avoids cross‑project cache contamination and Windows binary issues.
