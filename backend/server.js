@@ -10,22 +10,19 @@ const IS_TEST = !!process.env.JEST_WORKER_ID || process.env.NODE_ENV === 'test';
 const tlog = (...args) => { if (!IS_TEST) console.log(...args); };
 const terror = (...args) => { if (!IS_TEST) console.error(...args); };
 
-// 🧰 Safe route loader (skip optional routes if file/module is missing)
-const tryRequireRoute = (relPath) => {
+// 🔀 Route Imports
+// Helper to optionally load a route module if it exists
+function tryRequireRoute(p) {
   try {
-    return require(relPath);
-  } catch (err) {
-    // Only skip if the missing module is exactly the requested relative path
-    if (err && err.code === 'MODULE_NOT_FOUND' && err.message.includes(relPath)) {
-      if (!IS_TEST) console.warn(`[server.js] Optional route missing: ${relPath} — skipping mount`);
+    return require(p);
+  } catch (e) {
+    if (e && e.code === 'MODULE_NOT_FOUND') {
+      tlog(`[server] Optional route missing: ${p}`);
       return null;
     }
-    // Different error (e.g., syntax error within the module) — rethrow
-    throw err;
+    throw e;
   }
-};
-
-// 🔀 Route Imports
+}
 const codexRoutes = require("./routes/codex");
 const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
@@ -52,10 +49,9 @@ const testSeedOrdersRoute = require('./routes/testSeedOrdersRoute');
 const testSeedInvoicesRoute = require('./routes/testSeedInvoicesRoute');
 const testEmailRoute = require('./routes/testEmailRoute');
 const taskRoutes = require('./routes/taskRoutes');
-// Optional/soon-to-exist routes — load safely in all environments
 const cartRoutes = tryRequireRoute('./routes/cartRoutes');
-const paymentsRoutes = tryRequireRoute('./routes/paymentsRoutes');
-const rewardsRoutes = tryRequireRoute('./routes/rewardsRoutes');
+const paymentsRoutes = require('./routes/paymentsRoutes');
+const rewardsRoutes = require('./routes/rewardsRoutes');
 const referralRoutes = tryRequireRoute('./routes/referralRoutes');
 const bundlesRoutes = tryRequireRoute('./routes/bundlesRoutes');
 
@@ -87,9 +83,9 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/stripe', stripeRoutes);
 app.use('/api/telebirr', telebirrRoutes);
-if (paymentsRoutes) app.use('/api/payments', paymentsRoutes);
+app.use('/api/payments', paymentsRoutes);
 if (cartRoutes) app.use('/api/cart', cartRoutes);
-if (rewardsRoutes) app.use('/api/rewards', rewardsRoutes);
+app.use('/api/rewards', rewardsRoutes);
 if (referralRoutes) app.use('/api/referrals', referralRoutes);
 app.use('/api/flags', flagRoutes);
 app.use('/api/admin/reviews', reviewModerationRoutes);
