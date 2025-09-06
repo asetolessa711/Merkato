@@ -1,0 +1,32 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`🌍 Language Switcher matches snapshot 1`] = `
+<DocumentFragment>
+  <div>
+    <button
+      aria-label="English"
+      class="active"
+    >
+      English
+    </button>
+    <button
+      aria-label="Amharic"
+      class=""
+    >
+      Amharic
+    </button>
+    <button
+      aria-label="Oromiffa"
+      class=""
+    >
+      Oromiffa
+    </button>
+    <button
+      aria-label="Swahili"
+      class=""
+    >
+      Swahili
+    </button>
+  </div>
+</DocumentFragment>
+`;

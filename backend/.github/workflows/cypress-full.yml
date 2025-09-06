@@ -1,0 +1,66 @@
+name: 🔁 Full Cypress E2E Tests
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 2 * * *' # Every day at 2AM UTC
+
+jobs:
+  full-test:
+    runs-on: ubuntu-latest
+
+    services:
+      mongo:
+        image: mongo:5
+        ports:
+          - 27017:27017
+
+    steps:
+      - name: 📂 Checkout
+        uses: actions/checkout@v3
+
+      - name: 🛠️ Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: 📦 Install frontend
+        run: cd frontend && npm ci
+
+      - name: 📦 Install backend
+        run: cd backend && npm ci
+
+      - name: 🚀 Start backend
+        run: |
+          cd backend
+          nohup npm run dev > backend.log 2>&1 &
+        env:
+          MONGO_URI: mongodb://localhost:27017/test-db
+          JWT_SECRET: testsecret
+
+      - name: ⏳ Wait for backend
+        run: npx wait-on http://localhost:5000/api
+
+      - name: 🌱 Seed test DB (API)
+        run: cd backend && npm run seed:test
+
+      - name: ⚙️ Build frontend
+        run: cd frontend && npm run build
+
+      - name: 🚀 Serve frontend
+        working-directory: frontend
+        run: nohup npx serve build -l 3000 --single > serve.log 2>&1 &
+
+      - name: ⏳ Wait for frontend
+        run: npx wait-on http://localhost:3000
+
+      - name: 🧪 Run All Cypress Tests
+        uses: cypress-io/github-action@v5
+        with:
+          working-directory: frontend
+          browser: chrome
+          wait-on: 'http://localhost:3000'
+          wait-on-timeout: 120
+        env:
+          REACT_APP_API_URL: http://localhost:5000/api

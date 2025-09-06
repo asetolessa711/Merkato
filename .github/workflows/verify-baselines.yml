@@ -1,0 +1,23 @@
+﻿name: Verify Baselines
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+      - feat/**
+      - bugfix/**
+      - chore/**
+  workflow_dispatch: {}
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ensure required workflows exist
+        shell: bash
+        run: |
+          test -f ".github/workflows/frontend-baseline.yml"
+          test -f ".github/workflows/frontend-tests.yml"
+          echo "Baseline workflows present."

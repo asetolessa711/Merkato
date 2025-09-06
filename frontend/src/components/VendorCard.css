@@ -1,0 +1,88 @@
+/* VendorCard.css */
+
+.vendor-card {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  padding: 16px;
+  text-align: center;
+  transition: transform 0.2s, box-shadow 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 8px;
+  height: 100%; /* 💡 Makes it stretch in grid layout */
+}
+
+.vendor-card:hover {
+  transform: translateY(-4px) scale(1.03);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+}
+
+.vendor-logo {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 50%;
+  margin-bottom: 10px;
+}
+
+.vendor-card h4 {
+  margin: 10px 0 4px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.vendor-card p {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: #666;
+}
+
+.vendor-card .btn-secondary {
+  padding: 8px 16px;
+  background-color: #00b894;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+
+.vendor-card .btn-secondary:hover,
+.vendor-card .btn-secondary:focus {
+  background-color: #00936f;
+  outline: 2px solid #00936f;
+  outline-offset: 2px;
+}
+
+/* ✅ Size modifiers */
+.size-sm { width: 180px; font-size: 0.85rem; }
+.size-md { width: 220px; font-size: 1rem; }
+.size-lg { width: 260px; font-size: 1.1rem; }
+
+/* ✅ Theme variants (future flexibility) */
+.theme-light { background: #fff; color: #333; }
+.theme-dark { background: #2d3436; color: #fff; }
+.theme-mint { background: #eafaf1; color: #2d3436; }
+
+/* Optional: future stat labels */
+.vendor-stats {
+  font-size: 0.85rem;
+  color: #777;
+  margin-bottom: 8px;
+}
+
+/* ✅ Responsive adjustments */
+@media (max-width: 600px) {
+  .vendor-card {
+    padding: 10px;
+  }
+
+  .vendor-logo {
+    width: 40px;
+    height: 40px;
+  }
+}

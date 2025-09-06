@@ -1,0 +1,79 @@
+@baseUrl = http://localhost:5000/api
+@contentType = application/json
+@authToken = {{login.response.body.token}}
+
+### ✅ Test Email Configuration (Optional)
+# @name emailConfig
+GET {{baseUrl}}/test-email
+Accept: application/json
+Content-Type: {{contentType}}
+
+### ✅ Register new user
+# @name register
+POST {{baseUrl}}/auth/register
+Accept: application/json
+Content-Type: {{contentType}}
+
+{
+    "name": "Test User",
+    "email": "test@example.com",
+    "password": "Password123!",
+    "country": "US"
+}
+
+### ✅ Login user
+# @name login
+POST {{baseUrl}}/auth/login
+Accept: application/json
+Content-Type: {{contentType}}
+
+{
+    "email": "test@example.com",
+    "password": "Password123!"
+}
+
+### ✅ Get current user (Protected)
+GET {{baseUrl}}/auth/me
+Accept: application/json
+Authorization: Bearer {{authToken}}
+Content-Type: {{contentType}}
+
+### ✅ Request password reset (Email will be sent if user exists)
+# @name forgotPassword
+POST {{baseUrl}}/auth/forgot-password
+Accept: application/json
+Content-Type: {{contentType}}
+
+{
+    "email": "test@example.com"
+}
+
+### ✅ Reset password using token (expires in 1 hour)
+# @name resetPassword
+POST {{baseUrl}}/auth/reset-password
+Accept: application/json
+Content-Type: {{contentType}}
+
+{
+    "token": "<🔑 PASTE TOKEN FROM EMAIL LINK HERE>",
+    "password": "NewPassword123!"
+}
+
+### ✅ Create Admin (DEV ONLY)
+# @name createAdmin
+POST {{baseUrl}}/auth/register-admin
+Accept: application/json
+Content-Type: {{contentType}}
+
+{
+    "name": "Admin User",
+    "email": "admin@merkato.com",
+    "password": "AdminPass123!"
+}
+
+### ✅ (Optional) Simulate Logout (token invalidation test)
+# @name logout
+GET {{baseUrl}}/auth/logout
+Accept: application/json
+Authorization: Bearer {{authToken}}
+Content-Type: {{contentType}}

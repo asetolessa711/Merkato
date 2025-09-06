@@ -1,0 +1,112 @@
+.homePage {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.hero {
+  text-align: center;
+  padding: 40px 20px;
+  background: linear-gradient(to right, #f8f9fa, #e9ecef);
+  border-radius: 12px;
+  margin-bottom: 40px;
+}
+
+.welcomeTitle {
+  font-size: clamp(1.8rem, 3vw, 2.5rem);
+  color: #2d3748;
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+}
+
+.logo {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
+.ctaRow {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 30px;
+}
+
+.btnPrimary {
+  background: #00B894;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.btnPrimary:hover {
+  background: #009b7b;
+}
+
+.btnSecondary {
+  background: white;
+  color: #00B894;
+  padding: 12px 24px;
+  border-radius: 6px;
+  text-decoration: none;
+  border: 2px solid #00B894;
+  transition: all 0.2s;
+}
+
+.btnSecondary:hover {
+  background: #00B894;
+  color: white;
+}
+
+/* Add your existing styles with CSS Module syntax */
+.categories {
+  margin-bottom: 30px;
+}
+
+.categoryList {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.categoryItem {
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.categoryItem:hover {
+  transform: translateY(-2px);
+}
+
+/* Add the rest of your existing styles with CSS Module syntax */
+
+@media (max-width: 768px) {
+  .hero {
+    padding: 30px 15px;
+  }
+
+  .ctaRow {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .categoryList {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btnPrimary,
+  .btnSecondary,
+  .categoryItem {
+    transition: none;
+  }
+}

@@ -1,0 +1,39 @@
+.vendor-sidebar {
+  width: 220px;
+  padding: 20px;
+  background-color: #fff;
+  border-right: 1px solid #eee;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+
+.sidebar-header {
+  margin-bottom: 1.5rem;
+  color: #2d3436;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sidebar-nav a {
+  padding: 12px 16px;
+  text-decoration: none;
+  color: #0984e3;
+  font-weight: 500;
+  border-radius: 6px;
+  transition: all 0.2s ease-in-out;
+}
+
+.sidebar-nav a:hover {
+  background-color: #f0f4f8;
+}
+
+.sidebar-nav a.active {
+  background-color: #ecf0f1;
+  border-left: 4px solid #00B894;
+  font-weight: bold;
+}
