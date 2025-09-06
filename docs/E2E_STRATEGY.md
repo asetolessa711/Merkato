@@ -60,5 +60,5 @@ Examples
   `E2E_EPHEMERAL=true E2E_SPEC=cypress/e2e/basic_navigation.cy.js,cypress/e2e/checkout_payment.cy.js npm --prefix frontend run e2e:run`
 
 Notes
-- Docker Compose is optional and not required for the current workflow.
+- Containers are optional and not required for the current workflow.
 - A Mongo memory server is unnecessary for this project’s E2E goals; we prefer real Mongo for parity.

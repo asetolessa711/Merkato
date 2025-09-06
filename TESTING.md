@@ -53,5 +53,5 @@
 - Ensure `.env.test` files exist for backend tests if needed.
 - For manual test seeding and running, see scripts in each `package.json`.
 
-## Notes on Docker
-We previously supported a Docker-based local runner for E2E. This has been retired in favor of attached mode and a fast headless orchestrator. If needed in future, we can revive container docs as a separate optional path.
+## Notes on local setup
+Containerized setups are optional and not required for the current workflow. The default path is local services (MongoDB as a Windows Service is recommended on Windows) plus the provided E2E runner modes.
