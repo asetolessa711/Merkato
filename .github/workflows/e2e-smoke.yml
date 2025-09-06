@@ -1,0 +1,36 @@
+name: E2E Smoke
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  e2e-smoke:
+    runs-on: ubuntu-latest
+    services:
+      mongo:
+        image: mongo:6
+        ports: ["27017:27017"]
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand(\"ping\")' || exit 1" 
+          --health-interval 10s --health-timeout 5s --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install backend deps
+        run: npm ci
+        working-directory: backend
+      - name: Install frontend deps
+        run: npm ci
+        working-directory: frontend
+      - name: Run E2E smoke (Cypress runner; Mongo service)
+        env:
+          MONGO_URI: mongodb://127.0.0.1:27017/merkato_e2e
+          E2E_SPEC: cypress/e2e/smoke.cy.js,cypress/e2e/card_intent.cy.js,cypress/e2e/paypal_approval.cy.js
+        run: npm run e2e:smoke
+        working-directory: frontend
+
