@@ -1,0 +1,34 @@
+#!/bin/sh
+# pre-commit hook: validate no zero-byte tracked files and run tests
+# Place this file at .git/hooks/pre-commit and make it executable
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Detect zero-byte tracked files
+zeros=$(git ls-files -z | xargs -0 -I{} sh -c 'f="{}"; [ -f "$f" ] && [ ! -s "$f" ] && echo "$f"' || true)
+if [ -n "$zeros" ]; then
+  printf "\n${YELLOW}Found zero-byte tracked files:${NC}\n"
+  echo "$zeros" | sed 's/^/ - /'
+  printf "\n${RED}Commit aborted: remove or populate empty files, or add to .gitignore if intentional.${NC}\n"
+  exit 1
+fi
+
+printf "\n${GREEN}Running backend tests...${NC}\n"
+cd backend && npm test
+BACKEND_STATUS=$?
+cd ..
+
+printf "\n${GREEN}Running frontend tests...${NC}\n"
+cd frontend && npm test
+FRONTEND_STATUS=$?
+cd ..
+
+if [ $BACKEND_STATUS -ne 0 ] || [ $FRONTEND_STATUS -ne 0 ]; then
+  printf "\n${RED}Tests failed. Commit aborted.${NC}\n"
+  exit 1
+else
+  printf "\n${GREEN}All checks passed. Proceeding with commit.${NC}\n"
+fi
