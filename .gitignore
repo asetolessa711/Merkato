@@ -13,6 +13,24 @@ Documents/
 frontend/build/
 backend/coverage/
 backend/jest-failures-summary.txt
+backend/tests/fixtures/
+
+# Office temp/lock files
+~$*.doc*
+~$*.xls*
+~$*.ppt*
+*.tmp
+*.temp
+*.swp
+*.swo
+*.bak
+*.orig
+*.DS_Store
+
+# Ensure no empty placeholder files get committed
+**/.placeholder
+**/EMPTY
+**/empty
 
 # E2E/CI artifacts
 frontend/build-e2e-*/

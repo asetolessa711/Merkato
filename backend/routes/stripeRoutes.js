@@ -1,6 +1,28 @@
 const express = require('express');
 const router = express.Router();
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const IS_TEST = process.env.NODE_ENV === 'test' || !!process.env.JEST_WORKER_ID;
+let stripeClient = null;
+
+function getStripe() {
+  if (stripeClient) return stripeClient;
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) {
+    if (IS_TEST) {
+      // Minimal mock for tests to avoid external dependency
+      stripeClient = {
+        checkout: {
+          sessions: {
+            create: async () => ({ id: `cs_test_${Date.now()}`, url: 'https://stripe.test/checkout' })
+          }
+        }
+      };
+      return stripeClient;
+    }
+    throw new Error('STRIPE_SECRET_KEY is not set');
+  }
+  stripeClient = require('stripe')(key);
+  return stripeClient;
+}
 const { protect, authorize } = require('../middleware/authMiddleware');
 const Product = require('../models/Product');
 
@@ -10,6 +32,7 @@ router.post('/create-checkout-session', protect, authorize('customer'), async (r
     const product = await Product.findById(productId);
     if (!product) return res.status(404).json({ message: 'Product not found' });
 
+    const stripe = getStripe();
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       mode: 'payment',

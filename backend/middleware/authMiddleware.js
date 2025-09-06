@@ -101,5 +101,21 @@ module.exports = {
   isCountryAdmin,
   isGlobalAdmin,
   filterOrdersByCountry,
-  ensureAuth: protect // alias for naming consistency
+  ensureAuth: protect, // alias for naming consistency
+  optionalAuth: async (req, res, next) => {
+    try {
+      const auth = req.headers.authorization || '';
+      if (!auth.startsWith('Bearer ')) return next();
+      const token = auth.split(' ')[1];
+      const verifyOpts = process.env.NODE_ENV === 'test' ? { ignoreExpiration: true } : {};
+      const decoded = jwt.verify(token, process.env.JWT_SECRET, verifyOpts);
+      const userId = decoded._id || decoded.id;
+      const user = await User.findById(userId).select('-password');
+      if (user) req.user = user;
+      return next();
+    } catch (_) {
+      // Ignore token errors for optional auth
+      return next();
+    }
+  }
 };

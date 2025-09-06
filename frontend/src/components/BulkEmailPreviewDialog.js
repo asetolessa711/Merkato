@@ -18,9 +18,10 @@ const BulkEmailPreviewDialog = ({
         <p>Previewing email for {orderIds.length} orders.</p>
         <pre style={{ background: '#f8f8f8', padding: 10, borderRadius: 6 }}>{emailContent || 'Dear Test User,\nYour order 1 status is pending.'}</pre>
         <div style={{ marginTop: 20, display: 'flex', gap: 10 }}>
-          {/* First Confirm triggers confirm to match tests expecting summary immediately */}
-          <button data-testid="bulk-email-preview-confirm" onClick={onConfirm} style={{ background: '#007bff', color: '#fff', padding: '6px 16px', borderRadius: 6 }}>Confirm</button>
-          <button onClick={onPreviewConfirm || (() => {})} style={{ background: '#28a745', color: '#fff', padding: '6px 16px', borderRadius: 6 }}>Confirm & Resend</button>
+          {/* First Confirm keeps dialog open to mirror preview -> email preview flow */}
+          <button data-testid="bulk-email-preview-confirm" onClick={onPreviewConfirm || (() => {})} style={{ background: '#007bff', color: '#fff', padding: '6px 16px', borderRadius: 6 }}>Confirm</button>
+          {/* Secondary action finalizes and proceeds to summary */}
+          <button onClick={onConfirm} style={{ background: '#28a745', color: '#fff', padding: '6px 16px', borderRadius: 6 }}>Confirm & Resend</button>
           <button onClick={onCancel} style={{ background: '#eee', color: '#333', padding: '6px 16px', borderRadius: 6 }}>Cancel</button>
         </div>
       </div>

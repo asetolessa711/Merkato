@@ -11,13 +11,21 @@
   ```
 
 ### End-to-End Tests (Cypress)
-- Open Cypress UI:
+- Windows-fast headless run (ephemeral DB, auto-clean):
   ```sh
-  npm run cy:open
+  cd frontend
+  npm run e2e:fast:win
   ```
-- Run all E2E tests headlessly:
+- Attach to already running dev servers (developer desktop):
   ```sh
-  npm run cy:run
+  cd frontend
+  # Ensure: backend on 5051, frontend on 3000 (craco); then
+  npm run e2e:attach:core
+  ```
+- Full headless run (build-and-serve orchestrated):
+  ```sh
+  cd frontend
+  npm run e2e:run
   ```
 
 ## Backend
@@ -35,9 +43,7 @@
   ```
 
 ### MongoDB for Local Tests
-- Start a local MongoDB before running backend tests.
-  - Windows Service: start the MongoDB service from Services, or
-  - Docker: `docker run --rm -p 27017:27017 mongo:5`
+- Start a local MongoDB before running backend tests (Windows Service recommended). If you prefer containers, you can use Docker, but our default flow no longer relies on it.
 - The project defaults to `mongodb://127.0.0.1:27017` to avoid IPv6 `::1` connection issues on Windows.
 - Test environment file: `backend/.env.test` sets `MONGO_URI=mongodb://127.0.0.1:27017/merkato_test`.
 
@@ -47,11 +53,5 @@
 - Ensure `.env.test` files exist for backend tests if needed.
 - For manual test seeding and running, see scripts in each `package.json`.
 
-## E2E via Docker (Windows-safe, isolated)
-- Prereq: Docker Desktop installed and running.
-- Run headless E2E with Dockerized Cypress (no local binary):
-  ```sh
-  # From repo root; script starts backend + serves frontend, then runs Cypress in Docker
-  npm --prefix frontend run cy:run:docker
-  ```
-  The script mounts only the `frontend/` folder into the Cypress container and targets your locally served app via `host.docker.internal`. This avoids cross‑project cache contamination and Windows binary issues.
+## Notes on Docker
+We previously supported a Docker-based local runner for E2E. This has been retired in favor of attached mode and a fast headless orchestrator. If needed in future, we can revive container docs as a separate optional path.

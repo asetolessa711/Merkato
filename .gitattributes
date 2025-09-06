@@ -24,6 +24,12 @@
 *.gif    binary
 *.svg    binary
 *.ico    binary
+*.doc   binary
+*.docx  binary
+*.xls   binary
+*.xlsx  binary
+*.ppt   binary
+*.pptx  binary
 *.pdf    binary
 *.eot    binary
 *.ttf    binary

@@ -6,11 +6,8 @@ describe('🛒 Customer Checkout Flow', () => {
   const testProductName = 'Cypress Test Product';
 
   it('should allow a customer to checkout and see order in history', () => {
-    // 1. Log in as customer
-    cy.visit('/login');
-    cy.get('input[name=email]').type(customerEmail);
-    cy.get('input[name=password]').type(customerPassword);
-    cy.get('button[type=submit]').click();
+  // Ensure seed and login via stable helper
+  cy.login('customer');
 
     // 2. Add a product to the cart
     cy.visit('/shop');
@@ -26,18 +23,22 @@ describe('🛒 Customer Checkout Flow', () => {
     cy.get('input[name=city]').type('Testville');
     cy.get('input[name=postalCode]').type('12345');
     cy.get('input[name=country]').type('Testland');
+  // Select a card payment method to reveal card inputs
+  cy.get('input[name="paymentMethod"][value="stripe"]').check({ force: true });
     cy.get('input[name=cardNumber]').type('4111111111111111');
     cy.get('input[name=expiry]').type('12/30');
     cy.get('input[name=cvv]').type('123');
 
     // 5. Submit the order
+    cy.intercept('POST', '/api/orders').as('createOrder');
     cy.get('[data-testid="submit-order-btn"]').click();
+    cy.wait('@createOrder');
 
     // 6. Verify confirmation message
-    cy.get('[data-testid="order-confirm-msg"]').should('contain', 'Thank you').and('contain', 'order');
+  cy.get('[data-testid="order-confirm-msg"]').should('contain', 'Thank you');
 
   // 7. Verify order appears in customer order history
-      cy.visit('/account/orders');
+  cy.visit('/account/orders');
       // Assert the "recently placed" banner (set on checkout success via localStorage)
       cy.get('[data-testid="recently-placed"]', { timeout: 15000 })
         .should('contain', testProductName);

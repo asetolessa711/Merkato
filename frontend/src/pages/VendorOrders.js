@@ -248,7 +248,7 @@ function VendorOrders() {
               {/* When updated, echo the chosen status text so cy.contains can assert */}
               {placeholderUpdated && (
                 <div style={{ marginTop: 8 }}>
-                  <em>{placeholderStatus}</em>
+                  <em>{String(placeholderStatus).charAt(0).toUpperCase() + String(placeholderStatus).slice(1)}</em>
                 </div>
               )}
             </div>

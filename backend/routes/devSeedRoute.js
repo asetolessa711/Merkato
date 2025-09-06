@@ -11,8 +11,8 @@ router.post('/seed', async (req, res) => {
     const ensureUser = async (name, email, roles, country) => {
       let user = await User.findOne({ email });
       if (!user) {
-        const hash = await bcrypt.hash(password, 10);
-        user = await User.create({ name, email, password: hash, roles, country });
+        // Do NOT pre-hash here; let the User model pre-save hook hash the plaintext
+        user = await User.create({ name, email, password, roles, country });
       }
       return user;
     };

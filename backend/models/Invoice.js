@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const invoiceSchema = new mongoose.Schema({
   vendor: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  customer: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   order: { type: mongoose.Schema.Types.ObjectId, ref: 'Order' },
   items: [
     {

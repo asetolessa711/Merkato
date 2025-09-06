@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './HomePage.css';
-import MerkatoFooter from '../components/MerkatoFooter';
 import ProductCard from '../components/ProductCard'; // ✅ Already imported
 
 const categories = [
@@ -148,8 +147,7 @@ function HomePage() {
         ))}
 
       </div>
-      {/* Improved Footer with links */}
-      <MerkatoFooter showSocials={true} />
+      {/* Footer is provided by layout; avoid duplicate footer here */}
     </div>
   );
 }

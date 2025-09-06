@@ -130,6 +130,11 @@ function LoginPage() {
   localStorage.setItem('token', token);
   // Write immediately for Cypress assertions
   localStorage.setItem('user', JSON.stringify({ ...res.data, role }));
+      // Merge server cart with any anonymous cart
+      try {
+        const { mergeCartOnLogin } = await import('../utils/cartClient');
+        await mergeCartOnLogin(token);
+      } catch {}
       if (remember) {
         localStorage.setItem('rememberMe', 'true');
       } else {

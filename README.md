@@ -101,9 +101,16 @@ npm test
 ```
 
 ### E2E (Cypress)
+Recommended commands:
 ```bash
-cd frontend
-npx cypress open  # or: npx cypress run
+# Fast Windows headless with ephemeral DB
+cd frontend && npm run e2e:fast:win
+
+# Attach to running dev servers
+cd frontend && npm run e2e:attach:core
+
+# Full deterministic (build-and-serve)
+cd frontend && npm run e2e:run
 ```
 
 Seeding:
@@ -111,6 +118,21 @@ Seeding:
 cd backend
 npm run seed:test
 ```
+
+### E2E Strategy (Attach vs Build-and-Serve)
+
+We support two primary modes:
+
+- Attach Mode (local dev): run backend and frontend dev servers, then run Cypress against them (fastest iteration).
+- Build-and-Serve (beta/CI): the E2E runner starts backend, seeds DB, builds the frontend, serves static assets, and runs Cypress (deterministic).
+
+Optional: set `E2E_EPHEMERAL=true` so each run uses a unique Mongo database (clean state, no cross-run drift). See `docs/E2E_STRATEGY.md` for details and commands.
+
+### E2E Commands
+Common workflows are documented in `docs/E2E_COMMANDS.md`:
+- Attach Mode against running servers
+- Semi‑Attach (runner starts backend with ephemeral DB; reuse dev frontend)
+- Build‑and‑Serve (CI/Beta) with optional ephemeral DB and auto‑drop
 
 ---
 
@@ -137,10 +159,52 @@ Features:
 
 ---
 
+## Customer Strategy
+
+Merkato treats every buyer as a customer from first touch. Identity is unified; rewards scale with behavior. Purchase is never gated by role.
+
+Core Principles
+- Minimal Segmentation: Everyone gets access to deals — no gated tiers.
+- Behavior-Triggered Rewards: Actions like sharing, buying, or returning unlock instant perks.
+- Gamified UX: Surprise discounts, spin-to-win, and daily check-ins drive habit loops.
+- Social Commerce: Group buying and referrals are central to growth.
+
+Suggested Tiers
+
+Segment | Behavior Trigger | UX Treatment | Reward Logic
+--------|-------------------|--------------|--------------
+Visitor | First-time or passive browsing | Surprise deal, spin-to-win, onboarding | Welcome discount, free shipping
+Active Shopper | Purchase or cart activity | Fast checkout, personalized feed | Instant coupon, loyalty points
+Sharer | Referral, group buy, or social share | Social storefront, invite dashboard | Referral bonus, group discount
+
+Implementation Notes
+- Unified Identity: Orders can be placed by signed-in users or visitors; visitors provide minimal buyerInfo (name, email, country). Backend upserts a minimal customer and ties the order.
+- Behavior Capture: `BehaviorEvent` stores share/referral/group events for tiering.
+- Profile Summary API: `GET /api/customer/profile-summary` returns segment, rewardsEligible, and progressive flags (onboardingNeeded, fastCheckoutEligible).
+- Rewards are applied progressively in UX; purchase access is never blocked by tier.
+
+### Checkout Requirements
+- buyerInfo (for unauthenticated buyers):
+  - Required: `name`, `email`, `country`
+  - Optional: `phone`
+- shippingAddress: Required for all orders (supports multiple addresses per buyer)
+  - Required: `fullName`, `city`, `country`
+  - Optional: `phone`, `street`, `postalCode`
+  - Can differ from buyerInfo (e.g., sending gifts)
+- payment:
+  - `paymentMethod` required. Platform accepts all legal payment methods (cards, mobile wallets, PayPal/local gateways).
+  - When using card methods (e.g., Stripe/Chapa), provide `paymentIntentId`/`cardToken`.
+
+---
+
 ## Contributing
 
 Pull requests are welcome.
-Please lint and test before submitting.
+Please lint and test before submitting. Install pre-commit hooks to automatically run tests before commits:
+```powershell
+pwsh -File ./scripts/install-git-hooks.ps1
+```
+This installs POSIX and Windows hooks and helps prevent committing empty/temp files.
 For major changes, open an issue first to discuss the proposal.
 
 ---

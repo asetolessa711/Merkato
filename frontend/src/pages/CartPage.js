@@ -44,7 +44,7 @@ function CartPage() {
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   const handleCheckout = () => {
-    // Allow guest checkout flow to proceed to /checkout as well
+    // Frictionless checkout: allow navigation regardless of auth
     navigate('/checkout');
   };
 

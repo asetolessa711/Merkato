@@ -8,8 +8,10 @@
     "test:all": "node ./scripts/run-all-tests.js",
     "test:all:ps": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/run-all-tests.ps1",
     "test:e2e": "npm --prefix frontend run cy:run",
-    "start:backend": "cd backend && node server.js",
-    "start:frontend": "cd frontend && npm start"
+  "start:backend": "cd backend && node server.js",
+  "start:frontend": "cd frontend && npm start",
+  "hooks:install": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/install-git-hooks.ps1",
+  "repo:clean": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/repo-sanitize.ps1"
   },
   "devDependencies": {
     "axios": "^1.11.0",

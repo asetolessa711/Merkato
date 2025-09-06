@@ -142,7 +142,7 @@ describe('Upload Routes', () => {
           .set('Authorization', vendorToken)
           .attach('notfile', testFilePath);
       } catch (err) {
-        if (err.code === 'ECONNRESET') {
+        if (err.code === 'ECONNRESET' || err.code === 'ECONNABORTED') {
           connectionReset = true;
         } else {
           throw err;
@@ -194,9 +194,17 @@ describe('Upload Routes', () => {
 
     test('should reject file over size limit (2MB)', async () => {
       // Create a large dummy file (2MB + 1 byte)
-      const largePath = path.join(__dirname, '..', 'fixtures', 'large-dummy.jpg');
+      const os = require('os');
+      let largePath = path.join(__dirname, '..', 'fixtures', 'large-dummy.jpg');
       const overLimit = Buffer.alloc(2 * 1024 * 1024 + 1, 0xff);
-      fs.writeFileSync(largePath, overLimit);
+      try {
+        fs.writeFileSync(largePath, overLimit);
+      } catch (err) {
+        // Some environments lock fixtures; fallback to temp dir
+        const tmp = path.join(os.tmpdir(), `large-dummy-${Date.now()}.jpg`);
+        fs.writeFileSync(tmp, overLimit);
+        largePath = tmp;
+      }
 
       let aborted = false;
       let res = null;
@@ -218,7 +226,7 @@ describe('Upload Routes', () => {
         // If we get a response, it should be a 400, 403, or 413
         expect([400, 403, 413]).toContain(res.statusCode);
       }
-      fs.unlinkSync(largePath);
+      try { fs.unlinkSync(largePath); } catch (_) { /* ignore */ }
     });
 
     test('should prevent directory traversal in filename', async () => {

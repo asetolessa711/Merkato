@@ -37,6 +37,11 @@ const testSeedOrdersRoute = require('./routes/testSeedOrdersRoute');
 const testSeedInvoicesRoute = require('./routes/testSeedInvoicesRoute');
 const testEmailRoute = require('./routes/testEmailRoute');
 const taskRoutes = require('./routes/taskRoutes');
+const cartRoutes = require('./routes/cartRoutes');
+const paymentsRoutes = require('./routes/paymentsRoutes');
+const rewardsRoutes = require('./routes/rewardsRoutes');
+const referralRoutes = require('./routes/referralRoutes');
+const bundlesRoutes = require('./routes/bundlesRoutes');
 
 // 🚀 Initialize Express App
 const app = express();
@@ -66,12 +71,17 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/stripe', stripeRoutes);
 app.use('/api/telebirr', telebirrRoutes);
+app.use('/api/payments', paymentsRoutes);
+app.use('/api/cart', cartRoutes);
+app.use('/api/rewards', rewardsRoutes);
+app.use('/api/referrals', referralRoutes);
 app.use('/api/flags', flagRoutes);
 app.use('/api/admin/reviews', reviewModerationRoutes);
 app.use('/api/customer', customerRoutes);
 app.use('/api/email', emailInvoiceRoutes);
 
 app.use('/api/invoices', invoiceRoutes);
+app.use('/api/products', bundlesRoutes);
 app.use('/api/behavior', behaviorRoutes);
 app.use('/api/dev', devSeedRoute);
 app.use('/api', testSeedOrdersRoute);

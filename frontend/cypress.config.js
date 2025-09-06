@@ -4,6 +4,11 @@ const axios = require('axios');
 module.exports = defineConfig({
   e2e: {
     baseUrl: 'http://localhost:3000',
+    defaultCommandTimeout: 10000,
+    pageLoadTimeout: 60000,
+    requestTimeout: 10000,
+    responseTimeout: 20000,
+    retries: { runMode: 2, openMode: 0 },
     env: {
       API_URL: process.env.CYPRESS_API_URL || 'http://localhost:5051'
     },

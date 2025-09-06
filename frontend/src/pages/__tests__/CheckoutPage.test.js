@@ -41,12 +41,12 @@ describe('CheckoutPage', () => {
     expect(screen.getByText(/total: \$20/i)).toBeInTheDocument();
   });
 
-  it('shows guest checkout form if not logged in', () => {
+  it('shows buyer details form if not logged in', () => {
     localStorage.setItem('merkato-cart', JSON.stringify([
       { _id: '1', name: 'Test Product', price: 10, quantity: 1 }
     ]));
     render(<CheckoutPage />);
-    expect(screen.getByText(/guest checkout/i)).toBeInTheDocument();
+    // No explicit 'guest' copy — assert on presence of buyer inputs
     expect(screen.getByLabelText(/full name/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
   });
@@ -56,13 +56,13 @@ describe('CheckoutPage', () => {
       { _id: '1', name: 'Test Product', price: 100, quantity: 1 }
     ]));
     render(<CheckoutPage />);
-    // Fill guest form
+    // Fill buyer form
     fireEvent.change(screen.getByLabelText(/full name/i), { target: { value: 'John Doe' } });
     fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'john@example.com' } });
     fireEvent.change(screen.getByLabelText(/phone/i), { target: { value: '1234567890' } });
     fireEvent.change(screen.getByLabelText(/shipping address/i), { target: { value: '123 Main St' } });
     fireEvent.change(screen.getByLabelText(/country/i), { target: { value: 'USA' } });
-    fireEvent.click(screen.getByText(/place order as guest/i));
+    fireEvent.click(screen.getByTestId('guest-summary-btn'));
     // Modal should show
     await waitFor(() => expect(screen.getByText(/order summary/i)).toBeInTheDocument());
     // Apply promo code

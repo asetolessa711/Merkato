@@ -40,7 +40,7 @@ export default function GuestCheckoutForm({ onSubmit, isSubmitting }) {
 
   return (
     <form className={styles.guestCheckoutForm} onSubmit={handleSubmit}>
-      <h2>Guest Checkout</h2>
+      <h2>Buyer Details</h2>
       <div className={styles.formGroup}>
         <label htmlFor="guest-name">Full Name</label>
         <input id="guest-name" name="name" value={form.name} onChange={handleChange} />
@@ -67,7 +67,7 @@ export default function GuestCheckoutForm({ onSubmit, isSubmitting }) {
         {fieldError.country && <div className={styles.errorMsg}>{fieldError.country}</div>}
       </div>
       <button type="submit" className={styles.submitButton} disabled={isSubmitting}>
-        {isSubmitting ? '...' : 'Place Order as Guest'}
+        {isSubmitting ? '...' : 'Place Order'}
       </button>
     </form>
   );

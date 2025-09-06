@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { syncCart } from '../utils/cartClient';
+import { fetchPaymentMethods } from '../utils/paymentsClient';
 
 function ProductDetail({ currency = 'USD', rates = { USD: 1, ETB: 144, EUR: 0.91 } }) {
   const { id } = useParams();
@@ -8,6 +10,7 @@ function ProductDetail({ currency = 'USD', rates = { USD: 1, ETB: 144, EUR: 0.91
   const [reviews, setReviews] = useState([]);
   const [reviewForm, setReviewForm] = useState({ rating: '', comment: '' });
   const [orderForm, setOrderForm] = useState({ quantity: 1, paymentMethod: 'cod', shippingAddress: '' });
+  const [methods, setMethods] = useState([]);
   const [msg, setMsg] = useState('');
   const [recent, setRecent] = useState([]);
   const token = localStorage.getItem('token');
@@ -35,6 +38,17 @@ function ProductDetail({ currency = 'USD', rates = { USD: 1, ETB: 144, EUR: 0.91
     fetchData();
   }, [id]);
 
+  useEffect(() => {
+    (async () => {
+      const list = await fetchPaymentMethods();
+      setMethods(list);
+      if (!list.find(m => m.code === 'cod')) {
+        // Ensure we always have a safe default option
+        setMethods([{ code: 'cod', displayName: 'Cash on Delivery' }, ...list]);
+      }
+    })();
+  }, []);
+
 const getDisplayPrice = (p) => {
   const productCurrency = p.currency || 'USD';
   if (productCurrency === currency) return `${currency} ${p.price.toFixed(2)}`;
@@ -43,7 +57,7 @@ const getDisplayPrice = (p) => {
   return `${currency} ${converted.toFixed(2)}`;
 };
 
-const handleAddToCart = () => {
+const handleAddToCart = async () => {
   const stored = localStorage.getItem('merkato-cart');
   const parsed = stored ? JSON.parse(stored) : { items: [], timestamp: 0 };
   const cart = parsed.items || [];
@@ -65,6 +79,7 @@ const handleAddToCart = () => {
   const token = localStorage.getItem('token') || localStorage.getItem('merkato-token');
   const isAuthed = Boolean(token);
   localStorage.setItem('merkato-cart-ttl', JSON.stringify({ ts: now, maxAge: isAuthed ? 90 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000 }));
+  try { await syncCart(cart, token); } catch {}
 
   alert('🛒 Product added to cart!');
 };
@@ -175,10 +190,14 @@ const submitReview = async (e) => {
                   onChange={(e) => setOrderForm({ ...orderForm, paymentMethod: e.target.value })}
                   style={{ width: '100%', marginBottom: 10 }}
                 >
-                  <option value="cod">Cash on Delivery</option>
-                  <option value="stripe">Pay with Card (Stripe)</option>
-                  <option value="telebirr">Pay with Telebirr</option>
-                  <option value="chapa">Pay with Chapa</option>
+                  {(methods.length ? methods : [
+                    { code: 'cod', displayName: 'Cash on Delivery' },
+                    { code: 'stripe', displayName: 'Pay with Card (Stripe)' },
+                    { code: 'paypal', displayName: 'PayPal' },
+                    { code: 'telebirr', displayName: 'Pay with Telebirr' },
+                  ]).map(m => (
+                    <option key={m.code} value={m.code}>{m.displayName || m.code}</option>
+                  ))}
                 </select>
 
                 <button type="submit" style={{ width: '100%', backgroundColor: '#0984e3', color: 'white', padding: 10, border: 'none', borderRadius: 6 }}>

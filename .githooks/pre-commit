@@ -1,18 +1,48 @@
 #!/bin/sh
-# pre-commit hook: Run all tests before allowing a commit
-# Place this file at .git/hooks/pre-commit and make it executable
+# pre-commit hook: Run all tests before allowing a commit (POSIX)
+# Skips in CI and on Windows Git where bash may be absent.
+
+if [ "$CI" = "true" ]; then
+  exit 0
+fi
+
+# Detect Windows environment and delegate to PowerShell hook
+uname_out=$(uname 2>/dev/null || echo Windows)
+case "$uname_out" in
+  *Windows*|*MINGW*|*MSYS*)
+    # Run the PowerShell pre-commit if available
+    if command -v powershell.exe >/dev/null 2>&1; then
+      repo_root=$(git rev-parse --show-toplevel)
+      powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$repo_root/.githooks/pre-commit.ps1"
+      exit $?
+    fi
+    ;;
+esac
+
+# Prevent committing zero-byte files
+fail_empty=0
+for f in $(git diff --cached --name-only --diff-filter=ACM); do
+  if [ -f "$f" ] && [ ! -s "$f" ]; then
+    echo "❌ Empty file staged: $f"
+    fail_empty=1
+  fi
+done
+if [ $fail_empty -ne 0 ]; then
+  echo "Abort commit: remove empty files or add content, then re-commit."
+  exit 1
+fi
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 
 printf "\n${GREEN}Running backend tests...${NC}\n"
-cd backend && npm test
+cd backend && npm test --silent
 BACKEND_STATUS=$?
 cd ..
 
 printf "\n${GREEN}Running frontend tests...${NC}\n"
-cd frontend && npm test
+cd frontend && npm test --silent
 FRONTEND_STATUS=$?
 cd ..
 

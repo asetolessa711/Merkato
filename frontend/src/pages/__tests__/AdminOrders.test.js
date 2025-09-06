@@ -142,9 +142,9 @@ describe('AdminOrders', () => {
     fireEvent.click(screen.getByText('Export Selected'));
     const dialog = await screen.findByTestId('bulk-preview-header');
     expect(dialog).toBeInTheDocument();
-    const confirmBtns = await screen.findAllByRole('button', { name: /confirm/i });
-    // Click the first visible Confirm button
-    fireEvent.click(confirmBtns[0]);
+  // Click the finalizing Confirm & Export button (not the preview Confirm)
+  const finalizeExportBtn = await screen.findByRole('button', { name: /confirm \& export/i });
+  fireEvent.click(finalizeExportBtn);
     // Wait for the summary dialog to appear and check content
     await waitFor(() => {
       const summaryDialog = screen.getByTestId('bulk-summary-dialog');
@@ -169,8 +169,9 @@ describe('AdminOrders', () => {
     fireEvent.click(screen.getByText('Resend Emails'));
     const dialog = await screen.findByTestId('bulk-preview-header');
     expect(dialog).toBeInTheDocument();
-    const confirmBtns = await screen.findAllByRole('button', { name: /confirm/i });
-    fireEvent.click(confirmBtns[0]);
+  // Click the finalizing Confirm & Resend button (not the preview Confirm)
+  const finalizeResendBtn = await screen.findByRole('button', { name: /confirm \& resend/i });
+  fireEvent.click(finalizeResendBtn);
     // Wait for the summary dialog to appear and check content
     await waitFor(() => {
       const summaryDialog = screen.getByTestId('bulk-summary-dialog');

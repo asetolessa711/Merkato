@@ -2,7 +2,9 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
-const { protect, authorize } = require('../middleware/authMiddleware');
+const { protect, authorize, optionalAuth } = require('../middleware/authMiddleware');
+const Order = require('../models/Order');
+const BehaviorEvent = require('../models/BehaviorEvent');
 
 // ✅ Update customer profile (avatar)
 router.put('/profile', protect, authorize('customer'), async (req, res) => {
@@ -85,3 +87,47 @@ router.put('/addresses/default/:id', protect, authorize('customer'), async (req,
 });
 
 module.exports = router;
+
+// --- Customer Strategy Summary ---
+// Exposes segment and rewards computed from orders + behavior
+router.get('/profile-summary', protect, async (req, res) => {
+  try {
+    const userId = req.user?._id;
+    if (!userId) return res.status(401).json({ message: 'Unauthorized' });
+
+    const [ordersCount, lastOrder] = await Promise.all([
+      Order.countDocuments({ buyer: userId }),
+      Order.findOne({ buyer: userId }).sort('-createdAt').select('createdAt')
+    ]);
+
+    const shareEvents = await BehaviorEvent.countDocuments({ user: userId, eventName: { $in: ['share', 'referral', 'group_buy_join'] } });
+
+    // Determine segment
+    let segment = 'Visitor';
+    if (shareEvents > 0) segment = 'Sharer';
+    else if (ordersCount > 0) segment = 'Active Shopper';
+    else segment = 'Visitor';
+
+    // Rewards mapping
+    const rewards = {
+      Visitor: ['welcome_discount', 'free_shipping', 'spin_to_win'],
+      'Active Shopper': ['instant_coupon', 'loyalty_points', 'fast_checkout'],
+      Sharer: ['referral_bonus', 'group_discount']
+    };
+
+    const profile = {
+      segment,
+      ordersCount,
+      lastOrderAt: lastOrder?.createdAt || null,
+      sharesCount: shareEvents,
+      onboardingNeeded: ordersCount === 0,
+      fastCheckoutEligible: ordersCount > 0,
+      rewardsEligible: rewards[segment]
+    };
+
+    res.json(profile);
+  } catch (err) {
+    console.error('profile-summary error:', err.message);
+    res.status(500).json({ message: 'Failed to compute profile summary' });
+  }
+});

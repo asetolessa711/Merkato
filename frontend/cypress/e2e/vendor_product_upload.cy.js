@@ -10,10 +10,12 @@ describe('🛍️ Vendor Product Upload Flow', () => {
 
   it('should allow a vendor to upload a product and see it in product list', () => {
     // 1. Login as vendor
+    cy.intercept('POST', '/api/auth/login').as('login');
     cy.visit('/login');
     cy.get('input[name=email]').type(vendorEmail);
     cy.get('input[name=password]').type(vendorPassword);
     cy.get('button[type=submit]').click();
+    cy.wait('@login');
 
     // 1a. Confirm login by checking for user in localStorage
     cy.window().then((win) => {
@@ -22,8 +24,9 @@ describe('🛍️ Vendor Product Upload Flow', () => {
       cy.log('User in localStorage:', user);
     });
 
-    // 2. Go directly to product upload page (Check URL)
-    cy.visit('/vendor/products/upload'); // Update URL if necessary
+  // 2. Go directly to product upload page
+  // Upload page uses mock mode and does not trigger vendorProducts fetch
+  cy.visit('/vendor/products/upload');
 
     // 3. Fill product form
     cy.get('input[name=name]').type('Cypress Test Product');
@@ -45,14 +48,15 @@ describe('🛍️ Vendor Product Upload Flow', () => {
       });
     });
 
-    // 5. Submit form
-    cy.get('button[type=submit]').click();
+  // 5. Submit form (mock mode: no real POST happens, so don't wait on network)
+  cy.get('button[type=submit]').click();
 
-    // 6. Confirm upload success and check vendor product list
+  // 6. Confirm upload success and check vendor product list
   cy.get('[data-testid="upload-msg"]').should('contain', 'Product').and('contain', 'successfully');
 
     // 7. Visit vendor products page to confirm the product exists
-    cy.visit('/vendor/products');
-    cy.contains('Cypress Test Product').should('exist');
+  cy.visit('/vendor/products');
+  // VendorProducts reads from localStorage first in E2E; assert on the UI text
+  cy.contains('Cypress Test Product').should('exist');
   });
 });

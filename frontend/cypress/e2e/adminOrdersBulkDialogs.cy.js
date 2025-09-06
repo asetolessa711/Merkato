@@ -2,9 +2,8 @@
 
 describe('AdminOrders Bulk Dialogs E2E', () => {
   beforeEach(() => {
-    // Replace with your actual login and navigation logic
-    cy.loginAsAdmin();
-    cy.visit('/admin/orders');
+  cy.loginAsAdmin();
+  cy.visit('/admin/orders');
     // Seed test orders via API or fixture if needed
     cy.seedOrders([
       {
@@ -15,7 +14,7 @@ describe('AdminOrders Bulk Dialogs E2E', () => {
   });
 
   it('shows bulk export dialog after preview confirmation', () => {
-    cy.get('input[type="checkbox"]').check({ force: true });
+  cy.get('input[type="checkbox"]').check({ force: true });
     cy.contains('Export Selected').click();
     cy.get('[data-testid="bulk-preview-header"]').should('be.visible');
     cy.contains('Confirm').click();

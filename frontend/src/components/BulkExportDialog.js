@@ -21,9 +21,10 @@ const BulkExportDialog = ({
           ))}
         </ul>
         <div style={{ marginTop: 20, display: 'flex', gap: 10 }}>
-          {/* First Confirm triggers confirm to match tests expecting summary immediately */}
-          <button onClick={onConfirm} style={{ background: '#007bff', color: '#fff', padding: '6px 16px', borderRadius: 6 }}>Confirm</button>
-          <button data-testid="bulk-export-confirm" onClick={onPreviewConfirm || (() => {})} style={{ background: '#007bff', color: '#fff', padding: '6px 16px', borderRadius: 6 }}>Confirm & Export</button>
+          {/* First Confirm keeps dialog open to mirror preview -> export flow in E2E */}
+          <button onClick={onPreviewConfirm || (() => {})} style={{ background: '#007bff', color: '#fff', padding: '6px 16px', borderRadius: 6 }}>Confirm</button>
+          {/* Secondary action finalizes and proceeds to summary */}
+          <button data-testid="bulk-export-confirm" onClick={onConfirm} style={{ background: '#007bff', color: '#fff', padding: '6px 16px', borderRadius: 6 }}>Confirm & Export</button>
           <button onClick={onCancel} style={{ background: '#eee', color: '#333', padding: '6px 16px', borderRadius: 6 }}>Cancel</button>
         </div>
       </div>

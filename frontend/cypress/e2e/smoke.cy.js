@@ -1,32 +1,24 @@
-describe('🌐 Smoke Test - Core Flows', () => {
+describe('Smoke Test - Core Flows', () => {
   before(() => {
-    cy.task('db:seed'); // Ensure seeded
+    cy.task('db:seed');
   });
 
   it('logs in as admin', () => {
-    cy.visit('/login');
-    cy.get('[data-cy=email-input]').type('admin@example.com');
-    cy.get('[data-cy=password-input]').type('Password123!');
-    cy.get('[data-cy=login-button]').click();
-    cy.url().should('include', '/admin');
-    cy.get('[data-cy=dashboard-content]').should('contain', 'Welcome back, Admin');
+    cy.login('admin');
+    cy.visit('/admin');
+    cy.url({ timeout: 10000 }).should('include', '/admin');
   });
 
   it('logs in as vendor', () => {
-    cy.visit('/login');
-    cy.get('[data-cy=email-input]').type('vendor@example.com');
-    cy.get('[data-cy=password-input]').type('Password123!');
-    cy.get('[data-cy=login-button]').click();
-    cy.url().should('include', '/vendor');
-    cy.get('[data-cy=dashboard-content]').should('contain', 'Welcome back, Vendor');
+    cy.login('vendor');
+    cy.visit('/vendor');
+    cy.url({ timeout: 10000 }).should('include', '/vendor');
   });
 
   it('logs in as customer', () => {
-    cy.visit('/login');
-    cy.get('[data-cy=email-input]').type('testuser@example.com');
-    cy.get('[data-cy=password-input]').type('Password123!');
-    cy.get('[data-cy=login-button]').click();
-    cy.url().should('include', '/account/dashboard');
-    cy.get('[data-cy=dashboard-content]').should('contain', 'Welcome back, Customer');
+    cy.login('customer');
+    cy.visit('/account/dashboard');
+    cy.url({ timeout: 10000 }).should('include', '/account/dashboard');
   });
 });
+

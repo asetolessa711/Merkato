@@ -3,7 +3,8 @@ describe('📄 Product Detail Add to Cart', () => {
   const productName = 'Cypress Test Product';
 
   it('adds from product detail and shows in cart', () => {
-    const API = Cypress.env('API_URL') || 'http://localhost:5051';
+    cy.task('db:seed');
+    const API = Cypress.env('API_URL') || 'http://localhost:5000';
     cy.request('GET', `${API.replace(/\/$/, '')}/api/products`).then((res) => {
       const prod = (res.body || []).find(p => (p.name || '').toLowerCase() === productName.toLowerCase());
       expect(prod, `find ${productName} in /api/products`).to.exist;
@@ -15,4 +16,3 @@ describe('📄 Product Detail Add to Cart', () => {
     });
   });
 });
-

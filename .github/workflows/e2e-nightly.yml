@@ -1,0 +1,39 @@
+name: E2E Nightly
+
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch: {}
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    services:
+      mongo:
+        image: mongo:6
+        ports: ["27017:27017"]
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand(\"ping\")' || exit 1" 
+          --health-interval 10s --health-timeout 5s --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install backend
+        run: npm ci
+        working-directory: backend
+      - name: Start backend
+        run: npm run start:5051 &
+        working-directory: backend
+      - name: Wait for backend
+        run: npx wait-on http://localhost:5051/api
+      - name: Install frontend
+        run: npm ci
+        working-directory: frontend
+      - name: Run Cypress (core specs)
+        env:
+          CYPRESS_API_URL: http://localhost:5051
+        run: npm run e2e:core
+        working-directory: frontend
+
