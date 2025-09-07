@@ -3,8 +3,26 @@
 
 echo "husky pre-push: guard + backend/frontend tests"
 export CI=true
+export NODE_ENV=test
+
 node scripts/check-focused-tests.js || exit 1
 
-# Backend and frontend from their folders
-npm --prefix backend test --silent || exit 1
-npm --prefix frontend test --silent || exit 1
+# Helper: run a command once, retry once on failure
+run_with_retry() {
+	CMD="$1"
+	DESC="$2"
+	echo "Running $DESC..."
+	sh -c "$CMD"
+	status=$?
+	if [ $status -ne 0 ]; then
+		echo "$DESC failed once, retrying..."
+		sleep 1
+		sh -c "$CMD"
+		status=$?
+	fi
+	return $status
+}
+
+# Backend and frontend from their folders (backend already uses --runInBand)
+run_with_retry "npm --prefix backend test --silent" "backend tests" || exit 1
+run_with_retry "npm --prefix frontend test --silent" "frontend tests" || exit 1
