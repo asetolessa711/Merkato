@@ -111,7 +111,16 @@ async function main() {
     const freshBuildExists = fs.existsSync(path.join(defaultBuildDir, 'index.html')) && (Date.now() - (fs.statSync(defaultBuildDir).mtimeMs || 0) < 15 * 60 * 1000);
     if (!freshBuildExists) {
       const preferredBuildDir = path.join(frontendDir, `build-e2e-${backendPort}-${Date.now()}`);
-      const buildEnv = { ...process.env, REACT_APP_API_URL: apiUrl, BUILD_PATH: preferredBuildDir, npm_config_cache: npmCache };
+      const buildEnv = { 
+        ...process.env,
+        REACT_APP_API_URL: apiUrl,
+        BUILD_PATH: preferredBuildDir,
+        // Disable CRA ESLint plugin during automated E2E builds to prevent plugin/rule noise
+        DISABLE_ESLINT_PLUGIN: 'true',
+        // Optional: speed-ups and smaller output
+        GENERATE_SOURCEMAP: 'false',
+        npm_config_cache: npmCache,
+      };
       const build = run('npm', ['run', 'build'], { cwd: frontendDir, env: buildEnv });
       const buildCode = await new Promise((resolve) => build.on('close', resolve));
       if (buildCode !== 0) { cleanup(); process.exit(buildCode); }

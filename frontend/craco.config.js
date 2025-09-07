@@ -2,10 +2,6 @@ const webpack = require('webpack');
 const path = require('path');
 
 module.exports = {
-  // Disable built-in ESLint in dev to speed up startup and avoid loader noise
-  eslint: {
-    enable: false,
-  },
   jest: {
     configure: (jestConfig) => {
       const fs = require('fs');
