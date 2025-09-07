@@ -1,0 +1,61 @@
+name: E2E Core (PR)
+
+on:
+  pull_request:
+    branches: [ main, dev ]
+
+jobs:
+  e2e-core:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    services:
+      mongo:
+        image: mongo:6
+        ports:
+          - '27017:27017'
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand(\"ping\")' || exit 1"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install backend deps
+        working-directory: backend
+        run: npm ci
+      - name: Install frontend deps
+        working-directory: frontend
+        run: npm ci
+      - name: Run core E2E subset
+        working-directory: frontend
+        env:
+          E2E_EPHEMERAL: 'true'
+          E2E_AUTODROP: 'true'
+          E2E_BACKEND_PORT: '5051'
+          # Use targeted subset for speed (admin + smoke + critical customer/vendor flows)
+          E2E_SPEC: >-
+            cypress/e2e/smoke.cy.js,
+            cypress/e2e/adminOrdersBulkDialogs.cy.js,
+            cypress/e2e/order_status_update.cy.js,
+            cypress/e2e/card_intent.cy.js,
+            cypress/e2e/paypal_approval.cy.js,
+            cypress/e2e/cart_checkout_button.cy.js,
+            cypress/e2e/product_detail_add_to_cart.cy.js
+          CI: 'true'
+        run: npm run e2e:run
+      - name: Upload Cypress screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-screenshots
+          path: frontend/cypress/screenshots
+          retention-days: 7
+      - name: Upload Cypress videos
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-videos
+          path: frontend/cypress/videos
+          retention-days: 7

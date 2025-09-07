@@ -1,0 +1,67 @@
+name: E2E Full (Nightly)
+
+on:
+  schedule:
+    # 02:30 UTC nightly
+    - cron: '30 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  e2e-full:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    services:
+      mongo:
+        image: mongo:6
+        ports:
+          - '27017:27017'
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand(\"ping\")' || exit 1"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install backend deps
+        working-directory: backend
+        run: npm ci
+
+      - name: Install frontend deps
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run full E2E suite (build-and-serve)
+        working-directory: frontend
+        env:
+          # Runner uses ephemeral DB name and drops it afterward
+          E2E_EPHEMERAL: 'true'
+          E2E_AUTODROP: 'true'
+          # Pick a non-standard port to avoid collisions
+          E2E_BACKEND_PORT: '5051'
+          # Optional: increase default timeouts a bit on CI
+          CI: 'true'
+        run: npm run e2e:run
+
+      - name: Upload Cypress screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-screenshots
+          path: frontend/cypress/screenshots
+          retention-days: 7
+
+      - name: Upload Cypress videos
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-videos
+          path: frontend/cypress/videos
+          retention-days: 7
