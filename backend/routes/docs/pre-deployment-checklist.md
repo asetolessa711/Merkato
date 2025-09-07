@@ -74,6 +74,14 @@ A living, actionable list to verify before any production rollout.
 - [ ] Build artifacts versioned; deployment is repeatable and tagged
 - [ ] Release notes drafted; migration steps (if any) included
 
+### Regression guardrails (enabled)
+
+- [x] Focused-test guard: blocks `*.only`/`fit` in pre-commit and CI (`scripts/check-focused-tests.js` + Husky + `guards.yml`)
+- [x] Coverage thresholds: Jest fails if coverage dips below floor (frontend/backed configs)
+- [x] CI coverage gates: workflows run with `--coverage` and respect thresholds
+- [x] E2E stability: deterministic seed + ephemeral DB per run
+- [x] Baseline workflows: `frontend-tests.yml`, `backend-baseline.yml` always run on PRs
+
 ## � Rollback & DR
 
 - [ ] Rollback plan documented (previous image/version available)

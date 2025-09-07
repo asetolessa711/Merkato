@@ -12,6 +12,7 @@ Documents/
 .cache/
 frontend/build/
 backend/coverage/
+frontend/coverage/
 backend/jest-failures-summary.txt
 
 # E2E/CI artifacts

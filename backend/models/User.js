@@ -22,6 +22,9 @@ const userSchema = new mongoose.Schema(
       enum: ['customer', 'vendor', 'admin', 'global_admin', 'country_admin'],
       default: ['customer']
     },
+  // ✅ Phase 2: Vendor approval & status flags
+  vendorApproved: { type: Boolean, default: false },
+  isActive: { type: Boolean, default: true },
     country: {
       type: String,
       required: true

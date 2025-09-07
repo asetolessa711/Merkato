@@ -11,6 +11,8 @@ function CheckoutPage() {
   const [promoCode, setPromoCode] = useState('');
   const [promoApplied, setPromoApplied] = useState(false);
   const [discount, setDiscount] = useState(0);
+  const [deliveryDefaults, setDeliveryDefaults] = useState({ defaultEtaDays: 5, defaultEtaNote: 'Standard delivery', shippingOptions: [] });
+  const [selectedDeliveryName, setSelectedDeliveryName] = useState('');
 
   // Fields to support both styles used in tests
   const [shipping, setShipping] = useState({
@@ -52,6 +54,30 @@ function CheckoutPage() {
     (async () => {
       const list = await fetchPaymentMethods();
       setMethods(list);
+    })();
+  }, []);
+
+  useEffect(() => {
+    // Load delivery settings (global defaults + shipping options)
+    (async () => {
+      try {
+        const res = await axios.get('/api/products/delivery-settings');
+        const settings = res?.data || {};
+        const normalized = {
+          defaultEtaDays: typeof settings.defaultEtaDays === 'number' ? settings.defaultEtaDays : 5,
+          defaultEtaNote: settings.defaultEtaNote || 'Standard delivery',
+          shippingOptions: Array.isArray(settings.shippingOptions) ? settings.shippingOptions : []
+        };
+        setDeliveryDefaults(normalized);
+        if (normalized.shippingOptions.length > 0) {
+          setSelectedDeliveryName(normalized.shippingOptions[0].name);
+        } else {
+          setSelectedDeliveryName('Standard');
+        }
+      } catch (_) {
+        // Fallback to static standard option used in tests
+        setSelectedDeliveryName('Standard');
+      }
     })();
   }, []);
 
@@ -104,7 +130,9 @@ function CheckoutPage() {
     setMessage('');
 
     const token = localStorage.getItem('token');
-    const deliveryOption = { name: 'Standard', cost: 10, days: 3 };
+    // Use selected delivery option or fallback to Stable default for tests
+    const fromList = (deliveryDefaults.shippingOptions || []).find(o => o.name === selectedDeliveryName);
+    const deliveryOption = fromList || { name: 'Standard', cost: 10, days: 3 };
 
     // Build shipping object compatible with backend
     const shippingAddress = {
@@ -257,6 +285,34 @@ function CheckoutPage() {
 
                 <label htmlFor="country">Country</label>
                 <input id="country" name="country" value={shipping.country} onChange={handleChange} />
+              </div>
+            </fieldset>
+
+            {/* Delivery options */}
+            <fieldset style={{ border: '1px solid #ddd', padding: 16, marginBottom: 20 }}>
+              <legend>Delivery</legend>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {(deliveryDefaults.shippingOptions && deliveryDefaults.shippingOptions.length
+                  ? deliveryDefaults.shippingOptions
+                  : [{ name: 'Standard', cost: 10, days: 3 }]).map((opt) => (
+                  <label key={opt.name} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                    <input
+                      type="radio"
+                      name="deliveryOption"
+                      value={opt.name}
+                      checked={selectedDeliveryName === opt.name}
+                      onChange={(e) => setSelectedDeliveryName(e.target.value)}
+                      data-testid={`delivery-${opt.name}`}
+                    />
+                    <span>{opt.name}</span>
+                    <span>• ${Number(opt.cost || 0).toFixed(2)}</span>
+                    <span>• {opt.days} days</span>
+                  </label>
+                ))}
+                {/* Subtle ETA note */}
+                <small style={{ color: '#666' }}>
+                  {deliveryDefaults.defaultEtaNote} (~{deliveryDefaults.defaultEtaDays} days)
+                </small>
               </div>
             </fieldset>
 

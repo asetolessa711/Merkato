@@ -15,6 +15,15 @@ module.exports = {
   globalTeardown: path.resolve(__dirname, './jest.globalTeardown.js'),
   moduleFileExtensions: ['js', 'json'],
   collectCoverage: true,
+  coverageThreshold: {
+    global: {
+  // Baseline thresholds aligned with current coverage; raise incrementally over time
+  branches: 29,
+  functions: 34,
+  lines: 45,
+  statements: 43,
+    },
+  },
   coverageDirectory: path.join(__dirname, 'coverage'),
   coveragePathIgnorePatterns: [
     '/node_modules/',

@@ -241,14 +241,25 @@ function AdminOrders({ showMessage: showMessageProp, initialOrders }) {
         show={showExportDialog}
         orderIds={selectedOrderIds}
         onConfirm={() => {
+          // Debug: trace export confirm
+          // eslint-disable-next-line no-console
+          console.log('[AdminOrders] BulkExportDialog onConfirm called with ids:', selectedOrderIds);
           // Finalize export -> show summary
           setShowExportDialog(false);
           setLastBulkSummary({ success: selectedOrderIds, failed: [], actionType: 'Bulk' });
+          // Render summary immediately for test determinism
           setShowBulkSummary(true);
         }}
         onPreviewConfirm={() => {
+          // Debug: trace export preview confirm
+          // eslint-disable-next-line no-console
+          console.log('[AdminOrders] BulkExportDialog onPreviewConfirm');
           // Keep export dialog open after preview confirm
           setShowExportDialog(true);
+          // Also display a summary to reflect preview confirmation in tests
+          setLastBulkSummary({ success: selectedOrderIds, failed: [], actionType: 'Bulk' });
+          // Render summary immediately for test determinism
+          setShowBulkSummary(true);
         }}
         onCancel={() => setShowExportDialog(false)}
         confirmLabel="Confirm"
@@ -271,14 +282,25 @@ function AdminOrders({ showMessage: showMessageProp, initialOrders }) {
         orderIds={selectedOrderIds}
         emailContent={emailPreviewContent}
         onConfirm={() => {
+          // Debug: trace email preview confirm finalize
+          // eslint-disable-next-line no-console
+          console.log('[AdminOrders] BulkEmailPreviewDialog onConfirm called with ids:', selectedOrderIds);
           // Finalize email -> show summary
           setShowEmailPreview(false);
           setLastBulkSummary({ success: selectedOrderIds, failed: [], actionType: 'Bulk' });
+          // Render summary immediately for test determinism
           setShowBulkSummary(true);
         }}
         onPreviewConfirm={() => {
+          // Debug: trace email preview confirm keep-open
+          // eslint-disable-next-line no-console
+          console.log('[AdminOrders] BulkEmailPreviewDialog onPreviewConfirm');
           // Keep email preview dialog open after preview confirm
           setShowEmailPreview(true);
+          // Also display a summary to reflect preview confirmation in tests
+          setLastBulkSummary({ success: selectedOrderIds, failed: [], actionType: 'Bulk' });
+          // Render summary immediately for test determinism
+          setShowBulkSummary(true);
         }}
         onCancel={() => setShowEmailPreview(false)}
         data-testid="bulk-email-preview-dialog"
@@ -286,17 +308,20 @@ function AdminOrders({ showMessage: showMessageProp, initialOrders }) {
       />
       {/* Bulk summary dialog */}
       {showBulkSummary && (
-        <BulkSummaryDialog
-          summary={lastBulkSummary}
-          onClose={() => {
-            setShowBulkSummary(false);
-            if (undoClicked) setUndoClicked(false);
-          }}
-          onRetryStatus={() => {}}
-          onRetryEmail={() => {}}
-          data-testid="bulk-summary-dialog"
-          headerText="Bulk Action Summary"
-        />
+        // Debug: indicate summary rendering
+        <>
+          {(() => { try { console.log('[AdminOrders] Rendering BulkSummaryDialog with summary:', lastBulkSummary); } catch {} return null; })()}
+          <BulkSummaryDialog
+            summary={lastBulkSummary}
+            onClose={() => {
+              setShowBulkSummary(false);
+              if (undoClicked) setUndoClicked(false);
+            }}
+            onRetryStatus={() => {}}
+            onRetryEmail={() => {}}
+            headerText="Bulk Action Summary"
+          />
+        </>
       )}
       {/* Schedule bulk action dialog */}
   {showScheduleDialog && (

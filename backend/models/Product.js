@@ -24,6 +24,11 @@ const productSchema = new mongoose.Schema(
       default: 'en'
     },
 
+  // 🚚 Delivery ETA (Phase 1)
+  // Estimated time (in days) to ship/deliver this product. If not set, use global default from DeliverySettings.
+  deliveryEtaDays: { type: Number, min: 0 },
+  deliveryEtaNote: { type: String, maxlength: 200 },
+
     // ✅ Promotion Field
     promotion: {
       isPromoted: { type: Boolean, default: false },

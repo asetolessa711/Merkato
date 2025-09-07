@@ -10,6 +10,7 @@ const PromoCode = require('../models/PromoCode'); // ✅ NEW for promo logic
 const { Parser } = require('json2csv');
 const { protect, authorize } = require('../middleware/authMiddleware');
 const PromoCampaign = require('../models/PromoCampaign');
+const DeliverySettings = require('../models/DeliverySettings');
 
 // Utility: Check if user is Global, Admin, or Staff
 const isAdmin = (user) =>
@@ -26,6 +27,22 @@ router.get('/users', protect, authorize('global_admin', 'admin'), async (req, re
     res.json(users);
   } catch (err) {
     res.status(500).json({ message: 'Failed to load users' });
+  }
+});
+
+// ✅ List vendors (optionally filter by approval status)
+router.get('/vendors', protect, authorize('global_admin', 'admin', 'country_admin'), async (req, res) => {
+  try {
+    const filter = { roles: { $in: ['vendor'] } };
+    if (req.query.approved === 'true') filter.vendorApproved = true;
+    if (req.query.approved === 'false') filter.vendorApproved = { $ne: true };
+    if (req.user.role === 'admin' && req.user.country) {
+      filter.country = req.user.country;
+    }
+    const vendors = await User.find(filter).select('-password');
+    res.json(vendors);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to load vendors' });
   }
 });
 
@@ -172,6 +189,26 @@ router.put('/users/:id/status', protect, authorize('admin', 'global_admin', 'cou
   }
 });
 
+// ✅ Approve / Revoke vendor
+router.put('/vendors/:id/approve', protect, authorize('admin', 'global_admin', 'country_admin'), async (req, res) => {
+  try {
+    const { approved } = req.body; // boolean
+    const user = await User.findById(req.params.id);
+    if (!user || !(user.roles || []).includes('vendor')) {
+      return res.status(404).json({ message: 'Vendor not found' });
+    }
+    // Country admin can only manage vendors in same country
+    if (req.user.role === 'country_admin' && user.country !== req.user.country) {
+      return res.status(403).json({ message: 'Cross-country approval not allowed' });
+    }
+    user.vendorApproved = !!approved;
+    await user.save();
+    res.json({ message: approved ? 'Vendor approved' : 'Vendor approval revoked', vendorApproved: user.vendorApproved });
+  } catch (err) {
+    res.status(500).json({ message: 'Error updating vendor approval', error: err.message });
+  }
+});
+
 // ✅ Get First-Time Discount Status
 router.get('/first-time-discount', protect, authorize('admin', 'global_admin'), async (req, res) => {
   try {
@@ -201,6 +238,35 @@ router.put('/first-time-discount', protect, authorize('admin', 'global_admin'), 
     res.json({ message: `First-time discount updated to ${percentage}% and ${active ? 'activated' : 'deactivated'}` });
   } catch (err) {
     res.status(500).json({ message: 'Failed to update discount setting' });
+  }
+});
+
+// ✅ Delivery Settings (Phase 1: global ETA & shipping options)
+router.get('/delivery-settings', protect, authorize('admin', 'global_admin'), async (req, res) => {
+  try {
+    let settings = await DeliverySettings.findOne();
+    if (!settings) {
+      settings = await DeliverySettings.create({});
+    }
+    res.json(settings);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch delivery settings' });
+  }
+});
+
+router.put('/delivery-settings', protect, authorize('admin', 'global_admin'), async (req, res) => {
+  try {
+    const { defaultEtaDays, defaultEtaNote, shippingOptions } = req.body;
+    let settings = await DeliverySettings.findOne();
+    if (!settings) settings = new DeliverySettings();
+    if (typeof defaultEtaDays === 'number') settings.defaultEtaDays = defaultEtaDays;
+    if (typeof defaultEtaNote === 'string') settings.defaultEtaNote = defaultEtaNote;
+    if (Array.isArray(shippingOptions)) settings.shippingOptions = shippingOptions;
+    settings.updatedBy = req.user._id;
+    await settings.save();
+    res.json({ message: 'Delivery settings updated', settings });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to update delivery settings' });
   }
 });
 

@@ -1,0 +1,8 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "husky pre-push: guard + backend/frontend tests"
+export CI=true
+node scripts/check-focused-tests.js || exit 1
+npm run -s test:backend || exit 1
+npm run -s test:frontend || exit 1

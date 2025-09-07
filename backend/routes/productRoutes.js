@@ -4,6 +4,7 @@ const router = express.Router();
 const Product = require('../models/Product');
 const { protect, authorize } = require('../middleware/authMiddleware');
 const Flag = require('../models/Flag');
+const DeliverySettings = require('../models/DeliverySettings');
 
 // Get all products (public)
 router.get('/', async (req, res) => {
@@ -12,6 +13,21 @@ router.get('/', async (req, res) => {
     res.json(products);
   } catch (err) {
     res.status(500).json({ message: 'Failed to load products' });
+  }
+});
+
+// Public: Get delivery defaults (global ETA and shipping options)
+router.get('/delivery-settings', async (req, res) => {
+  try {
+    let settings = await DeliverySettings.findOne();
+    if (!settings) settings = await DeliverySettings.create({});
+    res.json({
+      defaultEtaDays: settings.defaultEtaDays,
+      defaultEtaNote: settings.defaultEtaNote,
+      shippingOptions: settings.shippingOptions || []
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to load delivery settings' });
   }
 });
 
@@ -82,6 +98,25 @@ router.put('/:id', protect, authorize('vendor', 'admin'), async (req, res) => {
     res.json(product);
   } catch (err) {
     res.status(500).json({ message: 'Failed to update product' });
+  }
+});
+
+// ✅ Update product ETA fields (vendor/admin)
+router.put('/:id/eta', protect, authorize('vendor', 'admin'), async (req, res) => {
+  try {
+    const { deliveryEtaDays, deliveryEtaNote } = req.body;
+    const update = {};
+    if (typeof deliveryEtaDays === 'number') update.deliveryEtaDays = deliveryEtaDays;
+    if (typeof deliveryEtaNote === 'string') update.deliveryEtaNote = deliveryEtaNote;
+    const product = await Product.findOneAndUpdate(
+      { _id: req.params.id, vendor: req.user._id },
+      { $set: update },
+      { new: true }
+    );
+    if (!product) return res.status(404).json({ message: 'Product not found or not authorized' });
+    res.json({ message: 'ETA updated', product });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to update product ETA' });
   }
 });
 

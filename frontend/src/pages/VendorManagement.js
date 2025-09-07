@@ -13,8 +13,8 @@ const VendorManagement = () => {
   const fetchVendors = async () => {
     try {
       const headers = { Authorization: `Bearer ${token}` };
-      const res = await axios.get('/api/admin/users', { headers });
-      const vendorList = res.data.filter(u => u.role === 'vendor');
+      const res = await axios.get('/api/admin/vendors', { headers });
+      const vendorList = Array.isArray(res.data) ? res.data : [];
       setVendors(vendorList);
     } catch (err) {
       showMessage('Failed to load vendors.', 'error');
@@ -28,14 +28,25 @@ const VendorManagement = () => {
         banReason = prompt('Optional: Enter reason for suspending this vendor:');
       }
 
-      const headers = { Authorization: `Bearer ${token}` };
-      await axios.put(`/api/users/${id}/status`, { isActive: !isActive, banReason }, { headers });
+  const headers = { Authorization: `Bearer ${token}` };
+  await axios.put(`/api/admin/users/${id}/status`, { isActive: !isActive, banReason }, { headers });
 
       showMessage(`Vendor ${isActive ? 'suspended' : 'reactivated'} successfully`, 'success');
       fetchVendors();
     } catch (err) {
       console.error('Status update failed');
       showMessage('Failed to update vendor status', 'error');
+    }
+  };
+
+  const toggleApproval = async (id, approved) => {
+    try {
+      const headers = { Authorization: `Bearer ${token}` };
+      await axios.put(`/api/admin/vendors/${id}/approve`, { approved: !approved }, { headers });
+      showMessage(`Vendor ${approved ? 'approval revoked' : 'approved'} successfully`, 'success');
+      fetchVendors();
+    } catch (err) {
+      showMessage('Failed to update vendor approval', 'error');
     }
   };
 
@@ -117,7 +128,8 @@ const VendorManagement = () => {
             <th className="p-2">Country</th>
             <th className="p-2">Joined</th>
             <th className="p-2">Products</th>
-            <th className="p-2">Status</th>
+            <th className="p-2">Active</th>
+            <th className="p-2">Approved</th>
             <th className="p-2">Subscription Plan</th>
             <th className="p-2">Ban Reason</th>
             <th className="p-2">Actions</th>
@@ -150,6 +162,7 @@ const VendorManagement = () => {
                 <td className="p-2">{new Date(v.createdAt).toLocaleDateString()}</td>
                 <td className="p-2">{v.productCount || 0}</td>
                 <td className="p-2">{v.isActive ? 'Active' : 'Suspended'}</td>
+                <td className="p-2">{v.vendorApproved ? 'Approved' : 'Pending'}</td>
                 <td className="p-2">{v.subscriptionPlan || 'Basic'}</td>
                 <td className="p-2">{!v.isActive ? (v.banReason || '—') : '—'}</td>
                 <td className="p-2">
@@ -158,6 +171,12 @@ const VendorManagement = () => {
                     onClick={() => toggleStatus(v._id, v.isActive)}
                   >
                     {v.isActive ? 'Suspend' : 'Reactivate'}
+                  </button>
+                  <button
+                    className="px-2 py-1 bg-indigo-600 text-white rounded ml-2"
+                    onClick={() => toggleApproval(v._id, v.vendorApproved)}
+                  >
+                    {v.vendorApproved ? 'Revoke' : 'Approve'}
                   </button>
                 </td>
               </tr>

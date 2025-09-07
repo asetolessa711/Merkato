@@ -29,6 +29,14 @@ module.exports = {
     '/node_modules/(?!(axios|react-router-dom|react-modal|react-icons|@?react|@?testing-library)/)'
   ],
   collectCoverage: true,
+  coverageThreshold: {
+    global: {
+      branches: 40,
+      functions: 50,
+      lines: 60,
+      statements: 60,
+    },
+  },
   coverageDirectory: '<rootDir>/coverage',
   coveragePathIgnorePatterns: [
     '/node_modules/',
