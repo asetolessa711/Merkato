@@ -13,26 +13,6 @@ Documents/
 frontend/build/
 backend/coverage/
 backend/jest-failures-summary.txt
-backend/tests/fixtures/
-backend/jest-results.json
-backend/jest-results*.json
-
-# Office temp/lock files
-~$*.doc*
-~$*.xls*
-~$*.ppt*
-*.tmp
-*.temp
-*.swp
-*.swo
-*.bak
-*.orig
-*.DS_Store
-
-# Ensure no empty placeholder files get committed
-**/.placeholder
-**/EMPTY
-**/empty
 
 # E2E/CI artifacts
 frontend/build-e2e-*/
@@ -45,3 +25,16 @@ frontend/cypress/downloads/
 
 # Uploaded test files
 backend/uploads/
+
+# Office temp lock files
+~$*
+docs/~$*
+
+# Jest result artifacts
+backend/jest-results.json
+
+# Test fixture media (generated or large files)
+backend/tests/fixtures/*.jpg
+backend/tests/fixtures/*.png
+backend/tests/fixtures/**/*.jpg
+backend/tests/fixtures/**/*.png

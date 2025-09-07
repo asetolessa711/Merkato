@@ -108,9 +108,9 @@ describe('AdminOrders', () => {
     // Wait for dialog to appear before clicking Confirm
     const dialog = await screen.findByTestId('bulk-preview-header');
     expect(dialog).toBeInTheDocument();
-    const confirmBtns = await screen.findAllByRole('button', { name: /confirm/i });
-    // Click the first visible Confirm button
-    fireEvent.click(confirmBtns[0]);
+    // Click the confirm button in the status preview dialog
+    const statusConfirmBtn = await screen.findByRole('button', { name: /^Confirm$/ });
+    fireEvent.click(statusConfirmBtn);
     // Wait for the summary dialog to appear and check content
     try {
       await waitFor(() => {
@@ -142,9 +142,12 @@ describe('AdminOrders', () => {
     fireEvent.click(screen.getByText('Export Selected'));
     const dialog = await screen.findByTestId('bulk-preview-header');
     expect(dialog).toBeInTheDocument();
-  // Click the finalizing Confirm & Export button (not the preview Confirm)
-  const finalizeExportBtn = await screen.findByRole('button', { name: /confirm \& export/i });
-  fireEvent.click(finalizeExportBtn);
+  // Click the preview Confirm first to mirror UI flow
+  const previewConfirms = await screen.findAllByRole('button', { name: /^Confirm$/ });
+  fireEvent.click(previewConfirms[0]);
+  // Then click the final confirm button to proceed to summary
+  const exportConfirmBtn2 = await screen.findByTestId('bulk-export-confirm');
+  fireEvent.click(exportConfirmBtn2);
     // Wait for the summary dialog to appear and check content
     await waitFor(() => {
       const summaryDialog = screen.getByTestId('bulk-summary-dialog');
@@ -169,9 +172,11 @@ describe('AdminOrders', () => {
     fireEvent.click(screen.getByText('Resend Emails'));
     const dialog = await screen.findByTestId('bulk-preview-header');
     expect(dialog).toBeInTheDocument();
-  // Click the finalizing Confirm & Resend button (not the preview Confirm)
-  const finalizeResendBtn = await screen.findByRole('button', { name: /confirm \& resend/i });
-  fireEvent.click(finalizeResendBtn);
+  // Click the preview Confirm first to keep dialog open, then finalize
+  const emailPreviewConfirm = await screen.findByTestId('bulk-email-preview-confirm');
+  fireEvent.click(emailPreviewConfirm);
+  const resendConfirmBtn = await screen.findByRole('button', { name: /Confirm & Resend/i });
+  fireEvent.click(resendConfirmBtn);
     // Wait for the summary dialog to appear and check content
     await waitFor(() => {
       const summaryDialog = screen.getByTestId('bulk-summary-dialog');

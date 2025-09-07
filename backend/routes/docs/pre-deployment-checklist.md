@@ -53,7 +53,7 @@ A living document for tracking all tasks and verifications required before produ
 * [ ] Add preview email route for testing HTML rendering
 * [ ] Email templates with branding/logo
 * [ ] Logging service (e.g. Winston, LogRocket, Sentry)
-* [ ] (Optional) Provide container config for backend + frontend
+* [ ] Dockerize backend + frontend
 
 ---
 

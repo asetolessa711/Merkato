@@ -127,21 +127,19 @@ function CheckoutPage() {
 
       // If artifacts are required, create intent/approval first
       let artifact = {};
-      let finalMethodCode = selected.code || 'cod';
       const orderAmount = Math.max(0, subtotal + (deliveryOption.cost || 0) - (discount || 0));
-      const requiresArtifact = ['stripe', 'paypal', 'mobile_wallet', 'telebirr', 'chapa'].includes(finalMethodCode) || selected.requiresArtifact;
-      if (requiresArtifact) {
+      if (selected.requiresArtifact || ['stripe', 'paypal', 'mobile_wallet', 'telebirr', 'chapa'].includes(selected.code)) {
         try {
           const intentRes = await axios.post('/api/payments/intent', {
-            method: finalMethodCode,
+            method: selected.code,
             amount: Number(orderAmount.toFixed(2)),
             currency: 'USD',
             metadata: { cartSize: cart.length }
           });
           const data = intentRes.data || {};
-          if (finalMethodCode === 'stripe' || finalMethodCode === 'chapa') {
+          if (selected.code === 'stripe' || selected.code === 'chapa') {
             artifact = { paymentIntentId: data.intentId || data.clientSecret };
-          } else if (finalMethodCode === 'paypal') {
+          } else if (selected.code === 'paypal') {
             if (!(window && window.Cypress)) {
               if (data.approvalUrl) {
                 // In real flow, redirect to approval; tests skip redirect
@@ -149,26 +147,21 @@ function CheckoutPage() {
               }
             }
             artifact = { approvalId: data.approvalId };
-          } else if (finalMethodCode === 'mobile_wallet') {
+          } else if (selected.code === 'mobile_wallet') {
             artifact = { transactionRef: data.walletRef || data.transactionRef };
-          } else if (finalMethodCode === 'telebirr') {
+          } else if (selected.code === 'telebirr') {
             artifact = { sessionId: data.sessionId };
           }
         } catch (_) {
-          // If intent fails or endpoint missing, gracefully fallback to COD for reliability (esp. tests)
+          // If intent fails, fall back to COD to keep UX flowing in tests
           artifact = {};
         }
-      }
-
-      // If online method requires an artifact but none was obtained, fallback to COD
-      if (requiresArtifact && Object.keys(artifact).length === 0) {
-        finalMethodCode = 'cod';
       }
 
       const payloadBase = {
         cartItems,
         shippingAddress,
-        paymentMethod: finalMethodCode,
+        paymentMethod: selected.code || 'cod',
         deliveryOption,
         ...(artifact || {})
       };

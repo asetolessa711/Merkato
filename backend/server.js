@@ -11,10 +11,21 @@ const tlog = (...args) => { if (!IS_TEST) console.log(...args); };
 const terror = (...args) => { if (!IS_TEST) console.error(...args); };
 
 // 🔀 Route Imports
-// Helper to optionally load a route module if it exists
+// Helper to optionally load a route module if it exists and return a valid Express router/function
 function tryRequireRoute(p) {
   try {
-    return require(p);
+    const mod = require(p);
+    // Normalize CommonJS and ESM default exports, and ignore empty objects
+    const router =
+      typeof mod === 'function'
+        ? mod
+        : (mod && typeof mod.default === 'function')
+          ? mod.default
+          : null;
+    if (!router) {
+      tlog(`[server] Optional route present but empty or invalid: ${p}`);
+    }
+    return router;
   } catch (e) {
     if (e && e.code === 'MODULE_NOT_FOUND') {
       tlog(`[server] Optional route missing: ${p}`);
@@ -50,7 +61,7 @@ const testSeedInvoicesRoute = require('./routes/testSeedInvoicesRoute');
 const testEmailRoute = require('./routes/testEmailRoute');
 const taskRoutes = require('./routes/taskRoutes');
 const cartRoutes = tryRequireRoute('./routes/cartRoutes');
-const paymentsRoutes = require('./routes/paymentsRoutes');
+const paymentsRoutes = tryRequireRoute('./routes/paymentsRoutes');
 const rewardsRoutes = require('./routes/rewardsRoutes');
 const referralRoutes = tryRequireRoute('./routes/referralRoutes');
 const bundlesRoutes = tryRequireRoute('./routes/bundlesRoutes');
@@ -83,7 +94,7 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/stripe', stripeRoutes);
 app.use('/api/telebirr', telebirrRoutes);
-app.use('/api/payments', paymentsRoutes);
+if (paymentsRoutes) app.use('/api/payments', paymentsRoutes);
 if (cartRoutes) app.use('/api/cart', cartRoutes);
 app.use('/api/rewards', rewardsRoutes);
 if (referralRoutes) app.use('/api/referrals', referralRoutes);

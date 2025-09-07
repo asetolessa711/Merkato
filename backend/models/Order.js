@@ -74,6 +74,17 @@ const orderSchema = new mongoose.Schema(
       country: { type: String }
     },
 
+    // Persist the selected delivery option from checkout
+    deliveryOption: {
+      name: { type: String },
+      cost: { type: Number, default: 0 },
+      // Accept either number of days or a string label (e.g., "3-5 days")
+      days: { type: mongoose.Schema.Types.Mixed }
+    },
+
+    // Optional explicit order date separate from timestamps
+    orderDate: { type: Date },
+
     updatedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User'

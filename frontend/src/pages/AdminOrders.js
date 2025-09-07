@@ -62,8 +62,7 @@ function AdminOrders({ showMessage: showMessageProp, initialOrders }) {
   const [selectedCountry, setSelectedCountry] = useState('');
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
-  // Support both legacy and new token keys for compatibility across tests/E2E
-  const token = localStorage.getItem('token') || localStorage.getItem('merkato-token');
+  const token = localStorage.getItem('token');
   const headers = { Authorization: `Bearer ${token}` };
 
   const handleModerationAction = (actionType) => {
@@ -385,12 +384,12 @@ function AdminOrders({ showMessage: showMessageProp, initialOrders }) {
               <hr />
               <p><strong>Items:</strong></p>
               <ul>
-                {(Array.isArray(order.vendors) ? (order.vendors).flatMap(v => v.products || []) : [])
+                {Array.isArray(order.vendors) ? (order.vendors).flatMap(v => v.products || []) : []
                   .map((p, i) => (
-                    <li key={i}>
-                      {p.product?.name || p.name} × {p.quantity}
-                    </li>
-                  ))}
+                  <li key={i}>
+                    {p.product?.name || p.name} × {p.quantity}
+                  </li>
+                ))}
               </ul>
               <div>
                 <label>Change Status: </label>

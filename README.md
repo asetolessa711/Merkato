@@ -101,16 +101,9 @@ npm test
 ```
 
 ### E2E (Cypress)
-Recommended commands:
 ```bash
-# Fast Windows headless with ephemeral DB
-cd frontend && npm run e2e:fast:win
-
-# Attach to running dev servers
-cd frontend && npm run e2e:attach:core
-
-# Full deterministic (build-and-serve)
-cd frontend && npm run e2e:run
+cd frontend
+npx cypress open  # or: npx cypress run
 ```
 
 Seeding:
@@ -200,11 +193,7 @@ Implementation Notes
 ## Contributing
 
 Pull requests are welcome.
-Please lint and test before submitting. Install pre-commit hooks to automatically run tests before commits:
-```powershell
-pwsh -File ./scripts/install-git-hooks.ps1
-```
-This installs POSIX and Windows hooks and helps prevent committing empty/temp files.
+Please lint and test before submitting.
 For major changes, open an issue first to discuss the proposal.
 
 ---

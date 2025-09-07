@@ -2,32 +2,16 @@
 describe('Order Status Update', () => {
   it('should allow admin to update order status', () => {
     cy.login('admin');
-    // Inject deterministic orders to avoid flake
-    cy.window().then((win) => {
-      const orders = [
-        {
-          _id: 'e2e-order-1',
-          status: 'pending',
-          currency: 'USD',
-          total: 99.99,
-          buyer: { name: 'E2E Buyer', email: 'buyer@example.com' },
-          updatedAt: new Date().toISOString(),
-          vendors: [{ products: [{ name: 'E2E Product', quantity: 1 }] }]
-        }
-      ];
-      win.localStorage.setItem('e2e-orders', JSON.stringify(orders));
-    });
   cy.intercept('GET', '**/api/admin/orders*').as('adminOrders');
     cy.intercept('PATCH', /\/api\/orders\/.+\/status/).as('updateStatus');
-  cy.visit('/admin/orders');
-  // Under injected mode, fetch may be skipped; wait for the UI instead of network
-  cy.get('[data-testid="order-row"]').should('exist');
+    cy.visit('/admin/orders');
+    cy.wait('@adminOrders');
     cy.get('[data-testid="order-row"]').first().within(() => {
       // Selecting triggers updateStatus via onChange handler; clicking Update can double-fire in CI
-      cy.get('[data-testid="status-select"]').select('shipped', { force: true });
+      cy.get('[data-testid="status-select"]').select('Shipped');
     });
     cy.wait('@updateStatus');
-    cy.contains(/shipped/i).should('exist');
+    cy.contains(/Shipped|shipped/i).should('exist');
   });
   it('should allow vendor to update order status', () => {
     cy.login('vendor');
