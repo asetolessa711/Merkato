@@ -4,5 +4,7 @@
 echo "husky pre-push: guard + backend/frontend tests"
 export CI=true
 node scripts/check-focused-tests.js || exit 1
-npm run -s test:backend || exit 1
-npm run -s test:frontend || exit 1
+
+# Backend and frontend from their folders
+npm --prefix backend test --silent || exit 1
+npm --prefix frontend test --silent || exit 1

@@ -5,9 +5,9 @@ on:
     branches:
       - main
       - dev
-      - "feat/**"
-      - "bugfix/**"
-      - "chore/**"
+      - feat/**
+      - bugfix/**
+      - chore/**
   pull_request:
     branches:
       - main
