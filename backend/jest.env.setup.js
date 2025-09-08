@@ -43,3 +43,12 @@ maybeAddTeardown();
 if (!process.env.NODE_ENV || process.env.NODE_ENV !== 'test') {
   process.env.NODE_ENV = 'test';
 }
+
+// Provide safe defaults for email creds in test to prevent require-time throws.
+// We still mock nodemailer later so no real email is sent.
+if (!process.env.EMAIL_USER) {
+  process.env.EMAIL_USER = 'test@example.com';
+}
+if (!process.env.EMAIL_PASS) {
+  process.env.EMAIL_PASS = 'test-password';
+}
