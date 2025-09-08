@@ -18,7 +18,7 @@
   },
   "devDependencies": {
     "axios": "^1.11.0",
-    "cypress": "^14.5.3",
+  "cypress": "^14.5.4",
     "husky": "^9.1.6",
     "lint-staged": "^15.2.10"
   },
