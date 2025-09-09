@@ -1,27 +1,29 @@
-const nodemailer = require('nodemailer');
-const rateLimit = require('express-rate-limit');
+const nodemailer = require("nodemailer");
+const rateLimit = require("express-rate-limit");
 
 // Environment variables with validation
 const {
   EMAIL_USER = process.env.EMAIL_USER,
   EMAIL_PASS = process.env.EMAIL_PASS,
-  BASE_URL = process.env.CLIENT_URL || 'http://localhost:3000',
-  EMAIL_FROM = `Merkato <${EMAIL_USER}>`
+  BASE_URL = process.env.CLIENT_URL || "http://localhost:3000",
+  EMAIL_FROM = `Merkato <${EMAIL_USER}>`,
 } = process.env;
 
 // Validate required environment variables
 if (!EMAIL_USER || !EMAIL_PASS) {
-  throw new Error('❌ EMAIL_USER and EMAIL_PASS must be set in environment variables');
+  throw new Error(
+    "❌ EMAIL_USER and EMAIL_PASS must be set in environment variables",
+  );
 }
 
 // Enhanced transporter with TLS
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  service: "gmail",
   auth: { user: EMAIL_USER, pass: EMAIL_PASS },
   tls: {
     rejectUnauthorized: true,
-    minVersion: "TLSv1.2"
-  }
+    minVersion: "TLSv1.2",
+  },
 });
 
 // Email Templates
@@ -58,7 +60,7 @@ const templates = {
     </p>
     <p style="color:#666;font-size:0.9em">If you didn't request this, you can safely ignore this email.</p>
     <p style="color:#666;font-size:0.9em">For security reasons, this link will expire in 1 hour.</p>
-  `
+  `,
 };
 
 // Send Email with HTML + plain text fallback
@@ -69,7 +71,7 @@ async function sendEmail(options) {
     const result = await transporter.sendMail({
       ...options,
       from: EMAIL_FROM,
-      text: options.text || options.html.replace(/<[^>]+>/g, '') // ✅ Plaintext fallback
+      text: options.text || options.html.replace(/<[^>]+>/g, ""), // ✅ Plaintext fallback
     });
 
     console.log(`📨 Email sent successfully to ${options.to}`);
@@ -78,36 +80,42 @@ async function sendEmail(options) {
     console.error(`❌ Email send failed:`, {
       to: options.to,
       error: err.message,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
-    throw new Error('Failed to send email. Please try again later.');
+    throw new Error("Failed to send email. Please try again later.");
   }
 }
 
 // Order Confirmation Email
 const sendOrderConfirmation = async ({ to, order }) => {
-  const productList = order.products.map(p =>
-    `<li>${p.product?.name || 'Product'} × ${p.quantity}</li>`
-  ).join('');
+  const productList = order.products
+    .map((p) => `<li>${p.product?.name || "Product"} × ${p.quantity}</li>`)
+    .join("");
 
-  const html = templates.base('Order Confirmation', templates.order(order, productList));
+  const html = templates.base(
+    "Order Confirmation",
+    templates.order(order, productList),
+  );
 
   return sendEmail({
     to,
     subject: `Order Confirmation - Merkato #${order._id}`,
-    html
+    html,
   });
 };
 
 // Password Reset Email
 const sendPasswordResetEmail = async ({ to, token }) => {
   const resetUrl = `${BASE_URL}/reset-password?token=${token}`;
-  const html = templates.base('Reset Your Merkato Password', templates.resetPassword(resetUrl));
+  const html = templates.base(
+    "Reset Your Merkato Password",
+    templates.resetPassword(resetUrl),
+  );
 
   return sendEmail({
     to,
-    subject: 'Reset Your Password - Merkato',
-    html
+    subject: "Reset Your Password - Merkato",
+    html,
   });
 };
 
@@ -117,7 +125,7 @@ const resetRateLimiter = rateLimit({
   max: 5,
   message: {
     status: 429,
-    message: 'Too many password reset requests. Please wait 15 minutes.'
+    message: "Too many password reset requests. Please wait 15 minutes.",
   },
   standardHeaders: true,
   legacyHeaders: false,
@@ -125,19 +133,19 @@ const resetRateLimiter = rateLimit({
   handler: (req, res) => {
     console.warn(`Rate limit exceeded for IP: ${req.ip}`);
     res.status(429).json({
-      message: 'Too many reset attempts. Please try again in 15 minutes.'
+      message: "Too many reset attempts. Please try again in 15 minutes.",
     });
-  }
+  },
 });
 
 // Development Test Utility
 const testEmailConfig = async () => {
-  if (process.env.NODE_ENV !== 'production') {
+  if (process.env.NODE_ENV !== "production") {
     try {
       await transporter.verify();
-      console.log('✅ Email configuration verified successfully');
+      console.log("✅ Email configuration verified successfully");
     } catch (err) {
-      console.error('❌ Email configuration error:', err.message);
+      console.error("❌ Email configuration error:", err.message);
     }
   }
 };
@@ -147,5 +155,5 @@ module.exports = {
   sendOrderConfirmation,
   sendPasswordResetEmail,
   resetRateLimiter,
-  testEmailConfig
+  testEmailConfig,
 };

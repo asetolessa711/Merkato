@@ -52,3 +52,8 @@ if (!process.env.EMAIL_USER) {
 if (!process.env.EMAIL_PASS) {
   process.env.EMAIL_PASS = 'test-password';
 }
+
+// Provide a default local Mongo URI for tests if missing, so server.js can start in CI
+if (!process.env.MONGO_URI) {
+  process.env.MONGO_URI = 'mongodb://127.0.0.1:27017/merkato_test';
+}

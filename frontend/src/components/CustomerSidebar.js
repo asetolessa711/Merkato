@@ -10,7 +10,7 @@ function CustomerSidebar({ user }) {
     { path: '/account/orders', icon: '📦', label: 'My Orders' },
     { path: '/favorites', icon: '❤️', label: 'Wishlist' },
     { path: '/account/inbox', icon: '💬', label: 'Messages' },
-    { path: '/customer/addresses', icon: '📍', label: 'Addresses' },
+  { path: '/account/addresses', icon: '📍', label: 'Addresses' },
     { path: '/account/guide', icon: '📖', label: 'Guide' }
   ];
 

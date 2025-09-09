@@ -13,6 +13,9 @@ function CheckoutPage() {
   const [discount, setDiscount] = useState(0);
   const [deliveryDefaults, setDeliveryDefaults] = useState({ defaultEtaDays: 5, defaultEtaNote: 'Standard delivery', shippingOptions: [] });
   const [selectedDeliveryName, setSelectedDeliveryName] = useState('');
+  // Saved addresses (for authenticated customers)
+  const [savedAddresses, setSavedAddresses] = useState([]);
+  const [selectedAddressId, setSelectedAddressId] = useState('');
 
   // Fields to support both styles used in tests
   const [shipping, setShipping] = useState({
@@ -56,6 +59,44 @@ function CheckoutPage() {
       setMethods(list);
     })();
   }, []);
+
+  // Fetch saved addresses for authenticated customers
+  useEffect(() => {
+    (async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        const res = await axios.get('/api/customer/addresses', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const list = Array.isArray(res.data) ? res.data : [];
+        setSavedAddresses(list);
+        const def = list.find(a => a.isDefault);
+        if (def) {
+          setSelectedAddressId(def._id || '');
+          // Prefill shipping fields with default address
+          applyAddressToShipping(def);
+        }
+      } catch (_) {
+        // ignore if fetch fails (guest or API unavailable)
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const applyAddressToShipping = (addr) => {
+    if (!addr) return;
+    setShipping((s) => ({
+      ...s,
+      fullName: addr.fullName || s.fullName || s.name || '',
+      name: addr.fullName || s.name || s.fullName || '',
+      phone: addr.phone || s.phone || '',
+      address: addr.street || addr.address || s.address || '',
+      city: addr.city || s.city || '',
+      postalCode: addr.postalCode || s.postalCode || '',
+      country: addr.country || s.country || ''
+    }));
+  };
 
   useEffect(() => {
     // Load delivery settings (global defaults + shipping options)
@@ -101,6 +142,12 @@ function CheckoutPage() {
       setShipping((s) => ({ ...s, [name]: value }));
     } else if (name === 'paymentMethod') {
       setPaymentMethod(value);
+    } else if (name === 'savedAddress') {
+      setSelectedAddressId(value);
+      const chosen = savedAddresses.find(a => (a._id || '') === value);
+      if (chosen) {
+        applyAddressToShipping(chosen);
+      }
     }
   };
 
@@ -134,8 +181,15 @@ function CheckoutPage() {
     const fromList = (deliveryDefaults.shippingOptions || []).find(o => o.name === selectedDeliveryName);
     const deliveryOption = fromList || { name: 'Standard', cost: 10, days: 3 };
 
-    // Build shipping object compatible with backend
-    const shippingAddress = {
+    // Build shipping object compatible with backend (prefer selected saved address)
+    const chosenAddr = savedAddresses.find(a => (a._id || '') === selectedAddressId);
+    const shippingAddress = chosenAddr ? {
+      fullName: chosenAddr.fullName || 'Guest',
+      city: chosenAddr.city || '',
+      country: chosenAddr.country || '',
+      address: chosenAddr.street || chosenAddr.address || '',
+      postalCode: chosenAddr.postalCode || ''
+    } : {
       fullName: shipping.fullName || shipping.name || 'Guest',
       city: shipping.city || '',
       country: shipping.country || '',
@@ -255,6 +309,27 @@ function CheckoutPage() {
   <form onSubmit={handleSubmit}>
             <fieldset style={{ border: '1px solid #ddd', padding: 16, marginBottom: 20 }}>
               <legend>Shipping</legend>
+              {/* Saved addresses for authenticated users */}
+              {isAuthed && savedAddresses.length > 0 && (
+                <div style={{ marginBottom: 12 }}>
+                  <label htmlFor="savedAddressSelect">Saved addresses</label>
+                  <select
+                    id="savedAddressSelect"
+                    name="savedAddress"
+                    value={selectedAddressId}
+                    onChange={handleChange}
+                    data-testid="saved-address-select"
+                    style={{ display: 'block', marginTop: 4 }}
+                  >
+                    <option value="">Use new address</option>
+                    {savedAddresses.map((a) => (
+                      <option key={a._id} value={a._id}>
+                        {(a.label ? `${a.label} - ` : '') + (a.street || a.address || '') + (a.isDefault ? ' (default)' : '')}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
               {/* Style A (checkout_payment.cy.js) - expose as visible for Cypress to type into */}
               <div style={{ display: 'grid', gap: 8, marginBottom: 10 }} data-testid="shipping-visible-block">
                 <input name="shippingAddress.fullName" placeholder="Full Name" onChange={handleChange} style={{display:'block', visibility:'visible', opacity:1}} />

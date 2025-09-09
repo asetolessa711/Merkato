@@ -115,10 +115,45 @@ async function main() {
     // Ensure attach targets are up
     await waitOn({ resources: [baseUrl], timeout: 60000 });
   } else {
-    console.log(`[e2e] Building frontend with REACT_APP_API_URL=${apiUrl} (skips if cached) ...`);
+    console.log(`[e2e] Preparing frontend (reuse recent build when possible) ...`);
     const defaultBuildDir = path.join(frontendDir, 'build');
-    const freshBuildExists = fs.existsSync(path.join(defaultBuildDir, 'index.html')) && (Date.now() - (fs.statSync(defaultBuildDir).mtimeMs || 0) < 15 * 60 * 1000);
-    if (!freshBuildExists) {
+    const buildReuseEnabled = String(process.env.E2E_REUSE_BUILD || 'true').toLowerCase() === 'true';
+    const reuseWindowMin = Number(process.env.E2E_REUSE_BUILD_MINUTES || 60);
+    const now = Date.now();
+    const isFresh = (dir) => {
+      try {
+        const stat = fs.statSync(dir);
+        return (now - (stat.mtimeMs || 0)) < reuseWindowMin * 60 * 1000;
+      } catch (_) { return false; }
+    };
+    const candidates = [];
+    // Consider default build
+    if (fs.existsSync(path.join(defaultBuildDir, 'index.html'))) {
+      candidates.push(defaultBuildDir);
+    }
+    // Consider prior build-e2e-* directories
+    try {
+      const entries = fs.readdirSync(frontendDir, { withFileTypes: true });
+      for (const e of entries) {
+        if (e.isDirectory() && /^build-e2e-/.test(e.name)) {
+          const p = path.join(frontendDir, e.name);
+          if (fs.existsSync(path.join(p, 'index.html'))) candidates.push(p);
+        }
+      }
+    } catch (_) {}
+    // Pick the newest usable candidate
+    let chosenReusable = null;
+    if (buildReuseEnabled && candidates.length) {
+      candidates.sort((a,b) => ((fs.statSync(b).mtimeMs||0) - (fs.statSync(a).mtimeMs||0)));
+      for (const c of candidates) {
+        if (isFresh(c)) { chosenReusable = c; break; }
+      }
+    }
+    if (chosenReusable) {
+      console.log(`[e2e] Reusing recent build: ${path.basename(chosenReusable)} (<= ${reuseWindowMin} min old)`);
+      await prepareAndServe(chosenReusable);
+    } else {
+      console.log(`[e2e] No recent build to reuse. Building with REACT_APP_API_URL=${apiUrl} ...`);
       const preferredBuildDir = path.join(frontendDir, `build-e2e-${backendPort}-${Date.now()}`);
       const buildEnv = { 
         ...process.env,
@@ -136,8 +171,6 @@ async function main() {
       // If CRA ignored BUILD_PATH, fall back to default
       const actual = fs.existsSync(preferredBuildDir) && fs.existsSync(path.join(preferredBuildDir, 'index.html')) ? preferredBuildDir : defaultBuildDir;
       await prepareAndServe(actual);
-    } else {
-      await prepareAndServe(defaultBuildDir);
     }
     async function prepareAndServe(actualBuildDir) {
       const tempServeDir = path.join(os.tmpdir(), `merkato-e2e-${Date.now()}`);
@@ -152,7 +185,9 @@ async function main() {
     }
   }
 
-  console.log('[e2e] Running Cypress (Electron headless, video off)...');
+  // Allow selecting browser via E2E_BROWSER, default to electron for portability
+  const e2eBrowser = String(process.env.E2E_BROWSER || 'electron');
+  console.log(`[e2e] Running Cypress (${e2eBrowser} headless, video off)...`);
   // In CI or task-driven full runs, force running all specs unless explicitly disabled with E2E_USE_ALL=false
   const isCI = String(process.env.CI || '').toLowerCase() === 'true';
   const forceAll = isCI && String(process.env.E2E_USE_ALL || 'true').toLowerCase() !== 'false';
@@ -264,7 +299,7 @@ async function main() {
   const fullSpecPattern = 'cypress/e2e/**/*.cy.{js,jsx,ts,tsx}';
   // Use top-level specPattern for CLI compatibility (Cypress v10+); e2e.specPattern is not a valid CLI key
   const configArg = `baseUrl=${baseUrl},specPattern=${fullSpecPattern}`;
-  const cyArgs = ['cypress', 'run', '--browser','electron','--headless','--config', configArg,'--reporter','json','--reporter-options',`output=${reportPath}`,...specArg];
+  const cyArgs = ['cypress', 'run', '--browser', e2eBrowser, '--headless', '--config', configArg, '--reporter', 'json', '--reporter-options', `output=${reportPath}`, ...specArg];
   try {
     const expose = Object.keys(cyEnv).filter(k => /^CYPRESS_/i.test(k)).reduce((acc,k)=> (acc[k]=cyEnv[k], acc), {});
     console.log('[e2e] Cypress env (filtered):', JSON.stringify(expose));

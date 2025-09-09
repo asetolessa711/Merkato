@@ -1,5 +1,6 @@
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 const request = require('supertest');
 const app = require('../../server');
 
@@ -10,6 +11,16 @@ let adminUser, adminToken;
 
 describe('Upload Routes', () => {
   let uploadedFilename;
+  const tmpFiles = [];
+
+  const makeTempFile = (basename, contentBuffer) => {
+    const tmpPath = path.join(os.tmpdir(), `${basename}-${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2)}${path.extname(basename)}`);
+    fs.writeFileSync(tmpPath, contentBuffer);
+    tmpFiles.push(tmpPath);
+    return tmpPath;
+  };
 
   // afterAll(() => {
   //   if (uploadedFilename) {
@@ -54,19 +65,19 @@ describe('Upload Routes', () => {
     if (adminUser && adminUser._id) {
       await deleteTestUser(adminUser._id, adminToken);
     }
+
+    // Cleanup any temp files we created
+    for (const f of tmpFiles) {
+      try { fs.unlinkSync(f); } catch (_) { /* ignore */ }
+    }
   });
 
   describe('POST /api/upload', () => {
     test('should allow vendor to upload multiple files', async () => {
-      const testFilePath1 = path.join(__dirname, '..', 'fixtures', 'test-image.jpg');
-      const testFilePath2 = path.join(__dirname, '..', 'fixtures', 'test-image2.jpg');
-      // Ensure both test files exist (create a copy if needed)
-      if (!fs.existsSync(testFilePath1)) {
-        throw new Error(`Test file missing: ${testFilePath1}`);
-      }
-      if (!fs.existsSync(testFilePath2)) {
-        fs.copyFileSync(testFilePath1, testFilePath2);
-      }
+      // Minimal JPEG header/footer bytes to simulate an image
+      const jpegBuf = Buffer.from([255,216,255,224,0,16,74,70,73,70,0,1,1,0,0,1,0,1,0,0,255,217]);
+      const testFilePath1 = makeTempFile('test-image.jpg', jpegBuf);
+      const testFilePath2 = makeTempFile('test-image2.jpg', jpegBuf);
       let res;
       try {
         res = await request(app)
@@ -89,17 +100,12 @@ describe('Upload Routes', () => {
         const uploadPath = path.join(__dirname, '../../uploads', uploadedFilename);
         expect(fs.existsSync(uploadPath)).toBe(true);
       }
-      // Clean up test-image2.jpg if it was created
-      if (fs.existsSync(testFilePath2) && testFilePath2 !== testFilePath1) {
-        fs.unlinkSync(testFilePath2);
-      }
+  // temp files cleaned in afterAll
     });
 
     test('should allow admin to upload a file', async () => {
-      const testFilePath = path.join(__dirname, '..', 'fixtures', 'test-image.jpg');
-      if (!fs.existsSync(testFilePath)) {
-        throw new Error(`Test file missing: ${testFilePath}`);
-      }
+      const jpegBuf = Buffer.from([255,216,255,224,0,16,74,70,73,70,0,1,1,0,0,1,0,1,0,0,255,217]);
+      const testFilePath = makeTempFile('test-image.jpg', jpegBuf);
       let res;
       try {
         res = await request(app)
@@ -133,7 +139,8 @@ describe('Upload Routes', () => {
     });
 
     test('should return 400 for invalid field name', async () => {
-      const testFilePath = path.join(__dirname, '..', 'fixtures', 'test-image.jpg');
+      const jpegBuf = Buffer.from([255,216,255,224,0,16,74,70,73,70,0,1,1,0,0,1,0,1,0,0,255,217]);
+      const testFilePath = makeTempFile('test-image.jpg', jpegBuf);
       let res;
       let connectionReset = false;
       try {
@@ -142,7 +149,7 @@ describe('Upload Routes', () => {
           .set('Authorization', vendorToken)
           .attach('notfile', testFilePath);
       } catch (err) {
-        if (err.code === 'ECONNRESET' || err.code === 'ECONNABORTED') {
+        if (err.code === 'ECONNRESET' || err.code === 'ECONNABORTED' || (err.message && /aborted/i.test(err.message))) {
           connectionReset = true;
         } else {
           throw err;
@@ -179,8 +186,7 @@ describe('Upload Routes', () => {
     ];
 
     test.each(fileCases)('should handle $name upload', async ({ filename, content, expected }) => {
-      const filePath = path.join(__dirname, '..', 'fixtures', filename);
-      fs.writeFileSync(filePath, content);
+      const filePath = makeTempFile(filename, content);
 
       const res = await request(app)
         .post('/api/upload')
@@ -188,8 +194,6 @@ describe('Upload Routes', () => {
         .attach('images', filePath);
 
       expect(expected).toContain(res.statusCode);
-
-      fs.unlinkSync(filePath);
     });
 
     test('should reject file over size limit (2MB)', async () => {
@@ -230,7 +234,8 @@ describe('Upload Routes', () => {
     });
 
     test('should prevent directory traversal in filename', async () => {
-      const testFilePath = path.join(__dirname, '..', 'fixtures', 'test-image.jpg');
+      const jpegBuf = Buffer.from([255,216,255,224,0,16,74,70,73,70,0,1,1,0,0,1,0,1,0,0,255,217]);
+      const testFilePath = makeTempFile('test-image.jpg', jpegBuf);
       let aborted = false;
       let res = null;
       try {
