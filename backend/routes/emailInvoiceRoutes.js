@@ -7,16 +7,36 @@ const { ensureAuth } = require('../middleware/authMiddleware');
 
 router.post('/:id/email-invoice', ensureAuth, async (req, res) => {
   try {
+    // Match current Order schema: buyer, vendors[], vendors.products[], etc.
     const order = await Order.findById(req.params.id)
-      .populate('customer')
-      .populate('vendor')
-      .populate('products.product');
+      .populate('buyer')
+      .populate('vendors.vendorId')
+      .populate('vendors.products.product');
 
-    if (!order || !order.customer?.email) {
+    if (!order || !order.buyer?.email) {
       return res.status(404).json({ message: 'Order or customer email not found.' });
     }
 
-    const logoUrl = order.vendor?.logo || 'https://yourdomain.com/default-logo.png';
+    const firstVendor = order.vendors && order.vendors[0] ? order.vendors[0].vendorId : null;
+    const logoUrl = (firstVendor && firstVendor.logo) || 'https://yourdomain.com/default-logo.png';
+
+    const itemsRows = (order.vendors || [])
+      .flatMap(v => (v.products || []).map(p => {
+        const prod = p.product || {};
+        const qty = p.quantity || 0;
+        const unit = Number(prod.price || 0);
+        const name = prod.name || 'Item';
+        const currency = order.currency || 'USD';
+        return `
+                <tr>
+                  <td>${name}</td>
+                  <td>${qty}</td>
+                  <td>${currency} ${unit.toFixed(2)}</td>
+                  <td>${currency} ${(unit * qty).toFixed(2)}</td>
+                </tr>
+              `;
+      }))
+      .join('');
 
     const html = `
       <html>
@@ -39,8 +59,7 @@ router.post('/:id/email-invoice', ensureAuth, async (req, res) => {
 
           <p><strong>Order ID:</strong> ${order._id}</p>
           <p><strong>Date:</strong> ${new Date(order.createdAt).toLocaleString()}</p>
-          <p><strong>Total:</strong> ${order.currency} ${order.total.toFixed(2)}</p>
-          ${order.promoCode ? `<p><strong>Promo:</strong> ${order.promoCode.code} (-${order.discount})</p>` : ''}
+          <p><strong>Total:</strong> ${(order.currency || 'USD')} ${Number(order.total || 0).toFixed(2)}</p>
 
           <h3>Items</h3>
           <table>
@@ -48,19 +67,12 @@ router.post('/:id/email-invoice', ensureAuth, async (req, res) => {
               <tr><th>Product</th><th>Qty</th><th>Unit Price</th><th>Total</th></tr>
             </thead>
             <tbody>
-              ${order.products.map(p => `
-                <tr>
-                  <td>${p.product.name}</td>
-                  <td>${p.quantity}</td>
-                  <td>${order.currency} ${p.product.price.toFixed(2)}</td>
-                  <td>${order.currency} ${(p.product.price * p.quantity).toFixed(2)}</td>
-                </tr>
-              `).join('')}
+              ${itemsRows}
             </tbody>
           </table>
 
           <div class="footer">
-            Thank you for shopping with ${order.vendor?.name || 'Merkato'}!
+            Thank you for shopping with ${(firstVendor && firstVendor.name) || 'Merkato'}!
           </div>
         </body>
       </html>
@@ -82,7 +94,7 @@ router.post('/:id/email-invoice', ensureAuth, async (req, res) => {
 
     await transporter.sendMail({
       from: `"Merkato" <${process.env.EMAIL_USER}>`,
-      to: order.customer.email,
+      to: order.buyer.email,
       subject: 'Your Merkato Invoice',
       text: 'Please find your invoice attached.',
       attachments: [
@@ -96,7 +108,7 @@ router.post('/:id/email-invoice', ensureAuth, async (req, res) => {
     order.emailLog = {
       status: 'sent',
       sentAt: new Date(),
-      to: order.customer.email
+      to: order.buyer.email
     };
     await order.save();
 
