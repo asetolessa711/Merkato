@@ -1,0 +1,96 @@
+name: E2E Weekly Cross-Browser (@smoke)
+
+on:
+  schedule:
+    # Every Sunday at 03:15 UTC
+    - cron: '15 3 * * 0'
+  workflow_dispatch:
+
+jobs:
+  cross-browser:
+    name: E2E (@smoke) - ${{ matrix.browser }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chrome, firefox]
+
+    services:
+      mongo:
+        image: mongo:6
+        ports:
+          - '27017:27017'
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand(\"ping\")' || exit 1"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install backend deps
+        working-directory: backend
+        run: npm ci
+
+      - name: Install frontend deps
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run @smoke E2E on ${{ matrix.browser }} (build-and-serve)
+        working-directory: frontend
+        env:
+          CI: 'true'
+          # Use isolated ephemeral DB per run and drop automatically
+          E2E_EPHEMERAL: 'true'
+          E2E_AUTODROP: 'true'
+          # Prefer non-default backend port to avoid collisions
+          E2E_BACKEND_PORT: '5051'
+          # Select Cypress browser via runner
+          E2E_BROWSER: '${{ matrix.browser }}'
+          # Filter to fast, stable smoke specs only
+          CYPRESS_INCLUDE_TAG: '@smoke'
+          # Light flake insurance
+          CYPRESS_retries: '2'
+          # Force runner to enumerate all specs (then tags will skip others)
+          E2E_USE_ALL: 'true'
+        run: npm run e2e:run
+
+      - name: Upload Cypress screenshots (${{ matrix.browser }})
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-screenshots-${{ matrix.browser }}
+          path: |
+            frontend/cypress/screenshots
+            !frontend/cypress/screenshots/**/.gitkeep
+          retention-days: 7
+
+      - name: Upload Cypress videos (${{ matrix.browser }})
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-videos-${{ matrix.browser }}
+          path: |
+            frontend/cypress/videos
+            !frontend/cypress/videos/**/.gitkeep
+          retention-days: 7
+
+      - name: Upload logs & summary (${{ matrix.browser }})
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-logs-and-summary-${{ matrix.browser }}
+          path: |
+            frontend/cypress-summary.txt
+            frontend/cypress-results/*.json
+            frontend/e2e-backend.log
+            frontend/e2e-backend.err.log
+            frontend/e2e-meta.txt
+          retention-days: 7
