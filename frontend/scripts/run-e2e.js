@@ -299,7 +299,7 @@ async function main() {
   const fullSpecPattern = 'cypress/e2e/**/*.cy.{js,jsx,ts,tsx}';
   // Use top-level specPattern for CLI compatibility (Cypress v10+); e2e.specPattern is not a valid CLI key
   const configArg = `baseUrl=${baseUrl},specPattern=${fullSpecPattern}`;
-  const cyArgs = ['cypress', 'run', '--browser', e2eBrowser, '--headless', '--config', configArg, '--reporter', 'json', '--reporter-options', `output=${reportPath}`, ...specArg];
+  const cyArgs = ['cypress', 'run', '--browser', e2eBrowser, '--headless', '--config', configArg, '--reporter', 'mochawesome', '--reporter-options', `reportFilename=cypress-report,overwrite=true,quiet=true,charts=false,html=false,json=true,reportDir=.`, ...specArg];
   try {
     const expose = Object.keys(cyEnv).filter(k => /^CYPRESS_/i.test(k)).reduce((acc,k)=> (acc[k]=cyEnv[k], acc), {});
     console.log('[e2e] Cypress env (filtered):', JSON.stringify(expose));
@@ -308,10 +308,21 @@ async function main() {
   const cy = run('npx', cyArgs, { cwd: frontendDir, env: cyEnv });
   const cyCode = await new Promise((resolve) => cy.on('close', resolve));
   try {
+    const summaryPath = path.join(frontendDir, 'cypress-summary.txt');
     if (fs.existsSync(reportPath)) {
       const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
       const stats = report?.stats || {};
-      console.log(`[e2e] Cypress results: ${stats.tests || 0} tests, ${stats.passes || 0} passed, ${stats.failures || 0} failed`);
+      const line = `[e2e] Cypress results: ${stats.tests || 0} tests, ${stats.passes || 0} passed, ${stats.failures || 0} failed`;
+      console.log(line);
+      try {
+        fs.writeFileSync(summaryPath, `${line}\n`, 'utf8');
+      } catch (_) {}
+    } else {
+      const fallback = `[e2e] Cypress finished with exit code ${cyCode}. No JSON report found at ${reportPath}.`;
+      console.warn(fallback);
+      try {
+        fs.writeFileSync(summaryPath, `${fallback}\n`, 'utf8');
+      } catch (_) {}
     }
   } catch (_) {}
   cleanup();
