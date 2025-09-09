@@ -27,5 +27,5 @@ run_with_retry() {
 # Backend and frontend from their folders (backend already uses --runInBand)
 # Disable coverage during pre-push to avoid threshold gating and speed up local pushes
 # Run via PowerShell to avoid Git Bash env/path quirks on Windows
-run_with_retry "powershell -NoProfile -ExecutionPolicy Bypass -Command \"& { Set-Variable -Name ErrorActionPreference -Value Stop; cd './backend'; \$env:JEST_CLOSE_DB='true'; npm test --silent }\"" "backend tests (pwsh)" || exit 1
-run_with_retry "powershell -NoProfile -ExecutionPolicy Bypass -Command \"& { Set-Variable -Name ErrorActionPreference -Value Stop; cd './frontend'; \$env:CI='true'; npm test --silent }\"" "frontend tests (pwsh)" || exit 1
+run_with_retry "powershell -NoProfile -ExecutionPolicy Bypass -Command \"& { Set-Variable -Name ErrorActionPreference -Value Stop; cd './backend'; Set-Item Env:JEST_CLOSE_DB 'true'; npm test --silent }\"" "backend tests (pwsh)" || exit 1
+run_with_retry "powershell -NoProfile -ExecutionPolicy Bypass -Command \"& { Set-Variable -Name ErrorActionPreference -Value Stop; cd './frontend'; Set-Item Env:CI 'true'; npm test --silent }\"" "frontend tests (pwsh)" || exit 1
