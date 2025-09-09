@@ -48,6 +48,8 @@ jobs:
           E2E_BACKEND_PORT: '5051'
           # Optional: increase default timeouts a bit on CI
           CI: 'true'
+          # Force running all specs explicitly and scrub any spec overrides
+          E2E_USE_ALL: 'true'
         run: npm run e2e:run
 
       - name: Upload Cypress screenshots
@@ -55,7 +57,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: cypress-screenshots
-          path: frontend/cypress/screenshots
+          path: |
+            frontend/cypress/screenshots
+            !frontend/cypress/screenshots/**/.gitkeep
           retention-days: 7
 
       - name: Upload Cypress videos
@@ -63,5 +67,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: cypress-videos
-          path: frontend/cypress/videos
+          path: |
+            frontend/cypress/videos
+            !frontend/cypress/videos/**/.gitkeep
           retention-days: 7

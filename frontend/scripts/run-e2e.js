@@ -47,6 +47,12 @@ async function main() {
     apiUrl = (process.env.E2E_API_URL || process.env.CYPRESS_API_URL || 'http://localhost:5051').replace(/\/$/, '');
     console.log(`[e2e] ATTACH mode: using API at ${apiUrl}`);
   } else {
+    // Ensure MongoDB is accepting connections in CI before starting backend to avoid early exit
+    try {
+      await waitOn({ resources: ['tcp:127.0.0.1:27017'], timeout: 60000 });
+    } catch (_) {
+      console.warn('[e2e] MongoDB port 27017 not ready after 60s; continuing and letting backend retry connect...');
+    }
     // For SEMI-ATTACH, prefer port 5000 to match CRA dev proxy default
     if (semiAttach) {
       backendPort = Number(process.env.E2E_BACKEND_PORT || 5000);
@@ -71,6 +77,9 @@ async function main() {
       PORT: String(backendPort),
       // Force local Mongo for speed and determinism
       MONGO_URI: mongoUri,
+      // Provide safe dummy email creds so sendEmail.js doesn't throw on require in routes
+      EMAIL_USER: process.env.EMAIL_USER || 'test@example.com',
+      EMAIL_PASS: process.env.EMAIL_PASS || 'test-password',
       npm_config_cache: npmCache,
       PUPPETEER_CACHE_DIR: puppeteerCache,
     };
@@ -144,10 +153,122 @@ async function main() {
   }
 
   console.log('[e2e] Running Cypress (Electron headless, video off)...');
+  // In CI or task-driven full runs, force running all specs unless explicitly disabled with E2E_USE_ALL=false
+  const isCI = String(process.env.CI || '').toLowerCase() === 'true';
+  const forceAll = isCI && String(process.env.E2E_USE_ALL || 'true').toLowerCase() !== 'false';
   const cyEnv = { ...process.env, CYPRESS_API_URL: apiUrl, CYPRESS_video: 'false', CYPRESS_CACHE_FOLDER: cypressCache, npm_config_cache: npmCache };
-  const specArg = process.env.E2E_SPEC ? ['--spec', process.env.E2E_SPEC] : [];
+  if (forceAll) {
+    // Clear any E2E_SPEC inherited from the parent environment for this child process
+    delete cyEnv.E2E_SPEC;
+  }
+  // If a stray CYPRESS_spec is present in the environment, it can override --spec and
+  // point to an invalid path (e.g., repo root). Clear it unless E2E_SPEC is explicitly provided.
+  if (forceAll || !process.env.E2E_SPEC) {
+    // Remove any CYPRESS_* vars that can force spec selection (spec, specs, specPattern, testFiles, integrationFolder)
+    const scrubKeys = new Set([
+      'cypress_spec',
+      'cypress_specs',
+      'cypress_specpattern',
+      'cypress_testfiles',
+      'cypress_integrationfolder',
+      'cypress_e2e__specpattern',
+      'cypress_e2e__spec',
+      'cypress_e2e__specs',
+      'npm_config_spec',
+      'npm_config_specs',
+      // common underscore variants
+      'cypress_spec_pattern',
+      'cypress_test_files',
+      'cypress_integration_folder',
+    ]);
+    Object.keys(cyEnv).forEach((key) => {
+      const k = String(key).toLowerCase();
+      const kflat = k.replace(/[_-]/g, '');
+      if (
+        scrubKeys.has(k) ||
+        scrubKeys.has(kflat) ||
+        (k.startsWith('cypress_') && (
+          k.includes('specpattern') ||
+          k.includes('spec_pattern') ||
+          k.endsWith('__spec') ||
+          k.endsWith('__specs') ||
+          k.includes('testfiles') ||
+          k.includes('test_files') ||
+          k.includes('integrationfolder') ||
+          k.includes('integration_folder')
+        ))
+      ) {
+        try { delete cyEnv[key]; } catch (_) { cyEnv[key] = ''; }
+      }
+    });
+    // Special-case: CYPRESS_e2e may contain JSON that overrides specPattern/spec via env.
+    // If present and contains those fields, drop it entirely to avoid partial spec runs.
+    for (const candidate of ['CYPRESS_e2e', 'CYPRESS_E2E', 'cypress_e2e']) {
+      if (cyEnv[candidate]) {
+        try {
+          const parsed = JSON.parse(String(cyEnv[candidate]));
+          if (parsed && (parsed.specPattern || parsed.spec || parsed.specs || parsed.testFiles || parsed.integrationFolder)) {
+            delete cyEnv[candidate];
+          }
+        } catch (_) {
+          // If it's not JSON, but looks like it might constrain specs, drop it proactively
+          const v = String(cyEnv[candidate]).toLowerCase();
+          if (v.includes('spec') || v.includes('testfiles') || v.includes('integration')) {
+            delete cyEnv[candidate];
+          }
+        }
+      }
+    }
+  }
+  let specArg = [];
+  if (!forceAll && process.env.E2E_SPEC) {
+    const raw = String(process.env.E2E_SPEC);
+    const parts = raw.split(',').map(s => s.trim()).filter(Boolean);
+    const resolved = [];
+    const specRoot = path.join(frontendDir, 'cypress', 'e2e');
+    const allSpecs = await listSpecFiles(specRoot);
+    const byBase = allSpecs.reduce((acc, p) => { acc[path.basename(p)] = p; return acc; }, {});
+    for (const p of parts) {
+      // Absolute or relative path that exists
+      const abs = path.isAbsolute(p) ? p : path.join(frontendDir, p);
+      if (fs.existsSync(abs)) { resolved.push(path.relative(frontendDir, abs)); continue; }
+      // If looks like a plain filename, try to map to cypress/e2e
+      const base = path.basename(p);
+      if (byBase[base]) { resolved.push(path.relative(frontendDir, byBase[base])); continue; }
+      // If starts with 'cypress/e2e', ensure it exists
+      const underE2E = path.join(specRoot, p.replace(/^cypress[\\/]+e2e[\\/]+/i, ''));
+      if (fs.existsSync(underE2E)) { resolved.push(path.relative(frontendDir, underE2E)); continue; }
+      console.warn(`[e2e] Ignoring unknown spec entry: ${p}`);
+    }
+    if (resolved.length > 0) {
+      specArg = ['--spec', resolved.join(',')];
+    } else {
+      console.log('[e2e] E2E_SPEC provided but no matching files were found. Running default spec discovery.');
+    }
+  } else {
+    // No explicit spec filter provided; enumerate all specs and pass them explicitly to avoid env/config overrides.
+    try {
+      const specRoot = path.join(frontendDir, 'cypress', 'e2e');
+      const allSpecs = await listSpecFiles(specRoot);
+      if (allSpecs && allSpecs.length) {
+        const rel = allSpecs.map((p) => path.relative(frontendDir, p));
+        specArg = ['--spec', rel.join(',')];
+        console.log(`[e2e] Running all specs explicitly: ${rel.length} files`);
+      }
+    } catch (e) {
+      console.warn('[e2e] Failed to enumerate specs:', e && e.message ? e.message : e);
+    }
+  }
   const reportPath = path.join(frontendDir, 'cypress-report.json');
-  const cyArgs = ['cypress', 'run', '--browser','electron','--headless','--config', `baseUrl=${baseUrl}`,'--reporter','json','--reporter-options',`output=${reportPath}`,...specArg];
+  // Always enforce a wide specPattern to avoid accidental narrowing by env or defaults
+  const fullSpecPattern = 'cypress/e2e/**/*.cy.{js,jsx,ts,tsx}';
+  const configArg = `baseUrl=${baseUrl},e2e.specPattern=${fullSpecPattern}`;
+  const cyArgs = ['cypress', 'run', '--browser','electron','--headless','--config', configArg,'--reporter','json','--reporter-options',`output=${reportPath}`,...specArg];
+  try {
+    const expose = Object.keys(cyEnv).filter(k => /^CYPRESS_/i.test(k)).reduce((acc,k)=> (acc[k]=cyEnv[k], acc), {});
+    console.log('[e2e] Cypress env (filtered):', JSON.stringify(expose));
+    console.log('[e2e] Cypress args:', JSON.stringify(cyArgs));
+  } catch (_) {}
   const cy = run('npx', cyArgs, { cwd: frontendDir, env: cyEnv });
   const cyCode = await new Promise((resolve) => cy.on('close', resolve));
   try {
@@ -226,6 +347,21 @@ function findFreePort(startPort) {
     };
     tryPort(startPort);
   });
+}
+
+async function listSpecFiles(dir) {
+  const out = [];
+  async function walk(d) {
+    let entries = [];
+    try { entries = await fs.promises.readdir(d, { withFileTypes: true }); } catch (_) { return; }
+    for (const e of entries) {
+      const p = path.join(d, e.name);
+      if (e.isDirectory()) { await walk(p); }
+      else if (/\.cy\.(js|jsx|ts|tsx)$/i.test(e.name)) { out.push(p); }
+    }
+  }
+  await walk(dir);
+  return out;
 }
 
 async function copyDir(src, dest) {
