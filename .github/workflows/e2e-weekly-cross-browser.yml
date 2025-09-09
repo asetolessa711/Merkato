@@ -35,13 +35,37 @@ jobs:
           node-version: 20
           cache: npm
 
+      - name: Configure npm retries (resilient to 5xx)
+        run: |
+          npm config set fetch-retries 5
+          npm config set fetch-retry-maxtimeout 60000
+          npm config set fetch-retry-mintimeout 10000
+          npm config set prefer-online true
+
       - name: Install backend deps
         working-directory: backend
-        run: npm ci
+        run: |
+          set -e
+          (npm ci --no-audit --no-fund) \
+          || (echo "npm ci failed, retrying in 10s..." && sleep 10 && npm ci --no-audit --no-fund) \
+          || (echo "npm ci failed again, retrying in 20s..." && sleep 20 && npm ci --no-audit --no-fund)
 
       - name: Install frontend deps
         working-directory: frontend
-        run: npm ci
+        run: |
+          set -e
+          (npm ci --no-audit --no-fund) \
+          || (echo "npm ci failed, retrying in 10s..." && sleep 10 && npm ci --no-audit --no-fund) \
+          || (echo "npm ci failed again, retrying in 20s..." && sleep 20 && npm ci --no-audit --no-fund)
+
+      - name: Restore Cypress binary cache
+        id: cypress-cache
+        uses: actions/cache@v4
+        with:
+          path: ./.cache/cypress
+          key: cypress-${{ runner.os }}-${{ matrix.browser }}-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: |
+            cypress-${{ runner.os }}-${{ matrix.browser }}-
 
       - name: Setup Chrome
         if: matrix.browser == 'chrome'
@@ -50,6 +74,15 @@ jobs:
       - name: Setup Firefox
         if: matrix.browser == 'firefox'
         uses: browser-actions/setup-firefox@v1
+
+      - name: Ensure Cypress binary (install/verify)
+        if: steps.cypress-cache.outputs.cache-hit != 'true'
+        working-directory: frontend
+        env:
+          CI: 'true'
+          CYPRESS_CACHE_FOLDER: ${{ github.workspace }}/.cache/cypress
+        run: |
+          npx cypress install --force || npx cypress verify
 
       - name: Run @smoke E2E on ${{ matrix.browser }} (build-and-serve)
         working-directory: frontend
@@ -70,6 +103,8 @@ jobs:
           CYPRESS_retries: '2'
           # Force runner to enumerate all specs (then tags will skip others)
           E2E_USE_ALL: 'true'
+          # Ensure Cypress uses the repo-local cache so it matches the cached path
+          CYPRESS_CACHE_FOLDER: ${{ github.workspace }}/.cache/cypress
         run: npm run e2e:run
 
       - name: Append Cypress summary to Job Summary
