@@ -1,9 +1,7 @@
+
+// cypress/support/e2e.js
 import './commands';
 import 'cypress-axe';
-// cypress/support/e2e.js
-
-// Import commands.js using ES2015 syntax:
-import './commands';
 
 // Silence/short-circuit noisy external calls (analytics, pixels, etc.) per test
 const SILENCE_PATTERNS = [
@@ -14,6 +12,9 @@ const SILENCE_PATTERNS = [
   /hotjar\.com/i,
   /segment\.io/i,
 ];
+
+// Track whether we've registered intercepts for this spec file
+let __silenceInterceptorsRegistered = false;
 
 // Global setup: Seed DB once before all tests if enabled
 before(() => {
@@ -32,10 +33,14 @@ beforeEach(() => {
   // Prefer data-testid selectors; warn if tests query by brittle selectors (best-effort heuristic)
   // Note: We cannot rewrite tests here, but this acts as guidance in console output.
   Cypress.log({ name: 'selector-policy', message: 'Prefer [data-testid] selectors for stability.' });
-  // Register silencing intercepts
-  SILENCE_PATTERNS.forEach((p) => {
-    cy.intercept({ url: p }, { statusCode: 204, body: '' }).as('silenced');
-  });
+
+  // Register silencing intercepts only once per spec
+  if (!__silenceInterceptorsRegistered) {
+    SILENCE_PATTERNS.forEach((p) => {
+      cy.intercept({ url: p }, { statusCode: 204, body: '' }).as('silenced');
+    });
+    __silenceInterceptorsRegistered = true;
+  }
 });
 
 after(() => {
@@ -44,20 +49,35 @@ after(() => {
 
 // Utility: tag-based filtering support (e.g., @flaky). Usage: add in spec titles.
 // Exclude via CYPRESS_EXCLUDE_TAG="@flaky"; include-only via CYPRESS_INCLUDE_TAG="@flaky".
-const excludeTag = (Cypress.env('EXCLUDE_TAG') || '').toString();
-const includeTag = (Cypress.env('INCLUDE_TAG') || '').toString();
-if (excludeTag || includeTag) {
-  const origIt = it;
-  // Replace global it with a safe wrapper; use origIt.skip to mark as pending at definition time
-  // @ts-ignore
-  // eslint-disable-next-line no-global-assign
-  it = (title, fn) => {
-    const hasTitle = typeof title === 'string' ? title : '';
-    const shouldInclude = includeTag ? hasTitle.includes(includeTag) : true;
-    const shouldExclude = excludeTag ? hasTitle.includes(excludeTag) : false;
+const excludeTag = String(Cypress.env('EXCLUDE_TAG') || '');
+const includeTag = String(Cypress.env('INCLUDE_TAG') || '');
+
+// Guard to avoid re-wrapping in case this file is evaluated more than once in the same run
+const TAG_WRAPPER_FLAG = '__MERKATO_IT_TAG_WRAPPED__';
+if ((excludeTag || includeTag) && !globalThis[TAG_WRAPPER_FLAG]) {
+  // Mark as wrapped before assigning to avoid races
+  Object.defineProperty(globalThis, TAG_WRAPPER_FLAG, {
+    value: true,
+    configurable: false,
+    enumerable: false,
+    writable: false,
+  });
+
+  const origIt = globalThis.it;
+  const makeBound = (base) => function wrapped(title, testFn) {
+    const t = typeof title === 'string' ? title : '';
+    const shouldInclude = includeTag ? t.includes(includeTag) : true;
+    const shouldExclude = excludeTag ? t.includes(excludeTag) : false;
     if (!shouldInclude || shouldExclude) {
-      return origIt.skip(title || '(skipped by tag filter)');
+      // Skip at definition time
+      return origIt.skip.call(globalThis, title || '(skipped by tag filter)');
     }
-    return origIt(title, fn);
+    return base.call(globalThis, title, testFn);
   };
+
+  // Replace global it with a safe wrapper and preserve it.only/skip
+  // eslint-disable-next-line no-global-assign
+  globalThis.it = makeBound(origIt);
+  if (origIt.only) globalThis.it.only = makeBound(origIt.only);
+  if (origIt.skip) globalThis.it.skip = origIt.skip.bind(globalThis);
 }
