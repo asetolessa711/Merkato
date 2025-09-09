@@ -56,11 +56,25 @@ jobs:
           E2E_BROWSER: '${{ matrix.browser }}'
           # Filter to fast, stable smoke specs only
           CYPRESS_INCLUDE_TAG: '@smoke'
+          # Avoid quarantined specs in weekly cross-browser check
+          CYPRESS_EXCLUDE_TAG: '@flaky'
           # Light flake insurance
           CYPRESS_retries: '2'
           # Force runner to enumerate all specs (then tags will skip others)
           E2E_USE_ALL: 'true'
         run: npm run e2e:run
+
+      - name: Append Cypress summary to Job Summary
+        if: always()
+        shell: bash
+        run: |
+          if [ -f "frontend/cypress-summary.txt" ]; then
+            echo "### Cypress summary (${ { matrix.browser } })" >> "$GITHUB_STEP_SUMMARY"
+            echo >> "$GITHUB_STEP_SUMMARY"
+            cat frontend/cypress-summary.txt >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "No cypress-summary.txt found" >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - name: Upload Cypress screenshots (${{ matrix.browser }})
         if: always()
