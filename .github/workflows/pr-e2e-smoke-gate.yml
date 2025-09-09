@@ -1,0 +1,105 @@
+name: PR E2E Smoke Gate
+
+on:
+  pull_request:
+    branches: [ main, dev ]
+
+concurrency:
+  group: pr-e2e-smoke-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    name: E2E Smoke (PR Gate)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      mongo:
+        image: mongo:6
+        ports:
+          - '27017:27017'
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand(\"ping\")' || exit 1"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install backend deps
+        working-directory: backend
+        run: npm ci
+      - name: Install frontend deps
+        working-directory: frontend
+        run: npm ci
+      - name: Run smoke suite by tag (@smoke) with 5 min budget
+        id: run_smoke
+        working-directory: frontend
+        env:
+          CI: 'true'
+          E2E_EPHEMERAL: 'true'
+          E2E_AUTODROP: 'true'
+          E2E_BACKEND_PORT: '5051'
+          CYPRESS_retries: '2'
+          # Tag-based selection: include @smoke, exclude @flaky
+          CYPRESS_INCLUDE_TAG: '@smoke'
+          CYPRESS_EXCLUDE_TAG: '@flaky'
+        run: |
+          start=$(date +%s)
+          npm run e2e:run
+          status=$?
+          end=$(date +%s)
+          duration=$((end-start))
+          echo "duration_seconds=${duration}" >> $GITHUB_OUTPUT
+          exit $status
+
+      - name: Append Cypress summary to Job Summary
+        if: always()
+        run: |
+          if [ -f "frontend/cypress-summary.txt" ]; then
+            echo "## Cypress summary" >> $GITHUB_STEP_SUMMARY
+            cat frontend/cypress-summary.txt >> $GITHUB_STEP_SUMMARY
+          else
+            echo "No cypress-summary.txt found." >> $GITHUB_STEP_SUMMARY
+          fi
+      - name: Enforce runtime budget (<= 300s)
+        if: always()
+        run: |
+          if [ -z "${{ steps.run_smoke.outputs.duration_seconds }}" ]; then
+            echo "::error::Missing duration output; failing gate."
+            exit 1
+          fi
+          dur=${{ steps.run_smoke.outputs.duration_seconds }}
+          echo "Total duration: ${dur}s"
+          if [ "$dur" -gt "300" ]; then
+            echo "::error::Smoke suite exceeded 5 minutes (${dur}s)."
+            exit 1
+          fi
+      - name: Upload Cypress screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-screenshots
+          path: frontend/cypress/screenshots
+          retention-days: 7
+      - name: Upload Cypress videos
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-videos
+          path: frontend/cypress/videos
+          retention-days: 7
+      - name: Upload logs & summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-logs-and-summary
+          path: |
+            frontend/cypress-summary.txt
+            frontend/cypress-results/*.json
+            backend/jest-results.json
+            frontend/e2e-backend.log
+            frontend/e2e-backend.err.log
+            frontend/e2e-meta.txt
+          retention-days: 7

@@ -9,7 +9,6 @@ module.exports = {
   ],
   setupFiles: [
     path.resolve(__dirname, "./jest.env.setup.js"),
-    path.resolve(__dirname, "./tests/setupFiles/ensureTestImage.js"),
   ],
   setupFilesAfterEnv: [
     path.resolve(__dirname, "./jest.afterEnv.setup.js"),

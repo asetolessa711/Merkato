@@ -13,6 +13,20 @@ function run(cmd, args, opts = {}) {
   return child;
 }
 
+function runWithLog(cmd, args, opts = {}, logFileBase) {
+  const child = spawn(cmd, args, { stdio: ['ignore', 'pipe', 'pipe'], shell: true, ...opts });
+  const outPath = path.join(opts.cwd || process.cwd(), '..', 'frontend', `${logFileBase || 'e2e-backend'}.log`);
+  const errPath = path.join(opts.cwd || process.cwd(), '..', 'frontend', `${logFileBase || 'e2e-backend'}.err.log`);
+  const outStream = fs.createWriteStream(outPath, { flags: 'a' });
+  const errStream = fs.createWriteStream(errPath, { flags: 'a' });
+  child.stdout.on('data', (d) => { try { process.stdout.write(d); outStream.write(d); } catch (_) {} });
+  child.stderr.on('data', (d) => { try { process.stderr.write(d); errStream.write(d); } catch (_) {} });
+  const closeStreams = () => { try { outStream.end(); } catch (_) {}; try { errStream.end(); } catch (_) {} };
+  child.on('close', closeStreams);
+  child.on('error', closeStreams);
+  return child;
+}
+
 async function main() {
   const repoRoot = path.resolve(__dirname, '..', '..');
   const frontendDir = path.resolve(__dirname, '..');
@@ -71,7 +85,7 @@ async function main() {
     const mongoUri = `${mongoBaseNoDb}/${ephemeralDbName}${mongoQuery}`;
 
     console.log(`[e2e] Starting backend on ${backendPort} ...`);
-    const backendEnv = {
+  const backendEnv = {
       ...process.env,
       NODE_ENV: 'development',
       PORT: String(backendPort),
@@ -83,7 +97,12 @@ async function main() {
       npm_config_cache: npmCache,
       PUPPETEER_CACHE_DIR: puppeteerCache,
     };
-    backend = run('node', ['server.js'], { cwd: backendDir, env: backendEnv });
+    // Persist meta info for artifacts
+    try {
+      const metaPath = path.join(frontendDir, 'e2e-meta.txt');
+      fs.writeFileSync(metaPath, `MONGO_URI=${mongoUri}\nDB_NAME=${ephemeralDbName}\nAPI_URL=${apiUrl}\n`, 'utf8');
+    } catch (_) {}
+    backend = runWithLog('node', ['server.js'], { cwd: backendDir, env: backendEnv }, 'e2e-backend');
   }
   const cleanup = () => {
     console.log('\n[e2e] Cleaning up processes...');
@@ -191,7 +210,11 @@ async function main() {
   // In CI or task-driven full runs, force running all specs unless explicitly disabled with E2E_USE_ALL=false
   const isCI = String(process.env.CI || '').toLowerCase() === 'true';
   const forceAll = isCI && String(process.env.E2E_USE_ALL || 'true').toLowerCase() !== 'false';
-  const cyEnv = { ...process.env, CYPRESS_API_URL: apiUrl, CYPRESS_video: 'false', CYPRESS_CACHE_FOLDER: cypressCache, npm_config_cache: npmCache };
+  const cyEnv = { ...process.env, CYPRESS_API_URL: apiUrl, CYPRESS_video: isCI ? 'true' : 'false', CYPRESS_CACHE_FOLDER: cypressCache, npm_config_cache: npmCache };
+  // Pass through exclude tag (e.g., @flaky) from env in a Cypress-friendly way
+  if (process.env.CYPRESS_EXCLUDE_TAG) {
+    cyEnv.CYPRESS_EXCLUDE_TAG = process.env.CYPRESS_EXCLUDE_TAG;
+  }
   if (forceAll) {
     // Clear any E2E_SPEC inherited from the parent environment for this child process
     delete cyEnv.E2E_SPEC;
@@ -256,6 +279,17 @@ async function main() {
     }
   }
   let specArg = [];
+  function maybeSplitSpecs(list) {
+    const total = Number(process.env.E2E_SPLIT_TOTAL || 0);
+    const index = Number(process.env.E2E_SPLIT_INDEX || 0);
+    if (total > 1 && index >= 0 && index < total) {
+      const sorted = [...list].sort();
+      const filtered = sorted.filter((_, i) => i % total === index);
+      console.log(`[e2e] Spec splitting: ${filtered.length}/${sorted.length} specs for shard ${index + 1}/${total}`);
+      return filtered;
+    }
+    return list;
+  }
   if (!forceAll && process.env.E2E_SPEC) {
     const raw = String(process.env.E2E_SPEC);
     const parts = raw.split(',').map(s => s.trim()).filter(Boolean);
@@ -276,7 +310,8 @@ async function main() {
       console.warn(`[e2e] Ignoring unknown spec entry: ${p}`);
     }
     if (resolved.length > 0) {
-      specArg = ['--spec', resolved.join(',')];
+      const sharded = maybeSplitSpecs(resolved);
+      specArg = ['--spec', sharded.join(',')];
     } else {
       console.log('[e2e] E2E_SPEC provided but no matching files were found. Running default spec discovery.');
     }
@@ -287,8 +322,9 @@ async function main() {
       const allSpecs = await listSpecFiles(specRoot);
       if (allSpecs && allSpecs.length) {
         const rel = allSpecs.map((p) => path.relative(frontendDir, p));
-        specArg = ['--spec', rel.join(',')];
-        console.log(`[e2e] Running all specs explicitly: ${rel.length} files`);
+        const sharded = maybeSplitSpecs(rel);
+        specArg = ['--spec', sharded.join(',')];
+        console.log(`[e2e] Running specs explicitly: ${sharded.length}/${rel.length} files`);
       }
     } catch (e) {
       console.warn('[e2e] Failed to enumerate specs:', e && e.message ? e.message : e);
@@ -299,7 +335,17 @@ async function main() {
   const fullSpecPattern = 'cypress/e2e/**/*.cy.{js,jsx,ts,tsx}';
   // Use top-level specPattern for CLI compatibility (Cypress v10+); e2e.specPattern is not a valid CLI key
   const configArg = `baseUrl=${baseUrl},specPattern=${fullSpecPattern}`;
-  const cyArgs = ['cypress', 'run', '--browser', e2eBrowser, '--headless', '--config', configArg, '--reporter', 'mochawesome', '--reporter-options', `reportFilename=cypress-report,overwrite=true,quiet=true,charts=false,html=false,json=true,reportDir=.`, ...specArg];
+  const resultsDir = path.join(frontendDir, 'cypress-results');
+  try {
+    fs.mkdirSync(resultsDir, { recursive: true });
+    // Clean previous JSON reports to avoid cross-run aggregation
+    for (const f of fs.readdirSync(resultsDir)) {
+      if (/\.json$/i.test(f)) {
+        try { fs.unlinkSync(path.join(resultsDir, f)); } catch (_) {}
+      }
+    }
+  } catch {}
+  const cyArgs = ['cypress', 'run', '--browser', e2eBrowser, '--headless', '--config', configArg, '--reporter', 'mochawesome', '--reporter-options', `reportDir=cypress-results,reportFilename=cypress-report,overwrite=false,quiet=true,charts=false,html=false,json=true`, ...specArg];
   try {
     const expose = Object.keys(cyEnv).filter(k => /^CYPRESS_/i.test(k)).reduce((acc,k)=> (acc[k]=cyEnv[k], acc), {});
     console.log('[e2e] Cypress env (filtered):', JSON.stringify(expose));
@@ -309,20 +355,32 @@ async function main() {
   const cyCode = await new Promise((resolve) => cy.on('close', resolve));
   try {
     const summaryPath = path.join(frontendDir, 'cypress-summary.txt');
-    if (fs.existsSync(reportPath)) {
-      const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
-      const stats = report?.stats || {};
-      const line = `[e2e] Cypress results: ${stats.tests || 0} tests, ${stats.passes || 0} passed, ${stats.failures || 0} failed`;
+    // Aggregate all mochawesome JSON reports in resultsDir
+    const files = fs.readdirSync(resultsDir).filter(f => /\.json$/i.test(f));
+    if (files.length) {
+      let total = { tests: 0, passes: 0, failures: 0, pending: 0, duration: 0 };
+      for (const f of files) {
+        try {
+          const data = JSON.parse(fs.readFileSync(path.join(resultsDir, f), 'utf8')) || {};
+          const s = data.stats || {};
+          total.tests += Number(s.tests || 0);
+          total.passes += Number(s.passes || 0);
+          total.failures += Number(s.failures || 0);
+          total.pending += Number(s.pending || 0);
+          total.duration += Number(s.duration || 0);
+        } catch (_) {}
+      }
+      const line = `[e2e] Cypress results: ${total.tests} tests, ${total.passes} passed, ${total.failures} failed`;
+      const meta = [];
+      if (ephemeralDbName) meta.push(`db=${ephemeralDbName}`);
+      if (apiUrl) meta.push(`api=${apiUrl}`);
+      const metaLine = meta.length ? ` [${meta.join(' ')}]` : '';
       console.log(line);
-      try {
-        fs.writeFileSync(summaryPath, `${line}\n`, 'utf8');
-      } catch (_) {}
+      try { fs.writeFileSync(summaryPath, `${line}${metaLine}\n`, 'utf8'); } catch (_) {}
     } else {
-      const fallback = `[e2e] Cypress finished with exit code ${cyCode}. No JSON report found at ${reportPath}.`;
+      const fallback = `[e2e] Cypress finished with exit code ${cyCode}. No JSON reports found in ${resultsDir}.`;
       console.warn(fallback);
-      try {
-        fs.writeFileSync(summaryPath, `${fallback}\n`, 'utf8');
-      } catch (_) {}
+      try { fs.writeFileSync(summaryPath, `${fallback}\n`, 'utf8'); } catch (_) {}
     }
   } catch (_) {}
   cleanup();

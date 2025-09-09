@@ -80,9 +80,11 @@ describe('Invoice Routes', () => {
     if (!product) {
       throw new Error('❌ No products found in DB. Please seed products first.');
     }
-    // Ensure the product is orderable (stock > 0) for this test suite
-    if (!product.stock || product.stock < 1) {
-      await Product.updateOne({ _id: product._id }, { $set: { stock: 5 } });
+    // Ensure the product is orderable for multiple orders in this suite
+    // We create two orders below, so guarantee stock >= 2 to avoid flakiness
+    const neededStock = 2;
+    if (!product.stock || product.stock < neededStock) {
+      await Product.updateOne({ _id: product._id }, { $set: { stock: Math.max(5, neededStock) } });
       product = await Product.findById(product._id);
     }
     productId = product._id;

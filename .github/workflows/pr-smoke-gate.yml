@@ -1,0 +1,76 @@
+name: PR Smoke Gate (5 min budget)
+
+on:
+  pull_request:
+    branches: [ main, dev ]
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      mongo:
+        image: mongo:6
+        ports:
+          - '27017:27017'
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand(\"ping\")' || exit 1"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install backend deps
+        working-directory: backend
+        run: npm ci
+      - name: Install frontend deps
+        working-directory: frontend
+        run: npm ci
+      - name: Run smoke (measure time and gate)
+        id: smoke
+        working-directory: frontend
+        env:
+          CI: 'true'
+          E2E_EPHEMERAL: 'true'
+          E2E_AUTODROP: 'true'
+          E2E_BACKEND_PORT: '5051'
+          CYPRESS_retries: '2'
+          CYPRESS_EXCLUDE_TAG: '@flaky'
+          # Focus a fast, stable subset
+          E2E_SPEC: >-
+            cypress/e2e/basic_navigation.cy.js,
+            cypress/e2e/cart_checkout_button.cy.js,
+            cypress/e2e/login_error.cy.js,
+            cypress/e2e/card_intent.cy.js
+        run: |
+          start=$(date +%s)
+          npm run e2e:run
+          code=$?
+          end=$(date +%s)
+          echo "duration=$((end-start))" >> $GITHUB_OUTPUT
+          exit $code
+      - name: Enforce 5-minute budget
+        if: always()
+        run: |
+          dur=${{ steps.smoke.outputs.duration }}
+          echo "Total duration: ${dur}s"
+          if [ -z "$dur" ] || [ "$dur" -gt 300 ]; then
+            echo "::error::Smoke suite exceeded budget (<=300s)."
+            exit 1
+          fi
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-smoke-artifacts
+          path: |
+            frontend/cypress-summary.txt
+            frontend/cypress-results/*.json
+            frontend/cypress/screenshots
+            frontend/cypress/videos
+            frontend/e2e-backend.log
+            frontend/e2e-backend.err.log
+            frontend/e2e-meta.txt
+          retention-days: 7

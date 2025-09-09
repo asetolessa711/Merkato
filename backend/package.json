@@ -17,9 +17,6 @@
     "test:backend": "jest --config=./jest.config.backend.js",
     "pretest": "node seedUsers.js && node seedFeedback.js"
   },
-  "jest": {
-    "globalSetup": "./tests/restoreTestImage.js"
-  },
   "keywords": [],
   "author": "Merkato Team",
   "license": "MIT",

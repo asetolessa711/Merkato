@@ -1,0 +1,184 @@
+{
+  "stats": {
+    "suites": 1,
+    "tests": 5,
+    "passes": 5,
+    "pending": 0,
+    "failures": 0,
+    "start": "2025-09-09T17:33:39.674Z",
+    "end": "2025-09-09T17:33:46.786Z",
+    "duration": 7112,
+    "testsRegistered": 5,
+    "passPercent": 100,
+    "pendingPercent": 0,
+    "other": 0,
+    "hasOther": false,
+    "skipped": 0,
+    "hasSkipped": false
+  },
+  "results": [
+    {
+      "uuid": "864ccb28-fe80-4163-b89b-08a6cc5d5566",
+      "title": "",
+      "fullFile": "cypress\\e2e\\adminOrdersBulkActions.cy.js",
+      "file": "cypress\\e2e\\adminOrdersBulkActions.cy.js",
+      "beforeHooks": [],
+      "afterHooks": [],
+      "tests": [],
+      "suites": [
+        {
+          "uuid": "bb27bdc1-9e39-4222-9317-d281cbd1c682",
+          "title": "AdminOrders Bulk Actions E2E",
+          "fullFile": "",
+          "file": "",
+          "beforeHooks": [],
+          "afterHooks": [],
+          "tests": [
+            {
+              "title": "performs bulk status change and shows summary",
+              "fullTitle": "AdminOrders Bulk Actions E2E performs bulk status change and shows summary",
+              "timedOut": null,
+              "duration": 1982,
+              "state": "passed",
+              "speed": "fast",
+              "pass": true,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "cy.intercept('POST', '/api/admin/orders/bulk-status').as('bulkStatus');\ncy.get('[data-testid=\"order-checkbox\"]').check({\n  force: true\n});\ncy.contains('Mark as Shipped').scrollIntoView().should('be.visible').click();\ncy.get('[data-testid=\"bulk-preview-header\"]').should('exist').and('be.visible');\ncy.get('[data-testid=\"bulk-preview-dialog\"] button').contains('Confirm').scrollIntoView().should('be.visible').click();\ncy.wait('@bulkStatus');\ncy.get('[data-testid=\"bulk-action-summary-header\"]').should('exist').and('be.visible');\ncy.get('[data-testid=\"bulk-summary-failed-count\"]').should('exist').and('be.visible');\ncy.get('[data-testid=\"bulk-action-summary-header\"]').parent().should('contain.text', 'Success: 2');",
+              "err": {},
+              "uuid": "7a29454b-f834-4d91-8054-0b0b76ab5307",
+              "parentUUID": "bb27bdc1-9e39-4222-9317-d281cbd1c682",
+              "isHook": false,
+              "skipped": false
+            },
+            {
+              "title": "undoes a bulk status change",
+              "fullTitle": "AdminOrders Bulk Actions E2E undoes a bulk status change",
+              "timedOut": null,
+              "duration": 1268,
+              "state": "passed",
+              "speed": "fast",
+              "pass": true,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "cy.intercept('POST', '/api/admin/orders/bulk-status').as('bulkStatus');\ncy.get('[data-testid=\"order-checkbox\"]').check({\n  force: true\n});\ncy.contains('Mark as Shipped').scrollIntoView().should('be.visible').click();\ncy.get('[data-testid=\"bulk-preview-header\"]').should('exist').and('be.visible');\ncy.get('[data-testid=\"bulk-preview-dialog\"] button').contains('Confirm').scrollIntoView().should('be.visible').click();\ncy.wait('@bulkStatus');\ncy.get('[data-testid=\"undo-bulk-action\"]').scrollIntoView().should('exist').and('be.visible').click();\ncy.get('[data-testid=\"undo-bulk-action\"]').should('not.exist');",
+              "err": {},
+              "uuid": "95fe4bdf-b7fa-43b9-8b96-97ef01662853",
+              "parentUUID": "bb27bdc1-9e39-4222-9317-d281cbd1c682",
+              "isHook": false,
+              "skipped": false
+            },
+            {
+              "title": "schedules a bulk action and shows scheduled entry",
+              "fullTitle": "AdminOrders Bulk Actions E2E schedules a bulk action and shows scheduled entry",
+              "timedOut": null,
+              "duration": 1510,
+              "state": "passed",
+              "speed": "fast",
+              "pass": true,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "cy.intercept('POST', '/api/admin/orders/bulk-schedule').as('bulkSchedule');\ncy.get('[data-testid=\"order-checkbox\"]').check({\n  force: true\n});\ncy.contains('Schedule Export').scrollIntoView().should('be.visible').click();\ncy.get('[data-testid=\"schedule-bulk-action-header\"]').should('exist').and('be.visible');\ncy.get('[data-testid=\"schedule-date-input\"]').should('exist').type('2025-08-06T12:00');\ncy.get('[data-testid=\"confirm-schedule-bulk-action\"]').scrollIntoView().should('be.visible').click();\ncy.wait('@bulkSchedule');\ncy.contains('Scheduled Bulk Actions').should('exist').and('be.visible');\ncy.contains('Export').should('exist').and('be.visible');",
+              "err": {},
+              "uuid": "d05da7c0-81c7-43fe-a1e6-d7b5b7b8b5a7",
+              "parentUUID": "bb27bdc1-9e39-4222-9317-d281cbd1c682",
+              "isHook": false,
+              "skipped": false
+            },
+            {
+              "title": "shows error message for failed bulk status change",
+              "fullTitle": "AdminOrders Bulk Actions E2E shows error message for failed bulk status change",
+              "timedOut": null,
+              "duration": 1159,
+              "state": "passed",
+              "speed": "fast",
+              "pass": true,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "// Simulate API failure by intercepting\ncy.intercept('POST', '/api/admin/orders/bulk-status', {\n  statusCode: 500,\n  body: {\n    failed: ['1', '2']\n  }\n});\ncy.get('[data-testid=\"order-checkbox\"]').check({\n  force: true\n});\ncy.contains('Mark as Shipped').scrollIntoView().should('be.visible').click();\ncy.get('[data-testid=\"bulk-preview-header\"]').should('exist').and('be.visible');\ncy.get('[data-testid=\"bulk-preview-dialog\"] button').contains('Confirm').scrollIntoView().should('be.visible').click();\ncy.get('[data-testid=\"bulk-action-summary-header\"]').should('exist').and('be.visible');\ncy.get('[data-testid=\"bulk-summary-failed-count\"]').should('exist').and('contain.text', '2');",
+              "err": {},
+              "uuid": "9ebf36ce-95d8-4b6e-922c-2c3107a0cf6e",
+              "parentUUID": "bb27bdc1-9e39-4222-9317-d281cbd1c682",
+              "isHook": false,
+              "skipped": false
+            },
+            {
+              "title": "shows info message if not authorized for bulk actions",
+              "fullTitle": "AdminOrders Bulk Actions E2E shows info message if not authorized for bulk actions",
+              "timedOut": null,
+              "duration": 1071,
+              "state": "passed",
+              "speed": "fast",
+              "pass": true,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "cy.window().then(win => win.localStorage.setItem('adminRole', 'viewer'));\ncy.reload();\ncy.get('[data-testid=\"order-checkbox\"]').check({\n  force: true\n});\ncy.contains('Mark as Shipped').scrollIntoView().should('be.visible').click();\ncy.get('[data-testid=\"bulk-action-unauthorized-info\"]').should('exist').and('be.visible');",
+              "err": {},
+              "uuid": "739e6df3-848c-4ac6-8ca3-18854c2f38ea",
+              "parentUUID": "bb27bdc1-9e39-4222-9317-d281cbd1c682",
+              "isHook": false,
+              "skipped": false
+            }
+          ],
+          "suites": [],
+          "passes": [
+            "7a29454b-f834-4d91-8054-0b0b76ab5307",
+            "95fe4bdf-b7fa-43b9-8b96-97ef01662853",
+            "d05da7c0-81c7-43fe-a1e6-d7b5b7b8b5a7",
+            "9ebf36ce-95d8-4b6e-922c-2c3107a0cf6e",
+            "739e6df3-848c-4ac6-8ca3-18854c2f38ea"
+          ],
+          "failures": [],
+          "pending": [],
+          "skipped": [],
+          "duration": 6990,
+          "root": false,
+          "rootEmpty": false,
+          "_timeout": 2000
+        }
+      ],
+      "passes": [],
+      "failures": [],
+      "pending": [],
+      "skipped": [],
+      "duration": 0,
+      "root": true,
+      "rootEmpty": true,
+      "_timeout": 2000
+    }
+  ],
+  "meta": {
+    "mocha": {
+      "version": "7.2.0"
+    },
+    "mochawesome": {
+      "options": {
+        "quiet": true,
+        "reportFilename": "cypress-report",
+        "saveHtml": false,
+        "saveJson": true,
+        "consoleReporter": "spec",
+        "useInlineDiffs": false,
+        "code": true
+      },
+      "version": "7.1.3"
+    },
+    "marge": {
+      "options": {
+        "reportDir": "cypress-results",
+        "reportFilename": "cypress-report",
+        "overwrite": false,
+        "quiet": true,
+        "charts": false,
+        "html": false,
+        "json": true
+      },
+      "version": "6.2.0"
+    }
+  }
+}

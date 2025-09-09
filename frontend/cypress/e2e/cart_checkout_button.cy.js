@@ -6,7 +6,7 @@ describe('🛒 Cart Checkout Button', () => {
     cy.task('db:seed');
   });
 
-  it('shows checkout button after adding product', () => {
+  it('shows checkout button after adding product @smoke', () => {
     cy.intercept('GET', '/api/products*').as('products');
     cy.visit('/shop');
     cy.wait('@products');

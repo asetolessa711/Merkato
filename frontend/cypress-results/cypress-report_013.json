@@ -1,0 +1,127 @@
+{
+  "stats": {
+    "suites": 1,
+    "tests": 2,
+    "passes": 2,
+    "pending": 0,
+    "failures": 0,
+    "start": "2025-09-09T17:35:05.676Z",
+    "end": "2025-09-09T17:35:08.071Z",
+    "duration": 2395,
+    "testsRegistered": 2,
+    "passPercent": 100,
+    "pendingPercent": 0,
+    "other": 0,
+    "hasOther": false,
+    "skipped": 0,
+    "hasSkipped": false
+  },
+  "results": [
+    {
+      "uuid": "fe0a32a9-1626-439c-adfa-55fbbaf273f6",
+      "title": "",
+      "fullFile": "cypress\\e2e\\order_status_update.cy.js",
+      "file": "cypress\\e2e\\order_status_update.cy.js",
+      "beforeHooks": [],
+      "afterHooks": [],
+      "tests": [],
+      "suites": [
+        {
+          "uuid": "9200f455-0b24-4fce-b7e4-7923890c659f",
+          "title": "Order Status Update",
+          "fullFile": "",
+          "file": "",
+          "beforeHooks": [],
+          "afterHooks": [],
+          "tests": [
+            {
+              "title": "should allow admin to update order status",
+              "fullTitle": "Order Status Update should allow admin to update order status",
+              "timedOut": null,
+              "duration": 1251,
+              "state": "passed",
+              "speed": "fast",
+              "pass": true,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "cy.login('admin');\ncy.intercept('GET', '**/api/admin/orders*').as('adminOrders');\ncy.intercept('PATCH', /\\/api\\/orders\\/.+\\/status/).as('updateStatus');\ncy.visit('/admin/orders');\ncy.wait('@adminOrders');\ncy.get('[data-testid=\"order-row\"]').first().within(() => {\n  // Selecting triggers updateStatus via onChange handler; clicking Update can double-fire in CI\n  cy.get('[data-testid=\"status-select\"]').select('Shipped');\n});\ncy.wait('@updateStatus');\ncy.contains(/Shipped|shipped/i).should('exist');",
+              "err": {},
+              "uuid": "aa0b6021-cdf9-44fe-825e-51dc59931bc4",
+              "parentUUID": "9200f455-0b24-4fce-b7e4-7923890c659f",
+              "isHook": false,
+              "skipped": false
+            },
+            {
+              "title": "should allow vendor to update order status",
+              "fullTitle": "Order Status Update should allow vendor to update order status",
+              "timedOut": null,
+              "duration": 1058,
+              "state": "passed",
+              "speed": "fast",
+              "pass": true,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "cy.login('vendor');\n// Frontend vendor orders page calls /api/orders/vendor-orders\ncy.intercept('GET', '**/api/orders/vendor-orders*').as('vendorOrders');\ncy.intercept('PATCH', /\\/api\\/orders\\/.+\\/status/).as('updateStatus');\ncy.visit('/vendor/orders');\n// Do not wait on vendorOrders; placeholder flow may render before network returns in CI\ncy.get('[data-testid=\"order-row\"]').first().within(() => {\n  cy.get('[data-testid=\"status-select\"]').select('Completed');\n  cy.get('[data-testid=\"update-status-btn\"]').click();\n});\n// In placeholder/no-order mode, no network request is fired; assert UI change instead\ncy.contains('Completed').should('exist');",
+              "err": {},
+              "uuid": "8aa2ea7e-a31f-4311-8222-1e3334a3a2bd",
+              "parentUUID": "9200f455-0b24-4fce-b7e4-7923890c659f",
+              "isHook": false,
+              "skipped": false
+            }
+          ],
+          "suites": [],
+          "passes": [
+            "aa0b6021-cdf9-44fe-825e-51dc59931bc4",
+            "8aa2ea7e-a31f-4311-8222-1e3334a3a2bd"
+          ],
+          "failures": [],
+          "pending": [],
+          "skipped": [],
+          "duration": 2309,
+          "root": false,
+          "rootEmpty": false,
+          "_timeout": 2000
+        }
+      ],
+      "passes": [],
+      "failures": [],
+      "pending": [],
+      "skipped": [],
+      "duration": 0,
+      "root": true,
+      "rootEmpty": true,
+      "_timeout": 2000
+    }
+  ],
+  "meta": {
+    "mocha": {
+      "version": "7.2.0"
+    },
+    "mochawesome": {
+      "options": {
+        "quiet": true,
+        "reportFilename": "cypress-report",
+        "saveHtml": false,
+        "saveJson": true,
+        "consoleReporter": "spec",
+        "useInlineDiffs": false,
+        "code": true
+      },
+      "version": "7.1.3"
+    },
+    "marge": {
+      "options": {
+        "reportDir": "cypress-results",
+        "reportFilename": "cypress-report",
+        "overwrite": false,
+        "quiet": true,
+        "charts": false,
+        "html": false,
+        "json": true
+      },
+      "version": "6.2.0"
+    }
+  }
+}

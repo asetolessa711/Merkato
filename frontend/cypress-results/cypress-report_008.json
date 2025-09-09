@@ -1,0 +1,184 @@
+{
+  "stats": {
+    "suites": 1,
+    "tests": 5,
+    "passes": 5,
+    "pending": 0,
+    "failures": 0,
+    "start": "2025-09-09T17:34:32.628Z",
+    "end": "2025-09-09T17:34:40.428Z",
+    "duration": 7800,
+    "testsRegistered": 5,
+    "passPercent": 100,
+    "pendingPercent": 0,
+    "other": 0,
+    "hasOther": false,
+    "skipped": 0,
+    "hasSkipped": false
+  },
+  "results": [
+    {
+      "uuid": "64005091-c358-4f24-a8a3-2c615afa65ac",
+      "title": "",
+      "fullFile": "cypress\\e2e\\customerFlow.cy.js",
+      "file": "cypress\\e2e\\customerFlow.cy.js",
+      "beforeHooks": [],
+      "afterHooks": [],
+      "tests": [],
+      "suites": [
+        {
+          "uuid": "ef46f941-8eda-4520-a9dd-b7a1e0571897",
+          "title": "🛒 Customer E2E Flow",
+          "fullFile": "",
+          "file": "",
+          "beforeHooks": [],
+          "afterHooks": [],
+          "tests": [
+            {
+              "title": "registers, logs in, adds to cart, checks out, and sees order confirmation",
+              "fullTitle": "🛒 Customer E2E Flow registers, logs in, adds to cart, checks out, and sees order confirmation",
+              "timedOut": null,
+              "duration": 3781,
+              "state": "passed",
+              "speed": "fast",
+              "pass": true,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "// Visit home page\ncy.visit('/');\n// Register a new user\ncy.intercept('POST', '/api/auth/register').as('register');\ncy.contains(/register/i).click();\ncy.get('input[name=\"name\"]').type('Test Customer');\ncy.get('input[name=\"email\"]').type(email);\ncy.get('input[name=\"password\"]').type(password);\ncy.get('input[name=\"confirmPassword\"]').type(password);\ncy.get('button[type=\"submit\"]').contains(/register/i).click();\ncy.wait('@register');\n// Navigate to login only if we remained on the register page; allow auto-login flows\ncy.location('pathname', {\n  timeout: 10000\n}).then(path => {\n  if (path.includes('/register')) {\n    cy.visit('/login');\n  }\n});\n// Login (if not auto-logged in)\nif (Cypress.$('input[name=\"email\"]').length) {\n  cy.intercept('POST', '/api/auth/login').as('login');\n  cy.get('input[name=\"email\"]').type(email);\n  cy.get('input[name=\"password\"]').type(password);\n  cy.get('button[type=\"submit\"]').contains(/login/i).click();\n  cy.wait('@login');\n}\n// Wait for dashboard or home\ncy.url().should('match', /dashboard|account|home|\\//i);\n// Add a product to cart\ncy.contains(/shop/i).click();\ncy.get('[data-testid=\"product-card\"]').first().within(() => {\n  cy.contains(/add to cart/i).click();\n});\n// Open cart page and verify item present\ncy.get('[data-testid=\"cart-link\"]').click();\ncy.url().should('include', '/cart');\n// On CartPage, ensure checkout button is enabled (cart not empty)\ncy.get('[data-testid=\"checkout-btn\"]').should('exist').and('be.enabled');\n// Remove item and re-add to test cart update\n// Remove first item if any and verify cart updates\ncy.contains('button', /Remove/i).first().click({\n  force: true\n});\n// Either the cart becomes empty (no checkout button) or remains with fewer items\ncy.get('body').then($body => {\n  if ($body.find('[data-testid=\"checkout-btn\"]').length) {\n    cy.get('[data-testid=\"checkout-btn\"]').should('exist');\n  } else {\n    cy.contains(/your cart is empty/i).should('be.visible');\n  }\n});\n// Re-add for checkout\ncy.contains(/shop/i).click();\ncy.get('[data-testid=\"product-card\"]').first().within(() => {\n  cy.contains(/add to cart/i).click();\n});\n// Proceed to checkout from cart page\ncy.get('[data-testid=\"cart-link\"]').click();\ncy.url().should('include', '/cart');\ncy.get('[data-testid=\"checkout-btn\"]').should('be.enabled').click();\n// Fill in checkout form if required\ncy.get('input[name=\"address\"]').type('123 Test St');\ncy.get('input[name=\"city\"]').type('Testville');\ncy.get('input[name=\"zip\"]').type('12345');\ncy.intercept('POST', '/api/orders').as('createOrder');\ncy.get('button[type=\"submit\"]').contains(/place order|pay/i).click();\ncy.wait('@createOrder');\n// Confirm order confirmation page\ncy.contains(/thank you/i, {\n  timeout: 10000\n}).should('be.visible');\ncy.contains(/order has been placed/i).should('be.visible');\n// Test logout\ncy.get('[data-testid=\"navbar\"]').within(() => {\n  cy.contains(/logout/i).click();\n});\ncy.contains(/login/i).should('be.visible');",
+              "err": {},
+              "uuid": "85d208d3-15ae-4a8e-bafb-b9fa37a11067",
+              "parentUUID": "ef46f941-8eda-4520-a9dd-b7a1e0571897",
+              "isHook": false,
+              "skipped": false
+            },
+            {
+              "title": "shows error on invalid login",
+              "fullTitle": "🛒 Customer E2E Flow shows error on invalid login",
+              "timedOut": null,
+              "duration": 996,
+              "state": "passed",
+              "speed": "fast",
+              "pass": true,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "cy.visit('/login');\ncy.get('input[name=\"email\"]').type('not-a-user@example.com');\ncy.get('input[name=\"password\"]').type('WrongPass123!');\ncy.get('button[type=\"submit\"]').contains(/login/i).click();\ncy.contains(/invalid email|invalid credentials|not found/i).should('be.visible');",
+              "err": {},
+              "uuid": "cdb0c64a-2639-4f41-b647-38f7049461a8",
+              "parentUUID": "ef46f941-8eda-4520-a9dd-b7a1e0571897",
+              "isHook": false,
+              "skipped": false
+            },
+            {
+              "title": "prevents checkout with empty cart",
+              "fullTitle": "🛒 Customer E2E Flow prevents checkout with empty cart",
+              "timedOut": null,
+              "duration": 313,
+              "state": "passed",
+              "speed": "fast",
+              "pass": true,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "cy.visit('/');\ncy.get('[data-testid=\"cart-link\"]').click();\ncy.url().should('include', '/cart');\n// On empty cart page, no checkout button is rendered\ncy.contains(/your cart is empty/i).should('be.visible');\ncy.get('[data-testid=\"checkout-btn\"]').should('not.exist');",
+              "err": {},
+              "uuid": "9b5642b0-0532-4b94-bd67-8caa3eb9a6af",
+              "parentUUID": "ef46f941-8eda-4520-a9dd-b7a1e0571897",
+              "isHook": false,
+              "skipped": false
+            },
+            {
+              "title": "persists session after reload",
+              "fullTitle": "🛒 Customer E2E Flow persists session after reload",
+              "timedOut": null,
+              "duration": 2055,
+              "state": "passed",
+              "speed": "fast",
+              "pass": true,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "// Register, then explicitly login (RegisterPage redirects to /login on success)\nconst regEmail = `persist-${Date.now()}@example.com`;\ncy.visit('/');\ncy.contains(/register/i).click();\ncy.intercept('POST', '/api/auth/register').as('register');\ncy.get('input[name=\"name\"]').type('Persistent Customer');\ncy.get('input[name=\"email\"]').type(regEmail);\ncy.get('input[name=\"password\"]').type(password);\ncy.get('input[name=\"confirmPassword\"]').type(password);\ncy.get('button[type=\"submit\"]').contains(/register/i).click();\ncy.wait('@register');\n// If still on register, go to /login; if already auto-logged-in, skip\ncy.location('pathname', {\n  timeout: 10000\n}).then(path => {\n  if (path.includes('/register')) {\n    cy.visit('/login');\n  }\n});\n// Register then explicit login (app redirects to /login on successful register)\nconst persistEmail = regEmail;\ncy.get('body').then($body => {\n  if ($body.find('input[name=\"email\"]').length) {\n    cy.intercept('POST', '/api/auth/login').as('login');\n    cy.get('input[name=\"email\"]').type(persistEmail);\n    cy.get('input[name=\"password\"]').type(password);\n    cy.get('button[type=\"submit\"]').contains(/login/i).click();\n    cy.wait('@login');\n  }\n});\ncy.contains(/logout/i).should('be.visible');\n// Reload and check still logged in\ncy.reload();\ncy.contains(/logout/i).should('be.visible');",
+              "err": {},
+              "uuid": "4a8a9de7-0fa0-4ad9-9c85-e343939f3369",
+              "parentUUID": "ef46f941-8eda-4520-a9dd-b7a1e0571897",
+              "isHook": false,
+              "skipped": false
+            },
+            {
+              "title": "persists cart after reload",
+              "fullTitle": "🛒 Customer E2E Flow persists cart after reload",
+              "timedOut": null,
+              "duration": 540,
+              "state": "passed",
+              "speed": "fast",
+              "pass": true,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "cy.visit('/');\ncy.contains(/shop/i).click();\ncy.get('[data-testid=\"product-card\"]').first().within(() => {\n  cy.contains(/add to cart/i).click();\n});\ncy.get('[data-testid=\"cart-link\"]').click();\ncy.url().should('include', '/cart');\ncy.get('[data-testid=\"checkout-btn\"]').should('exist').and('be.enabled');\n// Reload and check cart still has item\ncy.reload();\n// Ensure we're on cart page and UI still interactive\ncy.url().should('include', '/cart');\n// Confirm that at least one item is still in the cart\n// CartPage renders item rows; assert presence via text and checkout button\ncy.get('[data-testid=\"checkout-btn\"]').should('exist').and('be.enabled');\n// Directly check localStorage for cart persistence\ncy.window().then(win => {\n  const stored = win.localStorage.getItem('merkato-cart');\n  const cart = stored ? JSON.parse(stored) : {\n    items: []\n  };\n  expect(cart.items || cart).to.have.length.of.at.least(1);\n});",
+              "err": {},
+              "uuid": "9115d963-5408-410f-9368-c0affdd3ac03",
+              "parentUUID": "ef46f941-8eda-4520-a9dd-b7a1e0571897",
+              "isHook": false,
+              "skipped": false
+            }
+          ],
+          "suites": [],
+          "passes": [
+            "85d208d3-15ae-4a8e-bafb-b9fa37a11067",
+            "cdb0c64a-2639-4f41-b647-38f7049461a8",
+            "9b5642b0-0532-4b94-bd67-8caa3eb9a6af",
+            "4a8a9de7-0fa0-4ad9-9c85-e343939f3369",
+            "9115d963-5408-410f-9368-c0affdd3ac03"
+          ],
+          "failures": [],
+          "pending": [],
+          "skipped": [],
+          "duration": 7685,
+          "root": false,
+          "rootEmpty": false,
+          "_timeout": 2000
+        }
+      ],
+      "passes": [],
+      "failures": [],
+      "pending": [],
+      "skipped": [],
+      "duration": 0,
+      "root": true,
+      "rootEmpty": true,
+      "_timeout": 2000
+    }
+  ],
+  "meta": {
+    "mocha": {
+      "version": "7.2.0"
+    },
+    "mochawesome": {
+      "options": {
+        "quiet": true,
+        "reportFilename": "cypress-report",
+        "saveHtml": false,
+        "saveJson": true,
+        "consoleReporter": "spec",
+        "useInlineDiffs": false,
+        "code": true
+      },
+      "version": "7.1.3"
+    },
+    "marge": {
+      "options": {
+        "reportDir": "cypress-results",
+        "reportFilename": "cypress-report",
+        "overwrite": false,
+        "quiet": true,
+        "charts": false,
+        "html": false,
+        "json": true
+      },
+      "version": "6.2.0"
+    }
+  }
+}

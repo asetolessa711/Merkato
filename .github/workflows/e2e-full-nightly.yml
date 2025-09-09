@@ -8,8 +8,13 @@ on:
 
 jobs:
   e2e-full:
+    name: E2E Full (Nightly) - shard ${{ matrix.shard_index }}/3
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        shard_index: [0, 1, 2]
 
     services:
       mongo:
@@ -50,24 +55,40 @@ jobs:
           CI: 'true'
           # Force running all specs explicitly and scrub any spec overrides
           E2E_USE_ALL: 'true'
+          # Shard specs across parallel runners
+          E2E_SPLIT_TOTAL: '3'
+          E2E_SPLIT_INDEX: '${{ matrix.shard_index }}'
         run: npm run e2e:run
 
-      - name: Upload Cypress screenshots
+      - name: Upload Cypress screenshots (shard ${{ matrix.shard_index }})
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: cypress-screenshots
+          name: cypress-screenshots-shard-${{ matrix.shard_index }}
           path: |
             frontend/cypress/screenshots
             !frontend/cypress/screenshots/**/.gitkeep
           retention-days: 7
 
-      - name: Upload Cypress videos
+      - name: Upload Cypress videos (shard ${{ matrix.shard_index }})
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: cypress-videos
+          name: cypress-videos-shard-${{ matrix.shard_index }}
           path: |
             frontend/cypress/videos
             !frontend/cypress/videos/**/.gitkeep
+          retention-days: 7
+
+      - name: Upload logs & summary (shard ${{ matrix.shard_index }})
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-logs-and-summary-shard-${{ matrix.shard_index }}
+          path: |
+            frontend/cypress-summary.txt
+            frontend/cypress-results/*.json
+            frontend/e2e-backend.log
+            frontend/e2e-backend.err.log
+            frontend/e2e-meta.txt
           retention-days: 7

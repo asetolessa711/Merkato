@@ -58,6 +58,7 @@ const reviewModerationRoutes = require("./routes/reviewModerationRoutes");
 const customerRoutes = require("./routes/customerRoutes");
 const emailInvoiceRoutes = require("./routes/emailInvoiceRoutes");
 const invoiceRoutes = require("./routes/invoiceRoutes");
+const featureFlagRoutes = require("./routes/featureFlagRoutes");
 const behaviorRoutes = require("./routes/behaviorRoutes");
 const devSeedRoute = require("./routes/devSeedRoute");
 const testSeedOrdersRoute = require("./routes/testSeedOrdersRoute");
@@ -106,6 +107,7 @@ app.use("/api/flags", flagRoutes);
 app.use("/api/admin/reviews", reviewModerationRoutes);
 app.use("/api/customer", customerRoutes);
 app.use("/api/email", emailInvoiceRoutes);
+app.use("/api/feature-flags", featureFlagRoutes);
 
 app.use("/api/invoices", invoiceRoutes);
 if (bundlesRoutes) app.use("/api/products", bundlesRoutes);

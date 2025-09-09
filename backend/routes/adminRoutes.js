@@ -19,9 +19,9 @@ const isAdmin = (user) =>
 // GET all users (Global/Admin only)
 router.get('/users', protect, authorize('global_admin', 'admin'), async (req, res) => {
   try {
-    const query = req.user.role === 'admin' && req.user.country
-      ? { country: req.user.country }
-      : {};
+  const roles = req.user.roles || [req.user.role];
+  const isScopedAdmin = roles.includes('admin') && !roles.includes('global_admin');
+  const query = isScopedAdmin && req.user.country ? { country: req.user.country } : {};
 
     const users = await User.find(query).select('-password');
     res.json(users);
@@ -36,9 +36,9 @@ router.get('/vendors', protect, authorize('global_admin', 'admin', 'country_admi
     const filter = { roles: { $in: ['vendor'] } };
     if (req.query.approved === 'true') filter.vendorApproved = true;
     if (req.query.approved === 'false') filter.vendorApproved = { $ne: true };
-    if (req.user.role === 'admin' && req.user.country) {
-      filter.country = req.user.country;
-    }
+  const roles = req.user.roles || [req.user.role];
+  const restrictByCountry = roles.includes('admin') || roles.includes('country_admin');
+  if (restrictByCountry && req.user.country) filter.country = req.user.country;
     const vendors = await User.find(filter).select('-password');
     res.json(vendors);
   } catch (err) {
@@ -50,8 +50,9 @@ router.get('/vendors', protect, authorize('global_admin', 'admin', 'country_admi
 router.get('/products', protect, authorize('global_admin', 'admin'), async (req, res) => {
   try {
     let products;
-    if (req.user.role === 'admin' && req.user.country) {
-      const vendors = await User.find({ role: 'vendor', country: req.user.country }).select('_id');
+  const roles = req.user.roles || [req.user.role];
+    if (roles.includes('admin') && req.user.country) {
+      const vendors = await User.find({ roles: 'vendor', country: req.user.country }).select('_id');
       const vendorIds = vendors.map(v => v._id);
       products = await Product.find({ vendor: { $in: vendorIds } }).populate('vendor', 'name email');
     } else {
@@ -92,8 +93,9 @@ router.get('/revenue', protect, authorize('global_admin', 'admin'), async (req, 
   try {
     let products = [];
 
-    if (req.user.role === 'admin' && req.user.country) {
-      const vendors = await User.find({ role: 'vendor', country: req.user.country }).select('_id');
+  const roles = req.user.roles || [req.user.role];
+    if (roles.includes('admin') && req.user.country) {
+      const vendors = await User.find({ roles: 'vendor', country: req.user.country }).select('_id');
       const vendorIds = vendors.map(v => v._id);
       products = await Product.find({ vendor: { $in: vendorIds } });
     } else {
@@ -146,8 +148,8 @@ router.get('/country-dashboard', protect, authorize('country_admin'), async (req
   try {
     const countryCode = req.user.country;
 
-    const totalVendors = await User.countDocuments({ role: 'vendor', country: countryCode });
-    const totalUsers = await User.countDocuments({ role: 'customer', country: countryCode });
+  const totalVendors = await User.countDocuments({ roles: 'vendor', country: countryCode });
+  const totalUsers = await User.countDocuments({ roles: 'customer', country: countryCode });
     const totalProducts = await Product.countDocuments({ country: countryCode });
 
     const totalRevenue = await Product.aggregate([
@@ -198,7 +200,8 @@ router.put('/vendors/:id/approve', protect, authorize('admin', 'global_admin', '
       return res.status(404).json({ message: 'Vendor not found' });
     }
     // Country admin can only manage vendors in same country
-    if (req.user.role === 'country_admin' && user.country !== req.user.country) {
+  const roles = req.user.roles || [req.user.role];
+  if (roles.includes('country_admin') && user.country !== req.user.country) {
       return res.status(403).json({ message: 'Cross-country approval not allowed' });
     }
     user.vendorApproved = !!approved;
@@ -274,7 +277,7 @@ router.put('/delivery-settings', protect, authorize('admin', 'global_admin'), as
 router.get('/export-summary', protect, authorize('admin', 'global_admin'), async (req, res) => {
   try {
     const userCount = await User.countDocuments();
-    const vendorCount = await User.countDocuments({ role: 'vendor' });
+  const vendorCount = await User.countDocuments({ roles: 'vendor' });
     const productCount = await Product.countDocuments();
     const orderCount = await Order.countDocuments();
     const reviewCount = await Review.countDocuments();

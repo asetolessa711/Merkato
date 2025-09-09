@@ -27,11 +27,14 @@ router.patch('/:id/approve', protect, authorize('admin'), async (req, res) => {
     const flag = await Flag.findById(req.params.id);
     if (!flag) return res.status(404).json({ message: 'Flag not found' });
 
-    flag.status = 'resolved';
-    flag.resolution = 'approved';
-    await flag.save();
+  // Align with Flag schema: status enum ['pending','approved','removed']
+  flag.status = 'approved';
+  flag.reviewedBy = req.user._id;
+  flag.reviewNote = 'approved';
+  flag.resolvedAt = new Date();
+  await flag.save();
 
-    res.json({ message: 'Flag approved and marked resolved' });
+  res.json({ message: 'Flag approved' });
   } catch (err) {
     res.status(500).json({ message: 'Failed to approve flag' });
   }
@@ -45,12 +48,15 @@ router.patch('/:id/reject', protect, authorize('admin'), async (req, res) => {
     const flag = await Flag.findById(req.params.id);
     if (!flag) return res.status(404).json({ message: 'Flag not found' });
 
-    await Product.findByIdAndDelete(flag.product);
-    flag.status = 'resolved';
-    flag.resolution = 'rejected-product-deleted';
-    await flag.save();
+  await Product.findByIdAndDelete(flag.product);
+  // Set removed status and review metadata
+  flag.status = 'removed';
+  flag.reviewedBy = req.user._id;
+  flag.reviewNote = 'rejected-product-deleted';
+  flag.resolvedAt = new Date();
+  await flag.save();
 
-    res.json({ message: 'Flag rejected and product deleted' });
+  res.json({ message: 'Flag rejected and product deleted' });
   } catch (err) {
     res.status(500).json({ message: 'Failed to reject flag' });
   }

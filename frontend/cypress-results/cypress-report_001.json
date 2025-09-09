@@ -1,0 +1,127 @@
+{
+  "stats": {
+    "suites": 1,
+    "tests": 2,
+    "passes": 2,
+    "pending": 0,
+    "failures": 0,
+    "start": "2025-09-09T17:33:49.412Z",
+    "end": "2025-09-09T17:33:51.888Z",
+    "duration": 2476,
+    "testsRegistered": 2,
+    "passPercent": 100,
+    "pendingPercent": 0,
+    "other": 0,
+    "hasOther": false,
+    "skipped": 0,
+    "hasSkipped": false
+  },
+  "results": [
+    {
+      "uuid": "b301b19d-9b57-446a-a5a4-312e547eb8bb",
+      "title": "",
+      "fullFile": "cypress\\e2e\\adminOrdersBulkDialogs.cy.js",
+      "file": "cypress\\e2e\\adminOrdersBulkDialogs.cy.js",
+      "beforeHooks": [],
+      "afterHooks": [],
+      "tests": [],
+      "suites": [
+        {
+          "uuid": "349ce577-8538-4d5e-a1ee-c4fc96b2ef42",
+          "title": "AdminOrders Bulk Dialogs E2E",
+          "fullFile": "",
+          "file": "",
+          "beforeHooks": [],
+          "afterHooks": [],
+          "tests": [
+            {
+              "title": "shows bulk export dialog after preview confirmation",
+              "fullTitle": "AdminOrders Bulk Dialogs E2E shows bulk export dialog after preview confirmation",
+              "timedOut": null,
+              "duration": 1297,
+              "state": "passed",
+              "speed": "fast",
+              "pass": true,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "cy.get('input[type=\"checkbox\"]').check({\n  force: true\n});\ncy.contains('Export Selected').click();\ncy.get('[data-testid=\"bulk-preview-header\"]').should('be.visible');\ncy.contains('Confirm').click();\ncy.get('[data-testid=\"bulk-export-header\"]').should('be.visible');\ncy.contains('Confirm & Export').click();\ncy.contains('Bulk Action Summary').should('be.visible');",
+              "err": {},
+              "uuid": "a9ed53cb-53c7-4117-8bfe-f67976530a01",
+              "parentUUID": "349ce577-8538-4d5e-a1ee-c4fc96b2ef42",
+              "isHook": false,
+              "skipped": false
+            },
+            {
+              "title": "shows bulk email preview dialog after preview confirmation",
+              "fullTitle": "AdminOrders Bulk Dialogs E2E shows bulk email preview dialog after preview confirmation",
+              "timedOut": null,
+              "duration": 1108,
+              "state": "passed",
+              "speed": "fast",
+              "pass": true,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "cy.get('input[type=\"checkbox\"]').check({\n  force: true\n});\ncy.contains('Resend Emails').click();\ncy.get('[data-testid=\"bulk-preview-header\"]').should('be.visible');\ncy.contains('Confirm').click();\ncy.get('[data-testid=\"bulk-email-preview-header\"]').should('be.visible');\ncy.contains('Confirm & Resend').click();\ncy.contains('Bulk Action Summary').should('be.visible');",
+              "err": {},
+              "uuid": "8adc497a-d261-444d-9279-cb23a5a1b65c",
+              "parentUUID": "349ce577-8538-4d5e-a1ee-c4fc96b2ef42",
+              "isHook": false,
+              "skipped": false
+            }
+          ],
+          "suites": [],
+          "passes": [
+            "a9ed53cb-53c7-4117-8bfe-f67976530a01",
+            "8adc497a-d261-444d-9279-cb23a5a1b65c"
+          ],
+          "failures": [],
+          "pending": [],
+          "skipped": [],
+          "duration": 2405,
+          "root": false,
+          "rootEmpty": false,
+          "_timeout": 2000
+        }
+      ],
+      "passes": [],
+      "failures": [],
+      "pending": [],
+      "skipped": [],
+      "duration": 0,
+      "root": true,
+      "rootEmpty": true,
+      "_timeout": 2000
+    }
+  ],
+  "meta": {
+    "mocha": {
+      "version": "7.2.0"
+    },
+    "mochawesome": {
+      "options": {
+        "quiet": true,
+        "reportFilename": "cypress-report",
+        "saveHtml": false,
+        "saveJson": true,
+        "consoleReporter": "spec",
+        "useInlineDiffs": false,
+        "code": true
+      },
+      "version": "7.1.3"
+    },
+    "marge": {
+      "options": {
+        "reportDir": "cypress-results",
+        "reportFilename": "cypress-report",
+        "overwrite": false,
+        "quiet": true,
+        "charts": false,
+        "html": false,
+        "json": true
+      },
+      "version": "6.2.0"
+    }
+  }
+}

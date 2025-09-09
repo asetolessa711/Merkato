@@ -94,11 +94,12 @@ describe('Upload Routes', () => {
         expect(res.body).toHaveProperty('imageUrls');
         expect(Array.isArray(res.body.imageUrls)).toBe(true);
         expect(res.body.imageUrls.length).toBeGreaterThanOrEqual(1);
-        // Extract filename from first imageUrl for static file test
-        const urlParts = res.body.imageUrls[0].split('/');
-        uploadedFilename = urlParts[urlParts.length - 1];
-        const uploadPath = path.join(__dirname, '../../uploads', uploadedFilename);
-        expect(fs.existsSync(uploadPath)).toBe(true);
+    // Extract filename from first imageUrl for static file test
+  const urlParts = res.body.imageUrls[0].split('/');
+  uploadedFilename = urlParts[urlParts.length - 1];
+  // uploads folder is under backend; from tests/integration go up two levels
+  const uploadPath = path.join(__dirname, '../../uploads', uploadedFilename);
+  expect(fs.existsSync(uploadPath)).toBe(true);
       }
   // temp files cleaned in afterAll
     });
@@ -121,11 +122,11 @@ describe('Upload Routes', () => {
         expect(res.body).toHaveProperty('imageUrls');
         expect(Array.isArray(res.body.imageUrls)).toBe(true);
         expect(res.body.imageUrls.length).toBeGreaterThanOrEqual(1);
-        // Extract filename from first imageUrl for static file test
-        const urlParts = res.body.imageUrls[0].split('/');
-        uploadedFilename = urlParts[urlParts.length - 1];
-        const uploadPath = path.join(__dirname, '../../uploads', uploadedFilename);
-        expect(fs.existsSync(uploadPath)).toBe(true);
+    // Extract filename from first imageUrl for static file test
+  const urlParts = res.body.imageUrls[0].split('/');
+  uploadedFilename = urlParts[urlParts.length - 1];
+  const uploadPath = path.join(__dirname, '../../uploads', uploadedFilename);
+  expect(fs.existsSync(uploadPath)).toBe(true);
       }
     });
 
@@ -197,18 +198,11 @@ describe('Upload Routes', () => {
     });
 
     test('should reject file over size limit (2MB)', async () => {
-      // Create a large dummy file (2MB + 1 byte)
-      const os = require('os');
-      let largePath = path.join(__dirname, '..', 'fixtures', 'large-dummy.jpg');
-      const overLimit = Buffer.alloc(2 * 1024 * 1024 + 1, 0xff);
-      try {
-        fs.writeFileSync(largePath, overLimit);
-      } catch (err) {
-        // Some environments lock fixtures; fallback to temp dir
-        const tmp = path.join(os.tmpdir(), `large-dummy-${Date.now()}.jpg`);
-        fs.writeFileSync(tmp, overLimit);
-        largePath = tmp;
-      }
+  // Create a large dummy file (2MB + 1 byte) in OS temp dir (Windows-safe)
+  const os = require('os');
+  const overLimit = Buffer.alloc(2 * 1024 * 1024 + 1, 0xff);
+  const largePath = path.join(os.tmpdir(), `large-dummy-${Date.now()}.jpg`);
+  fs.writeFileSync(largePath, overLimit);
 
       let aborted = false;
       let res = null;
@@ -222,7 +216,7 @@ describe('Upload Routes', () => {
         aborted = true;
       }
       // Check that the large file was not saved in uploads
-      const uploadsDir = path.join(__dirname, '../../uploads');
+  const uploadsDir = path.join(__dirname, '../../../uploads');
       const files = fs.readdirSync(uploadsDir);
       const found = files.some(f => f.includes('large-dummy'));
       expect(found).toBe(false);

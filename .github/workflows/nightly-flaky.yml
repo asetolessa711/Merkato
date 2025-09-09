@@ -1,0 +1,64 @@
+name: Nightly Flaky Quarantine
+
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+jobs:
+  e2e-flaky:
+    name: E2E Flaky (@flaky) - shard ${{ matrix.shard_index }}/2
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard_index: [0, 1]
+    services:
+      mongo:
+        image: mongo:6
+        ports:
+          - '27017:27017'
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand(\"ping\")' || exit 1"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install backend deps
+        working-directory: backend
+        run: npm ci
+      - name: Install frontend deps
+        working-directory: frontend
+        run: npm ci
+      - name: Run quarantined (@flaky) specs only
+        working-directory: frontend
+        env:
+          CI: 'true'
+          E2E_EPHEMERAL: 'true'
+          E2E_AUTODROP: 'true'
+          E2E_BACKEND_PORT: '5051'
+          CYPRESS_retries: '2'
+          # Only run specs tagged @flaky using include tag in titles
+          CYPRESS_INCLUDE_TAG: '@flaky'
+          # Shard specs across 2 runners
+          E2E_SPLIT_TOTAL: '2'
+          E2E_SPLIT_INDEX: '${{ matrix.shard_index }}'
+        run: npm run e2e:run
+      - name: Upload artifacts (shard ${{ matrix.shard_index }})
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flaky-suite-artifacts-shard-${{ matrix.shard_index }}
+          path: |
+            frontend/cypress-summary.txt
+            frontend/cypress-results/*.json
+            frontend/cypress/screenshots
+            frontend/cypress/videos
+            frontend/e2e-backend.log
+            frontend/e2e-backend.err.log
+            frontend/e2e-meta.txt
+          retention-days: 7

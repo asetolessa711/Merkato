@@ -1,0 +1,1 @@
+[e2e] Cypress results: 47 tests, 47 passed, 0 failed [db=merkato_e2e api=http://localhost:5052]

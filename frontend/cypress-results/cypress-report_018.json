@@ -1,0 +1,146 @@
+{
+  "stats": {
+    "suites": 1,
+    "tests": 3,
+    "passes": 3,
+    "pending": 0,
+    "failures": 0,
+    "start": "2025-09-09T17:35:34.404Z",
+    "end": "2025-09-09T17:35:37.372Z",
+    "duration": 2968,
+    "testsRegistered": 3,
+    "passPercent": 100,
+    "pendingPercent": 0,
+    "other": 0,
+    "hasOther": false,
+    "skipped": 0,
+    "hasSkipped": false
+  },
+  "results": [
+    {
+      "uuid": "412963ae-7ef6-4655-b706-f068bbe3e4c7",
+      "title": "",
+      "fullFile": "cypress\\e2e\\smoke.cy.js",
+      "file": "cypress\\e2e\\smoke.cy.js",
+      "beforeHooks": [],
+      "afterHooks": [],
+      "tests": [],
+      "suites": [
+        {
+          "uuid": "f219496d-4f41-48b5-b7cd-075b8901fa2e",
+          "title": "Smoke Test - Core Flows",
+          "fullFile": "",
+          "file": "",
+          "beforeHooks": [],
+          "afterHooks": [],
+          "tests": [
+            {
+              "title": "logs in as admin",
+              "fullTitle": "Smoke Test - Core Flows logs in as admin",
+              "timedOut": null,
+              "duration": 930,
+              "state": "passed",
+              "speed": "fast",
+              "pass": true,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "cy.login('admin');\ncy.visit('/admin');\ncy.url({\n  timeout: 10000\n}).should('include', '/admin');",
+              "err": {},
+              "uuid": "eebe3d49-afc3-406f-b058-831d58c5bffa",
+              "parentUUID": "f219496d-4f41-48b5-b7cd-075b8901fa2e",
+              "isHook": false,
+              "skipped": false
+            },
+            {
+              "title": "logs in as vendor",
+              "fullTitle": "Smoke Test - Core Flows logs in as vendor",
+              "timedOut": null,
+              "duration": 935,
+              "state": "passed",
+              "speed": "fast",
+              "pass": true,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "cy.login('vendor');\ncy.visit('/vendor');\ncy.url({\n  timeout: 10000\n}).should('include', '/vendor');",
+              "err": {},
+              "uuid": "1c24dbcb-6c94-4388-bbb3-461fd014b0a5",
+              "parentUUID": "f219496d-4f41-48b5-b7cd-075b8901fa2e",
+              "isHook": false,
+              "skipped": false
+            },
+            {
+              "title": "logs in as customer",
+              "fullTitle": "Smoke Test - Core Flows logs in as customer",
+              "timedOut": null,
+              "duration": 878,
+              "state": "passed",
+              "speed": "fast",
+              "pass": true,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "cy.login('customer');\ncy.visit('/account/dashboard');\ncy.url({\n  timeout: 10000\n}).should('include', '/account/dashboard');",
+              "err": {},
+              "uuid": "ad4b5804-f5c8-4cda-9f99-7fe48e224545",
+              "parentUUID": "f219496d-4f41-48b5-b7cd-075b8901fa2e",
+              "isHook": false,
+              "skipped": false
+            }
+          ],
+          "suites": [],
+          "passes": [
+            "eebe3d49-afc3-406f-b058-831d58c5bffa",
+            "1c24dbcb-6c94-4388-bbb3-461fd014b0a5",
+            "ad4b5804-f5c8-4cda-9f99-7fe48e224545"
+          ],
+          "failures": [],
+          "pending": [],
+          "skipped": [],
+          "duration": 2743,
+          "root": false,
+          "rootEmpty": false,
+          "_timeout": 2000
+        }
+      ],
+      "passes": [],
+      "failures": [],
+      "pending": [],
+      "skipped": [],
+      "duration": 0,
+      "root": true,
+      "rootEmpty": true,
+      "_timeout": 2000
+    }
+  ],
+  "meta": {
+    "mocha": {
+      "version": "7.2.0"
+    },
+    "mochawesome": {
+      "options": {
+        "quiet": true,
+        "reportFilename": "cypress-report",
+        "saveHtml": false,
+        "saveJson": true,
+        "consoleReporter": "spec",
+        "useInlineDiffs": false,
+        "code": true
+      },
+      "version": "7.1.3"
+    },
+    "marge": {
+      "options": {
+        "reportDir": "cypress-results",
+        "reportFilename": "cypress-report",
+        "overwrite": false,
+        "quiet": true,
+        "charts": false,
+        "html": false,
+        "json": true
+      },
+      "version": "6.2.0"
+    }
+  }
+}

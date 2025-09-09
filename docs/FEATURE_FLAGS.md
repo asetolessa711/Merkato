@@ -1,11 +1,15 @@
 # Feature Flags
 
-Environment variables (frontend) to gate new engagement features:
+Environment variables to gate new engagement features. Keep them conservative (false) by default for CI/E2E stability.
 
-- REACT_APP_FEATURE_GAMIFICATION=false
-- REACT_APP_FEATURE_BEHAVIORAL_PROMOS=false
+- Frontend envs: `REACT_APP_FEATURE_GAMIFICATION`, `REACT_APP_FEATURE_BEHAVIORAL_PROMOS`
+- Backend envs (optional overrides): `FEATURE_GAMIFICATION`, `FEATURE_BEHAVIORAL_PROMOS`
 
-Default them to false in CI and E2E to avoid DOM changes and keep tests stable. Enable locally by creating `frontend/.env.local` with:
+Backend public endpoint
+- `GET /api/feature-flags` returns `{ flags: { gamification: boolean, behavioralPromos: boolean } }`
+- Resolution order per flag: backend-specific env (FEATURE_*), then frontend-style env (REACT_APP_*), defaulting to false.
+
+Enable locally by creating `frontend/.env.local` (and/or backend `.env.local`) with, for example:
 
 REACT_APP_FEATURE_GAMIFICATION=true
 REACT_APP_FEATURE_BEHAVIORAL_PROMOS=true

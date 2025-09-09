@@ -1,0 +1,3 @@
+MONGO_URI=mongodb://127.0.0.1:27017/merkato_e2e
+DB_NAME=merkato_e2e
+API_URL=http://localhost:5052

@@ -55,3 +55,21 @@
   npm --prefix frontend run cy:run:docker
   ```
   The script mounts only the `frontend/` folder into the Cypress container and targets your locally served app via `host.docker.internal`. This avoids cross‑project cache contamination and Windows binary issues.
+
+## CI E2E Gates and Ops
+
+- PR Smoke Gate: `.github/workflows/pr-smoke-gate.yml`
+  - Runs a small, stable subset on every PR.
+  - Fails if any spec fails or if total runtime exceeds 5 minutes.
+  - Retries enabled only on CI via `CYPRESS_retries=2`.
+  - Quarantine with `@flaky` tag. Excluded on PRs via `CYPRESS_EXCLUDE_TAG=@flaky`.
+  - Nightly job runs only `@flaky` tests: `.github/workflows/nightly-flaky.yml` using `CYPRESS_INCLUDE_TAG=@flaky`.
+  - Artifacts: screenshots, videos (CI only), backend logs, cypress-results JSON, and `e2e-meta.txt` (DB/API used).
+
+- Spec splitting for parallelization:
+  - Set `E2E_SPLIT_TOTAL` to number of workers and `E2E_SPLIT_INDEX` (0-based) per job.
+  - Each shard gets its own ephemeral DB (when `E2E_EPHEMERAL=true`).
+
+- Seeding options:
+  - Runner seeds once per run via `/api/dev/seed`.
+  - Enable per-spec seeding by setting `CYPRESS_SEED_PER_SPEC=true` or Cypress `env.SEED_PER_SPEC`.
