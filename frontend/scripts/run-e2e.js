@@ -262,7 +262,8 @@ async function main() {
   const reportPath = path.join(frontendDir, 'cypress-report.json');
   // Always enforce a wide specPattern to avoid accidental narrowing by env or defaults
   const fullSpecPattern = 'cypress/e2e/**/*.cy.{js,jsx,ts,tsx}';
-  const configArg = `baseUrl=${baseUrl},e2e.specPattern=${fullSpecPattern}`;
+  // Use top-level specPattern for CLI compatibility (Cypress v10+); e2e.specPattern is not a valid CLI key
+  const configArg = `baseUrl=${baseUrl},specPattern=${fullSpecPattern}`;
   const cyArgs = ['cypress', 'run', '--browser','electron','--headless','--config', configArg,'--reporter','json','--reporter-options',`output=${reportPath}`,...specArg];
   try {
     const expose = Object.keys(cyEnv).filter(k => /^CYPRESS_/i.test(k)).reduce((acc,k)=> (acc[k]=cyEnv[k], acc), {});
