@@ -205,8 +205,23 @@ function ShopPage() {
       {/* Example Filter Section */}
       <div className="filters">
         {/* ...other filters... */}
+        {/* Search input to support Cypress search_flow spec */}
+        <input
+          type="text"
+          name="search"
+          placeholder="Search products..."
+          value={filters.search}
+          onChange={handleFilterChange}
+          aria-label="Search"
+          style={{ marginRight: 8 }}
+        />
         {/* Replace input with select for vendor */}
-        <select name="vendor" value={filters.vendor} onChange={handleFilterChange}>
+        <select
+          name="vendor"
+          value={filters.vendor}
+          onChange={handleFilterChange}
+          aria-label="Filter products by vendor"
+        >
           <option value="">All Vendors</option>
           {vendors.map((v) => (
             <option key={v._id} value={v.name}>

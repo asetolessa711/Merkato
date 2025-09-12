@@ -33,7 +33,60 @@ jobs:
       - name: Install frontend deps
         working-directory: frontend
         run: npm ci
-      - name: Run smoke suite by tag (@smoke) with 5 min budget
+      - name: Compute Cypress tags from PR labels
+        id: tags
+        shell: bash
+        env:
+          LABELS_JSON: ${{ toJson(github.event.pull_request.labels) }}
+        run: |
+          set -euo pipefail
+          include='@smoke'
+          exclude='@flaky'
+          # Extract label names (lowercased)
+          names=$(echo "$LABELS_JSON" | jq -r '.[].name' 2>/dev/null | tr '[:upper:]' '[:lower:]' | tr '\n' ',')
+          echo "PR labels: ${names}"
+          # Include mappings (persona)
+          echo "$names" | grep -q 'e2e-include-a11y' && include="$include,@a11y" || true
+          echo "$names" | grep -q 'e2e-include-negative' && include="$include,@negative" || true
+          echo "$names" | grep -q 'e2e-include-admin' && include="$include,@admin" || true
+          echo "$names" | grep -q 'e2e-include-payments' && include="$include,@payments" || true
+          echo "$names" | grep -q 'e2e-include-vendor' && include="$include,@vendor" || true
+          echo "$names" | grep -q 'e2e-include-buyer' && include="$include,@buyer" || true
+          # Include mappings (threads)
+          echo "$names" | grep -q 'e2e-include-checkout' && include="$include,@checkout-flow" || true
+          echo "$names" | grep -q 'e2e-include-auth' && include="$include,@auth-flow" || true
+          echo "$names" | grep -q 'e2e-include-orders' && include="$include,@orders-flow" || true
+          echo "$names" | grep -q 'e2e-include-refund' && include="$include,@refund-flow" || true
+          # Exclude mappings
+          echo "$names" | grep -q 'e2e-exclude-payments' && exclude="$exclude,@payments" || true
+          echo "$names" | grep -q 'e2e-exclude-slow' && exclude="$exclude,@slow" || true
+          echo "include=$include" >> "$GITHUB_OUTPUT"
+          echo "exclude=$exclude" >> "$GITHUB_OUTPUT"
+      - name: Comment tag scope on PR
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const include = '${{ steps.tags.outputs.include }}' || '@smoke';
+            const exclude = '${{ steps.tags.outputs.exclude }}' || '@flaky';
+            const body = [
+              '### E2E Smoke Scope',
+              '',
+              `Included tags: \\`${include}\\``,
+              `Excluded tags: \\`${exclude}\\``,
+              '',
+              'Labels can tune scope, e.g.:',
+              '- e2e-include-a11y, e2e-include-admin, e2e-include-vendor, e2e-include-buyer',
+              '- e2e-include-checkout, e2e-include-auth, e2e-include-refund',
+              '- e2e-exclude-slow, e2e-exclude-payments',
+            ].join('\n');
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });
+      - name: Run smoke suite by tag (@smoke) with 5 min budget (curated)
         id: run_smoke
         working-directory: frontend
         env:
@@ -42,12 +95,11 @@ jobs:
           E2E_AUTODROP: 'true'
           E2E_BACKEND_PORT: '5051'
           CYPRESS_retries: '2'
-          # Tag-based selection: include @smoke, exclude @flaky
-          CYPRESS_INCLUDE_TAG: '@smoke'
-          CYPRESS_EXCLUDE_TAG: '@flaky'
+          CYPRESS_INCLUDE_TAG: ${{ steps.tags.outputs.include }}
+          CYPRESS_EXCLUDE_TAG: ${{ steps.tags.outputs.exclude }}
         run: |
           start=$(date +%s)
-          npm run e2e:run
+          node ./scripts/run-e2e.js --pr-smoke
           status=$?
           end=$(date +%s)
           duration=$((end-start))
@@ -62,6 +114,10 @@ jobs:
             cat frontend/cypress-summary.txt >> $GITHUB_STEP_SUMMARY
           else
             echo "No cypress-summary.txt found." >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ -f "frontend/scope-report.txt" ]; then
+            echo "\n## E2E scope" >> $GITHUB_STEP_SUMMARY
+            head -n 100 frontend/scope-report.txt >> $GITHUB_STEP_SUMMARY
           fi
       - name: Enforce runtime budget (<= 300s)
         if: always()
@@ -102,4 +158,6 @@ jobs:
             frontend/e2e-backend.log
             frontend/e2e-backend.err.log
             frontend/e2e-meta.txt
+            frontend/scope-report.json
+            frontend/scope-report.txt
           retention-days: 7

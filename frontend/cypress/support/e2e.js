@@ -2,6 +2,15 @@
 // cypress/support/e2e.js
 import './commands';
 import 'cypress-axe';
+// Optional tag filtering: load cypress-grep if present
+let __grepLoaded = false;
+try {
+  // eslint-disable-next-line import/no-extraneous-dependencies, global-require
+  require('cypress-grep');
+  __grepLoaded = true;
+} catch (_) {
+  __grepLoaded = false;
+}
 
 // Silence/short-circuit noisy external calls (analytics, pixels, etc.) per test
 const SILENCE_PATTERNS = [
@@ -47,37 +56,37 @@ after(() => {
   cy.log('🏁 Cypress Test Suite Finished');
 });
 
-// Utility: tag-based filtering support (e.g., @flaky). Usage: add in spec titles.
-// Exclude via CYPRESS_EXCLUDE_TAG="@flaky"; include-only via CYPRESS_INCLUDE_TAG="@flaky".
-const excludeTag = String(Cypress.env('EXCLUDE_TAG') || '');
-const includeTag = String(Cypress.env('INCLUDE_TAG') || '');
+// Tag filtering via cypress-grep
+// Usage:
+//  - Include only: set env CYPRESS_INCLUDE_TAG="a11y" (or comma/space separated)
+//  - Exclude: set env CYPRESS_EXCLUDE_TAG="flaky,negative" (will invert grep)
+//  - We normalize to @tag format for titles containing e.g. "@a11y"
+(() => {
+  const normalizeTags = (csv) => String(csv || '')
+    .split(/[\s,]+/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .map((s) => (s.startsWith('@') ? s : `@${s}`));
 
-// Guard to avoid re-wrapping in case this file is evaluated more than once in the same run
-const TAG_WRAPPER_FLAG = '__MERKATO_IT_TAG_WRAPPED__';
-if ((excludeTag || includeTag) && !globalThis[TAG_WRAPPER_FLAG]) {
-  // Mark as wrapped before assigning to avoid races
-  Object.defineProperty(globalThis, TAG_WRAPPER_FLAG, {
-    value: true,
-    configurable: false,
-    enumerable: false,
-    writable: false,
-  });
+  const includeRaw = Cypress.env('INCLUDE_TAG');
+  const excludeRaw = Cypress.env('EXCLUDE_TAG');
 
-  const origIt = globalThis.it;
-  const makeBound = (base) => function wrapped(title, testFn) {
-    const t = typeof title === 'string' ? title : '';
-    const shouldInclude = includeTag ? t.includes(includeTag) : true;
-    const shouldExclude = excludeTag ? t.includes(excludeTag) : false;
-    if (!shouldInclude || shouldExclude) {
-      // Skip at definition time
-      return origIt.skip.call(globalThis, title || '(skipped by tag filter)');
+  if (includeRaw) {
+    const tags = normalizeTags(includeRaw).join(',');
+    // cypress-grep reads grepTags/invert
+    Cypress.env('grepTags', tags);
+    Cypress.env('invert', false);
+    if (!__grepLoaded) {
+      // eslint-disable-next-line no-console
+      console.warn('[grep] INCLUDE_TAG provided but cypress-grep is not installed; tag filtering will be ignored.');
     }
-    return base.call(globalThis, title, testFn);
-  };
-
-  // Replace global it with a safe wrapper and preserve it.only/skip
-  // eslint-disable-next-line no-global-assign
-  globalThis.it = makeBound(origIt);
-  if (origIt.only) globalThis.it.only = makeBound(origIt.only);
-  if (origIt.skip) globalThis.it.skip = origIt.skip.bind(globalThis);
-}
+  } else if (excludeRaw) {
+    const tags = normalizeTags(excludeRaw).join(',');
+    Cypress.env('grepTags', tags);
+    Cypress.env('invert', true);
+    if (!__grepLoaded) {
+      // eslint-disable-next-line no-console
+      console.warn('[grep] EXCLUDE_TAG provided but cypress-grep is not installed; tag filtering will be ignored.');
+    }
+  }
+})();

@@ -31,6 +31,59 @@ async function main() {
   const repoRoot = path.resolve(__dirname, '..', '..');
   const frontendDir = path.resolve(__dirname, '..');
   const backendDir = path.resolve(repoRoot, 'backend');
+  // Determine PR smoke via env or CLI arg fallback (robust truthy parsing)
+  const rawPrSmoke = String(process.env.PR_SMOKE || '').trim().toLowerCase();
+  let prSmoke = false;
+  if (['true','1','yes','y','on'].includes(rawPrSmoke)) prSmoke = true;
+  // Hard override: if caller explicitly exported PR_SMOKE=true, never downgrade later
+  if (!prSmoke && process.env.PR_SMOKE && ['true','1','yes','y','on'].includes(rawPrSmoke)) {
+    prSmoke = true;
+  }
+  // Auto-enable in PR contexts if not explicitly disabled
+  if (!prSmoke) {
+    const ghEvent = (process.env.GITHUB_EVENT_NAME || '').toLowerCase();
+    if (ghEvent === 'pull_request' || ghEvent === 'pull_request_target') {
+      if (!['false','0','off','no'].includes(rawPrSmoke)) {
+        prSmoke = true;
+        process.env.PR_SMOKE = 'true';
+      }
+    }
+  }
+  if (!prSmoke) {
+    // Fallback: accept --pr-smoke flag
+    if (process.argv.some(a => /^--pr-smoke$/i.test(a))) {
+      prSmoke = true;
+      process.env.PR_SMOKE = 'true';
+    }
+  }
+  // Deprecation notice: using only the PR_SMOKE env var (without the --pr-smoke flag) is supported
+  // for backward compatibility but will be removed. Prefer invoking with the CLI flag so intent
+  // is explicit and resilient across shells / CI runners.
+  const cliPrSmokeFlag = process.argv.some(a => /^--pr-smoke$/i.test(a));
+  if (!cliPrSmokeFlag && process.env.PR_SMOKE && ['true','1','yes','y','on'].includes(rawPrSmoke)) {
+    console.warn('[e2e][deprecation] Detected PR_SMOKE environment variable without --pr-smoke flag. Use: node scripts/run-e2e.js --pr-smoke (env-only activation will be removed).');
+  }
+  const scriptVersion = 'run-e2e.js:vSMOKE-diag-2';
+  console.log(`[e2e] Runner start (${scriptVersion}) PR_SMOKE=${prSmoke} node=${process.version}`);
+  // Always snapshot raw E2E_SPEC
+  const rawEnvSpecAtStart = process.env.E2E_SPEC;
+  // Force clear E2E_SPEC when PR_SMOKE or when raw spec exactly matches the legacy 4-spec pattern (heuristic of accidental narrowing)
+  const legacyPattern = /adminOrdersBulkDialogs\.cy\.js.*auth_roles\.cy\.js.*basic_navigation\.cy\.js.*order_status_update\.cy\.js/i;
+  if (process.env.E2E_SPEC && (prSmoke || legacyPattern.test(process.env.E2E_SPEC))) {
+    console.log('[e2e] Clearing E2E_SPEC early (smoke or legacy-only pattern) to avoid spec narrowing.');
+    try { delete process.env.E2E_SPEC; } catch(_) { process.env.E2E_SPEC=''; }
+  }
+  // Early environment snapshot (spec-related) for debugging hidden narrowing influences
+  try {
+    const earlyDiagLines = [];
+    earlyDiagLines.push(`Start: ${new Date().toISOString()}`);
+    earlyDiagLines.push(`PR_SMOKE(raw)=${process.env.PR_SMOKE}`);
+    earlyDiagLines.push(`Computed prSmoke=${prSmoke}`);
+    const specKeys = Object.keys(process.env).filter(k => /spec/i.test(k));
+    earlyDiagLines.push('Spec-related env vars:');
+    for (const k of specKeys.sort()) earlyDiagLines.push(`  ${k}=${process.env[k]}`);
+    fs.writeFileSync(path.join(frontendDir, 'pre-spec-env.txt'), earlyDiagLines.join('\n') + '\n', 'utf8');
+  } catch (e) { console.warn('[e2e] Failed to write pre-spec-env.txt:', e.message || e); }
 
   // Execution modes
   // - E2E_ATTACH=true: attach to already-running services.
@@ -128,6 +181,27 @@ async function main() {
   }
 
   let baseUrl;
+  // Scope reporting
+  const scope = {
+    mode: {
+      attach: attachMode,
+      semiAttach,
+      ephemeralDb,
+    },
+    tags: {
+      include: process.env.CYPRESS_INCLUDE_TAG || null,
+      exclude: process.env.CYPRESS_EXCLUDE_TAG || null,
+    },
+    selection: {
+      viaEnvSpec: process.env.E2E_SPEC || null,
+      forceAll: null,
+      discoveredTotal: 0,
+      excluded: {
+        flakyBaseNames: [],
+      },
+      selectedSpecs: [],
+    },
+  };
   if (attachMode || semiAttach) {
     baseUrl = (process.env.E2E_BASE_URL || 'http://localhost:3000').replace(/\/$/, '');
     console.log(`[e2e] ${attachMode ? 'ATTACH' : 'SEMI-ATTACH'} mode: using frontend at ${baseUrl}`);
@@ -207,13 +281,46 @@ async function main() {
   // Allow selecting browser via E2E_BROWSER, default to electron for portability
   const e2eBrowser = String(process.env.E2E_BROWSER || 'electron');
   console.log(`[e2e] Running Cypress (${e2eBrowser} headless, video off)...`);
-  // In CI or task-driven full runs, force running all specs unless explicitly disabled with E2E_USE_ALL=false
+  // In CI or task-driven full runs, force running all specs unless explicitly disabled with E2E_USE_ALL=false.
+  // However, if E2E_SPEC is provided, honor it even when CI=true.
   const isCI = String(process.env.CI || '').toLowerCase() === 'true';
-  const forceAll = isCI && String(process.env.E2E_USE_ALL || 'true').toLowerCase() !== 'false';
-  const cyEnv = { ...process.env, CYPRESS_API_URL: apiUrl, CYPRESS_video: isCI ? 'true' : 'false', CYPRESS_CACHE_FOLDER: cypressCache, npm_config_cache: npmCache };
+  const allowFilters = String(process.env.E2E_ALLOW_FILTERS || '').toLowerCase() === 'true';
+  let forceAll = isCI && String(process.env.E2E_USE_ALL || 'true').toLowerCase() !== 'false' && !allowFilters;
+  // PR_SMOKE should always allow filtering / curated selection regardless of CI defaults
+  if (prSmoke) forceAll = false;
+  // In forceAll mode we intentionally ignore any parent-provided E2E_SPEC to avoid accidental partial runs.
+  scope.selection.forceAll = !!forceAll;
+  const cyEnv = { ...process.env, PR_SMOKE: prSmoke ? 'true' : process.env.PR_SMOKE || 'false', CYPRESS_API_URL: apiUrl, CYPRESS_video: isCI ? 'true' : 'false', CYPRESS_CACHE_FOLDER: cypressCache, npm_config_cache: npmCache };
+  // Pass a11y control flags through to Cypress.env
+  if (typeof process.env.A11Y_ENFORCE !== 'undefined') {
+    cyEnv.CYPRESS_A11Y_ENFORCE = process.env.A11Y_ENFORCE;
+  }
+  if (typeof process.env.A11Y_SKIP !== 'undefined') {
+    cyEnv.CYPRESS_A11Y_SKIP = process.env.A11Y_SKIP;
+  }
   // Pass through exclude tag (e.g., @flaky) from env in a Cypress-friendly way
   if (process.env.CYPRESS_EXCLUDE_TAG) {
     cyEnv.CYPRESS_EXCLUDE_TAG = process.env.CYPRESS_EXCLUDE_TAG;
+  }
+  // Pass through include tag (e.g., @smoke) to allow selecting only certain tagged tests
+  if (process.env.CYPRESS_INCLUDE_TAG) {
+    cyEnv.CYPRESS_INCLUDE_TAG = process.env.CYPRESS_INCLUDE_TAG;
+  }
+  // If PR_SMOKE is enabled and no explicit tag filters provided, default to include @smoke and exclude @flaky
+  // prSmoke computed above
+  if (prSmoke) {
+    if (!cyEnv.CYPRESS_INCLUDE_TAG && !cyEnv.CYPRESS_EXCLUDE_TAG) {
+      cyEnv.CYPRESS_INCLUDE_TAG = 'smoke';
+      cyEnv.CYPRESS_EXCLUDE_TAG = 'flaky';
+    }
+  // Force cypress-grep spec-level filtering assistance (parallel to our tag include)
+  cyEnv.CYPRESS_grepTags = '@smoke';
+  cyEnv.CYPRESS_grepFilterSpecs = 'true';
+    // Ensure legacy or inherited E2E_SPEC does not constrain smoke runs; rely on dynamic discovery + tag filtering
+    if (process.env.E2E_SPEC) {
+      console.log('[e2e] PR_SMOKE: ignoring inherited E2E_SPEC to avoid missing newly tagged smoke specs.');
+      try { delete process.env.E2E_SPEC; } catch(_) { process.env.E2E_SPEC = ''; }
+    }
   }
   if (forceAll) {
     // Clear any E2E_SPEC inherited from the parent environment for this child process
@@ -279,6 +386,18 @@ async function main() {
     }
   }
   let specArg = [];
+  // (cleanup) Removed legacy inclusionSafetyNetApplied safety net logic.
+  // Helper to normalize and dedupe spec list strings (forward slashes for stability across OS)
+  function normalizeAndDedupe(specList) {
+    const seen = new Set();
+    const out = [];
+    for (const s of specList) {
+      if (!s) continue;
+      const norm = s.replace(/\\/g, '/');
+      if (!seen.has(norm)) { seen.add(norm); out.push(norm); }
+    }
+    return out;
+  }
   function maybeSplitSpecs(list) {
     const total = Number(process.env.E2E_SPLIT_TOTAL || 0);
     const index = Number(process.env.E2E_SPLIT_INDEX || 0);
@@ -290,7 +409,7 @@ async function main() {
     }
     return list;
   }
-  if (!forceAll && process.env.E2E_SPEC) {
+  if (!prSmoke && !forceAll && process.env.E2E_SPEC) {
     const raw = String(process.env.E2E_SPEC);
     const parts = raw.split(',').map(s => s.trim()).filter(Boolean);
     const resolved = [];
@@ -312,24 +431,271 @@ async function main() {
     if (resolved.length > 0) {
       const sharded = maybeSplitSpecs(resolved);
       specArg = ['--spec', sharded.join(',')];
+      scope.selection.selectedSpecs = sharded;
     } else {
       console.log('[e2e] E2E_SPEC provided but no matching files were found. Running default spec discovery.');
     }
   } else {
     // No explicit spec filter provided; enumerate all specs and pass them explicitly to avoid env/config overrides.
-    try {
+  try {
+      if (!process.env.E2E_SPEC) {
+        console.warn('[e2e] E2E_SPEC not set; defaulting to full run (all specs).');
+      }
       const specRoot = path.join(frontendDir, 'cypress', 'e2e');
-      const allSpecs = await listSpecFiles(specRoot);
-      if (allSpecs && allSpecs.length) {
-        const rel = allSpecs.map((p) => path.relative(frontendDir, p));
-        const sharded = maybeSplitSpecs(rel);
-        specArg = ['--spec', sharded.join(',')];
-        console.log(`[e2e] Running specs explicitly: ${sharded.length}/${rel.length} files`);
+      let allSpecs = await listSpecFiles(specRoot);
+      scope.selection.discoveredTotal = Array.isArray(allSpecs) ? allSpecs.length : 0;
+      // PR_SMOKE: short-circuit here to enforce curated-only selection (ignore full discovery beyond baseline for speed & determinism)
+      if (prSmoke) {
+        try {
+          const curatedConfigPath = path.join(frontendDir, 'cypress', 'smoke', 'curated-smoke.json');
+          const curatedConfig = JSON.parse(fs.readFileSync(curatedConfigPath, 'utf8'));
+          scope.selection.curatedConfig = curatedConfig;
+          const curatedSmokeBase = Array.isArray(curatedConfig.specs) ? curatedConfig.specs : [];
+          if (!curatedSmokeBase.length) {
+            console.error('[e2e][PR_SMOKE] curated-smoke.json has no specs. Aborting.');
+            process.exit(98);
+          }
+          // Resolve curated specs to existing files
+          const byBase = allSpecs.reduce((acc,p)=>{acc[path.basename(p)]=p; return acc;}, {});
+          const resolved = [];
+          const missingFiles = [];
+            for (const base of curatedSmokeBase) {
+              if (byBase[base]) resolved.push(path.relative(frontendDir, byBase[base])); else missingFiles.push(base);
+            }
+          if (missingFiles.length) {
+            console.error('[e2e][PR_SMOKE] Missing curated spec file(s):', missingFiles.join(', '));
+            process.exit(99);
+          }
+          const normalized = normalizeAndDedupe(resolved);
+          specArg = ['--spec', normalized.join(',')];
+          scope.selection.selectedSpecs = normalized;
+          scope.selection.curatedSmokeApplied = true;
+          scope.selection.smokeSpecFilteringApplied = true;
+          console.log(`[e2e] PR_SMOKE: enforcing curated list (${normalized.length} specs).`);
+          // Optional tag enforcement
+          if (curatedConfig.enforceTags) {
+            const missingTags = [];
+            for (const rel of normalized) {
+              const abs = path.join(frontendDir, rel);
+              const content = fs.readFileSync(abs, 'utf8');
+              if (!/@smoke\b/i.test(content)) missingTags.push(path.basename(rel));
+            }
+            if (missingTags.length) {
+              console.warn('[e2e][PR_SMOKE] Curated spec(s) missing @smoke tag:', missingTags.join(', '));
+            }
+          }
+        } catch (curErr) {
+          console.error('[e2e][PR_SMOKE] Failed to load/apply curated-smoke.json:', curErr.message || curErr);
+          process.exit(97);
+        }
+      } else {
+      // Optional: exclude flaky specs for PR smoke runs using a registry
+    // prSmoke already computed above
+      const useFlakyRegistry = String(process.env.E2E_EXCLUDE_FLAKY || 'true').toLowerCase() !== 'false';
+      if (prSmoke && useFlakyRegistry) {
+        try {
+          const registryPath = path.join(frontendDir, 'cypress', 'flaky-specs.json');
+          if (fs.existsSync(registryPath)) {
+            const list = JSON.parse(fs.readFileSync(registryPath, 'utf8')) || [];
+            if (Array.isArray(list) && list.length) {
+              const byName = new Set(list.map((s) => String(s).trim()).filter(Boolean));
+              const before = allSpecs.length;
+              const excluded = [];
+              allSpecs = allSpecs.filter((p) => {
+                const base = path.basename(p);
+                const hit = byName.has(base);
+                if (hit) excluded.push(base);
+                return !hit;
+              });
+              const removed = before - allSpecs.length;
+              scope.selection.excluded.flakyBaseNames = excluded;
+              if (removed > 0) {
+                console.log(`[e2e] PR_SMOKE filtering: excluded ${removed} flaky spec(s) via flaky-specs.json`);
+              }
+            }
+          }
+        } catch (e) {
+          console.warn('[e2e] Failed to apply flaky registry filter:', e && e.message ? e.message : e);
+        }
+      }
+  if (allSpecs && allSpecs.length && !prSmoke) {
+          const rel = allSpecs.map((p) => path.relative(frontendDir, p));
+          const sharded = maybeSplitSpecs(rel);
+          const normalized = normalizeAndDedupe(sharded);
+          specArg = ['--spec', normalized.join(',')];
+          console.log(`[e2e] Running specs explicitly: ${normalized.length}/${rel.length} files`);
+          scope.selection.selectedSpecs = normalized;
+  }
+
+  // PR_SMOKE mode: derive curated list (no-op here when not prSmoke)
+  let smokeSpecFilteringApplied = !!scope.selection.curatedSmokeApplied;
+  if (prSmoke) {
+          // Curated baseline smoke spec set (kept intentionally small + fast)
+          let curatedSmokeBase = [];
+          try {
+            if (scope.selection.curatedConfig && Array.isArray(scope.selection.curatedConfig.specs)) {
+              curatedSmokeBase = scope.selection.curatedConfig.specs;
+            } else {
+              const cfg = JSON.parse(fs.readFileSync(path.join(frontendDir, 'cypress', 'smoke', 'curated-smoke.json'), 'utf8'));
+              curatedSmokeBase = Array.isArray(cfg.specs) ? cfg.specs : [];
+            }
+          } catch (_) {}
+          const curatedSet = new Set(curatedSmokeBase);
+          try {
+            const curatedResolved = allSpecs
+              .filter(p => curatedSet.has(path.basename(p)))
+              .map(p => path.relative(frontendDir, p));
+            if (curatedResolved.length) {
+              const normSmoke = normalizeAndDedupe(curatedResolved);
+              specArg = ['--spec', normSmoke.join(',')];
+              scope.selection.selectedSpecs = normSmoke;
+              console.log(`[e2e] PR_SMOKE: using curated smoke spec list (${normSmoke.length}).`);
+              smokeSpecFilteringApplied = true;
+              const missing = curatedSmokeBase.filter(b => !normSmoke.some(s => s.endsWith(b)));
+              if (missing.length) {
+                console.warn('[e2e] PR_SMOKE: curated smoke spec(s) missing:', missing.join(', '));
+              }
+            } else {
+              console.warn('[e2e] PR_SMOKE: curated list produced 0 specs; retaining full list.');
+            }
+          } catch (err) {
+            console.warn('[e2e] PR_SMOKE: failed to derive smoke spec list:', err && err.message ? err.message : err);
+          }
+        }
+        // Store flag on scope for later conditional clearing logic
+        scope.selection.smokeSpecFilteringApplied = smokeSpecFilteringApplied;
+      }
+      // In PR_SMOKE retain explicit list if we successfully filtered to smoke specs; only drop if filtering failed
+      if (prSmoke) {
+        console.log('[e2e] PR_SMOKE: keeping curated explicit spec list (' + scope.selection.selectedSpecs.length + ').');
       }
     } catch (e) {
       console.warn('[e2e] Failed to enumerate specs:', e && e.message ? e.message : e);
     }
   }
+
+  // (Cleanup) Removed legacy spec selection heuristics & inclusion safety net; relying on tag discovery + fail-fast.
+  // --- PR_SMOKE fail-fast validation & deep diagnostics ---
+  if (prSmoke) {
+    try {
+      let requiredSmoke = [];
+      try {
+        const curatedConfig = scope.selection.curatedConfig || JSON.parse(fs.readFileSync(path.join(frontendDir, 'cypress', 'smoke', 'curated-smoke.json'), 'utf8'));
+        requiredSmoke = (curatedConfig.specs || []).map(b => `cypress/e2e/${b}`);
+      } catch (e) {
+        console.warn('[e2e][diag] Failed to load curated-smoke.json for fail-fast:', e.message || e);
+      }
+      const missingFiles = requiredSmoke.filter(rel => !fs.existsSync(path.join(frontendDir, rel)));
+      if (missingFiles.length) {
+        console.error('[e2e][fail-fast] Required smoke spec file(s) missing:', missingFiles.join(', '));
+        process.exit(96);
+      }
+      // Derive current selected specs (either from explicit list or scope) BEFORE potential clearing below
+      let currentlySelected = new Set();
+      if (Array.isArray(specArg) && specArg[0] === '--spec' && specArg[1]) {
+        specArg[1].split(',').forEach(s => currentlySelected.add(s.trim()));
+      } else if (Array.isArray(scope.selection.selectedSpecs)) {
+        scope.selection.selectedSpecs.forEach(s => currentlySelected.add(s));
+      }
+      const missingInSelection = requiredSmoke.filter(rel => !currentlySelected.has(rel));
+      // If we have NO explicit spec list (tag-only mode) we only warn if missing; grep will still pick up tests inside.
+      const failFastEnabled = String(process.env.E2E_SMOKE_FAIL_FAST || 'true').toLowerCase() === 'true';
+      if (missingInSelection.length) {
+        const msg = `[e2e][diag] Required smoke spec(s) not explicitly selected: ${missingInSelection.join(', ')}.`;
+        console.warn(msg);
+        // Emit a deep diagnostics file to help root cause analysis
+        try {
+          const diagPath = path.join(frontendDir, 'smoke-specs-debug.txt');
+          const specRoot = path.join(frontendDir, 'cypress', 'e2e');
+          const all = await listSpecFiles(specRoot);
+          const lines = [];
+          lines.push('PR_SMOKE diagnostics');
+          lines.push(`Timestamp: ${new Date().toISOString()}`);
+            lines.push(`FailFastEnabled: ${failFastEnabled}`);
+          lines.push('All discovered spec files (relative):');
+          for (const abs of all.sort()) {
+            lines.push(' - ' + path.relative(frontendDir, abs));
+          }
+          lines.push('Current specArg: ' + (Array.isArray(specArg) ? specArg.join(' ') : ''));          
+          lines.push('Environment preview (filtered for spec-related keys):');
+          const envSpecKeys = Object.keys(process.env).filter(k => /spec/i.test(k));
+          for (const k of envSpecKeys.sort()) lines.push(` * ${k}=${process.env[k]}`);
+          fs.writeFileSync(diagPath, lines.join('\n') + '\n', 'utf8');
+          console.log('[e2e][diag] Wrote smoke-specs-debug.txt');
+        } catch (e) {
+          console.warn('[e2e][diag] Failed to write smoke-specs-debug.txt:', e.message || e);
+        }
+        if (failFastEnabled && (Array.isArray(specArg) && specArg.length) ) {
+          console.error('[e2e][fail-fast] Exiting because required smoke specs were NOT in explicit selection.');
+          process.exit(97);
+        }
+      } else {
+        console.log('[e2e][diag] All required smoke specs present in selection.');
+        // Optional tag enforcement
+        try {
+          const enforce = (scope.selection.curatedConfig && scope.selection.curatedConfig.enforceTags) === true;
+          if (enforce) {
+            const missingTags = [];
+            for (const rel of requiredSmoke) {
+              const abs = path.join(frontendDir, rel);
+              const content = fs.existsSync(abs) ? fs.readFileSync(abs, 'utf8') : '';
+              if (!/@smoke\b/i.test(content)) missingTags.push(path.basename(rel));
+            }
+            if (missingTags.length) {
+              console.warn('[e2e][diag] Curated spec(s) missing @smoke tag:', missingTags.join(', '));
+            }
+          }
+        } catch (e) {
+          console.warn('[e2e][diag] Tag enforcement check failed:', e.message || e);
+        }
+      }
+    } catch (e) {
+      console.warn('[e2e][diag] Smoke fail-fast logic encountered an error:', e.message || e);
+    }
+  }
+  // Write scope report before running Cypress
+  try {
+    // If we haven't already applied smoke-specific spec filtering, we can optionally clear explicit list.
+    // But when smokeSpecFilteringApplied is true we KEEP the explicit --spec to ensure non-smoke specs are excluded even if grep misses.
+    if (prSmoke && Array.isArray(specArg) && specArg[0] === '--spec') {
+      if (scope.selection.smokeSpecFilteringApplied) {
+        console.log('[e2e] PR_SMOKE: retaining explicit smoke spec list (smokeSpecFilteringApplied=true).');
+      } else {
+        console.log('[e2e] PR_SMOKE: clearing explicit --spec to rely purely on tag discovery (no smokeSpecFilteringApplied).');
+        specArg = [];
+      }
+    }
+      if (prSmoke && scope.selection.viaEnvSpec) {
+        console.log('[e2e] PR_SMOKE: overriding viaEnvSpec spec list in favor of dynamic smoke discovery.');
+        scope.selection.viaEnvSpec = null;
+      }
+      // If we deleted E2E_SPEC earlier for PR_SMOKE, correct the scope metadata
+      if (prSmoke && scope.selection && scope.selection.viaEnvSpec && !process.env.E2E_SPEC) {
+        scope.selection.viaEnvSpec = null;
+      }
+  const scopeJsonPath = path.join(frontendDir, 'scope-report.json');
+  const scopeTxtPath = path.join(frontendDir, 'scope-report.txt');
+    fs.writeFileSync(scopeJsonPath, JSON.stringify(scope, null, 2), 'utf8');
+    const lines = [];
+    lines.push('E2E Scope Report');
+  // Use cyEnv (final child env) rather than parent process.env so report matches execution
+  const effInclude = (cyEnv.CYPRESS_INCLUDE_TAG ? cyEnv.CYPRESS_INCLUDE_TAG : (prSmoke ? 'smoke' : (scope.tags.include || '(none)')));
+  const effExclude = (cyEnv.CYPRESS_EXCLUDE_TAG ? cyEnv.CYPRESS_EXCLUDE_TAG : (prSmoke ? 'flaky' : (scope.tags.exclude || '(none)')));
+  lines.push(`- include tags: ${effInclude}`);
+  lines.push(`- exclude tags: ${effExclude}`);
+    lines.push(`- via E2E_SPEC: ${scope.selection.viaEnvSpec ? 'yes' : 'no'}`);
+    if (!scope.selection.viaEnvSpec) {
+      lines.push(`- discovered specs: ${scope.selection.discoveredTotal}`);
+      if (scope.selection.excluded.flakyBaseNames.length) {
+        lines.push(`- excluded (flaky registry): ${scope.selection.excluded.flakyBaseNames.join(', ')}`);
+      }
+    }
+    lines.push(`- selected specs: ${scope.selection.selectedSpecs.length}`);
+    // Show up to 20 specs to keep it readable
+    const preview = scope.selection.selectedSpecs.slice(0, 20).join('\n  ');
+    lines.push(`  ${preview}${scope.selection.selectedSpecs.length > 20 ? '\n  ...' : ''}`);
+    fs.writeFileSync(scopeTxtPath, lines.join('\n') + '\n', 'utf8');
+  } catch (_) {}
   const reportPath = path.join(frontendDir, 'cypress-report.json');
   // Always enforce a wide specPattern to avoid accidental narrowing by env or defaults
   const fullSpecPattern = 'cypress/e2e/**/*.cy.{js,jsx,ts,tsx}';
@@ -346,11 +712,45 @@ async function main() {
     }
   } catch {}
   const cyArgs = ['cypress', 'run', '--browser', e2eBrowser, '--headless', '--config', configArg, '--reporter', 'mochawesome', '--reporter-options', `reportDir=cypress-results,reportFilename=cypress-report,overwrite=false,quiet=true,charts=false,html=false,json=true`, ...specArg];
+    // Deduplicate any accidental duplicate spec paths in --spec argument
+    try {
+      const specIndex = cyArgs.indexOf('--spec');
+      if (specIndex !== -1 && cyArgs[specIndex + 1]) {
+        const rawList = cyArgs[specIndex + 1].split(',').map(s => s.trim()).filter(Boolean);
+        const unique = Array.from(new Set(rawList));
+        if (unique.length !== rawList.length) {
+          cyArgs[specIndex + 1] = unique.join(',');
+          console.log(`[e2e] De-duplicated spec list: ${rawList.length} -> ${unique.length}`);
+        }
+      }
+    } catch (e) { console.warn('[e2e] Failed dedup specArg:', e.message || e); }
+  // Final override: for PR_SMOKE rely purely on specPattern + cypress-grep tag filtering so newly added smoke tests are never missed.
+  if (prSmoke && specArg.length) {
+    console.log('[e2e] PR_SMOKE: executing ONLY curated specs: ' + scope.selection.selectedSpecs.length);
+  }
   try {
+    // Deep diagnostic logging (temporary)
+    try {
+      const e2eDir = path.join(frontendDir, 'cypress', 'e2e');
+      const dirEntries = fs.readdirSync(e2eDir).filter(f => /\.cy\.js$/i.test(f));
+      console.log(`[e2e][debug] e2e dir entries (${dirEntries.length}): ${dirEntries.slice(0,60).join(', ')}`);
+    } catch (e) {
+      console.log('[e2e][debug] failed to list e2e dir:', e.message);
+    }
+    console.log('[e2e][debug] PR_SMOKE flag:', prSmoke);
+  console.log('[e2e][debug] smokeSpecFilteringApplied:', scope.selection.smokeSpecFilteringApplied);
+    console.log('[e2e][debug] cyEnv grepTags:', cyEnv.CYPRESS_grepTags, 'grepFilterSpecs:', cyEnv.CYPRESS_grepFilterSpecs);
+    console.log('[e2e][debug] pre-final specArg:', Array.isArray(specArg) ? specArg.join(' ') : '(none)');
     const expose = Object.keys(cyEnv).filter(k => /^CYPRESS_/i.test(k)).reduce((acc,k)=> (acc[k]=cyEnv[k], acc), {});
     console.log('[e2e] Cypress env (filtered):', JSON.stringify(expose));
     console.log('[e2e] Cypress args:', JSON.stringify(cyArgs));
   } catch (_) {}
+  // Persist final invocation snapshot for debugging
+  try {
+    const invPath = path.join(frontendDir, 'cypress-invocation.txt');
+    const envPreview = Object.keys(cyEnv).filter(k => /^CYPRESS_/i.test(k) || /PR_SMOKE|E2E_SPEC/i.test(k)).sort().reduce((acc,k)=> (acc[k]=cyEnv[k], acc), {});
+    fs.writeFileSync(invPath, JSON.stringify({ prSmoke, args: cyArgs, env: envPreview }, null, 2) + '\n', 'utf8');
+  } catch(e) { console.warn('[e2e] Failed to write cypress-invocation.txt:', e.message || e); }
   const cy = run('npx', cyArgs, { cwd: frontendDir, env: cyEnv });
   const cyCode = await new Promise((resolve) => cy.on('close', resolve));
   try {
@@ -368,19 +768,232 @@ async function main() {
           total.failures += Number(s.failures || 0);
           total.pending += Number(s.pending || 0);
           total.duration += Number(s.duration || 0);
+          // Collect per-spec timing for curated smoke governance
+          try {
+            if (prSmoke && scope.selection && scope.selection.curatedSmokeApplied) {
+              // Each mochawesome JSON has results[0].suites[0].tests[] (depending on nesting)
+              if (Array.isArray(data.results)) {
+                for (const r of data.results) {
+                  const stack = [];
+                  if (Array.isArray(r.suites)) stack.push(...r.suites);
+                  const specDurations = [];
+                  while (stack.length) {
+                    const suite = stack.pop();
+                    if (!suite) continue;
+                    if (Array.isArray(suite.suites)) stack.push(...suite.suites);
+                    if (Array.isArray(suite.tests)) {
+                      for (const t of suite.tests) {
+                        if (t && typeof t.duration === 'number') {
+                          specDurations.push(t.duration);
+                        }
+                      }
+                    }
+                  }
+                  if (r.file && specDurations.length) {
+                    if (!scope.__timings) scope.__timings = {};
+                    const base = path.basename(r.file);
+                    // Sum durations (tests only) as a proxy for spec runtime
+                    scope.__timings[base] = (scope.__timings[base] || 0) + specDurations.reduce((a,b)=>a+b,0);
+                  }
+                }
+              }
+            }
+          } catch (_) {}
         } catch (_) {}
       }
-      const line = `[e2e] Cypress results: ${total.tests} tests, ${total.passes} passed, ${total.failures} failed`;
+      // Include spec selection info for traceability
+      let specInfo = '';
+      if (process.env.E2E_SPEC) {
+        specInfo = ` spec=${process.env.E2E_SPEC}`;
+      } else if (Array.isArray(specArg) && specArg[0] === '--spec' && typeof specArg[1] === 'string') {
+        const count = specArg[1].split(',').filter(Boolean).length;
+        specInfo = ` specs=${count}`;
+      }
+      const line = `[e2e] Cypress results: ${total.tests} tests, ${total.passes} passed, ${total.failures} failed${specInfo}`;
       const meta = [];
       if (ephemeralDbName) meta.push(`db=${ephemeralDbName}`);
       if (apiUrl) meta.push(`api=${apiUrl}`);
       const metaLine = meta.length ? ` [${meta.join(' ')}]` : '';
       console.log(line);
       try { fs.writeFileSync(summaryPath, `${line}${metaLine}\n`, 'utf8'); } catch (_) {}
+      // Budget check for PR_SMOKE
+      if (prSmoke && scope.selection.curatedConfig && scope.selection.curatedConfig.budgetSeconds) {
+        const durSec = Math.round((total.duration || 0) / 1000);
+        const budget = Number(scope.selection.curatedConfig.budgetSeconds);
+        if (durSec > budget) {
+          console.warn(`[e2e][PR_SMOKE] Duration ${durSec}s exceeded budget ${budget}s (consider tightening or investigating slow spec).`);
+        } else {
+          console.log(`[e2e][PR_SMOKE] Duration ${durSec}s within budget ${budget}s.`);
+        }
+      }
+      // Write per-spec timing file for smoke set (milliseconds)
+      try {
+        if (prSmoke && scope.__timings) {
+          const timingPath = path.join(frontendDir, 'smoke-spec-timings.json');
+          const sorted = Object.entries(scope.__timings).sort((a,b)=>b[1]-a[1]).reduce((acc,[k,v])=>{acc[k]=v;return acc;},{});
+          fs.writeFileSync(timingPath, JSON.stringify({ generated: new Date().toISOString(), durationsMs: sorted }, null, 2));
+          // Also copy into test-report folder after it's created (handled later) by keeping path reference
+          scope.__timingPath = timingPath;
+          // --- Historical timing & governance ---
+          try {
+            const historyPath = path.join(frontendDir, 'smoke-spec-timings-history.json');
+            let history = [];
+            if (fs.existsSync(historyPath)) {
+              try { history = JSON.parse(fs.readFileSync(historyPath, 'utf8')) || []; } catch (_) { history = []; }
+            }
+            const entry = { generated: new Date().toISOString(), durationsMs: sorted, totalMs: Object.values(sorted).reduce((a,b)=>a+b,0) };
+            history.push(entry);
+            // Keep last 40 entries to cap file size
+            if (history.length > 40) history = history.slice(history.length - 40);
+            fs.writeFileSync(historyPath, JSON.stringify(history, null, 2));
+
+            // Compute medians for each spec (excluding current) for drift detection
+            const prior = history.slice(0, -1);
+            const median = (vals) => { if (!vals.length) return null; const s=vals.slice().sort((a,b)=>a-b); const m=Math.floor(s.length/2); return s.length%2? s[m] : Math.round((s[m-1]+s[m])/2); };
+            const priorMedians = {};
+            if (prior.length) {
+              const specNames = Object.keys(sorted);
+              for (const name of specNames) {
+                const vals = prior.map(e => e.durationsMs[name]).filter(v => typeof v === 'number');
+                if (vals.length) priorMedians[name] = median(vals);
+              }
+            }
+            const warnings = [];
+            const thresholds = (scope.selection.curatedConfig && scope.selection.curatedConfig.thresholds) || {};
+            const ABS_THRESHOLD_MS = Number(thresholds.perSpecAbsMs || 8000);
+            const DRIFT_FACTOR = Number(thresholds.driftFactor || 1.5);
+            const DRIFT_MIN_INCREASE = Number(thresholds.driftMinIncreaseMs || 500);
+            const TOP_HEAVY_SHARE = Number(thresholds.topHeavyShareWarn || 0.4); // fraction of total
+            const MOVING_WINDOW = Math.max(1, Number(thresholds.movingAverageWindow || 5));
+            const totalMs = Object.values(sorted).reduce((a,b)=>a+b,0) || 1;
+            // Compute moving average (last N prior + current not included) for each spec
+            const priorForAverages = history.slice(0, -1);
+            const movingAverages = {};
+            if (priorForAverages.length) {
+              const window = priorForAverages.slice(-MOVING_WINDOW);
+              for (const name of Object.keys(sorted)) {
+                const samples = window.map(r => r.durationsMs[name]).filter(v => typeof v === 'number');
+                if (samples.length) {
+                  movingAverages[name] = Math.round(samples.reduce((a,b)=>a+b,0)/samples.length);
+                }
+              }
+            }
+            for (const [spec, dur] of Object.entries(sorted)) {
+              if (dur > ABS_THRESHOLD_MS) {
+                warnings.push(`[ABS] ${spec} ${dur}ms exceeds ${ABS_THRESHOLD_MS}ms guideline.`);
+              }
+              if (priorMedians[spec]) {
+                const med = priorMedians[spec];
+                if (med > 0 && dur > med * DRIFT_FACTOR && (dur - med) > DRIFT_MIN_INCREASE) {
+                  warnings.push(`[DRIFT] ${spec} grew ${ (dur/med).toFixed(2) }x median (${med}ms -> ${dur}ms).`);
+                }
+              }
+              const share = dur / totalMs;
+              if (share >= TOP_HEAVY_SHARE) {
+                warnings.push(`[HEAVY] ${spec} consumes ${(share*100).toFixed(1)}% of smoke time (>= ${(TOP_HEAVY_SHARE*100).toFixed(0)}%). Consider slimming or splitting.`);
+              }
+            }
+            const governancePath = path.join(frontendDir, 'smoke-governance-report.txt');
+            const govLines = [];
+            govLines.push('Smoke Governance Report');
+            govLines.push(`Generated: ${entry.generated}`);
+            govLines.push('');
+            govLines.push('Per-spec durations (ms, descending):');
+            for (const [spec, dur] of Object.entries(sorted)) {
+              const med = priorMedians[spec];
+              const share = ((dur / (Object.values(sorted).reduce((a,b)=>a+b,0) || dur)) * 100).toFixed(1);
+              const avg = movingAverages[spec];
+              let extras = [];
+              if (med) extras.push(`median=${med}`);
+              if (avg) extras.push(`avgN=${avg}`);
+              if (med) {
+                const driftVal = dur - med;
+                extras.push(`Δmed=${driftVal>=0?'+':''}${driftVal}`);
+              }
+              govLines.push(`- ${spec}: ${dur}ms (${share}%)${extras.length? ' ['+extras.join(' ')+']':''}`);
+            }
+            govLines.push('');
+            if (warnings.length) {
+              govLines.push('Warnings:');
+              warnings.forEach(w => govLines.push(`- ${w}`));
+            } else {
+              govLines.push('Warnings: (none)');
+            }
+            govLines.push('');
+            govLines.push(`Total smoke duration (sum test durations): ${entry.totalMs}ms`);
+            if (scope.selection.curatedConfig && scope.selection.curatedConfig.budgetSeconds) {
+              govLines.push(`Configured budget: ${scope.selection.curatedConfig.budgetSeconds}s`);
+            }
+            fs.writeFileSync(governancePath, govLines.join('\n'));
+            scope.__governancePath = governancePath;
+            // Governance summary JSON for dashboards / CI analytics
+            try {
+              const summary = {
+                generated: entry.generated,
+                totalMs: entry.totalMs,
+                budgetSeconds: scope.selection.curatedConfig && scope.selection.curatedConfig.budgetSeconds || null,
+                budgetMet: (scope.selection.curatedConfig && scope.selection.curatedConfig.budgetSeconds) ? (entry.totalMs/1000) <= scope.selection.curatedConfig.budgetSeconds : null,
+                topSpec: Object.entries(sorted)[0] ? { name: Object.entries(sorted)[0][0], ms: Object.entries(sorted)[0][1] } : null,
+                warnings,
+                perSpec: Object.entries(sorted).map(([name, ms]) => ({ name, ms, median: priorMedians[name]||null, movingAvg: movingAverages[name]||null }))
+              };
+              const summaryPath = path.join(frontendDir, 'smoke-governance-summary.json');
+              fs.writeFileSync(summaryPath, JSON.stringify(summary, null, 2));
+              scope.__governanceSummaryPath = summaryPath;
+            } catch (sErr) {
+              console.warn('[e2e] Failed to write governance summary:', sErr.message||sErr);
+            }
+            if (warnings.length) {
+              console.warn('[e2e][PR_SMOKE] Timing warnings detected:\n' + warnings.join('\n'));
+            }
+          } catch (gerr) {
+            console.warn('[e2e] Failed timing governance step:', gerr && gerr.message ? gerr.message : gerr);
+          }
+        }
+      } catch (e) { console.warn('[e2e] Failed to write smoke-spec-timings.json:', e.message || e); }
     } else {
       const fallback = `[e2e] Cypress finished with exit code ${cyCode}. No JSON reports found in ${resultsDir}.`;
       console.warn(fallback);
       try { fs.writeFileSync(summaryPath, `${fallback}\n`, 'utf8'); } catch (_) {}
+    }
+    // Copy artifacts into a timestamped test-report folder for this run
+    try {
+      const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\..+$/, '');
+      const reportRoot = path.join(frontendDir, 'test-report');
+      const reportDir = path.join(reportRoot, stamp);
+      fs.mkdirSync(reportDir, { recursive: true });
+      // Copy cypress-results/*
+      for (const f of fs.readdirSync(resultsDir)) {
+        const src = path.join(resultsDir, f);
+        const dest = path.join(reportDir, f);
+        try { fs.copyFileSync(src, dest); } catch (_) {}
+      }
+      // Copy summary and meta if present
+      try { fs.copyFileSync(summaryPath, path.join(reportDir, path.basename(summaryPath))); } catch (_) {}
+      const metaPath = path.join(frontendDir, 'e2e-meta.txt');
+      if (fs.existsSync(metaPath)) {
+        try { fs.copyFileSync(metaPath, path.join(reportDir, 'e2e-meta.txt')); } catch (_) {}
+      }
+      // Copy scope report if present
+      const scopeJsonPath = path.join(frontendDir, 'scope-report.json');
+      const scopeTxtPath = path.join(frontendDir, 'scope-report.txt');
+      if (fs.existsSync(scopeJsonPath)) {
+        try { fs.copyFileSync(scopeJsonPath, path.join(reportDir, 'scope-report.json')); } catch (_) {}
+      }
+      if (fs.existsSync(scopeTxtPath)) {
+        try { fs.copyFileSync(scopeTxtPath, path.join(reportDir, 'scope-report.txt')); } catch (_) {}
+      }
+      const smokeTiming = path.join(frontendDir, 'smoke-spec-timings.json');
+      if (fs.existsSync(smokeTiming)) {
+        try { fs.copyFileSync(smokeTiming, path.join(reportDir, 'smoke-spec-timings.json')); } catch (_) {}
+      }
+      const smokeGov = path.join(frontendDir, 'smoke-governance-report.txt');
+      if (fs.existsSync(smokeGov)) {
+        try { fs.copyFileSync(smokeGov, path.join(reportDir, 'smoke-governance-report.txt')); } catch (_) {}
+      }
+      console.log(`[e2e] Artifacts copied to ${path.relative(frontendDir, reportDir)}`);
+    } catch (e) {
+      console.warn('[e2e] Failed to copy artifacts to test-report:', e && e.message ? e.message : e);
     }
   } catch (_) {}
   cleanup();

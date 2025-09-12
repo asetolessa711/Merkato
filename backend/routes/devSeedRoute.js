@@ -4,16 +4,48 @@ const Product = require('../models/Product');
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 
-// Seed test users and products for E2E (idempotent)
+// Seed test users and products for E2E (idempotent + corrective)
 router.post('/seed', async (req, res) => {
   try {
     const password = 'Password123!';
     const ensureUser = async (name, email, roles, country) => {
-      let user = await User.findOne({ email });
+      // Select password so we can validate/reset deterministically
+      let user = await User.findOne({ email }).select('+password');
       if (!user) {
         // Do NOT pre-hash here; let the User model pre-save hook hash the plaintext
         user = await User.create({ name, email, password, roles, country });
+        return user;
       }
+
+      // If user exists, ensure credentials and profile match expected test defaults
+      let needsSave = false;
+      try {
+        const ok = await user.matchPassword(password);
+        if (!ok) {
+          user.password = password; // pre-save hook will hash
+          needsSave = true;
+        }
+      } catch (_) {
+        // If match check fails for any reason, reset to known password
+        user.password = password;
+        needsSave = true;
+      }
+
+      // Normalize roles (order-insensitive)
+      const existingRoles = Array.isArray(user.roles) ? [...user.roles].sort().join(',') : '';
+      const desiredRoles = Array.isArray(roles) ? [...roles].sort().join(',') : '';
+      if (existingRoles !== desiredRoles) {
+        user.roles = roles;
+        needsSave = true;
+      }
+
+      // Ensure country matches
+      if (user.country !== country) {
+        user.country = country;
+        needsSave = true;
+      }
+
+      if (needsSave) await user.save();
       return user;
     };
 
@@ -60,7 +92,7 @@ router.post('/seed', async (req, res) => {
       vendor: vendor._id,
     });
 
-    res.status(200).json({
+  res.status(200).json({
       message: 'Database seeded ✅',
       users: {
         customer: customer.email,

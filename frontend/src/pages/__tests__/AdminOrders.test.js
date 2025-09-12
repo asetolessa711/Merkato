@@ -100,11 +100,12 @@ describe('AdminOrders', () => {
     // Inject test orders directly for reliable rendering
     axios.post.mockResolvedValueOnce({ data: { failed: [] } });
     renderWithContext(<AdminOrders initialOrders={orders} />);
-    // Select both orders
-    const checkboxes = await screen.findAllByRole('checkbox');
-    checkboxes.forEach(box => fireEvent.click(box));
-    // Click bulk shipped
-    fireEvent.click(screen.getByText('Mark as Shipped'));
+  // Select order checkboxes only
+  const orderCheckboxes1 = await screen.findAllByTestId('order-checkbox');
+  orderCheckboxes1.forEach(box => fireEvent.click(box));
+  // Wait for toolbar button to appear
+  const markAsShippedBtn1 = await screen.findByTestId('bulk-action-mark-shipped');
+  fireEvent.click(markAsShippedBtn1);
     // Wait for dialog to appear before clicking Confirm
     const dialog = await screen.findByTestId('bulk-preview-header');
     expect(dialog).toBeInTheDocument();
@@ -137,9 +138,10 @@ describe('AdminOrders', () => {
     // Inject test orders directly for reliable rendering
     axios.post.mockResolvedValueOnce({ data: 'csvdata' });
     renderWithContext(<AdminOrders initialOrders={orders} />);
-    const checkboxes = await screen.findAllByRole('checkbox');
-    checkboxes.forEach(box => fireEvent.click(box));
-    fireEvent.click(screen.getByText('Export Selected'));
+  const orderCheckboxes2 = await screen.findAllByTestId('order-checkbox');
+  orderCheckboxes2.forEach(box => fireEvent.click(box));
+  const exportBtn = await screen.findByTestId('bulk-action-export');
+  fireEvent.click(exportBtn);
     const dialog = await screen.findByTestId('bulk-preview-header');
     expect(dialog).toBeInTheDocument();
   // Click the preview Confirm first to mirror UI flow
@@ -167,9 +169,10 @@ describe('AdminOrders', () => {
     // Inject test orders directly for reliable rendering
     axios.post.mockResolvedValueOnce({ data: { failed: [] } });
     renderWithContext(<AdminOrders initialOrders={orders} />);
-    const checkboxes = await screen.findAllByRole('checkbox');
-    checkboxes.forEach(box => fireEvent.click(box));
-    fireEvent.click(screen.getByText('Resend Emails'));
+  const orderCheckboxes3 = await screen.findAllByTestId('order-checkbox');
+  orderCheckboxes3.forEach(box => fireEvent.click(box));
+  const resendEmailsBtn = await screen.findByTestId('bulk-action-resend-emails');
+  fireEvent.click(resendEmailsBtn);
     const dialog = await screen.findByTestId('bulk-preview-header');
     expect(dialog).toBeInTheDocument();
   // Click the preview Confirm first to keep dialog open, then finalize
@@ -195,9 +198,10 @@ describe('AdminOrders', () => {
     ];
     // Inject test orders directly for reliable rendering
     renderWithContext(<AdminOrders initialOrders={orders} />);
-    const checkboxes = await screen.findAllByRole('checkbox');
-    checkboxes.forEach(box => fireEvent.click(box));
-    fireEvent.click(screen.getByText('Schedule Export'));
+  const orderCheckboxes4 = await screen.findAllByTestId('order-checkbox');
+  orderCheckboxes4.forEach(box => fireEvent.click(box));
+  const scheduleExportBtn = await screen.findByTestId('bulk-action-schedule-export');
+  fireEvent.click(scheduleExportBtn);
     const dialog = await screen.findByTestId('schedule-bulk-action-header');
     expect(dialog).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('Schedule for:'), { target: { value: '2025-08-06T12:00' } });
@@ -218,9 +222,10 @@ describe('AdminOrders', () => {
     // Inject test orders directly for reliable rendering
     axios.post.mockResolvedValueOnce({ data: { failed: [] } });
     renderWithContext(<AdminOrders initialOrders={orders} />);
-    const checkboxes = await screen.findAllByRole('checkbox');
-    checkboxes.forEach(box => fireEvent.click(box));
-    fireEvent.click(screen.getByText('Mark as Shipped'));
+  const orderCheckboxes5 = await screen.findAllByTestId('order-checkbox');
+  orderCheckboxes5.forEach(box => fireEvent.click(box));
+  const markAsShippedBtn = await screen.findByTestId('bulk-action-mark-shipped');
+  fireEvent.click(markAsShippedBtn);
     const dialog = await screen.findByTestId('bulk-preview-header');
     expect(dialog).toBeInTheDocument();
     const confirmBtns = await screen.findAllByRole('button', { name: /confirm/i });

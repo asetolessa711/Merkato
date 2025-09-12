@@ -1,4 +1,5 @@
 import 'cypress-file-upload';
+// If cypress-axe is installed, its commands (injectAxe/checkA11y) will be available
 
 const API_URL = Cypress.env('API_URL') || 'http://localhost:5051';
 
@@ -15,21 +16,55 @@ Cypress.Commands.add('ensureSeed', () => {
 // Accepts an optional payload (ignored by backend route, but kept for API-compat)
 Cypress.Commands.add('seedOrders', (payload) => {
   // Use token from localStorage to authorize the test seed endpoint
-  cy.window().then((win) => {
-    const token = win.localStorage.getItem('token');
+  let token;
+  return cy.window().then((win) => {
+    token = win.localStorage.getItem('token');
     // Persist payload for UI-level injection as a fallback (AdminOrders reads e2e-orders)
     if (payload) {
       try { win.localStorage.setItem('e2e-orders', JSON.stringify(payload)); } catch {}
     }
-    cy.request({
+  }).then(() => {
+    return cy.request({
       method: 'POST',
       url: `${API_URL}/api/test/seed-orders`,
       headers: token ? { Authorization: `Bearer ${token}` } : {},
       body: payload || {},
       failOnStatusCode: false
     });
-    // Ensure the UI reflects the seeded data immediately
-    cy.reload();
+  }).then((res) => {
+    // If unauthorized, surface it clearly for fast diagnosis
+    if (res.status === 401) {
+      throw new Error('seedOrders: Unauthorized (401). Ensure cy.login ran and token is set.');
+    }
+    // Return the created order id if provided (as a Chainable)
+    const direct = res.body && res.body.orderId ? res.body.orderId : null;
+    if (direct) return cy.wrap(direct, { log: false });
+    // Fallback: fetch vendor-visible orders and return the first id (as a Chainable)
+    return cy.request({
+      method: 'GET',
+      url: `${API_URL}/api/orders/vendor-orders`,
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      failOnStatusCode: false
+    }).then((list) => {
+      const arr = list.body?.orders || list.body || [];
+      const id = Array.isArray(arr) && arr[0] && arr[0]._id ? arr[0]._id : null;
+      return cy.wrap(id, { log: false });
+    });
+  });
+});
+
+// Auto-inject axe-core after each visit to enable cy.checkA11y in specs without boilerplate
+// Safe no-op if cypress-axe is not installed
+Cypress.Commands.overwrite('visit', (originalFn, url, options) => {
+  const result = originalFn(url, options);
+  // Queue axe injection after the page loads; ignore if command not present or disabled
+  return result.then(() => {
+    try {
+      const disabled = String(Cypress.env('DISABLE_AXE') || '').toLowerCase() === 'true';
+      if (!disabled && typeof cy.injectAxe === 'function') {
+        cy.injectAxe();
+      }
+    } catch (_) {}
   });
 });
 // Custom command to log in as admin via API for stability

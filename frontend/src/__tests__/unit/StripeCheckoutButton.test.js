@@ -31,6 +31,7 @@ import StripeCheckoutButton from '../../components/StripeCheckoutButton';
 import '@testing-library/jest-dom';
 import axios from 'axios';
 
+// Tags: @thread:payments @thread:checkout
 describe('\ud83d\udcb3 StripeCheckoutButton', () => {
   const mockItems = [{ productId: '123', quantity: 1 }];
 

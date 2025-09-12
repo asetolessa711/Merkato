@@ -8,7 +8,7 @@ const { registerTestUser, loginTestUser, deleteTestUser } = require('../utils/te
 let adminUser, adminToken;
 let normalUser, userToken;
 
-describe('Admin Routes', () => {
+describe('Admin Routes @admin', () => {
   let testUserId;
   let testOrderId;
 

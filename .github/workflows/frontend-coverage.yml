@@ -12,6 +12,12 @@ jobs:
   coverage:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      # Governance baseline thresholds (ratcheted separately in jest.config.js)
+      COV_MIN_LINES: '32'
+      COV_MIN_STATEMENTS: '32'
+      COV_MIN_FUNCTIONS: '25'
+      COV_MIN_BRANCHES: '25'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -30,6 +36,58 @@ jobs:
           cd frontend
           npm run test:coverage
           npm run coverage:summary
+          echo "COVERAGE_JSON=$(cat coverage/coverage-compact.json | tr -d '\n' | sed 's/"/\\"/g')" >> $GITHUB_ENV
+      - name: Enforce thresholds
+        run: |
+          echo "Evaluating coverage thresholds..."
+          data=$(echo "$COVERAGE_JSON" | sed 's/\\"/"/g')
+          lines=$(echo "$data" | jq -r '.lines')
+          branches=$(echo "$data" | jq -r '.branches')
+          functions=$(echo "$data" | jq -r '.functions')
+          statements=$(echo "$data" | jq -r '.statements')
+          fail=0
+          comp() { metric=$1 value=$2 min=$3; awk "BEGIN {exit !($value < $min)}" && true; }
+          awk "BEGIN {exit !($lines < $COV_MIN_LINES)}" && fail=1 || true
+          awk "BEGIN {exit !($branches < $COV_MIN_BRANCHES)}" && fail=1 || true
+          awk "BEGIN {exit !($functions < $COV_MIN_FUNCTIONS)}" && fail=1 || true
+          awk "BEGIN {exit !($statements < $COV_MIN_STATEMENTS)}" && fail=1 || true
+          echo "lines=$lines branches=$branches functions=$functions statements=$statements"
+          if [ $fail -eq 1 ]; then
+            echo "Coverage below enforced thresholds" >&2
+            exit 1
+          fi
+      - name: Detect regression vs previous main baseline
+        if: github.event_name == 'pull_request'
+        id: regression
+        run: |
+          echo "Fetching baseline from main..."
+          git fetch origin main:refs/remotes/origin/main --depth=1 || true
+          if git show origin/main:frontend/coverage/coverage-compact.json > /tmp/base.json 2>/dev/null; then
+            base_lines=$(jq -r '.lines' /tmp/base.json)
+            base_statements=$(jq -r '.statements' /tmp/base.json)
+            base_functions=$(jq -r '.functions' /tmp/base.json)
+            base_branches=$(jq -r '.branches' /tmp/base.json)
+            cur=$(echo "$COVERAGE_JSON" | sed 's/\\"/"/g')
+            cur_lines=$(echo "$cur" | jq -r '.lines')
+            cur_statements=$(echo "$cur" | jq -r '.statements')
+            cur_functions=$(echo "$cur" | jq -r '.functions')
+            cur_branches=$(echo "$cur" | jq -r '.branches')
+            # Allow 0.1% tolerance
+            regression=0
+            tol=0.1
+            awk "BEGIN {exit !($cur_lines + $tol < $base_lines)}" && regression=1 || true
+            awk "BEGIN {exit !($cur_statements + $tol < $base_statements)}" && regression=1 || true
+            awk "BEGIN {exit !($cur_functions + $tol < $base_functions)}" && regression=1 || true
+            awk "BEGIN {exit !($cur_branches + $tol < $base_branches)}" && regression=1 || true
+            echo "BASE_LINES=$base_lines" >> $GITHUB_OUTPUT
+            echo "BASE_STATEMENTS=$base_statements" >> $GITHUB_OUTPUT
+            echo "BASE_FUNCTIONS=$base_functions" >> $GITHUB_OUTPUT
+            echo "BASE_BRANCHES=$base_branches" >> $GITHUB_OUTPUT
+            echo "REGRESSION=$regression" >> $GITHUB_OUTPUT
+          else
+            echo "No baseline coverage file on main. Skipping regression check." >> $GITHUB_STEP_SUMMARY
+            echo "REGRESSION=0" >> $GITHUB_OUTPUT
+          fi
       - name: Upload coverage artifact
         uses: actions/upload-artifact@v4
         with:
@@ -49,10 +107,36 @@ jobs:
               return;
             }
             const data = JSON.parse(fs.readFileSync(summaryPath,'utf8'));
-            const body = `### Frontend Coverage\n\n| Metric | % |\n|--------|----|\n| Lines | ${data.lines}% |\n| Branches | ${data.branches}% |\n| Functions | ${data.functions}% |\n| Statements | ${data.statements}% |\n\n> Target suggestions: Lines >= 70%, Branches >= 50% initially.\n`;
+            const regression = core.getInput('REGRESSION') || process.env.REGRESSION || '0';
+            const linesBase = core.getInput('BASE_LINES') || process.env.BASE_LINES;
+            const statementsBase = core.getInput('BASE_STATEMENTS') || process.env.BASE_STATEMENTS;
+            const functionsBase = core.getInput('BASE_FUNCTIONS') || process.env.BASE_FUNCTIONS;
+            const branchesBase = core.getInput('BASE_BRANCHES') || process.env.BASE_BRANCHES;
+            function delta(cur, base){ if(!base) return '—'; const diff=(cur-base).toFixed(2); const sign=diff>0?'+':''; return `${sign}${diff}%`; }
+            const body = [
+              '### Frontend Coverage (Governance)',
+              '',
+              '| Metric | Current | Baseline | Δ |',
+              '|--------|---------|----------|----|',
+              `| Lines | ${data.lines}% | ${linesBase||'—'} | ${delta(data.lines, linesBase)} |`,
+              `| Branches | ${data.branches}% | ${branchesBase||'—'} | ${delta(data.branches, branchesBase)} |`,
+              `| Functions | ${data.functions}% | ${functionsBase||'—'} | ${delta(data.functions, functionsBase)} |`,
+              `| Statements | ${data.statements}% | ${statementsBase||'—'} | ${delta(data.statements, statementsBase)} |`,
+              '',
+              `Thresholds (ratchet): Lines ≥ ${process.env.COV_MIN_LINES} | Branches ≥ ${process.env.COV_MIN_BRANCHES} | Funcs ≥ ${process.env.COV_MIN_FUNCTIONS} | Stmts ≥ ${process.env.COV_MIN_STATEMENTS}`,
+              '',
+              regression==='1' ? '⚠️ **Regression detected** (drop beyond tolerance). Please add/adjust tests before merge.' : '✅ No coverage regression beyond tolerance.',
+              '',
+              'Tagging Guidance: use @trust-ui for auth/payment; @persona-ui:vendor / @persona-ui:customer for persona flows.'
+            ].join('\n');
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
               body
             });
+      - name: Fail on regression
+        if: steps.regression.outputs.REGRESSION == '1'
+        run: |
+          echo "Coverage regression beyond tolerance." >&2
+          exit 1

@@ -8,7 +8,7 @@ const Order = require('../../models/Order');
 const Product = require('../../models/Product');
 const User = require('../../models/User');
 
-describe('Admin Orders Bulk Endpoints', () => {
+describe('Admin Orders Bulk Endpoints @admin @orders', () => {
   let adminToken;
   let customerId;
   let vendorId;

@@ -2,7 +2,7 @@ const request = require('supertest');
 const app = require('../../server');
 const mongoose = require('mongoose');
 
-describe('Admin Flag Moderation', () => {
+describe('Admin Flag Moderation @admin', () => {
   let adminToken;
   let userToken;
   let productId;

@@ -7,7 +7,7 @@ const { registerTestUser, loginTestUser } = require('../utils/testUserUtils');
 const Order = require('../../models/Order');
 const Product = require('../../models/Product');
 
-describe('Admin Orders GET (seed-on-demand)', () => {
+describe('Admin Orders GET (seed-on-demand) @admin', () => {
   let adminToken;
   let vendorId;
 

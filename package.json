@@ -8,6 +8,7 @@
     "test:all": "node ./scripts/run-all-tests.js",
     "test:all:ps": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/run-all-tests.ps1",
     "test:e2e": "npm --prefix frontend run cy:run",
+  "threads:scan": "node ./scripts/threads-scan.js",
     "guard:focused": "node ./scripts/check-focused-tests.js",
     "guard:lint": "echo lint placeholder",
     "precommit": "node -e \"console.log('Use Husky hooks instead of npm precommit');\"",

@@ -4,7 +4,7 @@ describe('❌ Checkout validation errors', () => {
   const productName = 'Cypress Test Product';
   before(() => { cy.task('db:seed'); });
 
-  it('shows errors for incomplete address and missing payment method @negative @smoke', () => {
+  it('shows errors for incomplete address and missing payment method @negative', () => {
     cy.intercept('GET', '/api/products*').as('products');
     cy.visit('/shop');
     cy.wait('@products');

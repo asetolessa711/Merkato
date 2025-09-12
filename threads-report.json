@@ -1,0 +1,378 @@
+{
+  "generatedAt": "2025-09-12T19:26:23.138Z",
+  "tagPrefix": "@thread:",
+  "threads": {
+    "checkout": {
+      "description": "Customer adds items, reviews cart, submits order (guest or auth).",
+      "requiredLayers": [
+        "story",
+        "frontend",
+        "backend",
+        "e2e"
+      ],
+      "critical": true,
+      "coveredLayers": [
+        "story",
+        "frontend",
+        "backend",
+        "e2e"
+      ],
+      "missingLayers": [],
+      "coverageRatio": 1,
+      "files": {
+        "story": [
+          "frontend\\src\\components\\__stories__\\CartSidebar.stories.js",
+          "frontend\\src\\components\\__stories__\\ProductCard.stories.js",
+          "frontend\\src\\components\\__stories__\\StripeCheckoutButton.stories.js"
+        ],
+        "frontend": [
+          "frontend\\src\\__tests__\\integration\\CheckoutPage.test.js",
+          "frontend\\src\\__tests__\\unit\\CartSidebar.test.js",
+          "frontend\\src\\__tests__\\unit\\StripeCheckoutButton.test.js"
+        ],
+        "backend": [
+          "backend\\tests\\integration\\orderRoutes.test.js"
+        ],
+        "e2e": [
+          "frontend\\cypress\\e2e\\customer_register_and_checkout.cy.js",
+          "frontend\\cypress\\e2e\\payments_checkout.cy.js"
+        ]
+      }
+    },
+    "auth-register": {
+      "description": "User account creation (form submit, validation, persistence).",
+      "requiredLayers": [
+        "frontend",
+        "backend",
+        "e2e"
+      ],
+      "critical": true,
+      "coveredLayers": [
+        "frontend",
+        "backend",
+        "e2e"
+      ],
+      "missingLayers": [],
+      "coverageRatio": 1,
+      "files": {
+        "story": [],
+        "frontend": [
+          "frontend\\src\\__tests__\\integration\\App.test.js"
+        ],
+        "backend": [
+          "backend\\tests\\integration\\authRoutes.thread.test.js"
+        ],
+        "e2e": [
+          "frontend\\cypress\\e2e\\customer_register_and_checkout.cy.js"
+        ]
+      }
+    },
+    "auth-login": {
+      "description": "User login & session token handling.",
+      "requiredLayers": [
+        "frontend",
+        "backend",
+        "e2e"
+      ],
+      "critical": true,
+      "coveredLayers": [
+        "frontend",
+        "backend",
+        "e2e"
+      ],
+      "missingLayers": [],
+      "coverageRatio": 1,
+      "files": {
+        "story": [],
+        "frontend": [
+          "frontend\\src\\__tests__\\integration\\App.test.js"
+        ],
+        "backend": [
+          "backend\\tests\\integration\\authRoutes.thread.test.js"
+        ],
+        "e2e": [
+          "frontend\\cypress\\e2e\\login_only.cy.js"
+        ]
+      }
+    },
+    "product-browse": {
+      "description": "Browsing / listing products with pagination / filters.",
+      "requiredLayers": [
+        "story",
+        "frontend",
+        "e2e"
+      ],
+      "critical": false,
+      "coveredLayers": [
+        "story",
+        "frontend",
+        "e2e"
+      ],
+      "missingLayers": [],
+      "coverageRatio": 1,
+      "files": {
+        "story": [
+          "frontend\\src\\components\\__stories__\\ProductCard.stories.js",
+          "frontend\\src\\components\\__stories__\\ProductList.stories.js"
+        ],
+        "frontend": [
+          "frontend\\src\\__tests__\\integration\\ShopPage.integration.test.js"
+        ],
+        "backend": [],
+        "e2e": [
+          "frontend\\cypress\\e2e\\product_browse.cy.js",
+          "frontend\\cypress\\e2e\\search_flow.cy.js"
+        ]
+      }
+    },
+    "cart": {
+      "description": "Cart management (add/update/remove, totals).",
+      "requiredLayers": [
+        "story",
+        "frontend",
+        "e2e"
+      ],
+      "critical": true,
+      "coveredLayers": [
+        "story",
+        "frontend",
+        "e2e"
+      ],
+      "missingLayers": [],
+      "coverageRatio": 1,
+      "files": {
+        "story": [
+          "frontend\\src\\components\\__stories__\\CartSidebar.stories.js",
+          "frontend\\src\\components\\__stories__\\ProductCard.stories.js"
+        ],
+        "frontend": [
+          "frontend\\src\\__tests__\\unit\\CartSidebar.test.js",
+          "frontend\\src\\__tests__\\unit\\hooks\\useCart.test.js"
+        ],
+        "backend": [],
+        "e2e": [
+          "frontend\\cypress\\e2e\\cart_add_remove.cy.js"
+        ]
+      }
+    },
+    "order-history": {
+      "description": "Viewing past orders (auth required).",
+      "requiredLayers": [
+        "frontend",
+        "backend",
+        "e2e"
+      ],
+      "critical": false,
+      "coveredLayers": [
+        "frontend",
+        "backend",
+        "e2e"
+      ],
+      "missingLayers": [],
+      "coverageRatio": 1,
+      "files": {
+        "story": [],
+        "frontend": [
+          "frontend\\src\\__tests__\\integration\\OrderHistory.integration.test.js"
+        ],
+        "backend": [
+          "backend\\tests\\integration\\orderRoutes.test.js"
+        ],
+        "e2e": [
+          "frontend\\cypress\\e2e\\order_history.cy.js"
+        ]
+      }
+    },
+    "vendor-orders-manage": {
+      "description": "Vendor views & updates order statuses / bulk actions.",
+      "requiredLayers": [
+        "frontend",
+        "backend",
+        "e2e"
+      ],
+      "critical": true,
+      "coveredLayers": [
+        "frontend",
+        "backend",
+        "e2e"
+      ],
+      "missingLayers": [],
+      "coverageRatio": 1,
+      "files": {
+        "story": [],
+        "frontend": [
+          "frontend\\src\\__tests__\\integration\\VendorOrders.integration.test.js"
+        ],
+        "backend": [
+          "backend\\tests\\integration\\orderRoutes.test.js"
+        ],
+        "e2e": [
+          "frontend\\cypress\\e2e\\vendor_orders_manage.cy.js"
+        ]
+      }
+    },
+    "vendor-products-manage": {
+      "description": "Vendor creates / edits / lists products.",
+      "requiredLayers": [
+        "frontend",
+        "backend",
+        "e2e"
+      ],
+      "critical": true,
+      "coveredLayers": [
+        "story",
+        "frontend",
+        "backend",
+        "e2e"
+      ],
+      "missingLayers": [],
+      "coverageRatio": 1,
+      "files": {
+        "story": [
+          "frontend\\src\\components\\__stories__\\VendorProducts.stories.js"
+        ],
+        "frontend": [
+          "frontend\\src\\__tests__\\integration\\VendorProducts.integration.test.js"
+        ],
+        "backend": [
+          "backend\\tests\\integration\\productRoutes.thread.test.js"
+        ],
+        "e2e": [
+          "frontend\\cypress\\e2e\\vendor_products_manage.cy.js"
+        ]
+      }
+    },
+    "reviews": {
+      "description": "Submitting & displaying product reviews.",
+      "requiredLayers": [
+        "frontend",
+        "backend"
+      ],
+      "critical": false,
+      "coveredLayers": [
+        "frontend",
+        "backend"
+      ],
+      "missingLayers": [],
+      "coverageRatio": 1,
+      "files": {
+        "story": [],
+        "frontend": [
+          "frontend\\src\\__tests__\\integration\\ProductReviews.integration.test.js"
+        ],
+        "backend": [
+          "backend\\tests\\integration\\reviews.thread.test.js"
+        ],
+        "e2e": []
+      }
+    },
+    "returns-refunds": {
+      "description": "Customer initiates and vendor/admin processes returns/refunds.",
+      "requiredLayers": [
+        "backend",
+        "e2e"
+      ],
+      "critical": false,
+      "coveredLayers": [
+        "backend",
+        "e2e"
+      ],
+      "missingLayers": [],
+      "coverageRatio": 1,
+      "files": {
+        "story": [],
+        "frontend": [],
+        "backend": [
+          "backend\\tests\\integration\\orderRoutes.test.js"
+        ],
+        "e2e": [
+          "frontend\\cypress\\e2e\\returns_refunds_flow.cy.js"
+        ]
+      }
+    },
+    "search": {
+      "description": "Search experience (query input, results list).",
+      "requiredLayers": [
+        "story",
+        "frontend",
+        "e2e"
+      ],
+      "critical": false,
+      "coveredLayers": [
+        "story",
+        "frontend",
+        "e2e"
+      ],
+      "missingLayers": [],
+      "coverageRatio": 1,
+      "files": {
+        "story": [
+          "frontend\\src\\components\\__stories__\\ProductList.stories.js"
+        ],
+        "frontend": [
+          "frontend\\src\\__tests__\\integration\\ShopPage.integration.test.js"
+        ],
+        "backend": [],
+        "e2e": [
+          "frontend\\cypress\\e2e\\search_flow.cy.js"
+        ]
+      }
+    },
+    "payments": {
+      "description": "Payment method selection / submission (currently COD stub).",
+      "requiredLayers": [
+        "frontend",
+        "backend",
+        "e2e"
+      ],
+      "critical": true,
+      "coveredLayers": [
+        "story",
+        "frontend",
+        "backend",
+        "e2e"
+      ],
+      "missingLayers": [],
+      "coverageRatio": 1,
+      "files": {
+        "story": [
+          "frontend\\src\\components\\__stories__\\StripeCheckoutButton.stories.js"
+        ],
+        "frontend": [
+          "frontend\\src\\__tests__\\integration\\CheckoutPage.test.js",
+          "frontend\\src\\__tests__\\unit\\StripeCheckoutButton.test.js"
+        ],
+        "backend": [
+          "backend\\tests\\integration\\orderRoutes.test.js"
+        ],
+        "e2e": [
+          "frontend\\cypress\\e2e\\payments_checkout.cy.js"
+        ]
+      }
+    },
+    "notifications": {
+      "description": "User-facing toast / inline notifications for key actions.",
+      "requiredLayers": [
+        "story",
+        "frontend"
+      ],
+      "critical": false,
+      "coveredLayers": [
+        "story",
+        "frontend"
+      ],
+      "missingLayers": [],
+      "coverageRatio": 1,
+      "files": {
+        "story": [
+          "frontend\\src\\components\\__stories__\\CustomersPage.stories.js"
+        ],
+        "frontend": [
+          "frontend\\src\\__tests__\\integration\\Notifications.integration.test.js"
+        ],
+        "backend": [],
+        "e2e": []
+      }
+    }
+  }
+}

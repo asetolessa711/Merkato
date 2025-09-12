@@ -17,7 +17,7 @@ let normalUserId;
 //   }
 // }));
 
-describe('Vendor Routes', () => {
+describe('Vendor Routes @vendor', () => {
   let createdProductId;
 
 

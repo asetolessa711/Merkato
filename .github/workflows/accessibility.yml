@@ -1,7 +1,6 @@
-﻿name: Accessibility Check
+﻿name: Accessibility (pa11y, optional)
 on:
-  pull_request:
-    branches: [ main ]
+  workflow_dispatch:
 jobs:
   pa11y:
     runs-on: ubuntu-latest

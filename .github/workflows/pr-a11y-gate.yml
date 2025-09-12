@@ -1,8 +1,12 @@
-name: PR A11y Gate (critical-only)
+name: PR A11y Gate (critical-only, enforced)
 
 on:
   pull_request:
     branches: [ main, dev ]
+
+permissions:
+  contents: read
+  pull-requests: write
 
 concurrency:
   group: pr-a11y-${{ github.event.pull_request.number }}
@@ -32,7 +36,7 @@ jobs:
       - name: Install frontend deps
         working-directory: frontend
         run: npm ci
-      - name: Run a11y smoke (critical-only)
+      - name: Run a11y (critical-only, enforced)
         id: run_a11y
         working-directory: frontend
         env:
@@ -41,7 +45,8 @@ jobs:
           E2E_AUTODROP: 'true'
           E2E_BACKEND_PORT: '5051'
           E2E_REUSE_BUILD: 'false'
-          E2E_SPEC: 'cypress/e2e/a11y_smoke.cy.js'
+          A11Y_ENFORCE: 'true' # Enforce: fail build on critical violations
+          E2E_SPEC: 'cypress/e2e/a11y_smoke.cy.js,cypress/e2e/a11y_auth_pages.cy.js,cypress/e2e/a11y_product_detail.cy.js,cypress/e2e/a11y_high_traffic.cy.js,cypress/e2e/a11y_header_nav.cy.js,cypress/e2e/a11y_cart_with_items.cy.js,cypress/e2e/a11y_checkout_form.cy.js' # Focused subset
         run: |
           npm run e2e:run
       - name: Append Cypress summary to Job Summary
@@ -60,8 +65,42 @@ jobs:
           name: a11y-artifacts
           path: |
             frontend/cypress-results/a11y-summary.json
+            frontend/cypress-results/a11y-auth-summary.json
+            frontend/cypress-results/a11y-header-summary.json
+            frontend/cypress-results/a11y-cart-summary.json
+            frontend/cypress-results/a11y-high-traffic-summary.json
+            frontend/cypress-results/a11y-product-detail-summary.json
+            frontend/cypress-results/a11y-checkout-summary.json
             frontend/test-report/**/a11y-summary.json
+            frontend/test-report/**/a11y-auth-summary.json
+            frontend/test-report/**/a11y-header-summary.json
+            frontend/test-report/**/a11y-cart-summary.json
+            frontend/test-report/**/a11y-high-traffic-summary.json
+            frontend/test-report/**/a11y-product-detail-summary.json
+            frontend/test-report/**/a11y-checkout-summary.json
             frontend/cypress-summary.txt
             frontend/cypress-results/*.json
             frontend/e2e-meta.txt
           retention-days: 7
+      - name: Build A11Y PR Comment
+        if: always()
+        working-directory: frontend
+        run: node ./scripts/make-a11y-pr-comment.js || echo "a11y PR comment generation skipped"
+      - name: Post sticky A11Y PR comment
+        if: github.event_name == 'pull_request'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: a11y-summary
+          recreate: true
+          path: frontend/pr-a11y-comment.md
+      - name: Build Failures PR Comment
+        if: always()
+        working-directory: frontend
+        run: node ./scripts/make-failures-pr-comment.js || echo "failures PR comment generation skipped"
+      - name: Post sticky Failures PR comment
+        if: github.event_name == 'pull_request'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: e2e-failures
+          recreate: true
+          path: frontend/pr-failures-comment.md

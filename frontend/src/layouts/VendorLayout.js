@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
-import NavbarUniversal from '../components/NavbarUniversal';
+import TemuNavbar from '../components/TemuNavbar';
 import VendorSidebar from '../components/VendorSidebar';
 
 import styles from './VendorLayout.module.css';
@@ -9,7 +9,7 @@ import MerkatoFooter from '../components/MerkatoFooter';
 function VendorLayout({ user, onLogout, lang, onLangChange }) {
   return (
     <div className={styles.container}>
-      <NavbarUniversal />
+  <TemuNavbar role="vendor" showCategories={false} />
       {/* Fixed heading at the top */}
       <header className={styles.fixedHeader}>
         <h1>Vendor Dashboard</h1>

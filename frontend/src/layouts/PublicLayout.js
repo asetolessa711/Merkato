@@ -2,7 +2,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Outlet } from 'react-router-dom';
-import NavbarUniversal from '../components/NavbarUniversal';
+import TemuNavbar from '../components/TemuNavbar';
 
 import styles from './PublicLayout.module.css';
 import MerkatoFooter from '../components/MerkatoFooter';
@@ -25,8 +25,8 @@ function PublicLayout({ user, onLogout, lang, onLangChange }) {
         </div>
       )}
 
-  {/* Universal Navbar */}
-  <NavbarUniversal />
+  {/* Temu-style Navbar */}
+  <TemuNavbar />
 
       {/* Main content area for pages like HomePage, Shop, etc. */}
       <main className={styles.container}>

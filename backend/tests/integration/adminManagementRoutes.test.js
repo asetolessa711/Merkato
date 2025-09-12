@@ -7,7 +7,7 @@ const { registerTestUser, loginTestUser } = require('../utils/testUserUtils');
 const Product = require('../../models/Product');
 const Expense = require('../../models/Expense');
 
-describe('Admin Management Routes (vendors, expenses, flags, revenue)', () => {
+describe('Admin Management Routes (vendors, expenses, flags, revenue) @admin', () => {
   let adminToken;
   let countryAdminToken;
   let vendorET; // Ethiopia

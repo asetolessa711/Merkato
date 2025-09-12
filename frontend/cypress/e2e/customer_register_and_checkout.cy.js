@@ -1,5 +1,5 @@
 // Customer register + authenticated checkout (extracted shard)
-// Tags: @customer @checkout @register @candidate
+// Tags: @customer @checkout @register @candidate @thread:auth-register @thread:checkout
 // Purpose: Unique coverage of UI registration + authenticated checkout distinct from guest frictionless path.
 // Notes: Further optimization planned (stub analytics, payment intent, marketing banners) before smoke consideration.
 

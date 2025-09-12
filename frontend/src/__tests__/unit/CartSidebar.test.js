@@ -1,3 +1,4 @@
+// Tags: @thread:cart @thread:checkout (cart total + checkout button)
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import CartSidebar from '../../components/CartSidebar';

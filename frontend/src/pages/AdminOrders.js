@@ -274,6 +274,7 @@ function AdminOrders({ showMessage: showMessageProp, initialOrders }) {
           </div>
           <div style={{ display: "flex", gap: 12, marginTop: 24 }}>
             <button
+              data-testid="bulk-preview-confirm"
               onClick={async () => {
                 setShowStatusPreview(false);
                 try {
@@ -542,176 +543,226 @@ function AdminOrders({ showMessage: showMessageProp, initialOrders }) {
           </button>
         </div>
       </div>
-      {filteredOrders.length === 0 ? (
-        <p>No orders yet.</p>
-      ) : (
-        filteredOrders.map((order) => (
-          <div
-            key={order._id}
-            data-testid="order-row"
-            style={{
-              border: "1px solid #ccc",
-              borderRadius: 8,
-              padding: 16,
-              marginBottom: 20,
-              background: "#f8f8f8",
-              display: "flex",
-              alignItems: "center",
-            }}
-          >
-            <input
-              type="checkbox"
-              checked={selectedOrderIds.includes(order._id)}
-              onChange={(e) => {
-                if (e.target.checked) {
-                  setSelectedOrderIds([...selectedOrderIds, order._id]);
-                } else {
-                  setSelectedOrderIds(
-                    selectedOrderIds.filter((id) => id !== order._id),
-                  );
-                }
+      {/* Orders table container for Cypress stability */}
+      <div data-testid="orders-table">
+        {filteredOrders.length === 0 ? (
+          <p>No orders yet.</p>
+        ) : (
+          filteredOrders.map((order) => (
+            <div
+              key={order._id}
+              data-testid={`order-row-${order._id}`}
+              style={{
+                border: "1px solid #ccc",
+                borderRadius: 8,
+                padding: 16,
+                marginBottom: 20,
+                background: "#f8f8f8",
+                display: "flex",
+                alignItems: "center",
               }}
-              style={{ marginRight: 16 }}
-              data-testid="order-checkbox"
-            />
-            <div style={{ flex: 1 }}>
-              <p>
-                <strong>Order ID:</strong> {order._id}
-              </p>
-              <p>
-                <strong>Buyer:</strong> {order.buyer?.name} (
-                {order.buyer?.email})
-              </p>
-              <p>
-                <strong>Status:</strong> {order.status}
-              </p>
-              <p>
-                <strong>Total:</strong> {order.currency}{" "}
-                {order.total.toFixed(2)}
-              </p>
-              {order.promoCode && (
-                <div
-                  style={{
-                    marginTop: 8,
-                    marginBottom: 8,
-                    padding: 10,
-                    backgroundColor: "#eaf8e6",
-                    borderRadius: 6,
-                  }}
-                >
-                  <p>
-                    <strong>🎁 Promo Code:</strong> {order.promoCode.code}
-                  </p>
-                  <p>
-                    <strong>Discount:</strong> -{order.currency}{" "}
-                    {order.discount?.toFixed(2)}
-                  </p>
-                  <p>
-                    <strong>Total After Discount:</strong> {order.currency}{" "}
-                    {order.totalAfterDiscount?.toFixed(2)}
-                  </p>
-                </div>
-              )}
-              <p>
-                <strong>Payment:</strong> {order.paymentMethod}
-              </p>
-              <p>
-                <strong>Shipping:</strong>{" "}
-                {order.shippingAddress?.fullName || "N/A"},{" "}
-                {order.shippingAddress?.city}, {order.shippingAddress?.country}
-              </p>
-              {order.shippingAddress?.country && (
+            >
+              <input
+                type="checkbox"
+                checked={selectedOrderIds.includes(order._id)}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    setSelectedOrderIds([...selectedOrderIds, order._id]);
+                  } else {
+                    setSelectedOrderIds(
+                      selectedOrderIds.filter((id) => id !== order._id),
+                    );
+                  }
+                }}
+                style={{ marginRight: 16 }}
+                data-testid="order-checkbox"
+              />
+              <div style={{ flex: 1 }}>
                 <p>
-                  <strong>🌍 Country:</strong>{" "}
-                  {countryFlags[order.shippingAddress.country] || "🏳️"}{" "}
-                  {order.shippingAddress.country}
+                  <strong>Order ID:</strong> {order._id}
                 </p>
-              )}
-              <p>
-                <strong>Updated By:</strong> {order.updatedBy?.name || "—"} on{" "}
-                {new Date(order.updatedAt).toLocaleString()}
-              </p>
-              <hr />
-              <p>
-                <strong>Items:</strong>
-              </p>
-              <ul>
-                {(() => {
-                  const items = Array.isArray(order.vendors)
-                    ? order.vendors.flatMap((v) => v.products || [])
-                    : [];
-                  return items.map((p, i) => (
-                    <li key={p._id || i}>
-                      {(p.product && p.product.name) || p.name || 'Item'} × {p.quantity || 1}
-                    </li>
-                  ));
-                })()}
-              </ul>
-              <div>
-                <label>Change Status: </label>
-                <select
-                  data-testid="status-select"
-                  value={order.status}
-                  onChange={(e) => updateStatus(order._id, e.target.value)}
-                >
-                  <option value="pending">Pending</option>
-                  <option value="paid">Paid</option>
-                  <option value="shipped">Shipped</option>
-                  <option value="delivered">Delivered</option>
-                  <option value="completed">Completed</option>
-                  <option value="cancelled">Cancelled</option>
-                </select>
-                <button
-                  data-testid="update-status-btn"
-                  onClick={() => updateStatus(order._id, order.status)}
-                  style={{ marginLeft: 8 }}
-                >
-                  Update
-                </button>
-              </div>
-              <div style={{ marginTop: 10 }}>
-                <strong>Email Status:</strong>{" "}
-                {order.emailLog?.status === "sent" && (
-                  <span style={{ color: "green" }}>✅ Sent</span>
+                <p>
+                  <strong>Buyer:</strong> {order.buyer?.name} (
+                  {order.buyer?.email})
+                </p>
+                <p>
+                  <strong>Status:</strong> {order.status}
+                </p>
+                <p>
+                  <strong>Total:</strong> {order.currency}{" "}
+                  {order.total.toFixed(2)}
+                </p>
+                {order.promoCode && (
+                  <div
+                    style={{
+                      marginTop: 8,
+                      marginBottom: 8,
+                      padding: 10,
+                      backgroundColor: "#eaf8e6",
+                      borderRadius: 6,
+                    }}
+                  >
+                    <p>
+                      <strong>🎁 Promo Code:</strong> {order.promoCode.code}
+                    </p>
+                    <p>
+                      <strong>Discount:</strong> -{order.currency}{" "}
+                      {order.discount?.toFixed(2)}
+                    </p>
+                    <p>
+                      <strong>Total After Discount:</strong> {order.currency}{" "}
+                      {order.totalAfterDiscount?.toFixed(2)}
+                    </p>
+                  </div>
                 )}
-                {order.emailLog?.status === "failed" && (
-                  <span style={{ color: "red" }}>❌ Failed</span>
+                <p>
+                  <strong>Payment:</strong> {order.paymentMethod}
+                </p>
+                <p>
+                  <strong>Shipping:</strong>{" "}
+                  {order.shippingAddress?.fullName || "N/A"},{" "}
+                  {order.shippingAddress?.city}, {order.shippingAddress?.country}
+                </p>
+                {order.shippingAddress?.country && (
+                  <p>
+                    <strong>🌍 Country:</strong>{" "}
+                    {countryFlags[order.shippingAddress.country] || "🏳️"}{" "}
+                    {order.shippingAddress.country}
+                  </p>
                 )}
-                {!order.emailLog?.status && (
-                  <span style={{ color: "gray" }}>⏳ Not Sent</span>
-                )}
-                <br />
-                {order.emailLog?.to && <small>📧 {order.emailLog.to}</small>}
-                <br />
-                {order.emailLog?.sentAt && (
-                  <small>
-                    🕒 {new Date(order.emailLog.sentAt).toLocaleString()}
-                  </small>
-                )}
-                {order.emailLog?.status === "failed" && (
-                  <>
-                    <br />
-                    <small style={{ color: "darkred" }}>
-                      ⚠ {order.emailLog.error}
+                <p>
+                  <strong>Updated By:</strong> {order.updatedBy?.name || "—"} on{" "}
+                  {new Date(order.updatedAt).toLocaleString()}
+                </p>
+                <hr />
+                <p>
+                  <strong>Items:</strong>
+                </p>
+                <ul>
+                  {(() => {
+                    const items = Array.isArray(order.vendors)
+                      ? order.vendors.flatMap((v) => v.products || [])
+                      : [];
+                    return items.map((p, i) => (
+                      <li key={p._id || i}>
+                        {(p.product && p.product.name) || p.name || 'Item'} × {p.quantity || 1}
+                      </li>
+                    ));
+                  })()}
+                </ul>
+                <div>
+                  <label>Change Status: </label>
+                  <select
+                    data-testid="status-select"
+                    value={order.status}
+                    onChange={(e) => updateStatus(order._id, e.target.value)}
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="paid">Paid</option>
+                    <option value="shipped">Shipped</option>
+                    <option value="delivered">Delivered</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+                  <button
+                    data-testid="update-status-btn"
+                    onClick={() => updateStatus(order._id, order.status)}
+                    style={{ marginLeft: 8 }}
+                  >
+                    Update
+                  </button>
+                </div>
+                <div style={{ marginTop: 10 }}>
+                  <strong>Email Status:</strong>{" "}
+                  {order.emailLog?.status === "sent" && (
+                    <span style={{ color: "green" }}>✅ Sent</span>
+                  )}
+                  {order.emailLog?.status === "failed" && (
+                    <span style={{ color: "red" }}>❌ Failed</span>
+                  )}
+                  {!order.emailLog?.status && (
+                    <span style={{ color: "gray" }}>⏳ Not Sent</span>
+                  )}
+                  <br />
+                  {order.emailLog?.to && <small>📧 {order.emailLog.to}</small>}
+                  <br />
+                  {order.emailLog?.sentAt && (
+                    <small>
+                      🕒 {new Date(order.emailLog.sentAt).toLocaleString()}
                     </small>
-                    <br />
-                    <button onClick={() => handleResendInvoice(order._id)}>
-                      🔁 Resend Invoice
-                    </button>
-                  </>
-                )}
+                  )}
+                  {order.emailLog?.status === "failed" && (
+                    <>
+                      <br />
+                      <small style={{ color: "darkred" }}>
+                        ⚠ {order.emailLog.error}
+                      </small>
+                      <br />
+                      <button onClick={() => handleResendInvoice(order._id)}>
+                        🔁 Resend Invoice
+                      </button>
+                    </>
+                  )}
+                </div>
+                {/* Returns / Refunds instrumentation (localStorage-backed until real API) */}
+                {(() => {
+                  try {
+                    // Derive current return status from order object or localStorage (set by customer / admin / vendor actions in tests)
+                    const lsKey = `return-request-${order._id}`;
+                    const stored = window.localStorage.getItem(lsKey);
+                    const currentStatus = order.returnStatus || stored || null;
+                    // Approval button appears only when customer has requested return
+                    if (currentStatus === 'requested') {
+                      return (
+                        <div style={{ marginTop: 12 }}>
+                          <span
+                            data-testid={`return-status-${order._id}`}
+                            style={{ color: '#d35400', fontWeight: 600, marginRight: 8 }}
+                          >Return Requested</span>
+                          <button
+                            data-testid={`approve-return-btn-${order._id}`}
+                            style={{ background: '#ffeaa7', border: 'none', padding: '6px 12px', borderRadius: 6, cursor: 'pointer' }}
+                            onClick={() => {
+                              try { window.localStorage.setItem(lsKey, 'approved'); } catch {}
+                              setOrders(prev => prev.map(o => o._id === order._id ? { ...o, returnStatus: 'approved' } : o));
+                            }}
+                          >✅ Approve Return</button>
+                          <button
+                            data-testid="approve-return-btn"
+                            style={{ display: 'none' }}
+                            onClick={() => {
+                              try { window.localStorage.setItem(lsKey, 'approved'); } catch {}
+                              setOrders(prev => prev.map(o => o._id === order._id ? { ...o, returnStatus: 'approved' } : o));
+                            }}
+                          />
+                        </div>
+                      );
+                    }
+                    if (currentStatus === 'approved') {
+                      return (
+                        <div style={{ marginTop: 12 }}>
+                          <span
+                            data-testid={`return-status-${order._id}`}
+                            style={{ color: '#27ae60', fontWeight: 600, marginRight: 8 }}
+                          >Return Approved</span>
+                        </div>
+                      );
+                    }
+                  } catch {}
+                  return null;
+                })()}
               </div>
             </div>
-          </div>
-        ))
-      )}
+          ))
+        )}
+      </div>
       {/* Scheduled actions list for E2E assertion */}
       {scheduledActions.length > 0 && (
-        <div style={{ marginTop: 20 }}>
+        <div style={{ marginTop: 20 }} data-testid="scheduled-bulk-actions-section">
           <h3>Scheduled Bulk Actions</h3>
           <ul>
             {scheduledActions.map((a, i) => (
-              <li key={i}>{a.type}</li>
+              <li key={i} data-testid="scheduled-bulk-action-row">{a.type}</li>
             ))}
           </ul>
         </div>
@@ -725,6 +776,26 @@ function AdminOrders({ showMessage: showMessageProp, initialOrders }) {
         >
           Undo
         </button>
+      )}
+      {/* Global select-all checkbox for tests */}
+      {filteredOrders.length > 0 && (
+        <div style={{ marginTop: 10 }}>
+          <label style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <input
+              type="checkbox"
+              data-testid="order-select-all"
+              checked={selectedOrderIds.length === filteredOrders.length}
+              onChange={(e) => {
+                if (e.target.checked) {
+                  setSelectedOrderIds(filteredOrders.map((o) => o._id));
+                } else {
+                  setSelectedOrderIds([]);
+                }
+              }}
+            />
+            <span>Select All</span>
+          </label>
+        </div>
       )}
     </div>
   );

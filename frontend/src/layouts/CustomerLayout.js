@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import styles from './CustomerLayout.module.css';
 
-import NavbarUniversal from '../components/NavbarUniversal';
+import TemuNavbar from '../components/TemuNavbar';
 import CustomerSidebar from '../components/CustomerSidebar';
 import MerkatoFooter from '../components/MerkatoFooter';
 import Breadcrumb from '../components/Breadcrumb';
@@ -31,6 +31,7 @@ function CustomerLayout({ children, user, onLogout, lang, onLangChange }) {
   const location = useLocation();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const isCypress = typeof window !== 'undefined' && window.Cypress;
 
   // Memoized stats
   const quickStats = useMemo(() => [
@@ -58,10 +59,9 @@ function CustomerLayout({ children, user, onLogout, lang, onLangChange }) {
   }, [user]);
 
   if (isLoading) {
-    const isCypress = typeof window !== 'undefined' && window.Cypress;
     return (
       <div className={styles.container}>
-        <NavbarUniversal />
+  <TemuNavbar role="customer" />
         <div className={styles.mainContent}>
           <CustomerSidebar user={null} activePath={location.pathname} />
           <main className={styles.contentArea}>
@@ -97,16 +97,18 @@ function CustomerLayout({ children, user, onLogout, lang, onLangChange }) {
 
   return (
     <div className={styles.container}>
-      <NavbarUniversal />
+  <TemuNavbar role="customer" />
       {/* Fixed heading at the top */}
       <header className={styles.fixedHeader}>
-        <h1>Customer Dashboard</h1>
+    <h1 data-testid="customer-dashboard-title">Customer Dashboard</h1>
       </header>
       <div className={styles.mainContentScrollable}>
         <CustomerSidebar user={user} activePath={location.pathname} />
         <main className={styles.contentArea}>
-          {/* Only render children, no duplicate headings */}
-          <div className={styles.childrenWrapper}>{children}</div>
+          {/* Render nested routes via Outlet (React Router v6) */}
+          <div className={styles.childrenWrapper}>
+            <Outlet />
+          </div>
         </main>
       </div>
       <MerkatoFooter />
@@ -115,7 +117,7 @@ function CustomerLayout({ children, user, onLogout, lang, onLangChange }) {
 }
 
 CustomerLayout.propTypes = {
-  children: PropTypes.node.isRequired,
+  children: PropTypes.node,
   user: PropTypes.shape({
     name: PropTypes.string,
     lastLogin: PropTypes.string,

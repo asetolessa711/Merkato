@@ -164,7 +164,7 @@ const submitReview = async (e) => {
             <div style={{ padding: 15, background: '#f8f8f8', borderRadius: 8 }}>
               <h4>Buy Now</h4>
               <form onSubmit={submitOrder}>
-                <label>Quantity</label>
+                <label htmlFor="order-quantity">Quantity</label>
                 <input
                   type="number"
                   min="1"
@@ -172,22 +172,25 @@ const submitReview = async (e) => {
                   value={orderForm.quantity}
                   onChange={(e) => setOrderForm({ ...orderForm, quantity: e.target.value })}
                   required
+                  id="order-quantity"
                   style={{ width: '100%', marginBottom: 10 }}
                 />
 
-                <label>Shipping Address</label>
+                <label htmlFor="order-shipping">Shipping Address</label>
                 <textarea
                   rows={3}
                   value={orderForm.shippingAddress}
                   onChange={(e) => setOrderForm({ ...orderForm, shippingAddress: e.target.value })}
                   required
+                  id="order-shipping"
                   style={{ width: '100%', marginBottom: 10 }}
                 />
 
-                <label>Payment Method</label>
+                <label htmlFor="order-payment">Payment Method</label>
                 <select
                   value={orderForm.paymentMethod}
                   onChange={(e) => setOrderForm({ ...orderForm, paymentMethod: e.target.value })}
+                  id="order-payment"
                   style={{ width: '100%', marginBottom: 10 }}
                 >
                   {(methods.length ? methods : [
@@ -245,7 +248,7 @@ const submitReview = async (e) => {
 
       <h4>Write a Review</h4>
       <form onSubmit={submitReview}>
-        <label>Rating (1–5)</label>
+        <label htmlFor="review-rating">Rating (1–5)</label>
         <input
           type="number"
           name="rating"
@@ -254,15 +257,17 @@ const submitReview = async (e) => {
           value={reviewForm.rating}
           onChange={(e) => setReviewForm({ ...reviewForm, rating: e.target.value })}
           required
+          id="review-rating"
         />
 
-        <label>Comment</label>
+        <label htmlFor="review-comment">Comment</label>
         <textarea
           name="comment"
           value={reviewForm.comment}
           onChange={(e) => setReviewForm({ ...reviewForm, comment: e.target.value })}
           required
           rows={3}
+          id="review-comment"
         />
 
         <button type="submit">Submit Review</button>

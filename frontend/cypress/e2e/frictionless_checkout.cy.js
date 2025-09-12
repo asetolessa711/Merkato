@@ -1,9 +1,9 @@
 // Frictionless checkout: unauthenticated buyer completes purchase using buyer details
-describe('Frictionless Checkout Flow', () => {
+describe('Frictionless Checkout Flow @buyer @checkout-flow', () => {
   const testProductName = 'Cypress Test Product';
   before(() => { cy.task('db:seed'); });
 
-  it('allows a buyer without auth to checkout and see confirmation (COD path) @smoke', () => {
+  it('allows a buyer without auth to checkout and see confirmation (COD path) @smoke @checkout-flow @buyer', () => {
     // 1. Add a product to the cart
     cy.intercept('GET', '/api/products*').as('products');
     // Register intercepts EARLY so we don't miss initial requests on checkout mount

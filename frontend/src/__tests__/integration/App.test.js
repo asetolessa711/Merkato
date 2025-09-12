@@ -1,5 +1,10 @@
+// Tags: @thread:auth-login @thread:auth-register (login + post-register redirect behaviors validated indirectly)
 // Force axios to CJS build for axios-mock-adapter compatibility
 jest.mock('axios', () => require('axios/dist/node/axios.cjs'));
+
+// Mock the user hook BEFORE importing App so routing uses the mock
+jest.mock('../../hooks/useUser');
+import useUser from '../../hooks/useUser';
 
 import React from 'react';
 
@@ -45,6 +50,8 @@ beforeEach(() => {
   setupMockAxios([
     { method: 'get', url: /\/api\/products/, status: 200, response: { data: [] } }
   ]);
+  // Default to unauthenticated unless a test overrides
+  useUser.mockReturnValue({ user: null, loading: false, clearUser: jest.fn() });
 });
 
 afterEach(() => {
@@ -83,31 +90,32 @@ describe('🧪 App Routing & Layout', () => {
   });
 
   test('shows loading indicator while fetching user', async () => {
-    localStorage.setItem('token', 'dummy-token');
-    // Simulate a delayed response by not calling mockUser or mockUserAuthError
+  // Simulate a delayed response
+  useUser.mockReturnValue({ user: null, loading: true, clearUser: jest.fn() });
     renderWithRoute('/account/dashboard');
     expect(screen.getByText(/loading/i)).toBeInTheDocument();
   });
 
   test('renders dashboard for authenticated customer', async () => {
-    localStorage.setItem('token', 'dummy-token');
-    mockUser('customer');
+  // Provide both mocked hook and localStorage state so ProtectedRoute authorizes without network
+  const authedCustomer = { roles: ['customer'], email: 'test@example.com', name: 'Test User' };
+  useUser.mockReturnValue({ user: authedCustomer, loading: false, clearUser: jest.fn() });
+  localStorage.setItem('token', 'dummy-token');
+  localStorage.setItem('user', JSON.stringify(authedCustomer));
     renderWithRoute('/account/dashboard');
-    // Look for the heading in the dashboard
-    expect(await screen.findByRole('heading', { name: /customer dashboard/i })).toBeInTheDocument();
+  // Assert by accessible heading; ignores hidden duplicates from nested content
+  expect(await screen.findByRole('heading', { name: /customer dashboard/i })).toBeInTheDocument();
   });
 
   test('renders vendor dashboard for authenticated vendor', async () => {
-    localStorage.setItem('token', 'dummy-token');
-    mockUser('vendor');
+  useUser.mockReturnValue({ user: { roles: ['vendor'], email: 'test@example.com', name: 'Test User' }, loading: false, clearUser: jest.fn() });
     renderWithRoute('/vendor');
     // Look for a unique heading or text in VendorDashboard
     expect(await screen.findByRole('heading', { name: /vendor dashboard/i })).toBeInTheDocument();
   });
 
   test('renders admin dashboard for authenticated admin', async () => {
-    localStorage.setItem('token', 'dummy-token');
-    mockUser('admin');
+  useUser.mockReturnValue({ user: { roles: ['admin'], email: 'test@example.com', name: 'Test User' }, loading: false, clearUser: jest.fn() });
     renderWithRoute('/admin');
     // Look for a unique heading or text in AdminDashboard
     expect(await screen.findByRole('heading', { name: /admin dashboard/i })).toBeInTheDocument();
@@ -121,8 +129,11 @@ describe('🧪 App Routing & Layout', () => {
   });
 
   test('logout removes token and redirects to login', async () => {
-    localStorage.setItem('token', 'dummy-token');
-    mockUser('customer');
+  // Ensure app renders in an authenticated state first
+  const authedCustomer = { roles: ['customer'], email: 'test@example.com', name: 'Test User' };
+  useUser.mockReturnValue({ user: authedCustomer, loading: false, clearUser: jest.fn() });
+  localStorage.setItem('token', 'dummy-token');
+  localStorage.setItem('user', JSON.stringify(authedCustomer));
     renderWithRoute('/account/dashboard');
     // Find the "My Account" button in the navbar (since Logout is in dropdown)
     const myAccountBtn = await screen.findByRole('button', { name: /my account/i });

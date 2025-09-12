@@ -401,8 +401,10 @@ router.get('/:id', protect, async (req, res) => {
       v.vendorId._id.toString() === req.user._id.toString()
     );
     const isBuyer = order.buyer.toString() === req.user._id.toString();
+    const roles = req.user.roles || [req.user.role];
+    const isAdmin = Array.isArray(roles) ? roles.includes('admin') || roles.includes('global_admin') : (req.user.role === 'admin');
 
-    if (!isVendor && !isBuyer && req.user.role !== 'admin') {
+    if (!isVendor && !isBuyer && !isAdmin) {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
@@ -437,28 +439,77 @@ router.get('/vendor-orders', protect, authorize('vendor'), async (req, res) => {
 router.patch('/:orderId/status', protect, authorize('vendor', 'admin'), async (req, res) => {
   try {
     const { status } = req.body;
-    const order = await Order.findById(req.params.orderId);
+  const order = await Order.findById(req.params.orderId);
     
     if (!order) {
       return res.status(404).json({ message: 'Order not found' });
     }
 
-    if (req.user.role === 'vendor') {
-      const vendorSection = order.vendors.find(v => 
-        v.vendorId.toString() === req.user._id.toString()
-      );
+    // Validate requested status value
+    const allowedStatuses = ['pending', 'paid', 'shipped', 'delivered', 'cancelled'];
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({ message: `Invalid status value: ${status}` });
+    }
+
+    // Enforce valid transitions for global order
+    const allowedTransitions = {
+      pending: ['paid', 'cancelled'],
+      paid: ['shipped', 'cancelled'],
+      shipped: ['delivered'],
+      delivered: [],
+      cancelled: []
+    };
+    // Vendors can only progress shipping stages for their section
+    const vendorAllowedTransitions = {
+      pending: ['shipped'],
+      shipped: ['delivered'],
+      delivered: []
+    };
+
+    const roles = req.user.roles || [req.user.role];
+    if (Array.isArray(roles) && roles.includes('vendor')) {
+      // Vendors are not authorized to set global statuses handled by admins
+      if (status === 'paid' || status === 'cancelled') {
+        return res.status(403).json({ message: 'Access denied: only admins can set paid or cancelled' });
+      }
+      // Robustly match vendor section regardless of population state
+      const reqUserId = req.user._id.toString();
+      const vendorSection = order.vendors.find((v) => {
+        try {
+          const vid = v && v.vendorId ? (v.vendorId._id ? v.vendorId._id.toString() : v.vendorId.toString()) : '';
+          return vid === reqUserId;
+        } catch (_) {
+          return false;
+        }
+      });
       if (!vendorSection) {
+        try { console.warn('[orders:status] Vendor section not found for user', reqUserId, 'in order', String(order._id)); } catch (_) {}
         return res.status(403).json({ message: 'Not authorized' });
+      }
+      const current = vendorSection.status || 'pending';
+      const canGoTo = vendorAllowedTransitions[current] || [];
+      if (!canGoTo.includes(status)) {
+        return res.status(400).json({ message: `Invalid status transition for vendor section from ${current} to ${status}` });
+      }
+      // Extra guard: vendor can only ship after order has been paid globally
+      if (current === 'pending' && status === 'shipped' && order.status !== 'paid') {
+        return res.status(400).json({ message: 'Cannot ship before order is paid' });
       }
       vendorSection.status = status;
     } else {
+      const current = order.status || 'pending';
+      const canGoTo = allowedTransitions[current] || [];
+      if (!canGoTo.includes(status)) {
+        return res.status(400).json({ message: `Invalid order status transition from ${current} to ${status}` });
+      }
       order.status = status;
     }
 
     await order.save();
     res.json({ success: true, order });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    try { console.error('[orders:status] Error updating status for order', String(req.params.orderId), '->', err && err.message ? err.message : err); } catch (_) {}
+    res.status(500).json({ message: err && err.message ? err.message : 'Failed to update order status' });
   }
 });
 
@@ -495,6 +546,21 @@ router.put('/:id/pay', protect, authorize('customer'), async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
     if (!order) return res.status(404).json({ message: 'Order not found' });
+
+    // Ensure the current user owns this order
+    if (order.buyer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized to pay this order' });
+    }
+
+    // Cannot pay a cancelled order
+    if (order.status === 'cancelled') {
+      return res.status(409).json({ message: 'Order is cancelled and cannot be paid' });
+    }
+
+    // Prevent double-pay
+    if (order.status === 'paid' || (order.statusHistory || []).some(s => s.status === 'paid')) {
+      return res.status(409).json({ message: 'Order is already marked as paid' });
+    }
 
     order.status = 'paid';
     order.statusHistory = order.statusHistory || [];

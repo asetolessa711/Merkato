@@ -4,7 +4,7 @@ const app = require('../../server');
 const { registerTestUser, loginTestUser } = require('../utils/testUserUtils');
 const Product = require('../../models/Product');
 
-describe('Admin Users & Products (country scoping)', () => {
+describe('Admin Users & Products (country scoping) @admin', () => {
   let globalAdminToken;
   let adminETToken;
   let vendorET;

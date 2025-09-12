@@ -1,3 +1,4 @@
+// Tags: @thread:checkout @thread:payments
 import '@testing-library/jest-dom';
 
 describe('CheckoutPage placeholder', () => {

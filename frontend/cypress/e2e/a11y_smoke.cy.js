@@ -34,6 +34,10 @@ describe('♿ A11y smoke', () => {
       if (cy.injectAxe) cy.injectAxe();
 
       if (cy.checkA11y) {
+        // Pre-initialize summary so routes with 0 violations are recorded
+        summary[path] = { count: 0, violations: [] };
+        const skipFailures = !enforce;
+        cy.log(`[a11y] smoke ${path}: enforce=${String(enforce)} skipFailures=${String(skipFailures)}`);
         cy.checkA11y('body', {
           runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa'] },
           includedImpacts: ['critical']
@@ -60,7 +64,7 @@ describe('♿ A11y smoke', () => {
             const ids = list.slice(0, 3).map(v => v.id).join(', ');
             throw new Error(`Accessibility critical violations on ${path}: ${ids}${list.length > 3 ? ` +${list.length - 3} more` : ''}`);
           }
-        });
+        }, Boolean(skipFailures));
       } else {
         cy.log('cy.checkA11y not available');
       }

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './HomePage.css';
 import ProductCard from '../components/ProductCard'; // ✅ Already imported
+import Hero from '../components/Hero';
 
 const categories = [
   "Today's Deals", "Flash Deals", "Trending", "Season's Favorites", "Top Vendors",
@@ -71,6 +72,15 @@ function HomePage() {
 
   return (
     <div className="homepage-outer">
+      {/* Hero Section */}
+      <Hero
+        title="Discover Daily Deals"
+        subtitle="Fresh picks across fashion, electronics, home, and more."
+        ctaText="Explore Deals"
+        onCtaClick={() => navigate('/shop?sort=deals')}
+        imageSrc="/images/hero-default.jpg"
+        imageAlt="Daily deals collage"
+      />
       {/* Promotional Video (if available) */}
       {promoVideoUrl && (
         <div style={{ margin: '2rem auto', maxWidth: 600 }}>
