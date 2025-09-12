@@ -2,5 +2,5 @@
 backend/**: [backend]
 frontend/**: [frontend]
 docs/**: [documentation]
-**/*.md: [documentation]
-**/test*/*: [tests]
+"**/*.md": [documentation]
+"**/test*/*": [tests]
