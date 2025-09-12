@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useMessage } from '../context/MessageContext';
 import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { loadCart, saveCart, isCartExpired } from '../utils/cartStorage';
 
 function CartPage() {

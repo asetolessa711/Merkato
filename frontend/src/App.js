@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
-import axios from 'axios';
 // Note: Legacy Navbar (fixed top-bar) is not used to avoid overlay issues in E2E
 
 // Hooks
@@ -86,7 +85,7 @@ const DirectChatWrapper = () => {
 function App() {
   const { user, loading, clearUser } = useUser();
   const [lang, setLang] = useState(() => localStorage.getItem('merkato-lang') || 'en');
-  const [currency, setCurrency] = useState('USD');
+  const [currency] = useState('USD');
   const [showFeedback, setShowFeedback] = useState(false);
 
   const handleLogout = () => {

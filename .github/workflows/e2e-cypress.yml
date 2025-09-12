@@ -42,6 +42,20 @@ jobs:
         working-directory: frontend
         run: npm ci
 
+      - name: Cache Cypress binary
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/Cypress
+            frontend/node_modules/.cache/Cypress
+          key: cypress-${{ runner.os }}-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: |
+            cypress-${{ runner.os }}-
+
+      - name: Verify Cypress binary
+        working-directory: frontend
+        run: npx cypress install --force
+
       - name: Start backend (port 5000)
         working-directory: backend
         # Previously used start:5001 (hard-coded PORT=5001) while waiting on :5000 causing wait-on timeout.

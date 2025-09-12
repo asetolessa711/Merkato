@@ -3,8 +3,11 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 import useUser from '../hooks/useUser';
 
-const ProtectedRoute = ({ requiredRole, children }) => {
-  const { user, loading } = useUser();
+// Always call hook unconditionally (React hooks rule) then let props override
+const ProtectedRoute = ({ requiredRole, children, user: propUser, loading: propLoading }) => {
+  const hook = useUser();
+  const user = propUser !== undefined ? propUser : hook.user;
+  const loading = propLoading !== undefined ? propLoading : hook.loading;
 
   // In Cypress, allow immediate render if localStorage has the role to avoid timing flakiness
   const stored = JSON.parse(localStorage.getItem('user') || 'null');

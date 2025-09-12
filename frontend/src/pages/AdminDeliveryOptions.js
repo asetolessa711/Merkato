@@ -21,6 +21,8 @@ const AdminDeliveryOptions = () => {
   const [options, setOptions] = useState([]);
   const [form, setForm] = useState({ name: '', description: '', days: '', cost: 0, isActive: true });
   const [editingId, setEditingId] = useState(null);
+  // Local state for adding a new shipping option (referenced in addOption)
+  const [newOpt, setNewOpt] = useState({ name: '', cost: 0, days: 5 });
 
   async function fetchSettings() {
     try {

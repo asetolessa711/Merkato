@@ -1,7 +1,5 @@
 // src/pages/VendorDashboard.js
 import React, { useEffect, useState } from 'react';
-// === MOCK MODE: Set to true to use mock data (no backend required) ===
-const USE_MOCK_VENDOR = true; // Set to false for real API
 import axios from 'axios';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend
@@ -11,6 +9,9 @@ import VendorCard from '../components/VendorCard';
 import ProductRowSection from '../components/ProductRowSection';
 import Card from '../components/Card';
 import styles from '../layouts/VendorLayout.module.css';
+
+// === MOCK MODE: Set to true to use mock data (no backend required) ===
+const USE_MOCK_VENDOR = true; // Set to false for real API
 
 function VendorDashboard() {
   const isCypress = typeof window !== 'undefined' && window.Cypress;
@@ -25,12 +26,15 @@ function VendorDashboard() {
   const token = localStorage.getItem('token');
   const headers = { Authorization: `Bearer ${token}` };
 
-  if (!token) {
-    window.location.href = '/login';
-    return null;
-  }
+  // Redirect unauthenticated users without breaking hook rules
+  useEffect(() => {
+    if (!token) {
+      window.location.href = '/login';
+    }
+  }, [token]);
 
   useEffect(() => {
+    if (!token) return; // skip data work until redirect or auth established
     if (USE_MOCK_VENDOR) {
       setTimeout(() => {
         setProducts([
@@ -90,6 +94,10 @@ function VendorDashboard() {
     { value: 'gold', label: 'Gold' },
     { value: 'rose', label: 'Rose' },
   ];
+  if (!token) {
+    return null; // interim blank while redirecting
+  }
+
   return (
     <div className={styles.contentArea}>
   <h1 data-testid="vendor-dashboard-title" style={isCypress ? {} : {display:'none'}}>Vendor Dashboard</h1>

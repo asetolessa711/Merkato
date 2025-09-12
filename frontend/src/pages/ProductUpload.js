@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-// === MOCK MODE: Set to true to use mock upload (no backend required) ===
-const USE_MOCK_UPLOAD = true; // Set to false for real API
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { uploadProductImage } from '../utils/uploadImage';
 import { useMessage } from '../context/MessageContext';
+
+// === MOCK MODE: Set to true to use mock upload (no backend required) ===
+const USE_MOCK_UPLOAD = true; // Set to false for real API
 
 function ProductUpload() {
   const [form, setForm] = useState({
@@ -23,7 +24,7 @@ function ProductUpload() {
     }
   });
 
-  const [imageFiles, setImageFiles] = useState([]);
+  const [imageFiles, setImageFiles] = useState([]); // retained for logic but may be removable later
   const [previewImages, setPreviewImages] = useState([]);
   const [imageUrls, setImageUrls] = useState([]);
   const [testMsg, setTestMsg] = useState('');
