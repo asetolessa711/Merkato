@@ -1,0 +1,20 @@
+{
+  "specs": [
+    "adminOrdersBulkActions.cy.js",
+    "basic_navigation.cy.js",
+    "cart_checkout_button.cy.js",
+    "frictionless_checkout.cy.js",
+    "returns_refunds_flow.cy.js",
+  "vendorOrdersBulkActions.cy.js",
+  "vendor_forbidden_action.cy.js"
+  ],
+  "budgetSeconds": 180,
+  "enforceTags": true,
+  "thresholds": {
+    "perSpecAbsMs": 8000,
+    "driftFactor": 1.5,
+    "driftMinIncreaseMs": 500,
+  "topHeavyShareWarn": 0.4,
+  "movingAverageWindow": 5
+  }
+}

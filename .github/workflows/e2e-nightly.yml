@@ -1,0 +1,65 @@
+name: E2E Nightly Full
+
+on:
+  schedule:
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+jobs:
+  e2e-full:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install root deps
+        run: npm ci
+
+      - name: Install backend deps
+        working-directory: ./backend
+        run: npm ci
+
+      - name: Install frontend deps
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Run full E2E (includes flaky for visibility)
+        working-directory: ./frontend
+        env:
+          CYPRESS_INCLUDE_TAG: ''
+          CYPRESS_EXCLUDE_TAG: ''
+        run: |
+          npm run e2e:run || true
+          node ./scripts/tag-audit.js
+          node ./scripts/make-pr-comment.js
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+            name: nightly-cypress-results
+            path: |
+              frontend/cypress-results/**
+              frontend/test-report/**
+              frontend/scope-report.txt
+              frontend/cypress-summary.txt
+              frontend/pr-comment.md
+
+      - name: Nightly summary (issue comment)
+        if: always()
+        uses: thollander/actions-comment-pull-request@v3
+        with:
+          file-path: frontend/pr-comment.md
+          comment-tag: nightly-e2e
+          mode: upsert
+          pr-number: 0

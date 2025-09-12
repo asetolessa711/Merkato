@@ -1,6 +1,7 @@
 // Vendor forbidden action: vendor cannot update someone else's order
+// Tags: @smoke @persona:vendor @security @authZ
 
-describe('🚫 Vendor forbidden action', () => {
+describe('🚫 Vendor forbidden action @smoke @persona:vendor @security @authZ', () => {
   before(() => {
     cy.task('db:seed');
   });

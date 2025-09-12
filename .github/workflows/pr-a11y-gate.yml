@@ -1,0 +1,67 @@
+name: PR A11y Gate (critical-only)
+
+on:
+  pull_request:
+    branches: [ main, dev ]
+
+concurrency:
+  group: pr-a11y-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  a11y:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      mongo:
+        image: mongo:6
+        ports:
+          - '27017:27017'
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand(\"ping\")' || exit 1"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install backend deps
+        working-directory: backend
+        run: npm ci
+      - name: Install frontend deps
+        working-directory: frontend
+        run: npm ci
+      - name: Run a11y smoke (critical-only)
+        id: run_a11y
+        working-directory: frontend
+        env:
+          CI: 'true'
+          E2E_EPHEMERAL: 'true'
+          E2E_AUTODROP: 'true'
+          E2E_BACKEND_PORT: '5051'
+          E2E_REUSE_BUILD: 'false'
+          E2E_SPEC: 'cypress/e2e/a11y_smoke.cy.js'
+        run: |
+          npm run e2e:run
+      - name: Append Cypress summary to Job Summary
+        if: always()
+        run: |
+          if [ -f "frontend/cypress-summary.txt" ]; then
+            echo "## Cypress a11y summary" >> $GITHUB_STEP_SUMMARY
+            cat frontend/cypress-summary.txt >> $GITHUB_STEP_SUMMARY
+          else
+            echo "No cypress-summary.txt found." >> $GITHUB_STEP_SUMMARY
+          fi
+      - name: Upload a11y summary and artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a11y-artifacts
+          path: |
+            frontend/cypress-results/a11y-summary.json
+            frontend/test-report/**/a11y-summary.json
+            frontend/cypress-summary.txt
+            frontend/cypress-results/*.json
+            frontend/e2e-meta.txt
+          retention-days: 7

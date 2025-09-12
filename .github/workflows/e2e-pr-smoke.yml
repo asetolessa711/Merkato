@@ -1,0 +1,60 @@
+name: E2E PR Smoke
+
+on:
+  pull_request:
+    branches: [ "**" ]
+
+jobs:
+  e2e-smoke:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install root deps
+        run: npm ci
+
+      - name: Install backend deps
+        working-directory: ./backend
+        run: npm ci
+
+      - name: Install frontend deps
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Run PR smoke E2E (curated)
+        working-directory: ./frontend
+        run: npm run e2e:pr
+
+      - name: Upload Cypress results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-results
+          path: |
+            frontend/cypress-results/**
+            frontend/test-report/**
+            frontend/scope-report.txt
+            frontend/cypress-summary.txt
+            frontend/pr-comment.md
+
+      - name: Comment PR with summary
+        if: always()
+        uses: thollander/actions-comment-pull-request@v3
+        with:
+          file-path: frontend/pr-comment.md
+          comment-tag: e2e-pr-smoke
+          mode: upsert

@@ -1,0 +1,70 @@
+name: Backend Flow Coverage (matrix)
+
+on:
+  pull_request:
+    branches: [ main, dev ]
+  push:
+    branches: [ main, dev ]
+  workflow_dispatch:
+
+jobs:
+  flow:
+    name: Flow "${{ matrix.flow }}" coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      mongo:
+        image: mongo:6
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand(\"ping\")' || exit 1"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    strategy:
+      fail-fast: false
+      matrix:
+        flow: [ auth, orders, vendor, checkout, payments, admin ]
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Create backend/.env.test
+        run: |
+          echo "NODE_ENV=test" >> backend/.env.test
+          echo "MONGO_URI=mongodb://127.0.0.1:27017/merkato_test" >> backend/.env.test
+          echo "JWT_SECRET=test_secret" >> backend/.env.test
+          echo "CLIENT_URL=http://localhost:3000" >> backend/.env.test
+          echo "EMAIL_USER=test@example.com" >> backend/.env.test
+          echo "EMAIL_PASS=test-password" >> backend/.env.test
+
+      - name: Run flow tests (${{ matrix.flow }})
+        env:
+          CI: true
+          NODE_ENV: test
+          MONGO_URI: mongodb://127.0.0.1:27017/merkato_test
+          FLOW_COVERAGE: "true"
+        run: |
+          npm run test:flow:${{ matrix.flow }} --silent
+
+      - name: Upload coverage artifact (${{ matrix.flow }})
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-backend-${{ matrix.flow }}
+          path: backend/coverage/${{ matrix.flow }}
+          if-no-files-found: warn

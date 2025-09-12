@@ -15,6 +15,22 @@ backend/coverage/
 frontend/coverage/
 backend/jest-failures-summary.txt
 
+# E2E generated timing & report bundles (exclude large ephemeral artifacts)
+frontend/test-report/
+frontend/cypress-results/*.json
+frontend/cypress-results/*.txt
+frontend/cypress-results/tag-audit.md
+frontend/smoke-spec-timings.json
+frontend/smoke-spec-timings-history.json
+frontend/smoke-governance-report.txt
+frontend/smoke-governance-summary.json
+frontend/scope-report.json
+frontend/scope-report.txt
+frontend/cypress-invocation.txt
+frontend/cypress-summary.txt
+frontend/pre-spec-env.txt
+frontend/run_tmp_out.txt
+
 # E2E/CI artifacts
 frontend/build-e2e-*/
 cypress/screenshots/
