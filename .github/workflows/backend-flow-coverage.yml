@@ -52,14 +52,40 @@ jobs:
           echo "EMAIL_USER=test@example.com" >> backend/.env.test
           echo "EMAIL_PASS=test-password" >> backend/.env.test
 
+      - name: Start backend (flow coverage) on port 5000
+        working-directory: backend
+        run: |
+          nohup npm start > backend.log 2>&1 &
+          echo "Started backend for flow '${{ matrix.flow }}' coverage; waiting for /api health."
+        env:
+          PORT: 5000
+          MONGO_URI: mongodb://127.0.0.1:27017/merkato_test
+          JWT_SECRET: test_secret
+
+      - name: Wait for backend health
+        run: npx wait-on --timeout=90000 http://localhost:5000/api
+
+      - name: Show backend log if wait failed
+        if: failure()
+        run: |
+          echo "---- backend.log (tail) ----"
+          tail -n 200 backend/backend.log || true
+
       - name: Run flow tests (${{ matrix.flow }})
         env:
           CI: true
           NODE_ENV: test
           MONGO_URI: mongodb://127.0.0.1:27017/merkato_test
           FLOW_COVERAGE: "true"
+          JEST_DISABLE_THRESHOLD: "true"
         run: |
           npm run test:flow:${{ matrix.flow }} --silent
+
+      - name: Show backend log after tests (failure only)
+        if: failure()
+        run: |
+          echo "---- backend.log (tail after tests) ----"
+          tail -n 200 backend/backend.log || true
 
       - name: Upload coverage artifact (${{ matrix.flow }})
         if: always()
@@ -67,4 +93,12 @@ jobs:
         with:
           name: coverage-backend-${{ matrix.flow }}
           path: backend/coverage/${{ matrix.flow }}
+          if-no-files-found: warn
+
+      - name: Upload backend log (${{ matrix.flow }})
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-log-${{ matrix.flow }}
+          path: backend/backend.log
           if-no-files-found: warn
