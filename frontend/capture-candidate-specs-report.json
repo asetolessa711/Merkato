@@ -1,0 +1,191 @@
+{
+  "generated": "2025-09-12T07:32:58.830Z",
+  "loops": 3,
+  "smokeBaselineMs": 21049,
+  "specs": [
+    {
+      "spec": "vendor_product_upload.cy.js",
+      "persona": "vendor",
+      "purpose": "Upload flow, trust-critical",
+      "tags": [
+        "persona:vendor",
+        "trust"
+      ],
+      "runs": [
+        {
+          "durationMs": 5385
+        },
+        {
+          "durationMs": 5376
+        },
+        {
+          "durationMs": 5630
+        }
+      ],
+      "medianMs": 5385,
+      "averageMs": 5464,
+      "shareVsCurrent": 0.25583163095634,
+      "predictedNewShare": 0.20371491261254446,
+      "predictedNewTotalMs": 26434,
+      "tagRecommendations": [
+        "@persona:vendor",
+        "persona:vendor",
+        "@trust"
+      ]
+    },
+    {
+      "spec": "vendor_forbidden_action.cy.js",
+      "persona": "vendor",
+      "purpose": "Role enforcement, edge-case",
+      "tags": [
+        "persona:vendor",
+        "trust",
+        "security"
+      ],
+      "runs": [
+        {
+          "durationMs": 2885
+        },
+        {
+          "durationMs": 2855
+        },
+        {
+          "durationMs": 2816
+        }
+      ],
+      "medianMs": 2855,
+      "averageMs": 2852,
+      "shareVsCurrent": 0.13563589719226565,
+      "predictedNewShare": 0.11943607764390897,
+      "predictedNewTotalMs": 23904,
+      "tagRecommendations": [
+        "@persona:vendor",
+        "persona:vendor",
+        "@trust",
+        "@security"
+      ]
+    },
+    {
+      "spec": "customer_checkout.cy.js",
+      "persona": "customer",
+      "purpose": "Purchase flow, transactional",
+      "tags": [
+        "persona:customer",
+        "checkout-flow"
+      ],
+      "runs": [
+        {
+          "durationMs": 5703
+        },
+        {
+          "durationMs": 5776
+        },
+        {
+          "durationMs": 5650
+        }
+      ],
+      "medianMs": 5703,
+      "averageMs": 5710,
+      "shareVsCurrent": 0.2709392370183857,
+      "predictedNewShare": 0.21318032296650719,
+      "predictedNewTotalMs": 26752,
+      "tagRecommendations": [
+        "@persona:customer",
+        "persona:customer",
+        "@checkout-flow"
+      ]
+    },
+    {
+      "spec": "customerFlow.cy.js",
+      "persona": "customer",
+      "purpose": "Lifecycle, multi-step",
+      "tags": [
+        "persona:customer",
+        "journey"
+      ],
+      "runs": [
+        {
+          "durationMs": 9556
+        },
+        {
+          "durationMs": 9562
+        },
+        {
+          "durationMs": 10151
+        }
+      ],
+      "medianMs": 9562,
+      "averageMs": 9756,
+      "shareVsCurrent": 0.4542733621549717,
+      "predictedNewShare": 0.3123713697690373,
+      "predictedNewTotalMs": 30611,
+      "tagRecommendations": [
+        "@persona:customer",
+        "persona:customer",
+        "@journey"
+      ]
+    },
+    {
+      "spec": "auth_roles.cy.js",
+      "persona": "admin",
+      "purpose": "Permission matrix",
+      "tags": [
+        "persona:admin",
+        "roles",
+        "security"
+      ],
+      "runs": [
+        {
+          "durationMs": 19038
+        },
+        {
+          "durationMs": 16758
+        },
+        {
+          "durationMs": 16961
+        }
+      ],
+      "medianMs": 16961,
+      "averageMs": 17586,
+      "shareVsCurrent": 0.8057864981709345,
+      "predictedNewShare": 0.4462246777163904,
+      "predictedNewTotalMs": 38010,
+      "tagRecommendations": [
+        "@persona:admin",
+        "persona:admin",
+        "@roles",
+        "@security"
+      ]
+    },
+    {
+      "spec": "adminOrdersBulkDialogs.cy.js",
+      "persona": "admin",
+      "purpose": "Modal interactions",
+      "tags": [
+        "persona:admin",
+        "ui"
+      ],
+      "runs": [
+        {
+          "durationMs": 6723
+        },
+        {
+          "durationMs": 6353
+        },
+        {
+          "durationMs": 6302
+        }
+      ],
+      "medianMs": 6353,
+      "averageMs": 6459,
+      "shareVsCurrent": 0.3018195638747684,
+      "predictedNewShare": 0.23184439092037076,
+      "predictedNewTotalMs": 27402,
+      "tagRecommendations": [
+        "@persona:admin",
+        "persona:admin",
+        "@ui"
+      ]
+    }
+  ]
+}
