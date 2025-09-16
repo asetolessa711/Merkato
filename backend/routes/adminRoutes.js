@@ -11,6 +11,9 @@ const { Parser } = require('json2csv');
 const { protect, authorize } = require('../middleware/authMiddleware');
 const PromoCampaign = require('../models/PromoCampaign');
 const DeliverySettings = require('../models/DeliverySettings');
+const VendorLead = require('../models/VendorLead');
+const InviteToken = require('../models/InviteToken');
+const jwt = require('jsonwebtoken');
 
 // Utility: Check if user is Global, Admin, or Staff
 const isAdmin = (user) =>
@@ -388,3 +391,83 @@ router.post('/promo-campaigns', protect, authorize('admin', 'global_admin'), asy
 });
 
 module.exports = router;
+// --- Onboarding: Vendor Leads Management ---
+// Create or update a vendor lead (public registration handled on /api/vendor/register; admins can seed via this too)
+router.post('/vendors/leads', protect, authorize('admin', 'global_admin', 'country_admin'), async (req, res) => {
+  try {
+    const lead = new VendorLead(req.body);
+    await lead.save();
+    res.status(201).json(lead);
+  } catch (err) {
+    res.status(400).json({ message: 'Invalid lead data', error: err.message });
+  }
+});
+
+router.get('/vendors/leads', protect, authorize('admin', 'global_admin', 'country_admin'), async (req, res) => {
+  try {
+    const { status } = req.query;
+    const filter = status ? { status } : {};
+    const leads = await VendorLead.find(filter)
+      .populate('assigned_to', 'name email')
+      .sort({ createdAt: -1 });
+    res.json(leads);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch vendor leads' });
+  }
+});
+
+router.put('/vendors/leads/:id', protect, authorize('admin', 'global_admin', 'country_admin'), async (req, res) => {
+  try {
+    const lead = await VendorLead.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!lead) return res.status(404).json({ message: 'Lead not found' });
+    res.json(lead);
+  } catch (err) {
+    res.status(400).json({ message: 'Failed to update lead', error: err.message });
+  }
+});
+
+// Issue invite link (JWT) for a lead
+router.post('/vendors/invite/:leadId', protect, authorize('admin', 'global_admin', 'country_admin'), async (req, res) => {
+  try {
+    const lead = await VendorLead.findById(req.params.leadId);
+    if (!lead) return res.status(404).json({ message: 'Lead not found' });
+    lead.status = 'invited';
+    await lead.save();
+
+    const expiresInDays = 7;
+    const payload = { leadId: lead._id.toString(), email: lead.email, type: 'vendor-invite' };
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: `${expiresInDays}d` });
+    const expiresAt = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000);
+    await InviteToken.create({ token, expiresAt, leadId: lead._id });
+
+  const inviteUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/vendor/onboard?token=${encodeURIComponent(token)}`;
+    res.json({ message: 'Invite issued', inviteUrl, token, expiresAt });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to create invite', error: err.message });
+  }
+});
+
+// API-driven vendor verification (admin automation hook)
+router.post('/vendors/verify', protect, authorize('admin', 'global_admin'), async (req, res) => {
+  try {
+    const { business_registry_id, tax_id, bank_details, vendor_id } = req.body;
+    let user = null;
+    if (vendor_id) {
+      user = await User.findById(vendor_id);
+    } else if (req.body.email) {
+      user = await User.findOne({ email: req.body.email });
+    }
+    if (!user) return res.status(404).json({ message: 'Vendor not found' });
+    user.vendorStatus = 'verified';
+    user.trust_badge = true;
+    if (business_registry_id) user.businessRegistryId = business_registry_id;
+    if (tax_id) user.taxId = tax_id;
+    if (bank_details) user.bankDetails = bank_details;
+    await user.save();
+    res.json({ status: 'verified', vendor_id: user._id.toString() });
+  } catch (err) {
+    res.status(500).json({ message: 'Verification failed', error: err.message });
+  }
+});
+
+
