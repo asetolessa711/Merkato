@@ -2,14 +2,14 @@
   "stats": {
     "suites": 1,
     "tests": 1,
-    "passes": 1,
+    "passes": 0,
     "pending": 0,
-    "failures": 0,
-    "start": "2025-09-12T23:27:22.952Z",
-    "end": "2025-09-12T23:27:29.091Z",
-    "duration": 6139,
+    "failures": 1,
+    "start": "2025-09-16T05:54:56.115Z",
+    "end": "2025-09-16T05:55:08.834Z",
+    "duration": 12719,
     "testsRegistered": 1,
-    "passPercent": 100,
+    "passPercent": 0,
     "pendingPercent": 0,
     "other": 0,
     "hasOther": false,
@@ -18,7 +18,7 @@
   },
   "results": [
     {
-      "uuid": "4a39b31d-04ac-4e2a-b4af-b4d03e1f62df",
+      "uuid": "e7d523a2-41ec-4713-9895-6a0968792215",
       "title": "",
       "fullFile": "cypress\\e2e\\card_intent.cy.js",
       "file": "cypress\\e2e\\card_intent.cy.js",
@@ -27,7 +27,7 @@
       "tests": [],
       "suites": [
         {
-          "uuid": "5fbdd407-9b30-483b-831f-cd95ad0dba08",
+          "uuid": "3d164f41-f2da-4ffd-b74f-5499539b399b",
           "title": "Card Intent Checkout",
           "fullFile": "",
           "file": "",
@@ -38,29 +38,33 @@
               "title": "creates stripe intent and includes paymentIntentId in order",
               "fullTitle": "Card Intent Checkout creates stripe intent and includes paymentIntentId in order",
               "timedOut": null,
-              "duration": 5914,
-              "state": "passed",
-              "speed": "medium",
-              "pass": true,
-              "fail": false,
+              "duration": 12685,
+              "state": "failed",
+              "speed": null,
+              "pass": false,
+              "fail": true,
               "pending": false,
               "context": null,
               "code": "cy.intercept('GET', '/api/payments/methods', {\n  body: {\n    methods: [{\n      code: 'cod',\n      displayName: 'Cash on Delivery'\n    }, {\n      code: 'stripe',\n      type: 'card',\n      requiresArtifact: true,\n      artifactKeys: ['paymentIntentId'],\n      displayName: 'Pay with Card (Stripe)'\n    }]\n  }\n}).as('methods');\ncy.intercept('POST', '/api/payments/intent', req => {\n  expect(req.body.method).to.eq('stripe');\n  req.reply({\n    intentId: 'pi_test_123',\n    clientSecret: 'cs_test_123'\n  });\n}).as('intent');\nlet orderSeen = false;\ncy.intercept('POST', '/api/orders', req => {\n  expect(req.body.paymentMethod).to.eq('stripe');\n  expect(req.body.paymentIntentId).to.exist;\n  orderSeen = true;\n  req.reply({\n    success: true,\n    message: 'Order placed',\n    order: {\n      _id: 'o1'\n    }\n  });\n}).as('order');\n// Flow: add product, go checkout, select stripe, fill buyer fields, submit\ncy.visit('/shop');\ncy.contains('Cypress Test Product').click();\ncy.get('[data-testid=\"add-to-cart-btn\"]').click();\ncy.get('[data-testid=\"cart-link\"]').click();\ncy.get('[data-testid=\"checkout-btn\"]').click();\ncy.wait('@methods');\ncy.contains('Pay with Card').click();\ncy.get('input[name=name]').clear().type('Buyer One');\ncy.get('input[name=email]').clear().type('buyer@example.com');\ncy.get('input[name=address]').clear().type('123 Lane');\ncy.get('input[name=city]').clear().type('Testville');\ncy.get('input[name=postalCode]').clear().type('12345');\ncy.get('input[name=country]').clear().type('US');\ncy.get('[data-testid=\"submit-order-btn\"]').click();\ncy.wait('@intent');\ncy.wait('@order');\ncy.wrap(null).should(() => expect(orderSeen).to.eq(true));\ncy.get('[data-testid=\"order-confirm-msg\"]').should('contain', 'Thank you');",
-              "err": {},
-              "uuid": "bfd78059-d3b4-4f9e-ad33-a5aae684b0c1",
-              "parentUUID": "5fbdd407-9b30-483b-831f-cd95ad0dba08",
+              "err": {
+                "message": "CypressError: Timed out retrying after 10000ms: `cy.wait()` timed out waiting `10000ms` for the 1st request to the route: `methods`. No request ever occurred.\n\nhttps://on.cypress.io/wait",
+                "estack": "CypressError: Timed out retrying after 10000ms: `cy.wait()` timed out waiting `10000ms` for the 1st request to the route: `methods`. No request ever occurred.\n\nhttps://on.cypress.io/wait\n    at cypressErr (http://localhost:3000/__cypress/runner/cypress_runner.js:77648:18)\n    at Object.errByPath (http://localhost:3000/__cypress/runner/cypress_runner.js:77702:10)\n    at checkForXhr (http://localhost:3000/__cypress/runner/cypress_runner.js:138962:84)\n    at <unknown> (http://localhost:3000/__cypress/runner/cypress_runner.js:138988:28)\n    at tryCatcher (http://localhost:3000/__cypress/runner/cypress_runner.js:1777:23)\n    at Promise.attempt.Promise.try (http://localhost:3000/__cypress/runner/cypress_runner.js:4285:29)\n    at whenStable (http://localhost:3000/__cypress/runner/cypress_runner.js:147344:68)\n    at <unknown> (http://localhost:3000/__cypress/runner/cypress_runner.js:147285:14)\n    at tryCatcher (http://localhost:3000/__cypress/runner/cypress_runner.js:1777:23)\n    at Promise._settlePromiseFromHandler (http://localhost:3000/__cypress/runner/cypress_runner.js:1489:31)\n    at Promise._settlePromise (http://localhost:3000/__cypress/runner/cypress_runner.js:1546:18)\n    at Promise._settlePromise0 (http://localhost:3000/__cypress/runner/cypress_runner.js:1591:10)\n    at Promise._settlePromises (http://localhost:3000/__cypress/runner/cypress_runner.js:1671:18)\n    at Promise._fulfill (http://localhost:3000/__cypress/runner/cypress_runner.js:1615:18)\n    at <unknown> (http://localhost:3000/__cypress/runner/cypress_runner.js:5420:46)\nFrom Your Spec Code:\n    at Object.proxyGetter [as get] (http://localhost:3000/__cypress/runner/cypress_runner.js:80410:22)\n    at exists (http://localhost:3000/__cypress/runner/cypress_runner.js:146526:26)\n    at elExists (http://localhost:3000/__cypress/runner/cypress_runner.js:146541:10)\n    at ensureExistence (http://localhost:3000/__cypress/runner/cypress_runner.js:146722:22)\n    at onFailFn (http://localhost:3000/__cypress/runner/cypress_runner.js:146751:53)",
+                "diff": null
+              },
+              "uuid": "fa6f8bbf-cda1-4469-b558-8c5c1df37f7d",
+              "parentUUID": "3d164f41-f2da-4ffd-b74f-5499539b399b",
               "isHook": false,
               "skipped": false
             }
           ],
           "suites": [],
-          "passes": [
-            "bfd78059-d3b4-4f9e-ad33-a5aae684b0c1"
+          "passes": [],
+          "failures": [
+            "fa6f8bbf-cda1-4469-b558-8c5c1df37f7d"
           ],
-          "failures": [],
           "pending": [],
           "skipped": [],
-          "duration": 5914,
+          "duration": 12685,
           "root": false,
           "rootEmpty": false,
           "_timeout": 2000

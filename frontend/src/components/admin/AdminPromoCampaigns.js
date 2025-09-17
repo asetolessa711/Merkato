@@ -75,7 +75,7 @@ function AdminPromoCampaigns() {
           {' '}First-time users only
         </label>
         <br />
-        <button type="submit" style={{ marginTop: 10, padding: '8px 14px', backgroundColor: '#00B894', color: 'white', border: 'none', borderRadius: 4 }}>Create</button>
+  <button type="submit" style={{ marginTop: 10, padding: '8px 14px', backgroundColor: 'var(--color-primary)', color: 'white', border: 'none', borderRadius: 4 }}>Create</button>
       </form>
 
       <h4>Active Campaigns</h4>

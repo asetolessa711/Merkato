@@ -78,7 +78,7 @@ function VendorInbox() {
                   borderRadius: '6px',
                   backgroundColor: selectedThread?._id === thread._id ? '#e0f7fa' : '#f8f8f8',
                   cursor: 'pointer',
-                  borderLeft: thread.read ? '4px solid #ccc' : '4px solid #00B894'
+                  borderLeft: thread.read ? '4px solid #ccc' : '4px solid var(--color-primary)'
                 }}
               >
                 <strong>{thread.customerName}</strong><br />

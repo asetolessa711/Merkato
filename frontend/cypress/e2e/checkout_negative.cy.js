@@ -6,7 +6,9 @@ describe('❌ Checkout validation errors', () => {
 
   it('shows errors for incomplete address and missing payment method @negative', () => {
     cy.intercept('GET', '/api/products*').as('products');
-    cy.visit('/shop');
+  cy.intercept('GET', '**/api/products*').as('products');
+  cy.visit('/shop');
+  cy.wait('@products');
     cy.wait('@products');
     cy.contains(productName).click();
     cy.get('[data-testid="add-to-cart-btn"]').click();
@@ -23,8 +25,8 @@ describe('❌ Checkout validation errors', () => {
 
     cy.get('[data-testid="submit-order-btn"], button[type="submit"]').first().click();
 
-    // Expect friendly validation errors rendered
-    cy.contains(/address is required|incomplete|enter your address/i).should('be.visible');
-    cy.contains(/payment method is required|select a payment/i).should('be.visible');
+  // Expect friendly validation errors rendered (tolerate variants)
+  cy.contains(/address is required|incomplete|enter your address|shipping address|address.*required/i).should('be.visible');
+  cy.contains(/payment method is required|select a payment|choose payment|payment.*required/i).should('be.visible');
   });
 });

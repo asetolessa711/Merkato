@@ -2,13 +2,14 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Outlet } from 'react-router-dom';
-import TemuNavbar from '../components/TemuNavbar';
+import MerkatoNavbar from '../components/MerkatoNavbar';
+import ThemeSwitcher from '../components/ThemeSwitcher';
 
 import styles from './PublicLayout.module.css';
 import MerkatoFooter from '../components/MerkatoFooter';
 import { Link } from 'react-router-dom';
 
-function PublicLayout({ user, onLogout, lang, onLangChange }) {
+function PublicLayout({ user = null, onLogout, lang = 'en', onLangChange = () => {} }) {
   const isCypress = typeof window !== 'undefined' && window.Cypress;
   return (
     <div className="public-layout">
@@ -25,8 +26,9 @@ function PublicLayout({ user, onLogout, lang, onLangChange }) {
         </div>
       )}
 
-  {/* Temu-style Navbar */}
-  <TemuNavbar />
+  {/* Merkato Navbar (microbanner is rendered inside the navbar header) */}
+  <MerkatoNavbar />
+  <ThemeSwitcher />
 
       {/* Main content area for pages like HomePage, Shop, etc. */}
       <main className={styles.container}>
@@ -42,12 +44,6 @@ PublicLayout.propTypes = {
   onLogout: PropTypes.func,
   lang: PropTypes.string,
   onLangChange: PropTypes.func
-};
-
-PublicLayout.defaultProps = {
-  user: null,
-  lang: 'en',
-  onLangChange: () => {}
 };
 
 export default PublicLayout;

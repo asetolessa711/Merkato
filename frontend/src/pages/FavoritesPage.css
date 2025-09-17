@@ -48,7 +48,7 @@
 
 .input:focus {
   outline: none;
-  border-color: #00B894;
+  border-color: var(--color-primary);
   box-shadow: 0 0 0 2px rgba(0,184,148,0.2);
 }
 
@@ -79,7 +79,7 @@
 
 .success {
   background-color: #e6fffa;
-  color: #00B894;
+  color: var(--color-primary);
   border: 1px solid #b2f5ea;
 }
 
@@ -87,7 +87,7 @@
 .submitButton {
   width: 100%;
   padding: 0.75rem;
-  background-color: #00B894;
+  background-color: var(--color-primary);
   color: white;
   border: none;
   border-radius: 0.375rem;
@@ -146,7 +146,7 @@
 }
 
 .backLink {
-  color: #00B894;
+  color: var(--color-primary);
   text-decoration: none;
   font-weight: 500;
   transition: all 0.2s ease;
@@ -187,7 +187,7 @@
   content: "•";
   position: absolute;
   left: 0.5rem;
-  color: #00B894;
+  color: var(--color-primary);
 }
 
 /* Responsive Design */

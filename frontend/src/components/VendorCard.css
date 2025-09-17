@@ -42,7 +42,7 @@
 
 .vendor-card .btn-secondary {
   padding: 8px 16px;
-  background-color: #00b894;
+  background-color: var(--color-primary);
   color: #fff;
   border: none;
   border-radius: 6px;

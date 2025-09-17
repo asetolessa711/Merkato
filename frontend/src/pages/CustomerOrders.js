@@ -70,7 +70,7 @@ function CustomerOrders() {
       printWindow.document.write('<html><head><title>Invoice</title>');
       printWindow.document.write('<style>');
       printWindow.document.write('body { font-family: sans-serif; padding: 20px; }');
-      printWindow.document.write('.header { font-size: 1.5rem; font-weight: bold; margin-bottom: 20px; color: #00B894; }');
+  printWindow.document.write('.header { font-size: 1.5rem; font-weight: bold; margin-bottom: 20px; color: var(--color-primary); }');
       printWindow.document.write('.order-details { margin-bottom: 15px; }');
       printWindow.document.write('.product-line { margin-bottom: 10px; }');
       printWindow.document.write('</style>');
@@ -254,7 +254,7 @@ function CustomerOrders() {
                 onClick={() => setShowModal(order._id)}
                 style={{
                   marginTop: 15,
-                  backgroundColor: '#00b894',
+                  backgroundColor: 'var(--color-primary)',
                   color: 'white',
                   padding: '8px 16px',
                   border: 'none',

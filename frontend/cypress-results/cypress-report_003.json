@@ -5,9 +5,9 @@
     "passes": 2,
     "pending": 0,
     "failures": 0,
-    "start": "2025-09-12T23:25:11.045Z",
-    "end": "2025-09-12T23:25:13.765Z",
-    "duration": 2720,
+    "start": "2025-09-16T05:52:29.468Z",
+    "end": "2025-09-16T05:52:33.603Z",
+    "duration": 4135,
     "testsRegistered": 2,
     "passPercent": 100,
     "pendingPercent": 0,
@@ -18,7 +18,7 @@
   },
   "results": [
     {
-      "uuid": "2d7a803e-e86d-418d-9eec-efb128d7db6c",
+      "uuid": "0d10e6fd-ad0d-4550-920f-17cfbbae043b",
       "title": "",
       "fullFile": "cypress\\e2e\\a11y_header_nav.cy.js",
       "file": "cypress\\e2e\\a11y_header_nav.cy.js",
@@ -27,7 +27,7 @@
       "tests": [],
       "suites": [
         {
-          "uuid": "33d7785f-953d-4f8f-a60b-5852ac724888",
+          "uuid": "02f130dc-beb5-45a7-ab3b-520d341ca946",
           "title": "♿ A11y — Header & Navigation",
           "fullFile": "",
           "file": "",
@@ -38,7 +38,7 @@
               "title": "has no critical violations on / (header/nav) @a11y",
               "fullTitle": "♿ A11y — Header & Navigation has no critical violations on / (header/nav) @a11y",
               "timedOut": null,
-              "duration": 1706,
+              "duration": 2854,
               "state": "passed",
               "speed": "fast",
               "pass": true,
@@ -47,8 +47,8 @@
               "context": null,
               "code": "cy.visit(path);\nif (cy.injectAxe) cy.injectAxe();\nif (cy.checkA11y) {\n  // Pre-initialize summary so routes with 0 violations are recorded\n  summary[path] = {\n    count: 0,\n    violations: []\n  };\n  const skipFailures = !enforce;\n  cy.checkA11y('body', {\n    runOnly: {\n      type: 'tag',\n      values: ['wcag2a', 'wcag2aa']\n    },\n    includedImpacts: ['critical']\n  }, violations => {\n    const list = Array.isArray(violations) ? violations : [];\n    summary[path] = {\n      count: list.length,\n      violations: list.map(v => {\n        var _v$nodes;\n        return {\n          id: v.id,\n          impact: v.impact,\n          nodes: ((_v$nodes = v.nodes) === null || _v$nodes === void 0 ? void 0 : _v$nodes.length) || 0,\n          help: v.help,\n          helpUrl: v.helpUrl\n        };\n      })\n    };\n    if (enforce && list.length) {\n      const ids = list.slice(0, 3).map(v => v.id).join(', ');\n      throw new Error(`Accessibility critical violations on ${path}: ${ids}${list.length > 3 ? ` +${list.length - 3} more` : ''}`);\n    }\n  }, Boolean(skipFailures));\n} else {\n  cy.log('cy.checkA11y not available');\n}",
               "err": {},
-              "uuid": "d4227fbf-f91d-48f9-a64a-87a8c58a80bc",
-              "parentUUID": "33d7785f-953d-4f8f-a60b-5852ac724888",
+              "uuid": "3ba841b2-8c17-48f1-9dbd-bc577c91bf01",
+              "parentUUID": "02f130dc-beb5-45a7-ab3b-520d341ca946",
               "isHook": false,
               "skipped": false
             },
@@ -56,7 +56,7 @@
               "title": "has no critical violations on /shop (header/nav) @a11y",
               "fullTitle": "♿ A11y — Header & Navigation has no critical violations on /shop (header/nav) @a11y",
               "timedOut": null,
-              "duration": 963,
+              "duration": 1231,
               "state": "passed",
               "speed": "fast",
               "pass": true,
@@ -65,21 +65,21 @@
               "context": null,
               "code": "cy.visit(path);\nif (cy.injectAxe) cy.injectAxe();\nif (cy.checkA11y) {\n  // Pre-initialize summary so routes with 0 violations are recorded\n  summary[path] = {\n    count: 0,\n    violations: []\n  };\n  const skipFailures = !enforce;\n  cy.checkA11y('body', {\n    runOnly: {\n      type: 'tag',\n      values: ['wcag2a', 'wcag2aa']\n    },\n    includedImpacts: ['critical']\n  }, violations => {\n    const list = Array.isArray(violations) ? violations : [];\n    summary[path] = {\n      count: list.length,\n      violations: list.map(v => {\n        var _v$nodes;\n        return {\n          id: v.id,\n          impact: v.impact,\n          nodes: ((_v$nodes = v.nodes) === null || _v$nodes === void 0 ? void 0 : _v$nodes.length) || 0,\n          help: v.help,\n          helpUrl: v.helpUrl\n        };\n      })\n    };\n    if (enforce && list.length) {\n      const ids = list.slice(0, 3).map(v => v.id).join(', ');\n      throw new Error(`Accessibility critical violations on ${path}: ${ids}${list.length > 3 ? ` +${list.length - 3} more` : ''}`);\n    }\n  }, Boolean(skipFailures));\n} else {\n  cy.log('cy.checkA11y not available');\n}",
               "err": {},
-              "uuid": "a7a29586-65e4-448a-a9f6-50a36b9114ac",
-              "parentUUID": "33d7785f-953d-4f8f-a60b-5852ac724888",
+              "uuid": "f61ee946-6943-4dc9-9ffd-56a8cb6b8fdf",
+              "parentUUID": "02f130dc-beb5-45a7-ab3b-520d341ca946",
               "isHook": false,
               "skipped": false
             }
           ],
           "suites": [],
           "passes": [
-            "d4227fbf-f91d-48f9-a64a-87a8c58a80bc",
-            "a7a29586-65e4-448a-a9f6-50a36b9114ac"
+            "3ba841b2-8c17-48f1-9dbd-bc577c91bf01",
+            "f61ee946-6943-4dc9-9ffd-56a8cb6b8fdf"
           ],
           "failures": [],
           "pending": [],
           "skipped": [],
-          "duration": 2669,
+          "duration": 4085,
           "root": false,
           "rootEmpty": false,
           "_timeout": 2000

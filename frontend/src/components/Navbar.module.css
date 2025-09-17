@@ -80,7 +80,7 @@
   position: absolute;
   top: -5px;
   right: -5px;
-  background: #00B894;
+  background: var(--color-primary);
   color: white;
   font-size: 0.75rem;
   padding: 2px 6px;
@@ -107,7 +107,7 @@
 
 .searchInput:focus {
   outline: none;
-  border-color: #00b894;
+  border-color: var(--color-primary);
   box-shadow: 0 0 0 2px rgba(0, 184, 148, 0.1);
 }
 
@@ -153,7 +153,7 @@
 
 .langSelect:focus {
   outline: none;
-  border-color: #00b894;
+  border-color: var(--color-primary);
   box-shadow: 0 0 0 2px rgba(0, 184, 148, 0.1);
 }
 
@@ -177,7 +177,7 @@
 
 .profileButton:hover {
   background-color: #f5f5f5;
-  border-color: #00b894;
+  border-color: var(--color-primary);
 }
 
 .roleBadge {
@@ -225,7 +225,7 @@
 
 .dropdownItem:hover {
   background: #f5f5f5;
-  color: #00b894;
+  color: var(--color-primary);
 }
 
 /* Auth Section - Enhanced */
@@ -252,8 +252,8 @@
 }
 
 .authButton.register {
-  border: 1px solid #00B894;
-  color: #00B894;
+  border: 1px solid var(--color-primary);
+  color: var(--color-primary);
   background: white;
 }
 
@@ -263,7 +263,7 @@
 }
 
 .authButton.login {
-  background: #00B894;
+  background: var(--color-primary);
   color: white;
   border: none;
   margin-left: 0.5rem;
@@ -302,7 +302,7 @@
 
 .roleSwitcher:focus {
   outline: none;
-  border-color: #00b894;
+  border-color: var(--color-primary);
 }
 
 /* Back Button Styles */

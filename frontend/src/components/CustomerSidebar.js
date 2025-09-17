@@ -40,7 +40,7 @@ function CustomerSidebar({ user }) {
               alignItems: 'center',
               padding: '12px 24px',
               textDecoration: 'none',
-              color: isActive ? '#00b894' : '#4a5568',
+              color: isActive ? 'var(--color-primary)' : '#4a5568',
               backgroundColor: isActive ? '#f0f9ff' : 'transparent',
               fontSize: '0.95rem',
               gap: '12px',
@@ -49,7 +49,7 @@ function CustomerSidebar({ user }) {
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.backgroundColor = '#f0f9ff';
-              e.currentTarget.style.color = '#00b894';
+              e.currentTarget.style.color = 'var(--color-primary)';
             }}
             onMouseLeave={(e) => {
               if (!isActive) {
@@ -74,7 +74,7 @@ function CustomerSidebar({ user }) {
           padding: '12px',
           textDecoration: 'none',
           color: 'white',
-          backgroundColor: '#00b894',
+          backgroundColor: 'var(--color-primary)',
           borderRadius: '8px',
           fontSize: '0.95rem',
           gap: '8px',
@@ -82,7 +82,7 @@ function CustomerSidebar({ user }) {
           transition: 'background-color 0.2s ease'
         }}
         onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#00a383'}
-        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#00b894'}
+  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary)'}
       >
         <span>🎯</span>
         <span>Get Support</span>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import apiClient from '../utils/apiClient';
 import { Link, useLocation } from 'react-router-dom';
 import VendorCard from '../components/VendorCard'; // ✅ Integrated import
 import ProductCard from '../components/ProductCard';
@@ -29,19 +29,11 @@ function ShopPage() {
   });
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 100; // show many items so test product appears on page 1
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const [hoveredCategory, setHoveredCategory] = useState('');
+  // UI affordances reserved for future use; removed to satisfy no-unused-vars
 
-  const currency = 'USD';
-  const rates = { USD: 1, ETB: 56.5, EUR: 0.91 };
+  // Currency conversion handled inside ProductCard/theme; remove unused locals to satisfy ESLint
 
-  const getDisplayPrice = (p) => {
-    const productCurrency = p.currency || 'USD';
-    if (productCurrency === currency) return `${currency} ${p.price.toFixed(2)}`;
-    const baseToUSD = 1 / (rates[productCurrency] || 1);
-    const converted = p.price * baseToUSD * (rates[currency] || 1);
-    return `${currency} ${converted.toFixed(2)}`;
-  };
+  // price display handled inside ProductCard; remove unused helper
 
   const handleAddToCart = (product) => {
     const savedCart = JSON.parse(localStorage.getItem('merkato-cart') || '{}');
@@ -73,7 +65,7 @@ function ShopPage() {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        const res = await axios.get('/api/products');
+  const res = await apiClient.get('/api/products');
         setProducts(res.data);
         setFiltered(res.data);
       } catch (err) {
@@ -90,7 +82,7 @@ function ShopPage() {
 
     const fetchRecent = async () => {
       try {
-        const res = await axios.get('/api/recent');
+  const res = await apiClient.get('/api/recent');
         setRecent(res.data);
       } catch (err) {
         console.error(err);
@@ -99,7 +91,7 @@ function ShopPage() {
 
     const fetchVendors = async () => {
       try {
-        const res = await axios.get('/api/vendor/public');
+  const res = await apiClient.get('/api/vendor/public');
         setVendors(res.data);
       } catch (err) {
         console.error('Failed to fetch vendors', err);
@@ -148,7 +140,8 @@ function ShopPage() {
     scrollToTop();
   };
 
-  const handleClearFilters = () => {
+  // NOTE: reserved for future clear filters UI; disabling to satisfy lint until wired
+  /* const handleClearFilters = () => {
     setFilters({
       category: '',
       gender: '',
@@ -163,24 +156,16 @@ function ShopPage() {
     });
     setCurrentPage(1);
     scrollToTop();
-  };
+  }; */
 
-  const handleCategorySelect = (category) => {
-    setFilters(prev => ({ ...prev, category }));
-    setCurrentPage(1);
-    scrollToTop();
-  };
+  // Category selection handled via query params and filter inputs
 
-  const handleResetCategory = () => {
-    setFilters(prev => ({ ...prev, category: '' }));
-    setHoveredCategory('');
-    setCurrentPage(1);
-    scrollToTop();
-  };
+  // Category reset not currently used
 
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
-  const handleFavoriteToggle = (productId) => {
+  // NOTE: reserved for future favorites UI; disabling to satisfy lint until wired
+  /* const handleFavoriteToggle = (productId) => {
     let updatedFavorites = [...favorites];
     if (favorites.includes(productId)) {
       updatedFavorites = updatedFavorites.filter(id => id !== productId);
@@ -189,10 +174,10 @@ function ShopPage() {
     }
     setFavorites(updatedFavorites);
     localStorage.setItem('favorites', JSON.stringify(updatedFavorites));
-  };
+  }; */
 
   const paginated = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-  const promoted = products.filter(p => p.promotion?.isPromoted);
+  // const promoted = products.filter(p => p.promotion?.isPromoted);
 
   // --- Pagination Enhancement ---
   const totalPages = Math.ceil(filtered.length / itemsPerPage);

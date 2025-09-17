@@ -25,7 +25,7 @@
 
 .invoice-title {
   font-size: 1.75rem;
-  color: #00B894;
+  color: var(--color-primary);
   font-weight: 600;
 }
 
@@ -82,7 +82,7 @@
 
 .grand-total {
   font-size: 1.25rem;
-  color: #00B894;
+  color: var(--color-primary);
   margin-top: 16px;
   padding-top: 16px;
   border-top: 2px solid #eee;

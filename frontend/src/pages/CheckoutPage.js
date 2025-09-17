@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import axios from 'axios';
+import apiClient from '../utils/apiClient';
 import Modal from 'react-modal';
 import { fetchPaymentMethods } from '../utils/paymentsClient';
 
@@ -66,7 +66,7 @@ function CheckoutPage() {
       try {
         const token = localStorage.getItem('token');
         if (!token) return;
-        const res = await axios.get('/api/customer/addresses', {
+  const res = await apiClient.get('/customer/addresses', {
           headers: { Authorization: `Bearer ${token}` }
         });
         const list = Array.isArray(res.data) ? res.data : [];
@@ -102,7 +102,7 @@ function CheckoutPage() {
     // Load delivery settings (global defaults + shipping options)
     (async () => {
       try {
-        const res = await axios.get('/api/products/delivery-settings');
+  const res = await apiClient.get('/products/delivery-settings');
         const settings = res?.data || {};
         const normalized = {
           defaultEtaDays: typeof settings.defaultEtaDays === 'number' ? settings.defaultEtaDays : 5,
@@ -225,7 +225,7 @@ function CheckoutPage() {
       const orderAmount = Math.max(0, subtotal + (deliveryOption.cost || 0) - (discount || 0));
       if (selected.requiresArtifact || ['stripe', 'paypal', 'mobile_wallet', 'telebirr', 'chapa'].includes(selected.code)) {
         try {
-          const intentRes = await axios.post('/api/payments/intent', {
+          const intentRes = await apiClient.post('/payments/intent', {
             method: selected.code,
             amount: Number(orderAmount.toFixed(2)),
             currency: 'USD',
@@ -279,7 +279,7 @@ function CheckoutPage() {
         }
       };
 
-      await axios.post('/api/orders', body, headers);
+  await apiClient.post('/orders', body, headers);
 
   // For both guest and customer, show success message and clear cart
       try {

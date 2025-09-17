@@ -72,7 +72,7 @@ function AdminDashboard() {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold mb-4">Admin Dashboard</h2>
+  <h2 className="text-2xl font-bold mb-4">Discount Manager</h2>
 
       {/* Action Buttons */}
       <div style={{ display: 'flex', gap: '20px', marginBottom: '30px' }}>

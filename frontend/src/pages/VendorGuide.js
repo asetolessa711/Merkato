@@ -6,7 +6,7 @@ import styles from '../layouts/VendorLayout.module.css';
 function VendorGuide() {
   return (
     <div className={styles.contentArea}>
-      <h2 style={{ color: '#00B894', marginBottom: '1.5rem' }}>📚 Vendor Onboarding Guide</h2>
+  <h2 style={{ color: 'var(--color-primary)', marginBottom: '1.5rem' }}>📚 Vendor Onboarding Guide</h2>
 
       <ol style={{ lineHeight: 1.6 }}>
         <li>
@@ -58,7 +58,7 @@ function VendorGuide() {
         borderRadius: '8px',
         border: '1px solid #e9ecef'
       }}>
-        <h3 style={{ color: '#00B894', marginBottom: '1rem' }}>💡 Pro Tips</h3>
+  <h3 style={{ color: 'var(--color-primary)', marginBottom: '1rem' }}>💡 Pro Tips</h3>
         <ul style={{ listStyle: 'none', padding: 0 }}>
           <li>✅ Keep your inventory updated regularly</li>
           <li>✅ Respond to customer inquiries promptly</li>

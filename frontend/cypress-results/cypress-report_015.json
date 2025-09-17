@@ -5,9 +5,9 @@
     "passes": 1,
     "pending": 0,
     "failures": 0,
-    "start": "2025-09-12T23:27:13.109Z",
-    "end": "2025-09-12T23:27:14.709Z",
-    "duration": 1600,
+    "start": "2025-09-16T05:54:52.141Z",
+    "end": "2025-09-16T05:54:54.208Z",
+    "duration": 2067,
     "testsRegistered": 1,
     "passPercent": 100,
     "pendingPercent": 0,
@@ -18,7 +18,7 @@
   },
   "results": [
     {
-      "uuid": "12d39253-09c5-4e56-a777-bab840333b12",
+      "uuid": "2c1d7374-928c-4d9f-b5b3-fb9d495a7246",
       "title": "",
       "fullFile": "cypress\\e2e\\basic_navigation.cy.js",
       "file": "cypress\\e2e\\basic_navigation.cy.js",
@@ -27,7 +27,7 @@
       "tests": [],
       "suites": [
         {
-          "uuid": "64a69279-7049-4625-9729-516e7e936b30",
+          "uuid": "270d7d8b-491a-4cb6-9cc1-a5f968995a63",
           "title": "🌐 Basic Navigation",
           "fullFile": "",
           "file": "",
@@ -38,7 +38,7 @@
               "title": "shows navbar and navigates to cart @smoke",
               "fullTitle": "🌐 Basic Navigation shows navbar and navigates to cart @smoke",
               "timedOut": null,
-              "duration": 1500,
+              "duration": 2018,
               "state": "passed",
               "speed": "fast",
               "pass": true,
@@ -47,20 +47,20 @@
               "context": null,
               "code": "cy.visit('/');\ncy.get('[data-testid=\"navbar\"]', {\n  timeout: 15000\n}).should('be.visible');\ncy.contains('Shop').should('be.visible');\n// Ensure the cart link is in view to avoid fixed-header overlap issues\ncy.get('[data-testid=\"cart-link\"]').scrollIntoView().should('be.visible').click();\ncy.location('pathname').should('eq', '/cart');",
               "err": {},
-              "uuid": "dc6a94f1-1f64-4c5a-a8a6-251c64a8366c",
-              "parentUUID": "64a69279-7049-4625-9729-516e7e936b30",
+              "uuid": "e9b202a1-2c0b-418f-94cc-cbd4498ae236",
+              "parentUUID": "270d7d8b-491a-4cb6-9cc1-a5f968995a63",
               "isHook": false,
               "skipped": false
             }
           ],
           "suites": [],
           "passes": [
-            "dc6a94f1-1f64-4c5a-a8a6-251c64a8366c"
+            "e9b202a1-2c0b-418f-94cc-cbd4498ae236"
           ],
           "failures": [],
           "pending": [],
           "skipped": [],
-          "duration": 1500,
+          "duration": 2018,
           "root": false,
           "rootEmpty": false,
           "_timeout": 2000

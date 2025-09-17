@@ -5,9 +5,9 @@
     "passes": 0,
     "pending": 0,
     "failures": 1,
-    "start": "2025-09-12T23:26:04.798Z",
-    "end": "2025-09-12T23:26:17.434Z",
-    "duration": 12636,
+    "start": "2025-09-16T05:53:47.236Z",
+    "end": "2025-09-16T05:54:00.778Z",
+    "duration": 13542,
     "testsRegistered": 1,
     "passPercent": 0,
     "pendingPercent": 0,
@@ -18,7 +18,7 @@
   },
   "results": [
     {
-      "uuid": "eca56111-5e0e-4233-8bd6-96807533d5a8",
+      "uuid": "0414d8e8-cc5d-4869-9972-995dbd653f1e",
       "title": "",
       "fullFile": "cypress\\e2e\\admin_bulk_empty_selection.cy.js",
       "file": "cypress\\e2e\\admin_bulk_empty_selection.cy.js",
@@ -27,7 +27,7 @@
       "tests": [],
       "suites": [
         {
-          "uuid": "ac4ce8bf-4ac8-4c79-b64c-d87047f7eb22",
+          "uuid": "a767f017-61f0-42eb-8dd7-1fec1b4d77b3",
           "title": "🧪 Admin bulk action - empty selection",
           "fullFile": "",
           "file": "",
@@ -38,7 +38,7 @@
               "title": "shows friendly error when running bulk action without selecting orders @negative",
               "fullTitle": "🧪 Admin bulk action - empty selection shows friendly error when running bulk action without selecting orders @negative",
               "timedOut": null,
-              "duration": 12591,
+              "duration": 13444,
               "state": "failed",
               "speed": null,
               "pass": false,
@@ -47,12 +47,12 @@
               "context": null,
               "code": "// Try a few potential bulk action triggers\nconst triggers = [/Mark as Shipped/i, /Bulk Update/i, /Bulk Actions?/i];\ncy.wrap(triggers).each(pattern => {\n  cy.contains(pattern).then($el => {\n    if ($el && $el.length) {\n      cy.wrap($el).scrollIntoView().click({\n        force: true\n      });\n    }\n  });\n});\ncy.contains(/select at least one order|no orders selected|choose some orders/i, {\n  timeout: 10000\n}).should('be.visible');",
               "err": {
-                "message": "AssertionError: Timed out retrying after 10000ms: Expected to find content: '/Bulk Actions?/i' but never did.",
-                "estack": "AssertionError: Timed out retrying after 10000ms: Expected to find content: '/Bulk Actions?/i' but never did.\n    at Context.eval (webpack://merkato-frontend/./cypress/e2e/admin_bulk_empty_selection.cy.js:14:9)\n    at Context.callback (http://localhost:3000/__cypress/runner/cypress_runner.js:121301:26)\n    at getRet (http://localhost:3000/__cypress/runner/cypress_runner.js:121066:20)\n    at tryCatcher (http://localhost:3000/__cypress/runner/cypress_runner.js:1777:23)\n    at Promise.attempt.Promise.try (http://localhost:3000/__cypress/runner/cypress_runner.js:4285:29)\n    at thenFn (http://localhost:3000/__cypress/runner/cypress_runner.js:121077:66)\n    at yieldItem (http://localhost:3000/__cypress/runner/cypress_runner.js:121309:16)\n    at tryCatcher (http://localhost:3000/__cypress/runner/cypress_runner.js:1777:23)\n    at Object.gotValue (http://localhost:3000/__cypress/runner/cypress_runner.js:6446:18)",
+                "message": "AssertionError: Timed out retrying after 10000ms: expected '<span>' to be 'visible'\n\nThis element `<span>` is not visible because its content is being clipped by one of its parent elements, which has a CSS property of overflow: `hidden`, `clip`, `scroll` or `auto`",
+                "estack": "AssertionError: Timed out retrying after 10000ms: expected '<span>' to be 'visible'\n\nThis element `<span>` is not visible because its content is being clipped by one of its parent elements, which has a CSS property of overflow: `hidden`, `clip`, `scroll` or `auto`\n    at Context.eval (webpack://merkato-frontend/./cypress/e2e/admin_bulk_empty_selection.cy.js:21:104)",
                 "diff": null
               },
-              "uuid": "68d32fb1-08eb-41f9-bd38-84436456ce74",
-              "parentUUID": "ac4ce8bf-4ac8-4c79-b64c-d87047f7eb22",
+              "uuid": "0da65804-7c91-447e-8809-8e32549dcfed",
+              "parentUUID": "a767f017-61f0-42eb-8dd7-1fec1b4d77b3",
               "isHook": false,
               "skipped": false
             }
@@ -60,11 +60,11 @@
           "suites": [],
           "passes": [],
           "failures": [
-            "68d32fb1-08eb-41f9-bd38-84436456ce74"
+            "0da65804-7c91-447e-8809-8e32549dcfed"
           ],
           "pending": [],
           "skipped": [],
-          "duration": 12591,
+          "duration": 13444,
           "root": false,
           "rootEmpty": false,
           "_timeout": 2000

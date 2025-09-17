@@ -23,7 +23,7 @@ const ProductReviews = () => {
 
   return (
     <div style={{ padding: '20px', fontFamily: 'Poppins, sans-serif' }}>
-      <h2 style={{ color: '#00B894' }}>💬 Product Reviews</h2>
+  <h2 style={{ color: 'var(--color-primary)' }}>💬 Product Reviews</h2>
       {msg && <p style={{ color: 'red' }}>{msg}</p>}
       {reviews.length === 0 ? (
         <p>No reviews found for your products.</p>

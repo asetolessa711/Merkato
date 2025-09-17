@@ -4,10 +4,10 @@
 }
 
 .container {
-  padding: 20px;
+  padding: 12px;
   /* Prevent fixed/sticky headers from overlapping content when navigating to top */
-  padding-top: 80px;
-  max-width: 1200px;     /* Content width control */
+  padding-top: 96px;
+  max-width: 1440px;     /* Wider content like Amazon */
   margin: 0 auto;        /* Center the layout horizontally */
 }
 
@@ -35,7 +35,7 @@
 
 @media (max-width: 768px) {
   .container {
-    padding: 1rem;
+  padding: 10px;
   }
 
   .promoBanner {

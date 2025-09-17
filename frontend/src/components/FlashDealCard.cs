@@ -39,7 +39,7 @@
 }
 
 .flash-deal-card .price-green {
-  color: #00b894;
+  color: var(--color-primary);
   font-weight: bold;
 }
 

@@ -2,14 +2,14 @@
   "stats": {
     "suites": 1,
     "tests": 1,
-    "passes": 1,
+    "passes": 0,
     "pending": 0,
-    "failures": 0,
-    "start": "2025-09-12T23:27:31.868Z",
-    "end": "2025-09-12T23:27:32.771Z",
-    "duration": 903,
+    "failures": 1,
+    "start": "2025-09-16T05:55:11.219Z",
+    "end": "2025-09-16T05:55:23.257Z",
+    "duration": 12038,
     "testsRegistered": 1,
-    "passPercent": 100,
+    "passPercent": 0,
     "pendingPercent": 0,
     "other": 0,
     "hasOther": false,
@@ -18,7 +18,7 @@
   },
   "results": [
     {
-      "uuid": "58df4978-ddea-4814-8146-e1b28f10408e",
+      "uuid": "022ee5cc-27c3-4ba8-9e82-fe3e74b382e6",
       "title": "",
       "fullFile": "cypress\\e2e\\cart_add_remove.cy.js",
       "file": "cypress\\e2e\\cart_add_remove.cy.js",
@@ -27,7 +27,7 @@
       "tests": [],
       "suites": [
         {
-          "uuid": "aea7aff8-8e27-40be-b32d-85857edc4e8a",
+          "uuid": "4bc8589a-383b-412a-920c-f6435102225e",
           "title": "🧺 Cart Add/Remove Flow",
           "fullFile": "",
           "file": "",
@@ -38,29 +38,33 @@
               "title": "adds and removes an item without proceeding to checkout",
               "fullTitle": "🧺 Cart Add/Remove Flow adds and removes an item without proceeding to checkout",
               "timedOut": null,
-              "duration": 867,
-              "state": "passed",
-              "speed": "fast",
-              "pass": true,
-              "fail": false,
+              "duration": 12003,
+              "state": "failed",
+              "speed": null,
+              "pass": false,
+              "fail": true,
               "pending": false,
               "context": null,
               "code": "cy.visit('/');\ncy.get('[data-testid=\"product-card\"]').first().within(() => {\n  cy.contains(/add to cart/i).click();\n});\ncy.get('[data-testid=\"cart-link\"]').click();\ncy.url().should('include', '/cart');\n// Assuming remove buttons exist with text 'Remove'\ncy.contains(/remove/i).first().click({\n  force: true\n});\n// Accept either empty state or decreased count\ncy.contains(/your cart is empty/i).should('exist');",
-              "err": {},
-              "uuid": "bb5dd787-853f-4749-b7e2-195579c70a65",
-              "parentUUID": "aea7aff8-8e27-40be-b32d-85857edc4e8a",
+              "err": {
+                "message": "AssertionError: Timed out retrying after 10000ms: Expected to find element: `[data-testid=\"product-card\"]`, but never found it.",
+                "estack": "AssertionError: Timed out retrying after 10000ms: Expected to find element: `[data-testid=\"product-card\"]`, but never found it.\n    at Context.eval (webpack://merkato-frontend/./cypress/e2e/cart_add_remove.cy.js:5:7)",
+                "diff": null
+              },
+              "uuid": "5494be81-25e1-4fe8-81cb-619d545fd46a",
+              "parentUUID": "4bc8589a-383b-412a-920c-f6435102225e",
               "isHook": false,
               "skipped": false
             }
           ],
           "suites": [],
-          "passes": [
-            "bb5dd787-853f-4749-b7e2-195579c70a65"
+          "passes": [],
+          "failures": [
+            "5494be81-25e1-4fe8-81cb-619d545fd46a"
           ],
-          "failures": [],
           "pending": [],
           "skipped": [],
-          "duration": 867,
+          "duration": 12003,
           "root": false,
           "rootEmpty": false,
           "_timeout": 2000

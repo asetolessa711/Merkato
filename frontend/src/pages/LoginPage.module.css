@@ -8,7 +8,7 @@
 }
 
 .title {
-  color: #00B894;
+  color: var(--color-primary);
   margin-bottom: 20px;
   text-align: center;
   font-size: clamp(1.5rem, 2vw, 2rem);
@@ -37,7 +37,7 @@
 
 .input:focus {
   outline: none;
-  border-color: #00B894;
+  border-color: var(--color-primary);
   box-shadow: 0 0 0 2px rgba(0,184,148,0.2);
 }
 
@@ -101,11 +101,11 @@
 .checkboxLabel input[type="checkbox"] {
   width: 16px;
   height: 16px;
-  accent-color: #00B894;
+  accent-color: var(--color-primary);
 }
 
 .forgotLink {
-  color: #00B894;
+  color: var(--color-primary);
   text-decoration: none;
   font-size: 0.875rem;
   transition: color 0.2s;
@@ -119,7 +119,7 @@
 .submitButton {
   width: 100%;
   padding: 12px;
-  background-color: #00B894;
+  background-color: var(--color-primary);
   color: white;
   border: none;
   border-radius: 6px;
@@ -150,7 +150,7 @@
 
 .success {
   background-color: #e6fffa;
-  color: #00B894;
+  color: var(--color-primary);
   border: 1px solid #b2f5ea;
 }
 

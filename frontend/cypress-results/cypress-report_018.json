@@ -5,9 +5,9 @@
     "passes": 1,
     "pending": 0,
     "failures": 0,
-    "start": "2025-09-12T23:27:35.219Z",
-    "end": "2025-09-12T23:27:36.647Z",
-    "duration": 1428,
+    "start": "2025-09-16T05:55:24.514Z",
+    "end": "2025-09-16T05:55:26.553Z",
+    "duration": 2039,
     "testsRegistered": 1,
     "passPercent": 100,
     "pendingPercent": 0,
@@ -18,7 +18,7 @@
   },
   "results": [
     {
-      "uuid": "fb51b6d8-d483-444f-8f98-e997db3383cd",
+      "uuid": "2438ea2c-9326-427b-b09b-7f6119a081f1",
       "title": "",
       "fullFile": "cypress\\e2e\\cart_checkout_button.cy.js",
       "file": "cypress\\e2e\\cart_checkout_button.cy.js",
@@ -27,7 +27,7 @@
       "tests": [],
       "suites": [
         {
-          "uuid": "a034fee3-6c89-4e3a-87d0-f33873c08b65",
+          "uuid": "8fa2d627-a2d9-473b-acf8-8c05f1d2a525",
           "title": "🛒 Cart Checkout Button",
           "fullFile": "",
           "file": "",
@@ -38,7 +38,7 @@
               "title": "shows checkout button after adding product @smoke",
               "fullTitle": "🛒 Cart Checkout Button shows checkout button after adding product @smoke",
               "timedOut": null,
-              "duration": 1378,
+              "duration": 1989,
               "state": "passed",
               "speed": "fast",
               "pass": true,
@@ -47,20 +47,20 @@
               "context": null,
               "code": "cy.intercept('GET', '/api/products*').as('products');\ncy.visit('/shop');\ncy.wait('@products');\ncy.contains(productName, {\n  timeout: 15000\n}).should('exist');\ncy.contains(productName).closest('[data-testid=\"product-card\"]').within(() => {\n  cy.get('[data-testid=\"add-to-cart-btn\"]').click({\n    force: true\n  });\n});\ncy.get('[data-testid=\"cart-link\"]').click();\ncy.get('[data-testid=\"checkout-btn\"]').should('be.visible');",
               "err": {},
-              "uuid": "dd251a47-5bd3-4d08-aac0-46978ec01e4b",
-              "parentUUID": "a034fee3-6c89-4e3a-87d0-f33873c08b65",
+              "uuid": "fdffc2cd-a93b-4d6d-8d43-d663bcc6e274",
+              "parentUUID": "8fa2d627-a2d9-473b-acf8-8c05f1d2a525",
               "isHook": false,
               "skipped": false
             }
           ],
           "suites": [],
           "passes": [
-            "dd251a47-5bd3-4d08-aac0-46978ec01e4b"
+            "fdffc2cd-a93b-4d6d-8d43-d663bcc6e274"
           ],
           "failures": [],
           "pending": [],
           "skipped": [],
-          "duration": 1378,
+          "duration": 1989,
           "root": false,
           "rootEmpty": false,
           "_timeout": 2000

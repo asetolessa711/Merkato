@@ -112,13 +112,14 @@ describe('AdminOrders', () => {
     // Click the confirm button in the status preview dialog
     const statusConfirmBtn = await screen.findByRole('button', { name: /^Confirm$/ });
     fireEvent.click(statusConfirmBtn);
-    // Wait for the summary dialog to appear and check content
+    // Wait for the summary dialog to appear and check content (ensure we pick the visible one)
     try {
       await waitFor(() => {
-        const summaryDialog = screen.getByTestId('bulk-summary-dialog');
-        expect(summaryDialog).toBeInTheDocument();
-        expect(within(summaryDialog).getByText('Success:')).toBeInTheDocument();
-        expect(within(summaryDialog).getByText('2')).toBeInTheDocument();
+        const dialogs = screen.getAllByTestId('bulk-summary-dialog');
+        const visible = dialogs.find(d => d.style.display !== 'none');
+        expect(visible).toBeTruthy();
+        expect(within(visible).getByText('Success:')).toBeInTheDocument();
+        expect(within(visible).getByText('2')).toBeInTheDocument();
       }, { timeout: 3000 });
     } catch (e) {
       // Print the DOM for debugging if the dialog is not found
@@ -150,13 +151,14 @@ describe('AdminOrders', () => {
   // Then click the final confirm button to proceed to summary
   const exportConfirmBtn2 = await screen.findByTestId('bulk-export-confirm');
   fireEvent.click(exportConfirmBtn2);
-    // Wait for the summary dialog to appear and check content
-    await waitFor(() => {
-      const summaryDialog = screen.getByTestId('bulk-summary-dialog');
-      expect(summaryDialog).toBeInTheDocument();
-      expect(within(summaryDialog).getByText('Success:')).toBeInTheDocument();
-      expect(within(summaryDialog).getByText('1')).toBeInTheDocument();
-    });
+    // Wait for the summary dialog to appear and check content (select visible)
+  await waitFor(() => {
+      const dialogs = screen.getAllByTestId('bulk-summary-dialog');
+      const visible = dialogs.find(d => d.style.display !== 'none');
+      expect(visible).toBeTruthy();
+      expect(within(visible).getByText('Success:')).toBeInTheDocument();
+      expect(within(visible).getByText('1')).toBeInTheDocument();
+  }, { timeout: 3000 });
   });
 
   it('shows bulk email preview and performs resend', async () => {
@@ -180,13 +182,14 @@ describe('AdminOrders', () => {
   fireEvent.click(emailPreviewConfirm);
   const resendConfirmBtn = await screen.findByRole('button', { name: /Confirm & Resend/i });
   fireEvent.click(resendConfirmBtn);
-    // Wait for the summary dialog to appear and check content
-    await waitFor(() => {
-      const summaryDialog = screen.getByTestId('bulk-summary-dialog');
-      expect(summaryDialog).toBeInTheDocument();
-      expect(within(summaryDialog).getByText('Success:')).toBeInTheDocument();
-      expect(within(summaryDialog).getByText('1')).toBeInTheDocument();
-    });
+    // Wait for the summary dialog to appear and check content (select visible)
+  await waitFor(() => {
+      const dialogs = screen.getAllByTestId('bulk-summary-dialog');
+      const visible = dialogs.find(d => d.style.display !== 'none');
+      expect(visible).toBeTruthy();
+      expect(within(visible).getByText('Success:')).toBeInTheDocument();
+      expect(within(visible).getByText('1')).toBeInTheDocument();
+  }, { timeout: 3000 });
   });
 
   it('schedules a bulk action', async () => {
@@ -230,10 +233,11 @@ describe('AdminOrders', () => {
     expect(dialog).toBeInTheDocument();
     const confirmBtns = await screen.findAllByRole('button', { name: /confirm/i });
     fireEvent.click(confirmBtns[0]);
-    // Wait for the summary dialog to appear
+    // Wait for the summary dialog to appear (select visible)
     await waitFor(() => {
-      const summaryDialog = screen.getByTestId('bulk-summary-dialog');
-      expect(summaryDialog).toBeInTheDocument();
+      const dialogs = screen.getAllByTestId('bulk-summary-dialog');
+      const visible = dialogs.find(d => d.style.display !== 'none');
+      expect(visible).toBeTruthy();
     });
     // Find all Undo buttons and click the first visible one
     const undoButtons = await screen.findAllByRole('button', { name: /^Undo$/ });

@@ -1,9 +1,10 @@
 
 import React from 'react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
-import TemuNavbar from '../components/TemuNavbar';
+import AdminTopNav from './admin/AdminTopNav';
 import AdminSidebar from './AdminSidebar';
 import MerkatoFooter from '../components/MerkatoFooter';
+import AdminBreadcrumbs from './admin/AdminBreadcrumbs';
 import styles from '../layouts/AdminLayout.module.css';
 
 const AdminLayout = ({ user }) => {
@@ -39,24 +40,23 @@ const AdminLayout = ({ user }) => {
       {/* Show warning if no user */}
       {!user && <p style={{ padding: '20px', color: 'red' }}>⚠️ No user found.</p>}
 
-  {/* Fixed Top Navigation */}
-  <TemuNavbar role="admin" showCategories={false} />
+  {/* Fixed Admin Top Navigation */}
+  <AdminTopNav />
 
       {/* Main Content Area with Sidebar and Scrollable Main */}
-  <div className={styles.mainContent} style={{ marginTop: 120, flex: 1 }}>
+  <div className={styles.mainContent} style={{ marginTop: 56, paddingBottom: 88, display: 'grid', gridTemplateColumns: '280px 1fr', height: 'calc(100vh - 56px - 80px)', overflow: 'hidden' }}>
         <AdminSidebar />
-        <main className={styles.contentArea}>
+        <main className={styles.contentArea} style={{ padding: '16px 20px', overflowY: 'auto' }}>
           {/* Admin Role Notice */}
           {adminNotice}
-          {/* Heading for Admin Dashboard (deduplicated, only here) */}
-          <h2 style={{ marginTop: 0, fontWeight: 'bold', color: '#2c3e50', textAlign: 'center' }}>Admin Dashboard</h2>
+          <AdminBreadcrumbs />
           <Outlet />
         </main>
       </div>
 
       {/* Fixed Footer */}
       <div style={{ position: 'fixed', left: 0, bottom: 0, width: '100%', zIndex: 1000 }}>
-        <MerkatoFooter showSocials={false} />
+        <MerkatoFooter role="admin" showSocials={false} />
       </div>
     </div>
   );

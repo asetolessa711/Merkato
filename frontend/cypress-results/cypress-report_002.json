@@ -5,9 +5,9 @@
     "passes": 1,
     "pending": 0,
     "failures": 0,
-    "start": "2025-09-12T23:25:05.784Z",
-    "end": "2025-09-12T23:25:08.190Z",
-    "duration": 2406,
+    "start": "2025-09-16T05:52:23.804Z",
+    "end": "2025-09-16T05:52:27.571Z",
+    "duration": 3767,
     "testsRegistered": 1,
     "passPercent": 100,
     "pendingPercent": 0,
@@ -18,7 +18,7 @@
   },
   "results": [
     {
-      "uuid": "ce58645a-488a-45f0-a3b2-1a8f63c946ce",
+      "uuid": "bd0b8acb-374a-488d-9d80-9c074b89e549",
       "title": "",
       "fullFile": "cypress\\e2e\\a11y_checkout_form.cy.js",
       "file": "cypress\\e2e\\a11y_checkout_form.cy.js",
@@ -27,7 +27,7 @@
       "tests": [],
       "suites": [
         {
-          "uuid": "76dc8c03-ed25-481c-bbff-b0601e676630",
+          "uuid": "15ff7103-bfab-4610-be1b-0cdd0c3c82e3",
           "title": "♿ A11y — Checkout form",
           "fullFile": "",
           "file": "",
@@ -38,7 +38,7 @@
               "title": "has no critical violations on /checkout @a11y",
               "fullTitle": "♿ A11y — Checkout form has no critical violations on /checkout @a11y",
               "timedOut": null,
-              "duration": 2372,
+              "duration": 3720,
               "state": "passed",
               "speed": "fast",
               "pass": true,
@@ -47,20 +47,20 @@
               "context": null,
               "code": "cy.visit('/checkout');\ncy.injectAxe();\ncy.checkA11y(undefined, {\n  includedImpacts: ['critical']\n}, violations => {\n  counts['/checkout'] = violations.length;\n  writeSummary(counts, {\n    enforced: ENFORCE\n  });\n  if (ENFORCE && violations.length) {\n    const names = violations.map(v => v.id).join(', ');\n    throw new Error(`Critical a11y violations on /checkout: ${names}`);\n  }\n});",
               "err": {},
-              "uuid": "7ba0fd38-2f88-49d8-baa9-c4acf6047dee",
-              "parentUUID": "76dc8c03-ed25-481c-bbff-b0601e676630",
+              "uuid": "750a9e1b-cff7-49c8-a4dc-54051f839cbc",
+              "parentUUID": "15ff7103-bfab-4610-be1b-0cdd0c3c82e3",
               "isHook": false,
               "skipped": false
             }
           ],
           "suites": [],
           "passes": [
-            "7ba0fd38-2f88-49d8-baa9-c4acf6047dee"
+            "750a9e1b-cff7-49c8-a4dc-54051f839cbc"
           ],
           "failures": [],
           "pending": [],
           "skipped": [],
-          "duration": 2372,
+          "duration": 3720,
           "root": false,
           "rootEmpty": false,
           "_timeout": 2000

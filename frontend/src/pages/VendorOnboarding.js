@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MerkatoFooter from '../components/MerkatoFooter';
+import getOnboardingStep from '../utils/onboardingProgress';
 import styles from '../layouts/VendorLayout.module.css';
 
 function VendorOnboarding() {
@@ -39,9 +40,21 @@ function VendorOnboarding() {
 
   return (
     <div className={styles.contentArea}>
+      {/* Simple progress header */}
+      {(() => {
+        const { step, total, percent, label } = getOnboardingStep('/vendor/onboarding');
+        return (
+          <div style={{ margin: '8px 0 16px 0' }}>
+            <div aria-hidden style={{ height: 6, background: '#eef2ff', borderRadius: 999, overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${percent}%`, background: 'var(--color-primary)' }} />
+            </div>
+            <small style={{ color: '#555' }}>Step {step} of {total}: {label}</small>
+          </div>
+        );
+      })()}
       {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-        <h1 style={{ fontSize: '2.2rem', color: '#00B894', fontWeight: 'bold' }}>
+  <h1 style={{ fontSize: '2.2rem', color: 'var(--color-primary)', fontWeight: 'bold' }}>
           Welcome to Merkato Vendor Center 🚀
         </h1>
         <p style={{ fontSize: '1rem', color: '#555', marginTop: '10px' }}>
@@ -75,7 +88,7 @@ function VendorOnboarding() {
               {step.key === 'uploadProduct' && (
                 <button
                   onClick={() => navigate('/upload')}
-                  style={{ marginTop: '8px', backgroundColor: '#00B894', color: 'white', padding: '6px 12px', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+                  style={{ marginTop: '8px', backgroundColor: 'var(--color-primary)', color: 'white', padding: '6px 12px', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
                 >
                   Add Product
                 </button>

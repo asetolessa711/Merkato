@@ -2,14 +2,14 @@
   "stats": {
     "suites": 1,
     "tests": 3,
-    "passes": 3,
+    "passes": 2,
     "pending": 0,
-    "failures": 0,
-    "start": "2025-09-12T23:27:01.365Z",
-    "end": "2025-09-12T23:27:06.730Z",
-    "duration": 5365,
+    "failures": 1,
+    "start": "2025-09-16T05:54:44.722Z",
+    "end": "2025-09-16T05:54:50.407Z",
+    "duration": 5685,
     "testsRegistered": 3,
-    "passPercent": 100,
+    "passPercent": 66.66666666666666,
     "pendingPercent": 0,
     "other": 0,
     "hasOther": false,
@@ -18,7 +18,7 @@
   },
   "results": [
     {
-      "uuid": "e971f212-c6e5-4379-b8af-27cd2b266244",
+      "uuid": "c4eeaee8-8588-4604-9027-db27ff4b0375",
       "title": "",
       "fullFile": "cypress\\e2e\\auth_roles_positive.cy.js",
       "file": "cypress\\e2e\\auth_roles_positive.cy.js",
@@ -27,7 +27,7 @@
       "tests": [],
       "suites": [
         {
-          "uuid": "55c51ea4-a695-4668-9a8e-6f48f6208d97",
+          "uuid": "47f51def-38a7-4c19-b5a3-ddd9c6e7983b",
           "title": "Role Access (Positive Core Roles)",
           "fullFile": "",
           "file": "",
@@ -38,7 +38,7 @@
               "title": "customer can access /account/dashboard",
               "fullTitle": "Role Access (Positive Core Roles) customer can access /account/dashboard",
               "timedOut": null,
-              "duration": 2246,
+              "duration": 3181,
               "state": "passed",
               "speed": "fast",
               "pass": true,
@@ -47,8 +47,8 @@
               "context": null,
               "code": "cy.login(role);\ncy.visit(path);\ncy.get(testId, {\n  timeout: 10000\n}).should('exist').and('be.visible');",
               "err": {},
-              "uuid": "574ac5ad-fc8c-46e5-a65c-fc2a01eca871",
-              "parentUUID": "55c51ea4-a695-4668-9a8e-6f48f6208d97",
+              "uuid": "01f216e6-50ae-4593-a8b4-42120a1efea3",
+              "parentUUID": "47f51def-38a7-4c19-b5a3-ddd9c6e7983b",
               "isHook": false,
               "skipped": false
             },
@@ -56,7 +56,7 @@
               "title": "vendor can access /vendor",
               "fullTitle": "Role Access (Positive Core Roles) vendor can access /vendor",
               "timedOut": null,
-              "duration": 1309,
+              "duration": 1127,
               "state": "passed",
               "speed": "fast",
               "pass": true,
@@ -65,8 +65,8 @@
               "context": null,
               "code": "cy.login(role);\ncy.visit(path);\ncy.get(testId, {\n  timeout: 10000\n}).should('exist').and('be.visible');",
               "err": {},
-              "uuid": "3cefa529-4622-46ce-aa1c-a49d10021072",
-              "parentUUID": "55c51ea4-a695-4668-9a8e-6f48f6208d97",
+              "uuid": "7b1298b4-69c2-4f8f-9b91-aace5c232938",
+              "parentUUID": "47f51def-38a7-4c19-b5a3-ddd9c6e7983b",
               "isHook": false,
               "skipped": false
             },
@@ -74,31 +74,36 @@
               "title": "admin can access /admin",
               "fullTitle": "Role Access (Positive Core Roles) admin can access /admin",
               "timedOut": null,
-              "duration": 1599,
-              "state": "passed",
-              "speed": "fast",
-              "pass": true,
-              "fail": false,
+              "duration": 1215,
+              "state": "failed",
+              "speed": null,
+              "pass": false,
+              "fail": true,
               "pending": false,
               "context": null,
               "code": "cy.login(role);\ncy.visit(path);\ncy.get(testId, {\n  timeout: 10000\n}).should('exist').and('be.visible');",
-              "err": {},
-              "uuid": "5741e471-c544-454d-87a4-f6284b372e33",
-              "parentUUID": "55c51ea4-a695-4668-9a8e-6f48f6208d97",
+              "err": {
+                "message": "ReferenceError: The following error originated from your application code, not from Cypress.\n\n  > Cannot access 'visibleTabs' before initialization\n\nWhen Cypress detects uncaught errors originating from your application it will automatically fail the current test.\n\nThis behavior is configurable, and you can choose to turn this off by listening to the `uncaught:exception` event.\n\nhttps://on.cypress.io/uncaught-exception-from-application",
+                "estack": "ReferenceError: The following error originated from your application code, not from Cypress.\n\n  > Cannot access 'visibleTabs' before initialization\n\nWhen Cypress detects uncaught errors originating from your application it will automatically fail the current test.\n\nThis behavior is configurable, and you can choose to turn this off by listening to the `uncaught:exception` event.\n\nhttps://on.cypress.io/uncaught-exception-from-application\n    at AdminDashboard (webpack-internal:///./src/pages/AdminDashboard.js:101:26)\n    at renderWithHooks (webpack-internal:///./node_modules/react-dom/cjs/react-dom.development.js:13468:22)\n    at mountIndeterminateComponent (webpack-internal:///./node_modules/react-dom/cjs/react-dom.development.js:17440:17)\n    at beginWork (webpack-internal:///./node_modules/react-dom/cjs/react-dom.development.js:18743:20)\n    at HTMLUnknownElement.callCallback (webpack-internal:///./node_modules/react-dom/cjs/react-dom.development.js:3724:18)\n    at Object.invokeGuardedCallbackDev (webpack-internal:///./node_modules/react-dom/cjs/react-dom.development.js:3768:20)\n    at invokeGuardedCallback (webpack-internal:///./node_modules/react-dom/cjs/react-dom.development.js:3825:35)\n    at beginWork$1 (webpack-internal:///./node_modules/react-dom/cjs/react-dom.development.js:23724:11)\n    at performUnitOfWork (webpack-internal:///./node_modules/react-dom/cjs/react-dom.development.js:22972:16)\n    at workLoopSync (webpack-internal:///./node_modules/react-dom/cjs/react-dom.development.js:22895:9)",
+                "diff": null
+              },
+              "uuid": "47b873e8-5eba-4316-86ff-34d499e14bdc",
+              "parentUUID": "47f51def-38a7-4c19-b5a3-ddd9c6e7983b",
               "isHook": false,
               "skipped": false
             }
           ],
           "suites": [],
           "passes": [
-            "574ac5ad-fc8c-46e5-a65c-fc2a01eca871",
-            "3cefa529-4622-46ce-aa1c-a49d10021072",
-            "5741e471-c544-454d-87a4-f6284b372e33"
+            "01f216e6-50ae-4593-a8b4-42120a1efea3",
+            "7b1298b4-69c2-4f8f-9b91-aace5c232938"
           ],
-          "failures": [],
+          "failures": [
+            "47b873e8-5eba-4316-86ff-34d499e14bdc"
+          ],
           "pending": [],
           "skipped": [],
-          "duration": 5154,
+          "duration": 5523,
           "root": false,
           "rootEmpty": false,
           "_timeout": 2000

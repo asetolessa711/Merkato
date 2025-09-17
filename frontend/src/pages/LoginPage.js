@@ -44,7 +44,7 @@ function LoginPage() {
           storedUser.roles?.includes('global_admin') ||
           storedUser.roles?.includes('country_admin')
         ) {
-          navigate('/admin');
+          navigate('/admin/dashboard');
         } else if (storedUser.roles?.includes('vendor') || role === 'vendor') {
           navigate('/vendor');
         } else {
@@ -148,7 +148,7 @@ function LoginPage() {
           res.data.roles?.includes('global_admin') ||
           res.data.roles?.includes('country_admin')
         ) {
-          navigate('/admin');
+          navigate('/admin/dashboard');
         } else if (res.data.roles?.includes('vendor') || role === 'vendor') {
           navigate('/vendor');
         } else {

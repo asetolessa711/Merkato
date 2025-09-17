@@ -6,10 +6,10 @@
   height: 300px;
   min-height: 260px;
   max-height: 320px;
-  border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  border-radius: var(--card-radius, 16px);
+  box-shadow: var(--card-shadow, var(--shadow-sm, 0 2px 8px rgba(0,0,0,0.06)));
   transition: transform 0.2s, box-shadow 0.2s;
-  background: #fff;
+  background: var(--card-bg, var(--color-bg, #fff));
   cursor: pointer;
   overflow: hidden;
   position: relative;
@@ -19,9 +19,10 @@
   align-items: center;
 }
 
-.product-card:hover, .product-card.active {
+body[data-cardhoveranim="on"] .product-card:hover,
+body[data-cardhoveranim="on"] .product-card.active {
   transform: scale(1.07);
-  box-shadow: 0 6px 24px rgba(0,0,0,0.13);
+  box-shadow: var(--shadow-lg, 0 6px 24px rgba(0,0,0,0.13));
   z-index: 2;
 }
 
@@ -64,14 +65,46 @@
   background: #ffeaa7;
 }
 
+.quickview-btn {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  background: rgba(44,46,67,0.9);
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 0.8rem;
+  opacity: 0;
+  transition: opacity .15s ease-in-out, transform .15s ease-in-out;
+  transform: translateY(4px);
+}
+
+.product-card:hover .quickview-btn,
+.product-card:focus-within .quickview-btn {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 .discount-badge {
   position: absolute;
   top: 8px;
   left: 8px;
-  background: #e74c3c;
+  background: var(--card-badge-bg, var(--color-danger, #e74c3c));
   color: #fff;
   border-radius: 6px;
   padding: 2px 8px;
+  font-size: 0.8rem;
+}
+
+.rating-pill {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  background: rgba(17, 24, 39, 0.8);
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 999px;
   font-size: 0.8rem;
 }
 
@@ -97,9 +130,17 @@
 }
 
 .price, .product-price {
-  color: #00b894;
+  color: var(--color-primary);
   font-weight: bold;
   font-size: 1rem;
+}
+
+.compare-at {
+  color: var(--color-text-muted, #6B7280);
+  text-decoration: line-through;
+  margin-left: 8px;
+  font-weight: 500;
+  font-size: 0.9rem;
 }
 
 .stars {
@@ -120,13 +161,19 @@
 }
 
 .shop-btn:hover {
-  background: #00b894;
+  background: var(--color-primary);
 }
 
 /* Sizes (adaptive, use rem for scaling) */
 .size-sm { width: 140px; font-size: 0.85rem; }
 .size-md { width: 180px; font-size: 1rem; }
 .size-lg { width: 220px; font-size: 1.15rem; }
+
+/* Variants */
+.type-minimal .product-info .card-actions { display: none; }
+.type-minimal .product-description { display: none; }
+.type-deal .discount-badge { background: var(--color-warning, #F59E0B); color: #111; }
+.type-rich .product-description { display: block; max-height: 3.2em; overflow: hidden; }
 
 /* Color swatches */
 .color-preview {

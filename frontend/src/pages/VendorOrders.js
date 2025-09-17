@@ -174,7 +174,7 @@ function VendorOrders() {
 
   return (
     <div className={styles.contentArea}>
-      <h2 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '20px', color: '#00B894' }}>
+  <h2 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '20px', color: 'var(--color-primary)' }}>
         Orders for My Products
       </h2>
       {/* msg removed, global message used instead */}
@@ -219,7 +219,7 @@ function VendorOrders() {
               <XAxis dataKey="name" />
               <YAxis />
               <Tooltip />
-              <Bar dataKey="qty" fill="#00B894" />
+              <Bar dataKey="qty" fill="var(--color-primary)" />
             </BarChart>
           </ResponsiveContainer>
         </div>

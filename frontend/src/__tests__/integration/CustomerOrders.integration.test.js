@@ -41,7 +41,8 @@ describe('CustomerOrders integration (@persona:customer)', () => {
 
   test('renders injected order items list', async () => {
     renderPage();
-    await screen.findByText(/My Orders/i);
+  // Heading updated in UI to "Order History"
+  await screen.findByText(/Order History/i);
     await screen.findByTestId('order-products');
     const itemNames = await screen.findAllByTestId('order-item-name');
     const texts = itemNames.map(n => n.textContent);

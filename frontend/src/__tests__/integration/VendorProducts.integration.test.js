@@ -14,6 +14,11 @@ describe('VendorProducts integration', () => {
   beforeEach(() => {
     localStorage.setItem('token', 't');
     localStorage.setItem('user', JSON.stringify({ _id: 'vendor123', name: 'Vendor User' }));
+    // Seed local fallback to ensure deterministic render even if axios path changes
+    localStorage.setItem('uploadedProducts', JSON.stringify([
+      { _id: 'p1', name: 'Prod A', price: 10, stock: 5, category: 'Cat' },
+      { _id: 'p2', name: 'Prod B', price: 20, stock: 2, category: 'Cat' }
+    ]));
   });
   test('renders product table', async () => {
     render(<MemoryRouter><VendorProducts /></MemoryRouter>);

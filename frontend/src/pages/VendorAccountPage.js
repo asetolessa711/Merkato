@@ -17,9 +17,9 @@ export default function VendorAccountPage() {
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 24 }}>
         {TABS.map(t => (
           <button key={t} onClick={() => setTab(t)} style={{
-            background: tab === t ? 'linear-gradient(90deg,#00b894,#7c2ae8)' : '#f6f9fc',
+            background: tab === t ? 'linear-gradient(90deg,var(--color-primary),#7c2ae8)' : '#f6f9fc',
             color: tab === t ? '#fff' : '#333',
-            border: 'none', borderRadius: 8, padding: '8px 18px', fontWeight: 600, cursor: 'pointer', boxShadow: tab === t ? '0 2px 8px #00b89455' : 'none'
+            border: 'none', borderRadius: 8, padding: '8px 18px', fontWeight: 600, cursor: 'pointer', boxShadow: tab === t ? '0 2px 8px rgba(108,99,255,0.35)' : 'none'
           }}>{t}</button>
         ))}
       </div>
@@ -27,7 +27,7 @@ export default function VendorAccountPage() {
       {/* Profile Overview */}
       {tab === 'Profile' && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 24, marginBottom: 32 }}>
-          <img src={profile.avatar} alt="avatar" style={{ borderRadius: '50%', width: 80, height: 80, border: '2.5px solid #00b894' }} />
+          <img src={profile.avatar} alt="avatar" style={{ borderRadius: '50%', width: 80, height: 80, border: '2.5px solid var(--color-primary)' }} />
           <div>
             <h2 style={{ margin: 0 }}>{profile.name}</h2>
             <p style={{ margin: 0 }}>{profile.email}</p>

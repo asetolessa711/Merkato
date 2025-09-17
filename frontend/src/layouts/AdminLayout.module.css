@@ -6,6 +6,14 @@
   display: flex;
   flex-direction: column;
   font-family: 'Poppins', sans-serif;
+  --headline-size: 24px;
+  --section-title-size: 18px;
+  --body-size: 14px;
+  --caption-size: 12px;
+  --headline-weight: 800;
+  --section-weight: 600;
+  --body-weight: 400;
+  --caption-weight: 400;
 }
 
 .mainContent {
@@ -21,6 +29,13 @@
   background-color: #ffffff;
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
   border-left: 1px solid #e2e8f0;
+  font-size: var(--body-size);
 }
+
+.contentArea h1 { font-size: var(--headline-size); font-weight: var(--headline-weight); line-height: 1.3; margin: 0 0 10px; }
+.contentArea h2 { font-size: var(--section-title-size); font-weight: var(--section-weight); line-height: 1.35; margin: 16px 0 8px; }
+.contentArea h3 { font-size: 16px; font-weight: var(--section-weight); line-height: 1.35; margin: 12px 0 6px; }
+.contentArea p, .contentArea li { font-size: var(--body-size); line-height: 1.55; }
+.contentArea small, .contentArea .caption { font-size: var(--caption-size); color: #6b7280; }
 
 /* Add more admin-specific styles as needed */

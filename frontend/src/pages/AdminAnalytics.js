@@ -80,7 +80,7 @@ function AdminAnalytics() {
 
   return (
     <div style={{ padding: 30, fontFamily: 'Poppins, sans-serif' }}>
-      <h2 style={{ marginBottom: 20 }}>Admin Dashboard</h2>
+  <h2 style={{ marginBottom: 20 }}>System Tools</h2>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 20 }}>
         <Card title="Total Customers" value={stats.users} />
@@ -107,7 +107,7 @@ function AdminAnalytics() {
                 label: 'Revenue ($)',
                 data: dailyRevenue,
                 fill: false,
-                borderColor: '#00B894',
+                borderColor: 'var(--color-primary)',
                 tension: 0.3
               }
             ]
@@ -123,7 +123,7 @@ function Card({ title, value }) {
   return (
     <div style={{ background: '#fff', padding: 20, borderRadius: 8, boxShadow: '0 2px 6px rgba(0,0,0,0.05)', textAlign: 'center' }}>
       <h4 style={{ marginBottom: 10, fontWeight: 500 }}>{title}</h4>
-      <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#00B894' }}>{value}</div>
+  <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--color-primary)' }}>{value}</div>
     </div>
   );
 }

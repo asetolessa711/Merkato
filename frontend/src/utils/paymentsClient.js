@@ -1,8 +1,8 @@
-import axios from 'axios';
+import apiClient from './apiClient';
 
 export async function fetchPaymentMethods() {
   try {
-    const res = await axios.get('/api/payments/methods');
+  const res = await apiClient.get('/payments/methods');
     return Array.isArray(res.data?.methods) ? res.data.methods : [];
   } catch (_) {
     return [];

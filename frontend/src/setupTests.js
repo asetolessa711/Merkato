@@ -16,6 +16,8 @@ import '@testing-library/jest-dom';
 	const ERROR_SUPPRESS_PATTERNS = [
 		// jsdom limitation triggered by <a> navigation timers in tests
 		'Not implemented: navigation (except hash changes)',
+		// jsdom limitation for scrollTo in the test environment
+		'Not implemented: window.scrollTo',
 		// React Testing Library act() advisory for async state in mounted components
 		'inside a test was not wrapped in act',
 	];
@@ -36,3 +38,10 @@ import '@testing-library/jest-dom';
 		return originalError.apply(console, args);
 	};
 })();
+
+// jsdom's window.scrollTo throws Not Implemented; always mock to a no-op in tests
+if (typeof window !== 'undefined') {
+	// Prefer a jest mock when available for call assertions
+	// eslint-disable-next-line no-undef
+	window.scrollTo = typeof jest !== 'undefined' ? jest.fn() : () => {};
+}

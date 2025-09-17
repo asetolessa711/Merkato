@@ -56,7 +56,7 @@ function CartPage() {
           display: 'inline-block',
           marginTop: 20,
           padding: '10px 16px',
-          backgroundColor: '#00B894',
+          backgroundColor: 'var(--color-primary)',
           color: 'white',
           borderRadius: 6,
           textDecoration: 'none'
@@ -69,13 +69,13 @@ function CartPage() {
     <div style={{ maxWidth: 900, margin: '40px auto', fontFamily: 'Poppins, sans-serif' }}>
       <div style={{ textAlign: 'center', marginBottom: 30 }}>
         <Link to="/" style={{ textDecoration: 'none', fontSize: '2rem', fontWeight: 'bold' }}>
-          <span style={{ color: '#00B894' }}>M</span>
+          <span style={{ color: 'var(--color-primary)' }}>M</span>
           <span style={{ color: '#3498DB' }}>e</span>
           <span style={{ color: '#E67E22' }}>r</span>
           <span style={{ color: '#9B59B6' }}>k</span>
           <span style={{ color: '#E74C3C' }}>a</span>
           <span style={{ color: '#3498DB' }}>t</span>
-          <span style={{ color: '#00B894' }}>o</span>
+          <span style={{ color: 'var(--color-primary)' }}>o</span>
         </Link>
         <h2>Your Cart</h2>
       </div>
@@ -109,7 +109,7 @@ function CartPage() {
           data-testid="checkout-btn" // ✅ Add test id for Cypress
           onClick={handleCheckout}
           style={{
-            backgroundColor: '#00B894',
+            backgroundColor: 'var(--color-primary)',
             color: 'white',
             padding: '12px 24px',
             border: 'none',

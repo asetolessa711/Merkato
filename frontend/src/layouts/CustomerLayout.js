@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import styles from './CustomerLayout.module.css';
 
-import TemuNavbar from '../components/TemuNavbar';
+import MerkatoNavbar from '../components/MerkatoNavbar';
 import CustomerSidebar from '../components/CustomerSidebar';
 import MerkatoFooter from '../components/MerkatoFooter';
 import Breadcrumb from '../components/Breadcrumb';
@@ -61,7 +61,7 @@ function CustomerLayout({ children, user, onLogout, lang, onLangChange }) {
   if (isLoading) {
     return (
       <div className={styles.container}>
-  <TemuNavbar role="customer" />
+  <MerkatoNavbar role="customer" />
         <div className={styles.mainContent}>
           <CustomerSidebar user={null} activePath={location.pathname} />
           <main className={styles.contentArea}>
@@ -97,7 +97,7 @@ function CustomerLayout({ children, user, onLogout, lang, onLangChange }) {
 
   return (
     <div className={styles.container}>
-  <TemuNavbar role="customer" />
+  <MerkatoNavbar role="customer" />
       {/* Fixed heading at the top */}
       <header className={styles.fixedHeader}>
     <h1 data-testid="customer-dashboard-title">Customer Dashboard</h1>

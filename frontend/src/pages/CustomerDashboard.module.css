@@ -1,6 +1,6 @@
 /* Variables */
 :root {
-  --primary-color: #00b894;
+  --primary-color: var(--color-primary);
   --primary-hover: #00a38d;
   --text-primary: #2d3436;
   --text-secondary: #636e72;

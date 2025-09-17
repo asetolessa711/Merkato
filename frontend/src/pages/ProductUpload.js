@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import apiClient from '../utils/apiClient';
+import { ROUTES } from '../config/routes';
 import { useNavigate } from 'react-router-dom';
 import { uploadProductImage } from '../utils/uploadImage';
 import { useMessage } from '../context/MessageContext';
@@ -24,7 +25,7 @@ function ProductUpload() {
     }
   });
 
-  const [imageFiles, setImageFiles] = useState([]); // retained for logic but may be removable later
+  // Removed unused imageFiles state (kept previews and urls)
   const [previewImages, setPreviewImages] = useState([]);
   const [imageUrls, setImageUrls] = useState([]);
   const [testMsg, setTestMsg] = useState('');
@@ -63,7 +64,7 @@ function ProductUpload() {
   setHadInvalidImage(true);
       return;
     }
-    setImageFiles(files);
+  // Track previews only; image files state not required
     setPreviewImages(files.map(file => URL.createObjectURL(file)));
 
     if (USE_MOCK_UPLOAD) {
@@ -114,7 +115,7 @@ function ProductUpload() {
         gender: '', ageGroup: '', currency: 'USD', language: 'en',
         promotion: { isPromoted: false, badgeText: '' }
       });
-      setImageFiles([]);
+  // reset preview/images only
       setPreviewImages([]);
       setImageUrls([]);
       // Give Cypress time to assert the visible success message
@@ -123,12 +124,10 @@ function ProductUpload() {
     }
 
     try {
-      const res = await axios.post(
-        '/api/products',
+      const res = await apiClient.post(
+        '/api/vendor/products',
         { ...form, images: imageUrls },
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
       showMessage(`Product "${res.data.name}" uploaded successfully!`, 'success');
@@ -137,11 +136,12 @@ function ProductUpload() {
         gender: '', ageGroup: '', currency: 'USD', language: 'en',
         promotion: { isPromoted: false, badgeText: '' }
       });
-      setImageFiles([]);
+  // reset preview/images only
       setPreviewImages([]);
       setImageUrls([]);
 
-      setTimeout(() => navigate('/vendor'), 1000);
+  // After successful real upload, navigate to vendor products list for verification
+  setTimeout(() => navigate(ROUTES.vendorProducts), 800);
     } catch (err) {
       const error = err.response?.data?.message || 'Upload failed. Please try again.';
       console.error('Product upload failed:', error);
@@ -151,7 +151,7 @@ function ProductUpload() {
 
   return (
     <div style={{ padding: '20px', maxWidth: '700px', margin: '0 auto', fontFamily: 'Poppins, sans-serif', color: '#333' }}>
-      <h1 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '20px', color: '#00B894' }}>
+  <h1 style={{ fontSize: '2rem', fontWeight: 'bold', marginBottom: '20px', color: 'var(--color-primary)' }}>
         Upload a New Product 🚀
       </h1>
 
@@ -227,7 +227,7 @@ function ProductUpload() {
           </div>
         )}
 
-        <button type="submit" style={{
+  <button type="submit" data-testid="product-upload-submit" style={{
           marginTop: '20px',
           backgroundColor: '#0984e3',
           color: 'white',

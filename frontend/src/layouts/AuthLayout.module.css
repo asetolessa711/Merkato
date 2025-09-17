@@ -40,7 +40,7 @@
   transition: color 0.2s;
 }
 
-.logoChar1, .logoChar7 { color: #00B894; }
+.logoChar1, .logoChar7 { color: var(--color-primary); }
 .logoChar2, .logoChar6 { color: #3498DB; }
 .logoChar3 { color: #E67E22; }
 .logoChar4 { color: #9B59B6; }
@@ -59,7 +59,7 @@
 }
 
 .toggleLink {
-  color: #00B894;
+  color: var(--color-primary);
   text-decoration: none;
   font-weight: 500;
   transition: all 0.2s ease;
@@ -84,7 +84,7 @@
 }
 
 .forgotLink {
-  color: #00B894;
+  color: var(--color-primary);
   text-decoration: none;
   font-size: 0.875rem;
   font-weight: 500;

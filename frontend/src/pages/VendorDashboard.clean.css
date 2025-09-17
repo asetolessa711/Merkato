@@ -1,0 +1,20 @@
+.vd-title{font-size:20px;font-weight:700;margin:0 0 12px 0;color:#0f172a}
+.vd-actions{display:flex;gap:8px;margin-bottom:16px}
+.vd-btn{background:#7c2ae8;color:#fff;border:0;border-radius:8px;padding:8px 12px;font-weight:600;cursor:pointer}
+.vd-btn.ghost{background:#eef2ff;color:#1e1b4b}
+.vd-muted{color:#64748b}
+.vd-grid{display:grid;grid-template-columns:1fr;gap:16px}
+@media(min-width:900px){.vd-grid{grid-template-columns:1fr 1fr}}
+.vd-card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px}
+.vd-section{font-size:14px;color:#334155;margin:0 0 12px 0}
+.vd-kpis{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.vd-kpi{background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:12px}
+.vd-kpi-label{font-size:12px;color:#475569}
+.vd-kpi-value{font-size:18px;font-weight:700;color:#0f172a}
+.vd-table-wrap{overflow:auto}
+.vd-table{width:100%;border-collapse:collapse}
+.vd-table th,.vd-table td{padding:10px;border-bottom:1px solid #e5e7eb;text-align:left}
+.status{font-weight:600;text-transform:capitalize}
+.status.paid{color:#065f46}
+.status.shipped{color:#1d4ed8}
+.status.pending{color:#b45309}

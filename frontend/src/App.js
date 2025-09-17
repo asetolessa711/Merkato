@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
+import React, { useEffect, useState, lazy, Suspense } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useParams, useLocation } from 'react-router-dom';
 // Note: Legacy Navbar (fixed top-bar) is not used to avoid overlay issues in E2E
 
 // Hooks
@@ -41,45 +41,77 @@ import DirectChat from './pages/DirectChat';
 
 import VendorDashboard from './pages/VendorDashboard';
 import VendorOnboarding from './pages/VendorOnboarding';
+import VendorOnboardInvite from './pages/VendorOnboardInvite';
 import VendorOrders from './pages/VendorOrders';
 import VendorGuide from './pages/VendorGuide';
 import VendorStore from './pages/VendorStore';
 import VendorAnalytics from './pages/VendorAnalytics';
+import VendorAnalyticsProducts from './pages/VendorAnalyticsProducts';
+import VendorAnalyticsCustomers from './pages/VendorAnalyticsCustomers';
 import VendorInvoices from './pages/VendorInvoices';
 import VendorProducts from './pages/VendorProducts';
 import VendorMarketing from './pages/VendorMarketing';
 import VendorInbox from './pages/VendorInbox';
 import VendorQuestions from './pages/VendorQuestions';
+import VendorDrafts from './pages/VendorDrafts';
+import VendorFulfillment from './pages/VendorFulfillment';
+import VendorReturns from './pages/VendorReturns';
+import VendorBulkUpload from './pages/VendorBulkUpload';
+import VendorMediaLibrary from './pages/VendorMediaLibrary';
+import VendorVideoPromotions from './pages/VendorVideoPromotions';
+import VendorFinanceOverview from './pages/VendorFinanceOverview';
+import VendorPayouts from './pages/VendorPayouts';
+import VendorTaxDocs from './pages/VendorTaxDocs';
+import VendorHelpCenter from './pages/VendorHelpCenter';
+import VendorContactAdmin from './pages/VendorContactAdmin';
+import VendorPolicy from './pages/VendorPolicy';
 
 import AdminDashboard from './pages/AdminDashboard';
-import AdminDeliveryOptions from './pages/AdminDeliveryOptions';
-import AdminExpenseManager from './pages/AdminExpenseManager';
-import AdminSupportInbox from './pages/AdminSupportInbox';
-import AdminFeedbackInbox from './pages/AdminFeedbackInbox';
-import AdminOrders from './pages/AdminOrders';
-import AdminAnalytics from './pages/AdminAnalytics';
-import AdminFlagManager from './pages/AdminFlagManager';
-import AdminDiscountManager from './pages/AdminDiscountManager';
+import AdminVendorLeads from './pages/AdminVendorLeads';
+import AdminHomeSections from './pages/AdminHomeSections';
+import AdminMicroBanner from './pages/AdminMicroBanner';
+import AdminTrustTicker from './pages/AdminTrustTicker';
+import AdminMegaPromos from './pages/AdminMegaPromos';
 import VendorManagement from './pages/VendorManagement';
-import InvoiceReport from './pages/InvoiceReport';
-import AdminInvoices from './pages/AdminInvoices';
-
-
 import AdminPromoCodes from './components/admin/AdminPromoCodes';
 import PromoManager from './components/admin/PromoManager';
 import ReviewModeration from './components/admin/ReviewModeration';
 import CodexAgent from './pages/CodexAgent';
 import TaskCenter from './pages/TaskCenter';
-
+import SearchPage from './pages/SearchPage';
 import FeedbackPopup from './components/FeedbackPopup';
 import FloatingPromoButton from './components/FloatingPromoButton';
 import ProtectedRoute from './components/ProtectedRoute';
 import { MessageProvider } from './context/MessageContext';
 import GlobalMessage from './components/GlobalMessage';
+import VendorRegister from './pages/VendorRegister';
+
+const VendorRegisterLazy = (props) => <VendorRegister {...props} />;
+
+const AdminDeliveryOptions = lazy(() => import('./pages/AdminDeliveryOptions'));
+const AdminExpenseManager = lazy(() => import('./pages/AdminExpenseManager'));
+const AdminSupportInbox = lazy(() => import('./pages/AdminSupportInbox'));
+const AdminFeedbackInbox = lazy(() => import('./pages/AdminFeedbackInbox'));
+const AdminOrders = lazy(() => import('./pages/AdminOrders'));
+const AdminAnalytics = lazy(() => import('./pages/AdminAnalytics'));
+const AdminFlagManager = lazy(() => import('./pages/AdminFlagManager'));
+const AdminDiscountManager = lazy(() => import('./pages/AdminDiscountManager'));
+const InvoiceReport = lazy(() => import('./pages/InvoiceReport'));
+const AdminInvoices = lazy(() => import('./pages/AdminInvoices'));
+const AdminMegaMenu = lazy(() => import('./pages/AdminMegaMenu'));
+const AdminTheme = lazy(() => import('./pages/AdminTheme'));
 
 const DirectChatWrapper = () => {
   const { userId } = useParams();
   return <DirectChat selectedUser={{ _id: userId }} />;
+};
+
+// Route alias: /customer/* -> /account/*
+const CustomerAlias = () => {
+  const location = useLocation();
+  const suffix = location.pathname.replace(/^\/customer/, '');
+  const target = `/account${suffix}${location.search || ''}`;
+  return <Navigate to={target} replace />;
 };
 
 function App() {
@@ -172,6 +204,7 @@ function App() {
           }>
             <Route index element={<HomePage />} />
             <Route path="shop" element={<ShopPage />} />
+            <Route path="search" element={<SearchPage />} />
             <Route path="customers" element={<CustomersPage />} />
             <Route path="vendors" element={<VendorsPage />} />
             <Route path="favorites" element={<FavoritesPage />} />
@@ -182,6 +215,7 @@ function App() {
             <Route path="support" element={<SupportForm />} />
             <Route path="codex" element={<CodexAgent />} />
             <Route path="tasks" element={<TaskCenter />} />
+            <Route path="vendor/register" element={<VendorRegisterLazy />} />
             <Route path="*" element={<h2>404 – Page Not Found</h2>} />
           </Route>
 
@@ -217,11 +251,36 @@ function App() {
             </ProtectedRoute>
           }>
             <Route index element={<VendorDashboard />} />
+            {/* Alias: explicit dashboard path */}
+            <Route path="dashboard" element={<VendorDashboard />} />
             <Route path="account" element={<VendorAccountPage />} />
             <Route path="onboarding" element={<VendorOnboarding />} />
+            <Route path="onboard" element={<VendorOnboardInvite />} />
             <Route path="orders" element={<VendorOrders />} />
             <Route path="products" element={<VendorProducts />} />
             <Route path="products/upload" element={<ProductUpload />} />
+            {/* Alias: short upload path */}
+            <Route path="upload" element={<ProductUpload />} />
+            {/* Product drafts and scheduling */}
+            <Route path="drafts" element={<VendorDrafts />} />
+            {/* Orders subpages */}
+            <Route path="fulfillment" element={<VendorFulfillment />} />
+            <Route path="returns" element={<VendorReturns />} />
+            {/* Upload center */}
+            <Route path="bulk-upload" element={<VendorBulkUpload />} />
+            <Route path="media" element={<VendorMediaLibrary />} />
+            <Route path="video-promotions" element={<VendorVideoPromotions />} />
+            {/* Analytics */}
+            <Route path="analytics/products" element={<VendorAnalyticsProducts />} />
+            <Route path="analytics/customers" element={<VendorAnalyticsCustomers />} />
+            {/* Finance */}
+            <Route path="finance" element={<VendorFinanceOverview />} />
+            <Route path="payouts" element={<VendorPayouts />} />
+            <Route path="tax-docs" element={<VendorTaxDocs />} />
+            {/* Support */}
+            <Route path="help" element={<VendorHelpCenter />} />
+            <Route path="contact-admin" element={<VendorContactAdmin />} />
+            <Route path="policy" element={<VendorPolicy />} />
             <Route path="guide" element={<VendorGuide />} />
             <Route path="analytics" element={<VendorAnalytics />} />
             <Route path="invoices" element={<VendorInvoices />} />
@@ -238,23 +297,35 @@ function App() {
               <AdminLayout user={user} />
             </ProtectedRoute>
           }>
+            {/* Default admin landing: redirect to dashboard for consistency with tests */}
             <Route index element={<Navigate to="/admin/dashboard" replace />} />
             <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="promo-codes" element={<AdminPromoCodes />} />
             <Route path="promo-manager" element={<PromoManager />} />
+            <Route path="home-sections" element={<AdminHomeSections />} />
+            <Route path="microbanner" element={<AdminMicroBanner />} />
+            <Route path="trust" element={<AdminTrustTicker />} />
+            <Route path="mega-promos" element={<AdminMegaPromos />} />
             <Route path="vendors" element={<VendorManagement />} />
-            <Route path="orders" element={<AdminOrders />} />
-            <Route path="expenses" element={<AdminExpenseManager />} />
-            <Route path="feedback" element={<AdminFeedbackInbox />} />
-            <Route path="support" element={<AdminSupportInbox />} />
-            <Route path="analytics" element={<AdminAnalytics />} />
-            <Route path="flags" element={<AdminFlagManager />} />
-            <Route path="discount" element={<AdminDiscountManager />} />
+            <Route path="vendors/leads" element={<AdminVendorLeads />} />
+            <Route path="orders" element={<Suspense fallback={<div />}><AdminOrders /></Suspense>} />
+            <Route path="expenses" element={<Suspense fallback={<div />}><AdminExpenseManager /></Suspense>} />
+            <Route path="feedback" element={<Suspense fallback={<div />}><AdminFeedbackInbox /></Suspense>} />
+            <Route path="support" element={<Suspense fallback={<div />}><AdminSupportInbox /></Suspense>} />
+            <Route path="analytics" element={<Suspense fallback={<div />}><AdminAnalytics /></Suspense>} />
+            <Route path="flags" element={<Suspense fallback={<div />}><AdminFlagManager /></Suspense>} />
+            <Route path="discount" element={<Suspense fallback={<div />}><AdminDiscountManager /></Suspense>} />
+            <Route path="mega-menu" element={<Suspense fallback={<div />}><AdminMegaMenu /></Suspense>} />
+            <Route path="theme" element={<Suspense fallback={<div />}><AdminTheme /></Suspense>} />
             <Route path="review-moderation" element={<ReviewModeration />} />
-            <Route path="delivery-options" element={<AdminDeliveryOptions />} />
-            <Route path="invoices/report" element={<InvoiceReport />} />
-            <Route path="invoices" element={<AdminInvoices />} />
+            <Route path="delivery-options" element={<Suspense fallback={<div />}><AdminDeliveryOptions /></Suspense>} />
+            <Route path="invoices/report" element={<Suspense fallback={<div />}><InvoiceReport /></Suspense>} />
+            <Route path="invoices" element={<Suspense fallback={<div />}><AdminInvoices /></Suspense>} />
           </Route>
+        </Routes>
+        {/* Non-breaking alias to match target URL architecture */}
+        <Routes>
+          <Route path="/customer/*" element={<CustomerAlias />} />
         </Routes>
 
         <FeedbackPopup visible={showFeedback} onClose={() => setShowFeedback(false)} lang={lang} />

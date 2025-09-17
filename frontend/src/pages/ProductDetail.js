@@ -141,12 +141,18 @@ const submitReview = async (e) => {
   };
 
   return (
-    <div style={{ padding: 20, maxWidth: 1000, margin: '0 auto', fontFamily: 'Poppins, sans-serif' }}>
+    <main role="main" id="main-content" style={{ padding: 20, maxWidth: 1000, margin: '0 auto', fontFamily: 'Poppins, sans-serif' }}>
       {!product ? <p>Loading...</p> : (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 30 }}>
           <div style={{ flex: 1, minWidth: 300 }}>
             {product.image && (
-              <img src={product.image} alt={product.name} style={{ width: '100%', borderRadius: 10, objectFit: 'cover', maxHeight: 400 }} />
+              <img
+                src={product.image}
+                alt={product.name}
+                decoding="async"
+                sizes="(max-width: 900px) 100vw, 800px"
+                style={{ width: '100%', borderRadius: 10, objectFit: 'cover', maxHeight: 400 }}
+              />
             )}
             <p><strong>Category:</strong> {product.category}</p>
             <p><strong>Stock:</strong> {product.stock}</p>
@@ -154,10 +160,10 @@ const submitReview = async (e) => {
           </div>
 
           <div style={{ flex: 1, minWidth: 300 }}>
-            <h2>{product.name}</h2>
-            <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#00B894' }}>{getDisplayPrice(product)}</p>
+            <h1 style={{ fontSize: '1.75rem', lineHeight: 1.2, margin: '0 0 8px' }}>{product.name}</h1>
+            <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--color-primary)' }}>{getDisplayPrice(product)}</p>
 
-            <button data-testid="add-to-cart-btn" onClick={handleAddToCart} style={{ marginBottom: 20, backgroundColor: '#00B894', color: 'white', padding: 10, border: 'none', borderRadius: 6 }}>
+            <button data-testid="add-to-cart-btn" onClick={handleAddToCart} style={{ marginBottom: 20, backgroundColor: 'var(--color-primary)', color: 'white', padding: 10, border: 'none', borderRadius: 6 }}>
               🛒 Add to Cart
             </button>
 
@@ -207,7 +213,7 @@ const submitReview = async (e) => {
                   Place Order
                 </button>
               </form>
-              {msg && <p style={{ marginTop: 10 }}>{msg}</p>}
+              <p aria-live="polite" style={{ marginTop: 10 }}>{msg}</p>
             </div>
           </div>
         </div>
@@ -223,7 +229,7 @@ const submitReview = async (e) => {
                 <Link to={`/product/${p._id}`} style={{ textDecoration: 'none', color: '#333' }}>
                   {p.image && <img src={p.image} alt={p.name} style={{ height: 120, width: '100%', objectFit: 'cover', borderRadius: 6 }} />}
                   <h5 style={{ marginTop: 8 }}>{p.name}</h5>
-                  <p style={{ fontWeight: 'bold', color: '#00B894' }}>{p.currency} {p.price}</p>
+                  <p style={{ fontWeight: 'bold', color: 'var(--color-primary)' }}>{p.currency} {p.price}</p>
                 </Link>
               </div>
             ))}
@@ -233,7 +239,7 @@ const submitReview = async (e) => {
 
       <hr style={{ margin: '40px 0' }} />
 
-      <h3>Customer Reviews</h3>
+  <h2>Customer Reviews</h2>
       {reviews.length === 0 ? (
         <p>No reviews yet.</p>
       ) : (
@@ -246,7 +252,7 @@ const submitReview = async (e) => {
         ))
       )}
 
-      <h4>Write a Review</h4>
+  <h3>Write a Review</h3>
       <form onSubmit={submitReview}>
         <label htmlFor="review-rating">Rating (1–5)</label>
         <input
@@ -270,9 +276,9 @@ const submitReview = async (e) => {
           id="review-comment"
         />
 
-        <button type="submit">Submit Review</button>
+    <button type="submit">Submit Review</button>
       </form>
-    </div>
+  </main>
   );
 }
 

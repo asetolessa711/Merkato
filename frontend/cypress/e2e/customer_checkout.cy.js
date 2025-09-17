@@ -26,7 +26,7 @@ describe('🛒 Customer Checkout Flow', () => {
     cy.get('input[name=postalCode]').clear().type('12345');
     cy.get('input[name=country]').clear().type('US');
     // Prefer COD for determinism
-    cy.intercept('GET', '/api/payments/methods', (req) => {
+  cy.intercept('GET', '**/api/payments/methods*', (req) => {
       req.reply({ body: { methods: [ { code: 'cod', displayName: 'Cash on Delivery' } ] } });
     }).as('methods');
     cy.get('body').then($b => {
@@ -38,7 +38,7 @@ describe('🛒 Customer Checkout Flow', () => {
     });
 
     // 5. Submit the order
-    cy.intercept('POST', '/api/orders', (req) => {
+  cy.intercept('POST', '**/api/orders', (req) => {
       req.reply({ statusCode: 200, body: { success: true, message: 'Order placed', order: { _id: 'o1' } } });
     }).as('createOrder');
     cy.get('[data-testid="submit-order-btn"], button[type="submit"]').first().click();

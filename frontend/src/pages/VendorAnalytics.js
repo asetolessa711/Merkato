@@ -102,7 +102,7 @@ function VendorAnalytics() {
       flexDirection: 'column'
     }}>
       <div style={{ flex: 1 }}>
-        <h2 style={{ fontSize: '2rem', color: '#00B894', marginBottom: 30 }}>📊 Vendor Dashboard</h2>
+  <h2 style={{ fontSize: '2rem', color: 'var(--color-primary)', marginBottom: 30 }}>📊 Vendor Dashboard</h2>
 
         {/* msg removed, global message used instead */}
 
@@ -151,7 +151,7 @@ function VendorAnalytics() {
               </select>
               <button onClick={exportCSV} style={{ 
                 padding: '6px 10px', 
-                backgroundColor: '#00B894', 
+                backgroundColor: 'var(--color-primary)', 
                 color: 'white', 
                 border: 'none', 
                 borderRadius: 6, 
@@ -170,7 +170,7 @@ function VendorAnalytics() {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="revenue" fill="#00B894" name="Revenue ($)" />
+                <Bar dataKey="revenue" fill="var(--color-primary)" name="Revenue ($)" />
               </BarChart>
             ) : (
               <LineChart data={chartData}>

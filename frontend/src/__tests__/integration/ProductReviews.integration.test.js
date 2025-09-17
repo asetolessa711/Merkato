@@ -15,7 +15,7 @@ describe('Product reviews UI', () => {
   test('renders detail with reviews section (empty)', async () => {
     render(<MemoryRouter><ProductDetail /></MemoryRouter>);
     await waitFor(() => {
-      expect(screen.getByText(/reviews/i)).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: /customer reviews/i })).toBeInTheDocument();
     });
   });
 });

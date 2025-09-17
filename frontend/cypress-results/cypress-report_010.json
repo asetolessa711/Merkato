@@ -5,9 +5,9 @@
     "passes": 1,
     "pending": 0,
     "failures": 0,
-    "start": "2025-09-12T23:26:20.007Z",
-    "end": "2025-09-12T23:26:21.675Z",
-    "duration": 1668,
+    "start": "2025-09-16T05:54:02.836Z",
+    "end": "2025-09-16T05:54:06.514Z",
+    "duration": 3678,
     "testsRegistered": 1,
     "passPercent": 100,
     "pendingPercent": 0,
@@ -18,7 +18,7 @@
   },
   "results": [
     {
-      "uuid": "fd45fd75-e096-44ab-a895-63c5cfcf3d87",
+      "uuid": "1d1afcbb-884d-4492-a6c9-4ece5f499b52",
       "title": "",
       "fullFile": "cypress\\e2e\\analytics_dashboard.cy.js",
       "file": "cypress\\e2e\\analytics_dashboard.cy.js",
@@ -27,7 +27,7 @@
       "tests": [],
       "suites": [
         {
-          "uuid": "1ffe7656-f190-4e46-828e-ab459f2c6217",
+          "uuid": "5e3646c1-f8ba-44f8-a5bf-5ab31b0092f1",
           "title": "Vendor Analytics Dashboard",
           "fullFile": "",
           "file": "",
@@ -38,7 +38,7 @@
               "title": "should render analytics charts for vendor",
               "fullTitle": "Vendor Analytics Dashboard should render analytics charts for vendor",
               "timedOut": null,
-              "duration": 1584,
+              "duration": 3507,
               "state": "passed",
               "speed": "fast",
               "pass": true,
@@ -47,20 +47,20 @@
               "context": null,
               "code": "cy.login('vendor');\n// Align intercepts with actual endpoints used by VendorAnalytics.js\ncy.intercept('GET', '**/api/orders/vendor/analytics*').as('vendorAnalytics');\ncy.intercept('GET', '**/api/orders/vendor/sales*').as('vendorSales');\ncy.intercept('GET', '**/api/vendor/top-products*').as('vendorTopProducts');\ncy.intercept('GET', '**/api/vendor/top-customers*').as('vendorTopCustomers');\ncy.visit('/vendor/analytics');\ncy.wait(['@vendorAnalytics', '@vendorSales', '@vendorTopProducts', '@vendorTopCustomers']);\ncy.get('[data-testid=\"analytics-chart\"]').should('exist').and('be.visible');",
               "err": {},
-              "uuid": "0d4fdad6-0c59-47a7-b956-f0e02e3ec076",
-              "parentUUID": "1ffe7656-f190-4e46-828e-ab459f2c6217",
+              "uuid": "b2acbd04-b950-4ca6-9dd9-1344f44ea80c",
+              "parentUUID": "5e3646c1-f8ba-44f8-a5bf-5ab31b0092f1",
               "isHook": false,
               "skipped": false
             }
           ],
           "suites": [],
           "passes": [
-            "0d4fdad6-0c59-47a7-b956-f0e02e3ec076"
+            "b2acbd04-b950-4ca6-9dd9-1344f44ea80c"
           ],
           "failures": [],
           "pending": [],
           "skipped": [],
-          "duration": 1584,
+          "duration": 3507,
           "root": false,
           "rootEmpty": false,
           "_timeout": 2000

@@ -1,0 +1,140 @@
+.page {
+  max-width: 1120px;
+  margin: 28px auto;
+  padding: 16px;
+}
+
+.header {
+  margin-bottom: 8px;
+}
+
+.title {
+  font-size: 34px;
+  line-height: 1.2;
+  color: var(--color-primary);
+  margin: 0 0 4px 0;
+}
+
+.subtitle {
+  font-size: 16px;
+  color: #4b5563;
+  margin: 0 0 16px 0;
+}
+
+/* Mobile sticky header */
+.mobileHero {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mobileHero {
+    display: block;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: linear-gradient(90deg, #4f46e5, #6366f1);
+    color: #fff;
+    padding: 16px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    margin: -16px -16px 12px -16px; /* full bleed within page padding */
+  }
+}
+
+.progressOuter { height: 8px; background: rgba(255,255,255,.25); border-radius: 999px; overflow: hidden; }
+.progressInner { height: 100%; width: 33%; background: #fff; border-radius: 999px; }
+.progressNote { font-size: 12px; opacity: .9; margin-top: 4px; }
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(480px, 640px) minmax(240px, 1fr);
+  gap: 24px;
+}
+
+@media (max-width: 900px) {
+  .grid { grid-template-columns: 1fr; }
+}
+
+.card {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  border-top: 3px solid var(--color-primary);
+}
+
+/* Standardize control font sizes within this form card */
+.card input,
+.card select,
+.card textarea {
+  font-size: 15px;
+}
+
+.fieldset {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.legend { padding: 0 6px; color: #374151; }
+
+.twoCol { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+@media (max-width: 640px) { .twoCol { grid-template-columns: 1fr; } }
+
+.label { display: block; font-size: 14px; color: #6b7280; }
+
+.inlineConsent { display: flex; align-items: flex-start; gap: 10px; margin-top: 4px; width: 100%; justify-content: flex-start !important; }
+.inlineConsent input[type="checkbox"] { margin-top: 3px; }
+.inlineConsent label { flex: 1 1 auto; }
+
+.submitBtn {
+  background: var(--color-primary);
+  color: #fff;
+  padding: 12px 16px;
+  border: 0;
+  border-radius: 8px;
+  width: 100%;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.ctaPanel {
+  border: 1px dashed #c7d2fe;
+  border-radius: 12px;
+  background: #f5f7ff;
+}
+
+.ctaTitle { font-size: 18px; margin: 0 0 8px 0; color: #1f2937; }
+.ctaText { font-size: 15px; color: #374151; margin: 0 0 12px 0; }
+.ctaList { margin: 0 0 12px 0; color: #4b5563; font-size: 15px; padding: 0; }
+.ctaItem { display: flex; align-items: flex-start; gap: 8px; list-style: none; margin: 8px 0; }
+.ctaIcon { width: 18px; height: 18px; flex: 0 0 18px; color: #4f46e5; margin-top: 2px; }
+.ctaLink { color: var(--color-primary); font-weight: 600; text-decoration: none; }
+
+/* Terms/Privacy small text */
+.legalNote { font-size: 14px; color: #6b7280; text-align: left; margin: 4px 0; }
+
+/* Subtle form intro at top of card */
+.formIntro { font-size: 14px; color: #4b5563; background: #f9fafb; border: 1px solid #eef2f7; padding: 10px 12px; border-radius: 8px; }
+
+/* Ensure consent row is left-aligned across layouts */
+.inlineConsent { justify-content: flex-start; text-align: left; align-self: start; }
+
+/* Mobile collapsible address */
+.mobileDetails { display: none; }
+@media (max-width: 768px) {
+  .twoCol { grid-template-columns: 1fr; }
+  .mobileDetails { display: block; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; }
+  .mobileSummary { list-style: none; cursor: pointer; padding: 12px 14px; font-size: 14px; color: #374151; }
+  .mobileDetailsInner { padding: 12px; display: grid; gap: 10px; }
+}
+
+/* Floating help button (mobile) */
+.helpBtn { display: none; }
+@media (max-width: 768px) {
+  .helpBtn { display: inline-flex; position: fixed; right: 16px; bottom: 16px; padding: 10px 14px; gap: 8px; align-items: center; color: #fff; background: #4f46e5; border: none; border-radius: 999px; box-shadow: 0 6px 16px rgba(79,70,229,0.35); }
+  .helpBtn:active { transform: translateY(1px); }
+}

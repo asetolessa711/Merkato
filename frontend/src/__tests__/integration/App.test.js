@@ -83,10 +83,11 @@ describe('🧪 App Routing & Layout', () => {
     expect(screen.getByText(/404/i)).toBeInTheDocument();
   });
 
-  test('renders navigation bar or "Home" link', () => {
+  test('renders navigation bar on home', () => {
     renderWithRoute('/');
-    // Look for the Home link in the navbar
-    expect(screen.getByRole('link', { name: /home/i })).toBeInTheDocument();
+    // On '/', Home link is hidden; assert presence of brand and category trigger instead
+    expect(screen.getAllByText(/merkato/i).length).toBeGreaterThan(0);
+    expect(screen.getByRole('button', { name: /shop by category/i })).toBeInTheDocument();
   });
 
   test('shows loading indicator while fetching user', async () => {
@@ -114,11 +115,10 @@ describe('🧪 App Routing & Layout', () => {
     expect(await screen.findByRole('heading', { name: /vendor dashboard/i })).toBeInTheDocument();
   });
 
-  test('renders admin dashboard for authenticated admin', async () => {
-  useUser.mockReturnValue({ user: { roles: ['admin'], email: 'test@example.com', name: 'Test User' }, loading: false, clearUser: jest.fn() });
-    renderWithRoute('/admin');
-    // Look for a unique heading or text in AdminDashboard
-    expect(await screen.findByRole('heading', { name: /admin dashboard/i })).toBeInTheDocument();
+  test('renders admin overview when navigating to /admin/dashboard', async () => {
+    useUser.mockReturnValue({ user: { roles: ['admin'], email: 'test@example.com', name: 'Test User' }, loading: false, clearUser: jest.fn() });
+    renderWithRoute('/admin/dashboard');
+    expect(await screen.findByRole('heading', { name: /dashboard overview/i })).toBeInTheDocument();
   });
 
   test('redirects or fails to load dashboard for unauthenticated user', async () => {

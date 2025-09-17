@@ -5,9 +5,9 @@
     "passes": 1,
     "pending": 0,
     "failures": 0,
-    "start": "2025-09-12T23:24:59.806Z",
-    "end": "2025-09-12T23:25:02.167Z",
-    "duration": 2361,
+    "start": "2025-09-16T05:52:17.619Z",
+    "end": "2025-09-16T05:52:21.335Z",
+    "duration": 3716,
     "testsRegistered": 1,
     "passPercent": 100,
     "pendingPercent": 0,
@@ -18,7 +18,7 @@
   },
   "results": [
     {
-      "uuid": "eacce0b2-a38c-46c5-8124-915d9974f997",
+      "uuid": "da955c8d-515c-4380-8f7c-2f83a17f1408",
       "title": "",
       "fullFile": "cypress\\e2e\\a11y_cart_with_items.cy.js",
       "file": "cypress\\e2e\\a11y_cart_with_items.cy.js",
@@ -27,7 +27,7 @@
       "tests": [],
       "suites": [
         {
-          "uuid": "22913a8d-aa75-4acb-89aa-1affa6cc1308",
+          "uuid": "45d492bd-5e9d-45f5-96df-4cc85b87a0ed",
           "title": "♿ A11y — Cart (with items)",
           "fullFile": "",
           "file": "",
@@ -38,7 +38,7 @@
               "title": "has no critical violations on /cart with an item @a11y",
               "fullTitle": "♿ A11y — Cart (with items) has no critical violations on /cart with an item @a11y",
               "timedOut": null,
-              "duration": 2309,
+              "duration": 3661,
               "state": "passed",
               "speed": "fast",
               "pass": true,
@@ -47,20 +47,20 @@
               "context": null,
               "code": "cy.request('GET', `${API.replace(/\\/$/, '')}/api/products`).then(res => {\n  var _res$body;\n  const list = Array.isArray(res.body) ? res.body : ((_res$body = res.body) === null || _res$body === void 0 ? void 0 : _res$body.products) || [];\n  expect(list.length, 'products length').to.be.greaterThan(0);\n  const prod = list[0];\n  expect(prod && prod._id, 'product _id').to.exist;\n  cy.visit(`/product/${prod._id}`);\n  // Add to cart using test id if present; fallback to text search\n  cy.get('body').then($body => {\n    if ($body.find('[data-testid=\"add-to-cart-btn\"]').length) {\n      cy.get('[data-testid=\"add-to-cart-btn\"]').click({\n        force: true\n      });\n    } else {\n      cy.contains(/add to cart/i).click({\n        force: true\n      });\n    }\n  });\n  cy.visit('/cart');\n  if (cy.injectAxe) cy.injectAxe();\n  if (cy.checkA11y) {\n    const skipFailures = !enforce;\n    cy.checkA11y('body', {\n      runOnly: {\n        type: 'tag',\n        values: ['wcag2a', 'wcag2aa']\n      },\n      includedImpacts: ['critical']\n    }, violations => {\n      const list = Array.isArray(violations) ? violations : [];\n      summary['/cart'] = {\n        count: list.length,\n        violations: list.map(v => {\n          var _v$nodes;\n          return {\n            id: v.id,\n            impact: v.impact,\n            nodes: ((_v$nodes = v.nodes) === null || _v$nodes === void 0 ? void 0 : _v$nodes.length) || 0,\n            help: v.help,\n            helpUrl: v.helpUrl\n          };\n        })\n      };\n      if (enforce && list.length) {\n        const ids = list.slice(0, 3).map(v => v.id).join(', ');\n        throw new Error(`Accessibility critical violations on /cart: ${ids}${list.length > 3 ? ` +${list.length - 3} more` : ''}`);\n      }\n    }, Boolean(skipFailures));\n  } else {\n    cy.log('cy.checkA11y not available');\n  }\n});",
               "err": {},
-              "uuid": "f1bac8fd-f199-44ba-aa36-9d1c084cc154",
-              "parentUUID": "22913a8d-aa75-4acb-89aa-1affa6cc1308",
+              "uuid": "b66ade05-405a-4815-b423-2156e5805d74",
+              "parentUUID": "45d492bd-5e9d-45f5-96df-4cc85b87a0ed",
               "isHook": false,
               "skipped": false
             }
           ],
           "suites": [],
           "passes": [
-            "f1bac8fd-f199-44ba-aa36-9d1c084cc154"
+            "b66ade05-405a-4815-b423-2156e5805d74"
           ],
           "failures": [],
           "pending": [],
           "skipped": [],
-          "duration": 2309,
+          "duration": 3661,
           "root": false,
           "rootEmpty": false,
           "_timeout": 2000

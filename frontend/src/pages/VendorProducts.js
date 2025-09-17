@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import apiClient from '../utils/apiClient';
+import { ROUTES } from '../config/routes';
 import { useNavigate } from 'react-router-dom';
 import styles from '../layouts/VendorLayout.module.css';
 
@@ -9,11 +10,10 @@ function VendorProducts() {
 	const [error, setError] = useState('');
 	const navigate = useNavigate();
 
-	// Token convention used across most vendor pages
-	const token = localStorage.getItem('token');
-	const headers = token ? { Authorization: `Bearer ${token}` } : {};
-
-	useEffect(() => {
+		useEffect(() => {
+			// Token convention used across most vendor pages (derived inside effect)
+			const token = localStorage.getItem('token');
+			const headers = token ? { Authorization: `Bearer ${token}` } : {};
 		let mounted = true;
 			const fetchProducts = async () => {
 			try {
@@ -45,7 +45,8 @@ function VendorProducts() {
 							setProducts(uploaded);
 						}
 					} catch {}
-										const res = await axios.get('/api/vendor/products', { headers });
+										// Use explicit /api prefix so axios/fetch rewriting and Cypress intercepts align
+										const res = await apiClient.get('/api/vendor/products', { headers });
 										if (!mounted) return;
 										const serverProducts = Array.isArray(res.data) ? res.data : [];
 										const uploaded = JSON.parse(localStorage.getItem('uploadedProducts') || '[]');
@@ -70,9 +71,9 @@ function VendorProducts() {
 		};
 		fetchProducts();
 		return () => { mounted = false; };
-	}, [token]);
+	}, []);
 
-	const goToUpload = () => navigate('/vendor/products/upload');
+	const goToUpload = () => navigate(ROUTES.vendorProductUpload);
 
 	const renderTable = () => (
 		<div style={{ overflowX: 'auto' }}>
@@ -110,12 +111,12 @@ function VendorProducts() {
 	return (
 		<div className={styles.contentArea}>
 			<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-				<h2 style={{ color: '#00B894', fontWeight: 'bold', margin: 0 }}>My Products</h2>
+				<h2 style={{ color: 'var(--color-primary)', fontWeight: 'bold', margin: 0 }}>My Products</h2>
 				<button
 					data-testid="add-product-btn"
 					onClick={goToUpload}
 					style={{
-						background: 'linear-gradient(90deg, #7c2ae8 0%, #00b894 100%)',
+						background: 'linear-gradient(90deg, #7c2ae8 0%, var(--color-primary) 100%)',
 						color: '#fff',
 						border: 'none',
 						borderRadius: 10,

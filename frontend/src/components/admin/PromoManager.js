@@ -55,7 +55,7 @@ function PromoManager() {
 
 const tabBtn = (active) => ({
   padding: '8px 16px',
-  backgroundColor: active ? '#00B894' : '#dfe6e9',
+  backgroundColor: active ? 'var(--color-primary)' : '#dfe6e9',
   color: active ? '#fff' : '#2d3436',
   border: 'none',
   borderRadius: 6,

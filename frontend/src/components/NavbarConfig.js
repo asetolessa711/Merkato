@@ -49,7 +49,7 @@ export const roleLinks = {
       items: [
         { to: '/admin', label: 'Admin Panel' },
         { to: '/admin/reports', label: 'Reports' },
-        { to: '/admin/moderation', label: 'Moderation' },
+  { to: '/admin/review-moderation', label: 'Moderation' },
         { to: '/admin/settings', label: 'Settings' },
         { to: '/admin/profile', label: 'Update Profile' },
         { to: '/admin/address', label: 'Address Book' },

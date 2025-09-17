@@ -67,7 +67,7 @@ const DirectChat = ({ selectedUser }) => {
   return (
     <div style={{ padding: 20, fontFamily: 'Poppins, sans-serif' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
-        <h2 style={{ color: '#00B894' }}>💬 Chat with {chatUser?.name || 'User'}</h2>
+  <h2 style={{ color: 'var(--color-primary)' }}>💬 Chat with {chatUser?.name || 'User'}</h2>
         <button onClick={() => navigate(-1)} style={{
           background: 'transparent',
           border: '1px solid #ccc',
@@ -94,7 +94,7 @@ const DirectChat = ({ selectedUser }) => {
             }}>
               <div style={{
                 display: 'inline-block',
-                backgroundColor: msg.sender === user._id ? '#00B894' : '#dfe6e9',
+                backgroundColor: msg.sender === user._id ? 'var(--color-primary)' : '#dfe6e9',
                 color: msg.sender === user._id ? 'white' : '#333',
                 padding: '8px 12px',
                 borderRadius: '20px'

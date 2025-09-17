@@ -49,7 +49,7 @@
   }
   
   .filters button {
-    background-color: #00B894;
+  background-color: var(--color-primary);
     color: white;
     font-weight: bold;
     cursor: pointer;
@@ -355,7 +355,7 @@
 .vendor-card h4 {
   margin: 8px 0 4px;
   font-size: 18px;
-  color: #00B894;
+  color: var(--color-primary);
 }
 
 .vendor-card p {
@@ -387,7 +387,7 @@
 }
 /* --- Active Pagination Button --- */
 .pagination-btn.active {
-  background-color: #00B894;
+  background-color: var(--color-primary);
   color: white;
   font-weight: bold;
   cursor: default;

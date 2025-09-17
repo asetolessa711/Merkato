@@ -66,12 +66,15 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ message: 'Email already in use' });
     }
 
+    // Provide a safe default for country in non-production/test scenarios
+    const safeCountry = country || process.env.DEFAULT_COUNTRY || 'Ethiopia';
+
     const user = await User.create({
       name,
       email,
       password,
       roles: roles || ['customer'],
-      country
+      country: safeCountry
     });
 
     res.status(201).json({

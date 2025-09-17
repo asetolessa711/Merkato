@@ -22,8 +22,8 @@ const OrderConfirmation = () => {
   return (
     <div style={{ maxWidth: 700, margin: '40px auto', background: '#fff', borderRadius: 10, boxShadow: '0 2px 10px rgba(0,0,0,0.08)', padding: 32, fontFamily: 'Poppins, sans-serif' }}>
       <div style={{ textAlign: 'center', marginBottom: 16 }}>
-        <h2 style={{ color: '#00B894', marginBottom: 8 }} role="heading" aria-level="2">Order Confirmation</h2>
-        <div style={{ fontSize: 22, fontWeight: 600, color: '#00B894', marginBottom: 4 }}>Thank you!</div>
+  <h2 style={{ color: 'var(--color-primary)' , marginBottom: 8 }}>Order Confirmation</h2>
+  <div style={{ fontSize: 22, fontWeight: 600, color: 'var(--color-primary)' , marginBottom: 4 }}>Thank you!</div>
         <div style={{ fontSize: 16, color: '#555' }}>Your order has been placed successfully.</div>
       </div>
       <div style={{ marginBottom: 16, color: '#555' }}>
@@ -33,7 +33,7 @@ const OrderConfirmation = () => {
       </div>
       <div style={{ display: 'flex', gap: 32, marginBottom: 24 }}>
         <div style={{ flex: 1 }}>
-          <h4 style={{ marginBottom: 4 }} role="heading" aria-level="4">Buyer Info{buyer.type ? ` (${buyer.type})` : ''}:</h4>
+          <h4 style={{ marginBottom: 4 }}>Buyer Info{buyer.type ? ` (${buyer.type})` : ''}:</h4>
           <div>Name: {fallback(buyer.name)}</div>
           <div>Email: {fallback(buyer.email)}</div>
           <div>Phone: {fallback(buyer.phone)}</div>
@@ -43,7 +43,7 @@ const OrderConfirmation = () => {
         </div>
         {order.company && (
           <div style={{ flex: 1 }}>
-            <h4 style={{ marginBottom: 4 }} role="heading" aria-level="4">Company Info:</h4>
+            <h4 style={{ marginBottom: 4 }}>Company Info:</h4>
             <div>Name: {fallback(company.name)}</div>
             <div>Address: {fallback(company.address)}</div>
             <div>Email: {fallback(company.email)}</div>
@@ -80,7 +80,7 @@ const OrderConfirmation = () => {
         <div>Subtotal: {currency} {order.subtotal !== undefined && order.subtotal !== null ? Number(order.subtotal).toFixed(2) : '0.00'}</div>
         <div>Tax: {currency} {order.tax !== undefined && order.tax !== null ? Number(order.tax).toFixed(2) : '0.00'}</div>
         {order.discount !== undefined && order.discount !== null && (
-          <div style={{ color: '#00B894' }}>Discount: -{currency} {Number(order.discount).toFixed(2)}</div>
+          <div style={{ color: 'var(--color-primary)' }}>Discount: -{currency} {Number(order.discount).toFixed(2)}</div>
         )}
         {order.taxExempt && (
           <div style={{ color: '#636e72' }}>Tax Exempt</div>
@@ -95,11 +95,11 @@ const OrderConfirmation = () => {
       )}
       {order.invoiceUrl && (
         <div style={{ marginBottom: 8 }}>
-          <a href={order.invoiceUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#0984e3', textDecoration: 'underline', fontWeight: 500 }} role="link" aria-label="Download Invoice">📄 Download Invoice</a>
+          <a href={order.invoiceUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#0984e3', textDecoration: 'underline', fontWeight: 500 }} aria-label="Download Invoice">📄 Download Invoice</a>
         </div>
       )}
       <div style={{ textAlign: 'center', marginTop: 32 }}>
-        <button onClick={() => window.print()} style={{ background: '#00B894', color: '#fff', padding: '10px 24px', border: 'none', borderRadius: 6, fontSize: 16, cursor: 'pointer', marginBottom: 16 }} aria-label="Print Invoice">🖨️ Print Invoice</button>
+  <button onClick={() => window.print()} style={{ background: 'var(--color-primary)', color: '#fff', padding: '10px 24px', border: 'none', borderRadius: 6, fontSize: 16, cursor: 'pointer', marginBottom: 16 }} aria-label="Print Invoice">🖨️ Print Invoice</button>
         <br />
         <a href="/" style={{ display: 'inline-block', marginTop: 12, background: '#0984e3', color: '#fff', padding: '10px 24px', border: 'none', borderRadius: 6, fontSize: 16, textDecoration: 'none', cursor: 'pointer' }} role="button" aria-label="Return to Home">🏠 Return to Home</a>
       </div>

@@ -18,6 +18,7 @@ const BulkActionsToolbar = ({
   const hasSelection = selectedOrders.length > 0 && canBulkAction;
   return (
     <div style={{ marginBottom: 16, background: '#f5f5f5', padding: 10, borderRadius: 6, display: 'flex', gap: 10, alignItems: 'center' }}>
+  <strong>Bulk Actions</strong>
       <span>{hasSelection ? `${selectedOrders.length} selected` : 'No selection'}</span>
       {isBulkLimitExceeded && hasSelection && (
         <span style={{ color: 'red', fontWeight: 'bold', marginLeft: 10 }}>

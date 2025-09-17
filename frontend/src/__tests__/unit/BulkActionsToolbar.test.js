@@ -23,9 +23,9 @@ describe('BulkActionsToolbar @trust-ui', () => {
     expect(screen.getByTestId('bulk-action-mark-shipped')).toBeEnabled();
   });
 
-  it('hides when no selected orders', () => {
-    const { container } = render(<BulkActionsToolbar {...baseProps} selectedOrders={[]} />);
-    expect(container.firstChild).toBeNull();
+  it('shows a no-selection summary when none selected', () => {
+    render(<BulkActionsToolbar {...baseProps} selectedOrders={[]} />);
+    expect(screen.getByText(/No selection/i)).toBeInTheDocument();
   });
 
   it('disables buttons when limit exceeded and shows warning', () => {

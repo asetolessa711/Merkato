@@ -88,7 +88,7 @@ function EditProfile() {
           </>
         )}
 
-        <button type="submit" style={{ width: '100%', backgroundColor: '#00B894', color: 'white', padding: '12px 0', border: 'none', borderRadius: 6 }}>
+  <button type="submit" style={{ width: '100%', backgroundColor: 'var(--color-primary)', color: 'white', padding: '12px 0', border: 'none', borderRadius: 6 }}>
           Save Changes
         </button>
       </form>

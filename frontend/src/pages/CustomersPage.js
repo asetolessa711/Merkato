@@ -41,11 +41,11 @@ const TABS = [
 
   return (
     <div style={{ padding: 32, fontFamily: 'Poppins, sans-serif', maxWidth: 900, margin: '0 auto' }}>
-      <h1 style={{ color: '#00b894', fontWeight: 700, fontSize: '2rem', marginBottom: 16 }}>My Account</h1>
+  <h1 style={{ color: 'var(--color-primary)', fontWeight: 700, fontSize: '2rem', marginBottom: 16 }}>My Account</h1>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 24 }}>
         {TABS.map(t => (
           <button key={t} onClick={() => setTab(t)} style={{
-            background: tab === t ? 'linear-gradient(90deg,#7c2ae8,#00b894)' : '#f6f9fc',
+            background: tab === t ? 'linear-gradient(90deg,#7c2ae8,var(--color-primary))' : '#f6f9fc',
             color: tab === t ? '#fff' : '#333',
             border: 'none', borderRadius: 8, padding: '8px 18px', fontWeight: 600, cursor: 'pointer', boxShadow: tab === t ? '0 2px 8px #7c2ae855' : 'none'
           }}>{t}</button>
@@ -87,7 +87,7 @@ const TABS = [
       {/* Wallet */}
       {tab === 'Wallet' && (
         <div>
-          <h2>Wallet Balance: <span style={{ color: '#00b894' }}>${profile.wallet}</span></h2>
+          <h2>Wallet Balance: <span style={{ color: 'var(--color-primary)' }}>${profile.wallet}</span></h2>
           <button style={{ marginRight: 8 }}>Add Funds</button>
           <button>Withdraw Funds</button>
           <h3 style={{ marginTop: 24 }}>Transaction History</h3>
@@ -172,7 +172,7 @@ const TABS = [
       {tab === 'Support Chat' && (
         <div>
           <h2>Support Chat</h2>
-          <button style={{ background: '#00b894', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 22px', fontWeight: 600 }}>Open Chat</button>
+          <button style={{ background: 'var(--color-primary)', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 22px', fontWeight: 600 }}>Open Chat</button>
         </div>
       )}
     </div>

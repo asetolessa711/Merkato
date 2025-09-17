@@ -5,9 +5,9 @@
     "passes": 1,
     "pending": 0,
     "failures": 0,
-    "start": "2025-09-12T23:25:27.425Z",
-    "end": "2025-09-12T23:25:29.435Z",
-    "duration": 2010,
+    "start": "2025-09-16T05:52:43.931Z",
+    "end": "2025-09-16T05:52:47.045Z",
+    "duration": 3114,
     "testsRegistered": 1,
     "passPercent": 100,
     "pendingPercent": 0,
@@ -18,7 +18,7 @@
   },
   "results": [
     {
-      "uuid": "93cbe180-cbec-4993-a841-e9b1a1b325c8",
+      "uuid": "e317a539-392f-4271-8ec5-ff95566f71fc",
       "title": "",
       "fullFile": "cypress\\e2e\\a11y_product_detail.cy.js",
       "file": "cypress\\e2e\\a11y_product_detail.cy.js",
@@ -27,7 +27,7 @@
       "tests": [],
       "suites": [
         {
-          "uuid": "f6c72306-a529-4df7-a661-75da3b372920",
+          "uuid": "9324ee8a-591c-475c-8be1-14bd21e7c86a",
           "title": "♿ A11y — Product Detail",
           "fullFile": "",
           "file": "",
@@ -38,7 +38,7 @@
               "title": "has no critical violations on a product page @a11y",
               "fullTitle": "♿ A11y — Product Detail has no critical violations on a product page @a11y",
               "timedOut": null,
-              "duration": 1971,
+              "duration": 3039,
               "state": "passed",
               "speed": "fast",
               "pass": true,
@@ -47,20 +47,20 @@
               "context": null,
               "code": "cy.request('GET', `${API.replace(/\\/$/, '')}/api/products`).then(res => {\n  var _res$body;\n  const list = Array.isArray(res.body) ? res.body : ((_res$body = res.body) === null || _res$body === void 0 ? void 0 : _res$body.products) || [];\n  expect(list.length, 'products length').to.be.greaterThan(0);\n  const prod = list[0];\n  expect(prod && prod._id, 'product _id').to.exist;\n  cy.visit(`/product/${prod._id}`);\n  // Ensure axe is injected before running checks\n  if (cy.injectAxe) cy.injectAxe();\n  if (cy.checkA11y) {\n    const skipFailures = !enforce; // observe by default; fail only when enforced\n    cy.log(`[a11y] product detail: enforce=${String(enforce)} skipFailures=${String(skipFailures)}`);\n    cy.checkA11y('body', {\n      runOnly: {\n        type: 'tag',\n        values: ['wcag2a', 'wcag2aa']\n      },\n      includedImpacts: ['critical']\n    }, violations => {\n      const list = Array.isArray(violations) ? violations : [];\n      summary['/product/:id'] = {\n        count: list.length,\n        violations: list.map(v => {\n          var _v$nodes;\n          return {\n            id: v.id,\n            impact: v.impact,\n            nodes: ((_v$nodes = v.nodes) === null || _v$nodes === void 0 ? void 0 : _v$nodes.length) || 0,\n            help: v.help,\n            helpUrl: v.helpUrl\n          };\n        })\n      };\n      if (enforce && list.length) {\n        const ids = list.slice(0, 3).map(v => v.id).join(', ');\n        throw new Error(`Accessibility critical violations on /product/:id: ${ids}${list.length > 3 ? ` +${list.length - 3} more` : ''}`);\n      }\n    }, Boolean(skipFailures));\n  } else {\n    cy.log('cy.checkA11y not available');\n  }\n});",
               "err": {},
-              "uuid": "766a4de0-4d6f-43f4-a377-d07d96b16eda",
-              "parentUUID": "f6c72306-a529-4df7-a661-75da3b372920",
+              "uuid": "39ee3765-3165-4de8-af73-9c3a0c8bb3fc",
+              "parentUUID": "9324ee8a-591c-475c-8be1-14bd21e7c86a",
               "isHook": false,
               "skipped": false
             }
           ],
           "suites": [],
           "passes": [
-            "766a4de0-4d6f-43f4-a377-d07d96b16eda"
+            "39ee3765-3165-4de8-af73-9c3a0c8bb3fc"
           ],
           "failures": [],
           "pending": [],
           "skipped": [],
-          "duration": 1971,
+          "duration": 3039,
           "root": false,
           "rootEmpty": false,
           "_timeout": 2000

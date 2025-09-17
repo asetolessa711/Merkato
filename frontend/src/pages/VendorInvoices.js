@@ -101,7 +101,7 @@ const VendorInvoices = () => {
 
   return (
     <div className={styles.contentArea}>
-      <h2 style={{ color: '#00B894', fontWeight: 'bold' }}>🧾 My Invoices</h2>
+  <h2 style={{ color: 'var(--color-primary)', fontWeight: 'bold' }}>🧾 My Invoices</h2>
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', margin: '20px 0' }}>
         <input

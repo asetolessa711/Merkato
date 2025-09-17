@@ -56,6 +56,15 @@ const userSchema = new mongoose.Schema(
       type: String,
       maxlength: 500
     },
+    // Vendor onboarding fields
+    vendorStatus: { type: String, enum: ['new', 'reviewed', 'invited', 'onboarded', 'verified', 'active', 'rejected'], default: 'new' },
+    trust_badge: { type: Boolean, default: false },
+    businessRegistryId: { type: String },
+    taxId: { type: String },
+    bankDetails: {
+      iban: { type: String },
+      swift: { type: String }
+    },
     // Password reset fields
     resetPasswordToken: {
       type: String

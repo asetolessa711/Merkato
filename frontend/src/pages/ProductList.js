@@ -23,8 +23,9 @@ function ProductList({ lang = 'en', currency = 'USD', rates = { USD: 1, ETB: 144
 
   const fetchProducts = async () => {
     try {
-      const res = await axios.get('/api/products');
-      setProducts(res.data);
+  const res = await axios.get('/api/products');
+  const list = Array.isArray(res.data) ? res.data : (Array.isArray(res.data?.products) ? res.data.products : []);
+  setProducts(list);
     } catch (err) {
       console.error('Error fetching products:', err);
     }
@@ -33,8 +34,9 @@ function ProductList({ lang = 'en', currency = 'USD', rates = { USD: 1, ETB: 144
   const fetchFavorites = async () => {
     if (!token) return;
     try {
-      const res = await axios.get('/api/favorites', { headers });
-      const favoriteIds = res.data.map((p) => p._id);
+  const res = await axios.get('/api/favorites', { headers });
+  const arr = Array.isArray(res.data) ? res.data : [];
+  const favoriteIds = arr.map((p) => p._id).filter(Boolean);
       setFavorites(favoriteIds);
     } catch (err) {
       console.error('Failed to load favorites');
@@ -50,10 +52,11 @@ function ProductList({ lang = 'en', currency = 'USD', rates = { USD: 1, ETB: 144
 
   useEffect(() => {
     const applyFilters = () => {
-      const filteredList = products.filter((item) =>
-        (!search || item.name.toLowerCase().includes(search.toLowerCase())) &&
-        (!category || item.category === category) &&
-        (!language || item.language === language)
+      const list = Array.isArray(products) ? products : [];
+      const filteredList = list.filter((item) =>
+        (!search || String(item?.name || '').toLowerCase().includes(search.toLowerCase())) &&
+        (!category || item?.category === category) &&
+        (!language || item?.language === language)
       );
       setFiltered(filteredList);
     };
@@ -61,7 +64,7 @@ function ProductList({ lang = 'en', currency = 'USD', rates = { USD: 1, ETB: 144
     applyFilters();
   }, [products, search, category, language]);
 
-  const categoryList = [...new Set(products.map((p) => p.category).filter(Boolean))];
+  const categoryList = [...new Set((Array.isArray(products) ? products : []).map((p) => p?.category).filter(Boolean))];
 
   return (
     <div style={{ padding: '20px' }}>

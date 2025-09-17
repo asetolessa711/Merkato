@@ -76,7 +76,7 @@ function VendorStore() {
             ) : (
               <div
                 style={{
-                  width: '100px', height: '100px', borderRadius: '50%', backgroundColor: '#00B894',
+                  width: '100px', height: '100px', borderRadius: '50%', backgroundColor: 'var(--color-primary)',
                   color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: '2rem', margin: '0 auto 10px'
                 }}

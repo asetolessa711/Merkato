@@ -1,33 +1,5 @@
 // Tags: @thread:product-browse @thread:search
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import '@testing-library/jest-dom';
-import { MemoryRouter } from 'react-router-dom';
-import ShopPage from '../../pages/ShopPage';
-
-jest.mock('axios', () => ({ get: jest.fn(() => Promise.resolve({ data: [
-  { _id: 'p1', name: 'Demo Product 1', price: 10 },
-  { _id: 'p2', name: 'Another Item', price: 20 }
-] })) }));
-
-describe('ShopPage browse + search', () => {
-  test('renders products and filters by search', async () => {
-    render(<MemoryRouter><ShopPage /></MemoryRouter>);
-    await waitFor(() => {
-      expect(screen.getByText(/Demo Product 1/i)).toBeInTheDocument();
-    });
-    const input = screen.getByRole('textbox');
-    fireEvent.change(input, { target: { value: 'Another' } });
-    await waitFor(() => {
-      expect(screen.getByText(/Another Item/i)).toBeInTheDocument();
-    });
-  });
-});
-/**
- * Tier 2 Integration: ShopPage (@persona:customer @integration)
- * Focus: product fetch + deterministic reorder, vendor filter, add-to-cart side effect.
- */
-import React from 'react';
 import { render, screen, waitFor, within, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import ShopPage from '../../pages/ShopPage';
@@ -128,5 +100,15 @@ describe('ShopPage integration (@persona:customer)', () => {
       // If ProductCard has no button (implementation shift) mark test inconclusive but not failing
       console.warn('Add to cart button not found; skipping add-to-cart assertion');
     }
+  });
+
+  test('search filters visible list', async () => {
+    renderPage();
+    await screen.findByText(/cypress test product/i);
+    const input = screen.getByRole('textbox');
+    fireEvent.change(input, { target: { value: 'Another' } });
+    await waitFor(() => {
+      expect(screen.getByText(/Another Product/i)).toBeInTheDocument();
+    });
   });
 });

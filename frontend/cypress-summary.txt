@@ -1,1 +1,1 @@
-[e2e] Cypress results: 91 tests, 79 passed, 11 failed specs=45 [db=merkato_e2e api=http://localhost:5051]
+[e2e] Cypress results: 91 tests, 60 passed, 30 failed specs=45 [db=merkato_e2e api=http://localhost:5051]
