@@ -55,3 +55,11 @@ backend/tests/fixtures/*.jpg
 backend/tests/fixtures/*.png
 backend/tests/fixtures/**/*.jpg
 backend/tests/fixtures/**/*.png
+
+# Ignore Office documents under docs/ (keep Markdown/images tracked)
+docs/**/*.docx
+docs/**/*.doc
+docs/**/*.pptx
+docs/**/*.ppt
+docs/**/*.xlsx
+docs/**/*.xls
