@@ -1,0 +1,52 @@
+/* Design tokens: colors, radii, shadows, spacing */
+:root {
+  /* Brand palette */
+  --color-primary: #6C63FF;         /* Electric Indigo: CTAs, highlights */
+  --color-primary-600: #6C63FF;     /* Keep same until we add explicit scales */
+  --color-primary-700: #534BE6;     /* Slightly deeper for focus rings (accessible) */
+  --color-nav: #2C2E43;             /* Midnight Navy: nav, headings, footer bg */
+  --color-footer: #2C2E43;          /* Footer background */
+  --color-accent-red: #FF6B6B;      /* Coral Red: alerts, promos, secondary buttons */
+  --color-success: #A0E7E5;         /* Mint Green: success, badges */
+  --color-warning: #F4C430;         /* Goldenrod: sale badges, highlights */
+  --color-danger: #FF6B6B;          /* Align danger to Coral Red */
+  --color-info: #6C63FF;            /* Use primary for info accents */
+
+  /* Header (navbar) variables */
+  --header-bg: var(--color-nav);
+  --header-link: #ffffff;
+  --header-hover: var(--color-primary);
+  --header-dropdown-bg: #1f2236;
+
+  /* Base */
+  --color-bg: #FDFDFD;              /* Soft Ivory: page background */
+  --color-surface: #FDFDFD;         /* Card surfaces */
+  --color-text: #6E7E91;            /* Slate Gray: text, borders, dividers */
+  --color-text-muted: #8A97A8;      /* Muted text (derived) */
+
+  /* Shape & elevation */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.06);
+  --shadow-md: 0 6px 16px rgba(0,0,0,0.08);
+  --shadow-lg: 0 10px 24px rgba(0,0,0,0.10);
+}
+
+[data-theme="dark"] {
+  --color-bg: #0B1220;
+  --color-surface: #0F172A;
+  --color-text: #E5E7EB;
+  --color-text-muted: #9CA3AF;
+
+  /* Header tweaks for dark mode */
+  --header-bg: #0f1424;
+  --header-link: #e6e6e6;
+  --header-hover: var(--color-primary-600);
+  --header-dropdown-bg: #0f1424;
+}
+
+html, body {
+  background: var(--color-bg);
+  color: var(--color-text);
+}
