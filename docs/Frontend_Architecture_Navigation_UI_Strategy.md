@@ -341,6 +341,27 @@ P3 (governance & a11y expansion)
 - Preserve backward-compatible routes during migration windows.
 - Document UX decisions in this file; link PRs to specific checklist items.
 
+## Migration note: TemuNavbar → MerkatoNavbar
+Summary
+- We have replaced all references to the legacy Temu navbar with the new `MerkatoNavbar`. There is no separate "Temu" component anymore.
+
+Scope
+- Removed old file `frontend/src/components/TemuNavbar.jsx`.
+- Standardized component names and documentation to use `MerkatoNavbar` across public, customer, vendor, and admin.
+
+Compatibility
+- Test selectors are unchanged to avoid breaking E2E and unit tests:
+  - `data-testid="navbar"`, `data-testid="navbar-register-link"`, `data-testid="cart-link"`, `aria-label="My Account"`.
+- Public behavior and layout remain compatible; role-based presets are additive.
+
+Guidance for older branches
+- If you still reference `TemuNavbar`, migrate imports to `MerkatoNavbar` and remove any leftover comments about renames.
+- Prefer role presets: `<MerkatoNavbar role="public|customer|vendor|admin" />`.
+
+QA checklist
+- No occurrences of the string "Temu" remain in the repo (aside from historical commits).
+- CI/E2E should pass without selector updates.
+
 ## Branding & design system (for tech‑savvy young adults)
 Brand intent
 - Personality: bold, clear, optimistic, tech-forward (not gimmicky). Values: speed, trust, empowerment.
