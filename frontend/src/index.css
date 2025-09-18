@@ -3,8 +3,8 @@
 
 body {
   font-family: 'Poppins', sans-serif;
-  background-color: #f9f9f9;
-  color: #333;
+  background-color: var(--color-bg);
+  color: var(--color-text);
   margin: 0;
   padding: 0;
 }
@@ -15,7 +15,7 @@ h1, h2, h3 {
 
 a {
   text-decoration: none;
-  color: #007bff;
+  color: var(--color-primary);
 }
 
 a:hover {
@@ -23,24 +23,37 @@ a:hover {
 }
 
 button {
-  background-color: #007bff;
-  color: white;
+  background-color: var(--color-primary);
+  color: #fff;
   padding: 6px 12px;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
+  box-shadow: var(--shadow-sm);
 }
 
 button:hover {
-  background-color: #0056b3;
+  background-color: var(--color-primary-600);
 }
 
 input, select, textarea {
   padding: 8px;
   margin-top: 4px;
   margin-bottom: 10px;
-  border-radius: 4px;
-  border: 1px solid #ccc;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(0,0,0,0.12);
   width: 100%;
   box-sizing: border-box;
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    /* Allow OS-level dark if no explicit data-theme is set */
+    --color-bg: #0B1220;
+    --color-surface: #0F172A;
+    --color-text: #E5E7EB;
+    --color-text-muted: #9CA3AF;
+  }
 }
