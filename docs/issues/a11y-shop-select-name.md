@@ -1,7 +1,5 @@
 # A11y: /shop select missing accessible name (axe: select-name)# A11y: /shop select missing accessible name (axe: select-name)
 
-
-
 - Route: /shop- Route: /shop
 
 - Rule: select-name (critical)- Rule: select-name (critical)
