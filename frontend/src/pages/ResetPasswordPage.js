@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import ROUTES from '../config/routes';
 import axios from 'axios';
 import styles from './ResetPassword.module.css';
 
@@ -65,7 +66,7 @@ function ResetPasswordPage() {
       await axios.post('/api/auth/reset-password', { token, password });
       setMessage('Password has been reset successfully!');
       setIsError(false);
-      setTimeout(() => navigate('/login'), 1500);
+  setTimeout(() => navigate(ROUTES.login), 1500);
     } catch (err) {
       setMessage(getErrorMessage(err));
       setIsError(true);
@@ -81,7 +82,7 @@ function ResetPasswordPage() {
         <p className={styles.message}>
           This password reset link is invalid or has expired. Please request a new one.
         </p>
-        <Link to="/forgot-password" className={styles.link}>
+  <Link to={ROUTES.forgotPassword} className={styles.link}>
           Return to Forgot Password
         </Link>
       </div>
@@ -175,7 +176,7 @@ function ResetPasswordPage() {
         </button>
 
         <div className={styles.footer}>
-          <Link to="/login" className={styles.backLink}>
+          <Link to={ROUTES.login} className={styles.backLink}>
             ← Back to Login
           </Link>
         </div>

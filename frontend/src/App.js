@@ -64,6 +64,9 @@ import AdminDiscountManager from './pages/AdminDiscountManager';
 import VendorManagement from './pages/VendorManagement';
 import InvoiceReport from './pages/InvoiceReport';
 import AdminInvoices from './pages/AdminInvoices';
+import AdminMegaMenu from './pages/AdminMegaMenu';
+import AdminMicroBanner from './pages/AdminMicroBanner';
+import AdminTrustTicker from './pages/AdminTrustTicker';
 
 
 import AdminPromoCodes from './components/admin/AdminPromoCodes';
@@ -77,6 +80,7 @@ import FloatingPromoButton from './components/FloatingPromoButton';
 import ProtectedRoute from './components/ProtectedRoute';
 import { MessageProvider } from './context/MessageContext';
 import GlobalMessage from './components/GlobalMessage';
+import ROUTES from './config/routes';
 
 const DirectChatWrapper = () => {
   const { userId } = useParams();
@@ -91,7 +95,7 @@ function App() {
 
   const handleLogout = () => {
     clearUser();
-    window.location.href = '/';
+    window.location.href = ROUTES.home;
   };
 
   const handleLangChange = (newLang) => {
@@ -168,7 +172,7 @@ function App() {
         )}
         <Routes>
           {/* Public Pages */}
-          <Route path="/" element={
+          <Route path={ROUTES.home} element={
             <PublicLayout user={user} onLogout={handleLogout} lang={lang} onLangChange={handleLangChange} />
           }>
             <Route index element={<HomePage />} />
@@ -187,22 +191,22 @@ function App() {
           </Route>
 
           {/* Authentication */}
-          <Route path="/login" element={<AuthLayout><Login /></AuthLayout>} />
-          <Route path="/register" element={<AuthLayout><RegisterPage /></AuthLayout>} />
-          <Route path="/forgot-password" element={<AuthLayout><ForgotPasswordPage /></AuthLayout>} />
-          <Route path="/reset-password" element={<AuthLayout><ResetPasswordPage /></AuthLayout>} />
-          <Route path="/edit-profile" element={<EditProfile />} />
-          <Route path="/upload" element={<ProductUpload />} />
-          <Route path="/cart" element={<CartPage />} />
+          <Route path={ROUTES.login} element={<AuthLayout><Login /></AuthLayout>} />
+          <Route path={ROUTES.register} element={<AuthLayout><RegisterPage /></AuthLayout>} />
+          <Route path={ROUTES.forgotPassword} element={<AuthLayout><ForgotPasswordPage /></AuthLayout>} />
+          <Route path={ROUTES.resetPassword} element={<AuthLayout><ResetPasswordPage /></AuthLayout>} />
+          <Route path={ROUTES.editProfile} element={<EditProfile />} />
+          <Route path={ROUTES.upload} element={<ProductUpload />} />
+          <Route path={ROUTES.cart} element={<CartPage />} />
 
           {/* Customer Area */}
-          <Route path="/dashboard" element={<Navigate to="/account" replace />} />
-          <Route path="/account" element={
+          <Route path="/dashboard" element={<Navigate to={ROUTES.account} replace />} />
+          <Route path={ROUTES.account} element={
             <ProtectedRoute user={user} loading={loading} requiredRole="customer">
               <CustomerLayout user={user} onLogout={handleLogout} lang={lang} onLangChange={handleLangChange} />
             </ProtectedRoute>
           }>
-            <Route index element={<Navigate to="/account/dashboard" replace />} />
+            <Route index element={<Navigate to={ROUTES.accountDashboard} replace />} />
             <Route path="dashboard" element={<CustomerDashboard />} />
             <Route path="orders" element={<CustomerOrders />} />
             <Route path="guide" element={<CustomerGuide />} />
@@ -212,7 +216,7 @@ function App() {
           </Route>
 
           {/* Vendor Area */}
-          <Route path="/vendor" element={
+          <Route path={ROUTES.vendor} element={
             <ProtectedRoute user={user} loading={loading} requiredRole="vendor">
               <VendorLayout user={user} onLogout={handleLogout} lang={lang} onLangChange={handleLangChange} />
             </ProtectedRoute>
@@ -231,15 +235,15 @@ function App() {
             <Route path="inbox" element={<VendorInbox />} />
             <Route path="questions" element={<VendorQuestions />} />
           </Route>
-          <Route path="/vendor/:id" element={<VendorStore />} />
+          <Route path={ROUTES.vendorStore} element={<VendorStore />} />
 
           {/* Admin Area */}
-          <Route path="/admin" element={
+          <Route path={ROUTES.admin} element={
             <ProtectedRoute user={user} loading={loading} requiredRole="admin">
               <AdminLayout user={user} />
             </ProtectedRoute>
           }>
-            <Route index element={<Navigate to="/admin/dashboard" replace />} />
+            <Route index element={<Navigate to={ROUTES.adminDashboard} replace />} />
             <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="promo-codes" element={<AdminPromoCodes />} />
             <Route path="promo-manager" element={<PromoManager />} />
@@ -255,6 +259,9 @@ function App() {
             <Route path="delivery-options" element={<AdminDeliveryOptions />} />
             <Route path="invoices/report" element={<InvoiceReport />} />
             <Route path="invoices" element={<AdminInvoices />} />
+            <Route path="mega-menu" element={<AdminMegaMenu />} />
+            <Route path="microbanner" element={<AdminMicroBanner />} />
+            <Route path="trust-ticker" element={<AdminTrustTicker />} />
           </Route>
         </Routes>
 

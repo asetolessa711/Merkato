@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Navigate } from 'react-router-dom';
+import { ROUTES } from '../config/routes';
 import useUser from '../hooks/useUser';
 
 const ProtectedRoute = ({ requiredRole, children }) => {
@@ -27,7 +28,13 @@ const ProtectedRoute = ({ requiredRole, children }) => {
     const isAdmin = roles.includes('admin') || roles.includes('global_admin') || roles.includes('country_admin');
     const isVendor = roles.includes('vendor');
     const isCustomer = roles.includes('customer');
-    const fallback = isAdmin ? '/admin/dashboard' : isVendor ? '/vendor' : isCustomer ? '/account/dashboard' : '/login';
+    const fallback = isAdmin
+      ? ROUTES.adminDashboard
+      : isVendor
+      ? ROUTES.vendor
+      : isCustomer
+      ? ROUTES.accountDashboard
+      : ROUTES.login;
     return <Navigate to={fallback} replace />;
   }
 

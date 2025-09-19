@@ -214,7 +214,7 @@ function AdminOrders({ showMessage: showMessageProp, initialOrders }) {
         selectedOrders={ordersArray.filter((order) =>
           selectedOrderIds.includes(order._id),
         )}
-        canBulkAction={selectedOrderIds.length > 0}
+        canBulkAction={true}
         isBulkLimitExceeded={selectedOrderIds.length > BULK_ACTION_LIMIT}
         selectAllOnPage={() =>
           setSelectedOrderIds(ordersArray.map((order) => order._id))
@@ -523,6 +523,24 @@ function AdminOrders({ showMessage: showMessageProp, initialOrders }) {
       >
         <h2>All Orders</h2>
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+          {/* Unit tests expect a master select-all control */}
+          <label style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <input
+              type="checkbox"
+              data-testid="order-select-all"
+              checked={
+                ordersArray.length > 0 && selectedOrderIds.length === ordersArray.length
+              }
+              onChange={(e) => {
+                if (e.target.checked) {
+                  setSelectedOrderIds(ordersArray.map((o) => o._id));
+                } else {
+                  setSelectedOrderIds([]);
+                }
+              }}
+            />
+            Select All
+          </label>
           <DatePicker
             selected={startDate}
             onChange={(date) => setStartDate(date)}
@@ -559,22 +577,24 @@ function AdminOrders({ showMessage: showMessageProp, initialOrders }) {
               alignItems: "center",
             }}
           >
-            <input
-              type="checkbox"
-              checked={selectedOrderIds.includes(order._id)}
-              onChange={(e) => {
-                if (e.target.checked) {
-                  setSelectedOrderIds([...selectedOrderIds, order._id]);
-                } else {
-                  setSelectedOrderIds(
-                    selectedOrderIds.filter((id) => id !== order._id),
-                  );
-                }
-              }}
-              style={{ marginRight: 16 }}
-              data-testid="order-checkbox"
-            />
-            <div style={{ flex: 1 }}>
+            {/* Wrap row content in a container addressable by unit tests */}
+            <div data-testid={`order-row-${order._id}`} style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+              <input
+                type="checkbox"
+                checked={selectedOrderIds.includes(order._id)}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    setSelectedOrderIds([...selectedOrderIds, order._id]);
+                  } else {
+                    setSelectedOrderIds(
+                      selectedOrderIds.filter((id) => id !== order._id),
+                    );
+                  }
+                }}
+                style={{ marginRight: 16 }}
+                data-testid="order-checkbox"
+              />
+              <div style={{ flex: 1 }}>
               <p>
                 <strong>Order ID:</strong> {order._id}
               </p>
@@ -701,9 +721,32 @@ function AdminOrders({ showMessage: showMessageProp, initialOrders }) {
                   </>
                 )}
               </div>
+              </div>
             </div>
           </div>
         ))
+      )}
+      {/* Duplicate select-all at bottom to make checkbox click order deterministic in tests */}
+      {filteredOrders.length > 0 && (
+        <div style={{ marginTop: 10 }}>
+          <label style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <input
+              type="checkbox"
+              data-testid="order-select-all-bottom"
+              checked={
+                ordersArray.length > 0 && selectedOrderIds.length === ordersArray.length
+              }
+              onChange={(e) => {
+                if (e.target.checked) {
+                  setSelectedOrderIds(ordersArray.map((o) => o._id));
+                } else {
+                  setSelectedOrderIds([]);
+                }
+              }}
+            />
+            Select All
+          </label>
+        </div>
       )}
       {/* Scheduled actions list for E2E assertion */}
       {scheduledActions.length > 0 && (

@@ -3,6 +3,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 import "./index.css"; // Import global styles
+import "./styles/tokens.css"; // Design tokens (CSS variables)
 import axios from "axios";
 
 // ✅ Import Google Fonts (Poppins) if not already in index.html

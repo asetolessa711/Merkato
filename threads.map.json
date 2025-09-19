@@ -1,0 +1,74 @@
+{
+  "version": 1,
+  "naming": {
+    "tagPrefix": "@thread:",
+    "convention": "kebab-case concise verb-noun or domain noun (e.g. checkout, auth-register)"
+  },
+  "threads": {
+    "checkout": {
+      "description": "Customer adds items, reviews cart, submits order (guest or auth).",
+      "requiredLayers": ["story", "frontend", "backend", "e2e"],
+      "critical": true
+    },
+    "auth-register": {
+      "description": "User account creation (form submit, validation, persistence).",
+      "requiredLayers": ["frontend", "backend", "e2e"],
+      "critical": true
+    },
+    "auth-login": {
+      "description": "User login & session token handling.",
+      "requiredLayers": ["frontend", "backend", "e2e"],
+      "critical": true
+    },
+    "product-browse": {
+      "description": "Browsing / listing products with pagination / filters.",
+      "requiredLayers": ["story", "frontend", "e2e"],
+      "critical": false
+    },
+    "cart": {
+      "description": "Cart management (add/update/remove, totals).",
+      "requiredLayers": ["story", "frontend", "e2e"],
+      "critical": true
+    },
+    "order-history": {
+      "description": "Viewing past orders (auth required).",
+      "requiredLayers": ["frontend", "backend", "e2e"],
+      "critical": false
+    },
+    "vendor-orders-manage": {
+      "description": "Vendor views & updates order statuses / bulk actions.",
+      "requiredLayers": ["frontend", "backend", "e2e"],
+      "critical": true
+    },
+    "vendor-products-manage": {
+      "description": "Vendor creates / edits / lists products.",
+      "requiredLayers": ["frontend", "backend", "e2e"],
+      "critical": true
+    },
+    "reviews": {
+      "description": "Submitting & displaying product reviews.",
+      "requiredLayers": ["frontend", "backend"],
+      "critical": false
+    },
+    "returns-refunds": {
+      "description": "Customer initiates and vendor/admin processes returns/refunds.",
+      "requiredLayers": ["backend", "e2e"],
+      "critical": false
+    },
+    "search": {
+      "description": "Search experience (query input, results list).",
+      "requiredLayers": ["story", "frontend", "e2e"],
+      "critical": false
+    },
+    "payments": {
+      "description": "Payment method selection / submission (currently COD stub).",
+      "requiredLayers": ["frontend", "backend", "e2e"],
+      "critical": true
+    },
+    "notifications": {
+      "description": "User-facing toast / inline notifications for key actions.",
+      "requiredLayers": ["story", "frontend"],
+      "critical": false
+    }
+  }
+}

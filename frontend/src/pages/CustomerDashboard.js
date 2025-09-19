@@ -1,6 +1,4 @@
 import React, { useEffect, useState, useCallback } from 'react';
-// === MOCK MODE: Set to true to use mock data (no backend required) ===
-const USE_MOCK_CUSTOMER = false; // Use real API in dev/e2e
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import PropTypes from 'prop-types';
@@ -10,6 +8,9 @@ import ProductRowSection from '../components/ProductRowSection';
 import DailyCheckIn from '../components/DailyCheckIn';
 import { Flags } from '../utils/featureFlags';
 import { Events } from '../utils/eventsClient';
+
+// === MOCK MODE: Set to true to use mock data (no backend required) ===
+const USE_MOCK_CUSTOMER = false; // Use real API in dev/e2e
 
 // Use axios.defaults.baseURL configured in src/index.js and relative /api paths
 

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useMessage } from '../context/MessageContext';
 import { Link, useNavigate } from 'react-router-dom';
+import { ROUTES } from '../config/routes';
 import axios from 'axios';
 import { loadCart, saveCart, isCartExpired } from '../utils/cartStorage';
 
@@ -45,7 +46,7 @@ function CartPage() {
 
   const handleCheckout = () => {
     // Frictionless checkout: allow navigation regardless of auth
-    navigate('/checkout');
+    navigate(ROUTES.checkout);
   };
 
   if (cart.length === 0) {
@@ -53,7 +54,7 @@ function CartPage() {
       <div style={{ textAlign: 'center', marginTop: 60 }}>
         <h2>Your cart is empty</h2>
         <p>Check out our newest products and deals below:</p>
-        <Link to="/shop" style={{
+  <Link to={ROUTES.shop} style={{
           display: 'inline-block',
           marginTop: 20,
           padding: '10px 16px',
@@ -69,7 +70,7 @@ function CartPage() {
   return (
     <div style={{ maxWidth: 900, margin: '40px auto', fontFamily: 'Poppins, sans-serif' }}>
       <div style={{ textAlign: 'center', marginBottom: 30 }}>
-        <Link to="/" style={{ textDecoration: 'none', fontSize: '2rem', fontWeight: 'bold' }}>
+  <Link to={ROUTES.home} style={{ textDecoration: 'none', fontSize: '2rem', fontWeight: 'bold' }}>
           <span style={{ color: '#00B894' }}>M</span>
           <span style={{ color: '#3498DB' }}>e</span>
           <span style={{ color: '#E67E22' }}>r</span>

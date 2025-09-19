@@ -1,7 +1,5 @@
 // src/pages/VendorDashboard.js
 import React, { useEffect, useState } from 'react';
-// === MOCK MODE: Set to true to use mock data (no backend required) ===
-const USE_MOCK_VENDOR = true; // Set to false for real API
 import axios from 'axios';
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend
@@ -11,6 +9,9 @@ import VendorCard from '../components/VendorCard';
 import ProductRowSection from '../components/ProductRowSection';
 import Card from '../components/Card';
 import styles from '../layouts/VendorLayout.module.css';
+
+// === MOCK MODE: Set to true to use mock data (no backend required) ===
+const USE_MOCK_VENDOR = true; // Set to false for real API
 
 function VendorDashboard() {
   const isCypress = typeof window !== 'undefined' && window.Cypress;
@@ -25,10 +26,13 @@ function VendorDashboard() {
   const token = localStorage.getItem('token');
   const headers = { Authorization: `Bearer ${token}` };
 
-  if (!token) {
-    window.location.href = '/login';
-    return null;
-  }
+  // Redirect if unauthenticated without violating hooks rules
+  useEffect(() => {
+    if (!token) {
+      window.location.href = '/login';
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (USE_MOCK_VENDOR) {

@@ -1,0 +1,3 @@
+# One thread slug per line to exclude from enforcement and reports
+# Example:
+# search

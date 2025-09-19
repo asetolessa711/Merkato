@@ -38,6 +38,9 @@ const AdminSidebar = () => {
       <NavLink to="/admin/support" style={linkStyle} activeStyle={activeStyle}>🆘 Support</NavLink>
       <NavLink to="/admin/analytics" style={linkStyle} activeStyle={activeStyle}>📈 Analytics</NavLink>
       <NavLink to="/admin/promo-codes" style={linkStyle} activeStyle={activeStyle}>🎟 Promo Codes</NavLink>
+      <NavLink to="/admin/mega-menu" style={linkStyle} activeStyle={activeStyle}>🧭 Mega Menu</NavLink>
+      <NavLink to="/admin/microbanner" style={linkStyle} activeStyle={activeStyle}>🪧 Microbanner</NavLink>
+      <NavLink to="/admin/trust-ticker" style={linkStyle} activeStyle={activeStyle}>✅ Trust Ticker</NavLink>
     </div>
   );
 };

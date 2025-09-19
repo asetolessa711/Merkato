@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
+import ROUTES, { buildRoute } from '../config/routes';
 import './FavoritesPage.css';
 
 function FavoritesPage() {
@@ -59,7 +60,7 @@ function FavoritesPage() {
         <div className="empty-favorites">
           <h2>No Favorites Yet</h2>
           <p>Start saving products to view them here.</p>
-          <Link to="/shop" className="btn-primary">Explore Products</Link>
+          <Link to={ROUTES.shop} className="btn-primary">Explore Products</Link>
         </div>
       </div>
     );
@@ -71,7 +72,7 @@ function FavoritesPage() {
       <div className="favorites-grid">
         {products.map((product) => (
           <div key={product._id} className="favorite-card">
-            <Link to={`/product/${product._id}`} className="favorite-link">
+            <Link to={buildRoute.productDetail(product._id)} className="favorite-link">
               {product.badge && (
                 <div className={`badge badge-${product.badge.toLowerCase()}`}>
                   {product.badge}

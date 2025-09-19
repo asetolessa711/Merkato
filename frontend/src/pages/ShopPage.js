@@ -204,9 +204,18 @@ function ShopPage() {
 
       {/* Example Filter Section */}
       <div className="filters">
+        {/* Simple search input to filter products by name (used in tests) */}
+        <input
+          type="text"
+          aria-label="Search products"
+          placeholder="Search products"
+          value={filters.search}
+          onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+        />
         {/* ...other filters... */}
-        {/* Replace input with select for vendor */}
-        <select name="vendor" value={filters.vendor} onChange={handleFilterChange}>
+  {/* Replace input with select for vendor */}
+  <label htmlFor="filter-vendor">Filter products by vendor</label>
+  <select id="filter-vendor" name="vendor" aria-label="Filter products by vendor" value={filters.vendor} onChange={handleFilterChange}>
           <option value="">All Vendors</option>
           {vendors.map((v) => (
             <option key={v._id} value={v.name}>

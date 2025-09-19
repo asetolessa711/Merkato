@@ -16,6 +16,8 @@ const AdminDeliveryOptions = () => {
   const [defaultEtaNote, setDefaultEtaNote] = useState('Standard delivery');
   const [shippingOptions, setShippingOptions] = useState([]); // for saving to delivery-settings
   const [saving, setSaving] = useState(false);
+  // Basic new option state for addOption handler
+  const [newOpt, setNewOpt] = useState({ name: '', cost: 0, days: 5 });
 
   // Legacy CRUD UI state to keep tests green
   const [options, setOptions] = useState([]);

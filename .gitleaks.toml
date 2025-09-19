@@ -1,0 +1,38 @@
+######################################################################
+# Gitleaks configuration for Merkato
+# Goal: Minimize false positives while preserving real secret detection.
+# Strategy:
+#   1. DO NOT blanket-ignore entire test or docs directories (they can still leak real keys).
+#   2. Allowlist only specific, stable, benign patterns we intentionally repeat in tests.
+#   3. Keep this file small & reviewed. Add new entries only with justification.
+#   4. Never allowlist real looking API keys, JWTs, or cloud creds.
+######################################################################
+
+# Global allowlist
+[allowlist]
+description = "Known safe test fixtures & dummy data"
+
+# Regex patterns explicitly permitted (case-insensitive where needed)
+regexes = [
+  '''(?i)Password123!''',                 # Standard dummy password used in tests
+  '''testuser_[0-9a-f\-]+@example\.com''',  # Randomized test user emails
+  '''behavior_[0-9]+@example\.com''',    # Behavior test user pattern
+  '''cart_admin_[0-9]+@example\.com''',  # Cart admin test email pattern
+  '''cart_[0-9]+@example\.com''',        # Cart user test email pattern
+  '''flag_admin_[0-9]+@example\.com''',  # Flag admin test email pattern
+  '''flag_user_[0-9]+@example\.com''',   # Flag user test email pattern
+  '''invoice_[0-9]+@example\.com''',     # Invoice test email pattern (future)
+  '''test-session-id''',                  # Cypress / Stripe mocked session id
+]
+
+# (Optional) Path-specific ignores kept narrow. Add only when a file is inherently noisy.
+[[allowlist.paths]]
+description = "Mock stripe event fixture (contains dummy hashes)"
+path = "backend/tests/utils/mockStripeEvent.js"
+
+# Guidance for contributors (informational comments only)
+# If a new false positive appears:
+#   1. Prefer tightening the custom test value (e.g., add 'TEST_' prefix) so it stops matching rules.
+#   2. If unavoidable, add a specific regex here with a clear comment.
+#   3. Avoid broad wildcards like '.*' or whole directories.
+#   4. Never add real secrets here—rotate & remove them instead.

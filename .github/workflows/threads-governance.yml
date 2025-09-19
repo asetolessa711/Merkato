@@ -1,0 +1,70 @@
+name: Threads Governance
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main, dev ]
+
+jobs:
+  threads:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Checkout main for baseline
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: repo-main
+      - name: Install deps for baseline
+        working-directory: repo-main
+        run: npm ci
+      - name: Generate baseline from main
+        working-directory: repo-main
+        run: node scripts/threads-scan.js
+      - name: Prepare baseline file
+        run: |
+          mkdir -p .threads
+          cp repo-main/threads-report.json .threads/baseline.json
+      - name: Install deps (root only)
+        run: npm ci
+      - name: Scan threads
+        run: node scripts/threads-scan.js --baseline=.threads/baseline.json --strict
+      - name: Upload threads report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: threads-report
+          path: |
+            threads-report.json
+      - name: Threads summary (Markdown)
+        if: always()
+        shell: bash
+        run: |
+          node scripts/threads-summary.js >> $GITHUB_STEP_SUMMARY
+      - name: Prepare PR comment
+        if: always() && github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          {
+            echo "### 🔒 Threads Governance"
+            node scripts/threads-summary.js
+            echo ""
+            echo "> Ignore list available at .threads/ignore.txt (one slug per line)."
+          } > pr-comment.md
+      - name: Post PR comment
+        if: always() && github.event_name == 'pull_request'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          header: threads-governance
+          path: pr-comment.md
+          skip_unchanged: true
+  # Baseline stays implicit by scanning main each run; optional commit/storage can be added later.

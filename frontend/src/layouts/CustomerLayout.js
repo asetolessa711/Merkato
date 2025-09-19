@@ -100,7 +100,7 @@ function CustomerLayout({ children, user, onLogout, lang, onLangChange }) {
       <NavbarUniversal />
       {/* Fixed heading at the top */}
       <header className={styles.fixedHeader}>
-        <h1>Customer Dashboard</h1>
+        <h1 data-testid="customer-dashboard-title">Customer Dashboard</h1>
       </header>
       <div className={styles.mainContentScrollable}>
         <CustomerSidebar user={user} activePath={location.pathname} />

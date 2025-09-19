@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
+import ROUTES from '../config/routes';
 import PropTypes from 'prop-types';
 
 class BreadcrumbErrorBoundary extends React.Component {
@@ -73,7 +74,7 @@ const Breadcrumb = ({ customRoutes = {} }) => {
         }}>
           <li>
             <Link 
-              to="/" 
+              to={ROUTES.home} 
               style={linkStyle}
               onMouseEnter={(e) => e.target.style.backgroundColor = '#f0f7ff'}
               onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}

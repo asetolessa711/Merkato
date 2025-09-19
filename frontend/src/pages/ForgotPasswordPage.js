@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import ROUTES from '../config/routes';
 import axios from 'axios';
 import styles from './ForgotPassword.module.css';
 
@@ -46,7 +47,7 @@ function ForgotPasswordPage() {
           Note: For security reasons, this email will only be sent if the address matches a registered account.
         </p>
         <div className={styles.actions}>
-          <Link to="/login" className={styles.backLink}>Return to Login</Link>
+          <Link to={ROUTES.login} className={styles.backLink}>Return to Login</Link>
         </div>
       </div>
     );
@@ -104,7 +105,7 @@ function ForgotPasswordPage() {
         </button>
 
         <div className={styles.footer}>
-          <Link to="/login" className={styles.backLink}>
+          <Link to={ROUTES.login} className={styles.backLink}>
             ← Back to Login
           </Link>
         </div>

@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { ROUTES } from '../config/routes';
 import axios from 'axios';
 import './HomePage.css';
 import ProductCard from '../components/ProductCard'; // ✅ Already imported
+import Hero from '../components/Hero.jsx';
 
 const categories = [
   "Today's Deals", "Flash Deals", "Trending", "Season's Favorites", "Top Vendors",
@@ -15,10 +17,9 @@ function HomePage() {
   const navigate = useNavigate();
   const isCypress = typeof window !== 'undefined' && window.Cypress;
   const [products, setProducts] = useState([]);
-  const [search, setSearch] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState(categories[0]);
+  const [selectedCategory] = useState(categories[0]);
   // Get promo video URL from localStorage (set by admin upload)
-  const [promoVideoUrl, setPromoVideoUrl] = useState(localStorage.getItem('promoVideoUrl') || '');
+  const promoVideoUrl = localStorage.getItem('promoVideoUrl') || '';
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -27,6 +28,10 @@ function HomePage() {
     };
     loadProducts();
   }, []);
+
+  // Hero CTA handlers
+  const goShop = () => navigate(ROUTES.shop);
+  const goCategories = () => navigate(`${ROUTES.shop}?view=categories`);
 
   const handleAddToCart = (product) => {
     try {
@@ -48,12 +53,7 @@ function HomePage() {
     .filter(p => p.promotion?.isPromoted || p.discount > 0)
     .slice(0, 6);
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    if (search.trim()) {
-      navigate(`/shop?search=${encodeURIComponent(search.trim())}`);
-    }
-  };
+  // (search handler removed; route-level search box handles navigation)
 
   // Demo review cards (8+ for horizontal scroll)
   const reviewDemoProducts = Array.from({ length: 8 }).map((_, i) => ({
@@ -71,6 +71,23 @@ function HomePage() {
 
   return (
     <div className="homepage-outer">
+      {/* Hero / CTA section */}
+      <Hero
+        title="Shop Local. Save Big."
+        subtitle="Discover fashion, electronics, home, and more — curated for you."
+        ctaText="Shop Now"
+        onCtaClick={goShop}
+        secondaryCtaText="Explore Categories"
+        onSecondaryCtaClick={goCategories}
+        variant="banner"
+        slides={[
+          { title: 'Shop Local. Save Big.', subtitle: 'Daily deals across top categories.', ctaText: 'Shop Now', onCtaClick: goShop, secondaryCtaText: 'Explore Categories', onSecondaryCtaClick: goCategories, imageSrc: '/images/hero-kitchen.jpg', imageAlt: 'Kitchen and dining deals', bg: '#FFF6D6', variant: 'banner' },
+          { title: 'Upgrade Your Tech', subtitle: 'Phones, laptops, and gadgets at smart prices.', ctaText: 'Browse Tech', onCtaClick: () => navigate('/shop?category=Electronics'), secondaryCtaText: 'All Categories', onSecondaryCtaClick: goCategories, imageSrc: '/images/hero-tech.jpg', imageAlt: 'Electronics and gadgets', bg: '#E6F4FF', variant: 'split' },
+          { title: 'Make Home Cozy', subtitle: 'Furniture, decor, and essentials for every room.', ctaText: 'Shop Home & Living', onCtaClick: () => navigate('/shop?category=Home%20%26%20Living'), secondaryCtaText: 'Popular Picks', onSecondaryCtaClick: () => navigate('/shop?sort=popular'), imageSrc: '/images/hero-home.jpg', imageAlt: 'Home and living ideas', bg: '#F3F0FF', variant: 'overlay' },
+        ]}
+        fullBleed={false}
+        containerWidth={1200}
+      />
       {/* Promotional Video (if available) */}
       {promoVideoUrl && (
         <div style={{ margin: '2rem auto', maxWidth: 600 }}>
@@ -84,7 +101,7 @@ function HomePage() {
           <section className="flash-deals">
             <div className="section-header">
               <h2>🔥 Flash Deals</h2>
-              <Link to="/shop?sort=deals" className="view-all-link">View All</Link>
+              <Link to={`${ROUTES.shop}?sort=deals`} className="view-all-link">View All</Link>
             </div>
             <div className="products-row-scroll">
               {flashDeals.length > 0 ? (

@@ -1,3 +1,18 @@
+Param()
+$ErrorActionPreference = 'Stop'
+
+Write-Host "[hooks] Configuring git core.hooksPath -> .githooks" -ForegroundColor Cyan
+git config core.hooksPath .githooks
+
+# Ensure bash hook is executable on Git for Windows
+$hookPath = Join-Path (Get-Location) ".githooks/pre-commit"
+if (Test-Path $hookPath) {
+  try {
+    & git update-index --chmod=+x .githooks/pre-commit | Out-Null
+  } catch { }
+}
+
+Write-Host "[hooks] Installed. Test by staging a file and committing." -ForegroundColor Green
 <#
  .SYNOPSIS
 	Installs Git pre-commit hook from .githooks for Windows users (PowerShell).

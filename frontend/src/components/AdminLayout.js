@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
+import { ROUTES } from '../config/routes';
 import AdminSidebar from './AdminSidebar';
 import MerkatoFooter from '../components/MerkatoFooter';
 import styles from '../layouts/AdminLayout.module.css';
@@ -14,7 +15,7 @@ const AdminLayout = ({ user }) => {
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    navigate('/login');
+  navigate(ROUTES.login);
   };
 
   // Role-based admin controls example
@@ -53,7 +54,7 @@ const AdminLayout = ({ user }) => {
         zIndex: 1000
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-          <Link to="/" style={{ textDecoration: 'none', fontSize: '1.6rem', fontWeight: 'bold' }}>
+          <Link to={ROUTES.home} style={{ textDecoration: 'none', fontSize: '1.6rem', fontWeight: 'bold' }}>
             <span style={{ color: '#00B894' }}>M</span>
             <span style={{ color: '#3498DB' }}>e</span>
             <span style={{ color: '#E67E22' }}>r</span>
@@ -63,9 +64,9 @@ const AdminLayout = ({ user }) => {
             <span style={{ color: '#00B894' }}>o</span>
           </Link>
           <nav style={{ display: 'flex', gap: '16px', fontWeight: 'bold' }}>
-            <Link to="/shop" style={{ color: '#0984e3', textDecoration: 'none' }}>🛍 Shop</Link>
-            <Link to="/vendor" style={{ color: '#0984e3', textDecoration: 'none' }}>🧑‍💼 Vendor Panel</Link>
-            <Link to="/account" style={{ color: '#0984e3', textDecoration: 'none' }}>👤 Customer Panel</Link>
+            <Link to={ROUTES.shop} style={{ color: '#0984e3', textDecoration: 'none' }}>🛍 Shop</Link>
+            <Link to={ROUTES.vendor} style={{ color: '#0984e3', textDecoration: 'none' }}>🧑‍💼 Vendor Panel</Link>
+            <Link to={ROUTES.account} style={{ color: '#0984e3', textDecoration: 'none' }}>👤 Customer Panel</Link>
           </nav>
         </div>
         <button 
