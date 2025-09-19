@@ -46,6 +46,12 @@ backend/uploads/
 ~$*
 docs/~$*
 
+# Office and large local docs (moved out of repo)
+docs/**/*.docx
+docs/**/*.pptx
+docs/**/*.xlsx
+Documents/
+
 # Jest result artifacts
 backend/jest-results.json
 
