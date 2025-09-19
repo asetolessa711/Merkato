@@ -33,9 +33,25 @@ describe('Invoice Routes Access Control', () => {
     vendorToken = await ensure('vendor@test.com', ['vendor'], 'Vendor Auto');
     customerToken = await ensure('customer@test.com', ['customer'], 'Customer Auto');
 
-    // Create an order as the customer to ensure a linked invoice exists
+    // Create or ensure a dedicated product with ample stock for this suite
     const Product = require('../../models/Product');
-    const product = await Product.findOne();
+    const User = require('../../models/User');
+    const vendorUser = await User.findOne({ email: 'vendor@test.com' });
+    expect(vendorUser).toBeTruthy();
+    let product = await Product.findOne({ name: 'InvoiceRoutes Test Product' });
+    if (!product) {
+      product = await Product.create({
+        name: 'InvoiceRoutes Test Product',
+        description: 'Temp product for invoice routes tests',
+        price: 5,
+        category: 'test',
+        stock: 100,
+        vendor: vendorUser._id,
+      });
+    } else if (product.stock < 5) {
+      product.stock = 100;
+      await product.save();
+    }
     expect(product).toBeTruthy();
     const orderRes = await request(app)
       .post('/api/orders')
@@ -46,6 +62,11 @@ describe('Invoice Routes Access Control', () => {
         paymentMethod: 'cod',
         deliveryOption: { name: 'Std', cost: 10, days: 3 },
       });
+    if (![200, 201].includes(orderRes.statusCode)) {
+      // Helpful debug to understand 400s in CI
+      // eslint-disable-next-line no-console
+      console.error('Order creation failed:', orderRes.statusCode, orderRes.body);
+    }
     expect([200, 201]).toContain(orderRes.statusCode);
     orderId = orderRes.body?.order?._id;
     expect(orderId).toBeTruthy();
