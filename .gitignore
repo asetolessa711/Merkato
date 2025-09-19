@@ -17,9 +17,8 @@ backend/jest-failures-summary.txt
 
 # E2E generated timing & report bundles (exclude large ephemeral artifacts)
 frontend/test-report/
-frontend/cypress-results/*.json
-frontend/cypress-results/*.txt
-frontend/cypress-results/tag-audit.md
+frontend/cypress-results/
+frontend/test-report/
 frontend/smoke-spec-timings.json
 frontend/smoke-spec-timings-history.json
 frontend/smoke-governance-report.txt
@@ -55,11 +54,3 @@ backend/tests/fixtures/*.jpg
 backend/tests/fixtures/*.png
 backend/tests/fixtures/**/*.jpg
 backend/tests/fixtures/**/*.png
-
-# Ignore Office documents under docs/ (keep Markdown/images tracked)
-docs/**/*.docx
-docs/**/*.doc
-docs/**/*.pptx
-docs/**/*.ppt
-docs/**/*.xlsx
-docs/**/*.xls
