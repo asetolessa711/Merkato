@@ -6,23 +6,70 @@ const { protect, authorize, optionalAuth } = require('../middleware/authMiddlewa
 const Order = require('../models/Order');
 const BehaviorEvent = require('../models/BehaviorEvent');
 
-// ✅ Update customer profile (avatar)
+// ✅ Get customer profile
+router.get('/profile', protect, authorize('customer'), async (req, res) => {
+  try {
+    const customer = await User.findById(req.user._id).select('-password');
+    if (!customer) return res.status(404).json({ message: 'User not found' });
+    if (!customer.roles?.includes('customer')) return res.status(403).json({ message: 'Unauthorized' });
+
+    res.json({
+      _id: customer._id,
+      name: customer.name,
+      email: customer.email,
+      avatar: customer.avatar || null,
+      roles: customer.roles || []
+    });
+  } catch (err) {
+    console.error('GET /customer/profile error:', err);
+    res.status(500).json({ message: 'Failed to fetch profile' });
+  }
+});
+
+// ✅ Update customer profile (name/email/avatar) with validations
 router.put('/profile', protect, authorize('customer'), async (req, res) => {
   try {
     const customer = await User.findById(req.user._id);
-    if (!customer || !customer.roles.includes('customer')) {
-      return res.status(403).json({ message: 'Unauthorized' });
+    if (!customer) return res.status(404).json({ message: 'User not found' });
+    if (!customer.roles?.includes('customer')) return res.status(403).json({ message: 'Unauthorized' });
+
+    const { name, email, avatar } = req.body || {};
+
+    // Validate email format if provided
+    if (typeof email === 'string') {
+      const emailRegex = /[^@\s]+@[^@\s]+\.[^@\s]+/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ message: 'Invalid email format' });
+      }
+      // Duplicate email check (exclude self)
+      const existing = await User.findOne({ email });
+      if (existing && existing._id.toString() !== customer._id.toString()) {
+        return res.status(409).json({ message: 'Email already in use' });
+      }
+      customer.email = email;
     }
 
-    customer.avatar = req.body.avatar || customer.avatar;
+    if (typeof name === 'string' && name.trim().length) {
+      customer.name = name.trim();
+    }
+    if (typeof avatar === 'string' && avatar.trim().length) {
+      customer.avatar = avatar.trim();
+    }
+
     await customer.save();
 
     res.json({
       message: 'Customer profile updated successfully',
-      avatar: customer.avatar
+      profile: {
+        _id: customer._id,
+        name: customer.name,
+        email: customer.email,
+        avatar: customer.avatar || null,
+        roles: customer.roles || []
+      }
     });
   } catch (err) {
-    console.error(err);
+    console.error('PUT /customer/profile error:', err);
     res.status(500).json({ message: 'Failed to update profile', error: err.message });
   }
 });

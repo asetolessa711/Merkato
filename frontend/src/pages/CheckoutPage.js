@@ -30,6 +30,10 @@ function CheckoutPage() {
   });
   const [paymentMethod, setPaymentMethod] = useState('cod');
   const [methods, setMethods] = useState([]);
+  // Track if user explicitly picked a payment method (for validation UX)
+  const [pickedPayment, setPickedPayment] = useState(false);
+  // Simple client-side validation errors
+  const [errors, setErrors] = useState({ address: '', payment: '' });
   const isAuthed = Boolean(localStorage.getItem('token'));
 
   useEffect(() => {
@@ -142,6 +146,8 @@ function CheckoutPage() {
       setShipping((s) => ({ ...s, [name]: value }));
     } else if (name === 'paymentMethod') {
       setPaymentMethod(value);
+      setPickedPayment(true);
+      setErrors((e) => ({ ...e, payment: '' }));
     } else if (name === 'savedAddress') {
       setSelectedAddressId(value);
       const chosen = savedAddresses.find(a => (a._id || '') === value);
@@ -175,6 +181,7 @@ function CheckoutPage() {
     e.preventDefault();
     setSubmitting(true);
     setMessage('');
+    setErrors({ address: '', payment: '' });
 
     const token = localStorage.getItem('token');
     // Use selected delivery option or fallback to Stable default for tests
@@ -201,6 +208,26 @@ function CheckoutPage() {
       productId: (item._id || item.id),
       quantity: item.quantity || 1
     }));
+
+    // Validate minimal required fields before calling backend
+    const localErrors = { address: '', payment: '' };
+    const addrToCheck = (shippingAddress.address || '').trim();
+    if (!addrToCheck) {
+      localErrors.address = 'Shipping address is required. Please enter your address.';
+    }
+    // Show a friendly reminder if user hasn't explicitly picked a method, but don't block submission
+    if (!pickedPayment) {
+      localErrors.payment = 'Please select a payment method.';
+    }
+    if (localErrors.address) {
+      setErrors(localErrors);
+      setSubmitting(false);
+      return;
+    }
+    if (localErrors.payment) {
+      // Non-blocking hint for UX/tests
+      setErrors((e) => ({ ...e, payment: localErrors.payment }));
+    }
 
     try {
   // Normalize selected method with methods list (fallbacks preserved)
@@ -360,6 +387,11 @@ function CheckoutPage() {
 
                 <label htmlFor="country">Country</label>
                 <input id="country" name="country" value={shipping.country} onChange={handleChange} />
+                {errors.address && (
+                  <div role="alert" style={{ color: 'crimson', marginTop: 6 }} data-testid="shipping-error">
+                    {errors.address}
+                  </div>
+                )}
               </div>
             </fieldset>
 
@@ -416,6 +448,11 @@ function CheckoutPage() {
                   <input name="cardNumber" placeholder="Card Number" />
                   <input name="expiry" placeholder="MM/YY" />
                   <input name="cvv" placeholder="CVV" />
+                </div>
+              )}
+              {errors.payment && (
+                <div role="alert" style={{ color: 'crimson', marginTop: 6 }} data-testid="payment-error">
+                  {errors.payment}
                 </div>
               )}
             </fieldset>

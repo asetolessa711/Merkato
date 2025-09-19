@@ -121,6 +121,22 @@ describe('Mega Menu Routes @mega-menu', () => {
       expect(res.body).toHaveProperty('updatedAt');
       expect(res.body).toHaveProperty('version');
     });
+
+    test('reflects last saved menu on subsequent GET', async () => {
+      const payload = { menu: [ { title: 'Persist Cat', links: [ { label: 'Persist', to: '/x' } ] } ] };
+      const putRes = await request(app)
+        .put('/api/admin/mega-menu')
+        .set('Authorization', adminToken)
+        .send(payload);
+      expect(putRes.statusCode).toBe(200);
+
+      const res = await request(app)
+        .get('/api/admin/mega-menu')
+        .set('Authorization', adminToken);
+      expect(res.statusCode).toBe(200);
+      const titles = (res.body.menu || []).map(m => m.title);
+      expect(titles).toContain('Persist Cat');
+    });
   });
 
   describe('Admin: PUT /api/admin/mega-menu', () => {
@@ -182,6 +198,47 @@ describe('Mega Menu Routes @mega-menu', () => {
         expect(res.body.entries[0]).toHaveProperty('action');
         expect(res.body.entries[0].action).toBe('save');
       }
+    });
+
+    test('returns empty entries when audit log file is missing', async () => {
+      try { await fsp.unlink(AUDIT_FILE); } catch (_) {}
+      const res = await request(app)
+        .get('/api/admin/mega-menu/audit')
+        .set('Authorization', adminToken);
+      expect(res.statusCode).toBe(200);
+      expect(res.body).toHaveProperty('entries');
+      expect(Array.isArray(res.body.entries)).toBe(true);
+      expect(res.body.entries.length).toBe(0);
+    });
+
+    test('caps limit at 200 when requesting a large number', async () => {
+      // Create a few entries
+      for (let i = 0; i < 3; i++) {
+        // eslint-disable-next-line no-await-in-loop
+        await request(app)
+          .put('/api/admin/mega-menu')
+          .set('Authorization', adminToken)
+          .send({ menu: [ { title: `Cap ${i}`, links: [] } ] });
+      }
+      const res = await request(app)
+        .get('/api/admin/mega-menu/audit?limit=5000')
+        .set('Authorization', adminToken);
+      expect(res.statusCode).toBe(200);
+      expect(Array.isArray(res.body.entries)).toBe(true);
+      expect(res.body.entries.length).toBeLessThanOrEqual(200);
+    });
+  });
+
+  describe('Public: GET /api/categories (invalid JSON fallback)', () => {
+    test('returns default wrapped menu when the file contains invalid JSON', async () => {
+      await fsp.mkdir(DATA_DIR, { recursive: true });
+      await fsp.writeFile(DATA_FILE, '{not-json}', 'utf8');
+      const res = await request(app).get('/api/categories');
+      expect(res.statusCode).toBe(200);
+      expect(res.body).toHaveProperty('menu');
+      expect(Array.isArray(res.body.menu)).toBe(true);
+      expect(res.body).toHaveProperty('updatedAt');
+      expect(res.body).toHaveProperty('version');
     });
   });
 });

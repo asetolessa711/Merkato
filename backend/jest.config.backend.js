@@ -28,6 +28,12 @@ module.exports = (() => {
       // Exclude development-only Codex prototype files from coverage
       "/utils/codexAgent.js",
       "/routes/codex.js",
+      // Exclude dev/test seed and experimental routes from coverage
+      "/routes/devSeedRoute.js",
+      "/routes/testSeedOrdersRoute.js",
+      "/routes/testSeedInvoicesRoute.js",
+      "/routes/testEmailRoute.js",
+      "/routes/telebirrRoutes.js",
     ],
     testPathIgnorePatterns: [
       "/node_modules/",
@@ -46,11 +52,11 @@ module.exports = (() => {
   if (!disableThreshold) {
     cfg.coverageThreshold = {
       global: {
-        // Baseline thresholds aligned with current coverage; raise incrementally over time
-        branches: 27,
-        functions: 33,
-        lines: 44,
-        statements: 42,
+        // Thresholds aligned with current stable coverage; raise incrementally
+        branches: 60,
+        functions: 75,
+        lines: 76,
+        statements: 75,
       },
     };
   }

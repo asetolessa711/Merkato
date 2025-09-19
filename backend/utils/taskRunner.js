@@ -122,6 +122,20 @@ if (process.env.JEST_WORKER_ID || process.env.NODE_ENV === 'test') {
     args: ['-e', 'let i=0; const t=setInterval(()=>{ console.log(`tick ${++i}`); }, 200); process.on("SIGTERM", ()=>{ clearInterval(t); console.log("received SIGTERM"); }); setTimeout(()=>{}, 1<<30);'],
     cwd: repoRoot,
   };
+  TASK_DEFS['test:flaky-once'] = {
+    label: 'Test Flaky Once (retry to success)',
+    cmd: process.execPath,
+    args: ['-e', 'const a=process.env.ATTEMPT; console.log("attempt", a); process.exit(a === "1" ? 1 : 0);'],
+    cwd: repoRoot,
+    retry: { maxRetries: 2, backoffMs: 25 },
+  };
+  TASK_DEFS['test:always-fail'] = {
+    label: 'Test Always Fail (retry exhausted)',
+    cmd: process.execPath,
+    args: ['-e', 'console.log("will fail"); process.exit(1);'],
+    cwd: repoRoot,
+    retry: { maxRetries: 2, backoffMs: 25 },
+  };
 }
 
 function toId() {
@@ -177,20 +191,75 @@ function runTask(task) {
   task.startTime = new Date().toISOString();
   emitSSE(task.id, { type: 'status', status: task.status });
 
-  const spawnOpts = {
-    cwd: def.cwd,
-    env: { ...process.env, ...(def.env || {}) },
-    shell: !!def.shell, // allow composite commands when needed
-  };
+  const retryCfg = def.retry || null;
+  task.attempt = 0;
+  let backoffTimer = null;
+  let child = null;
 
-  const child = spawn(def.cmd, def.args || [], spawnOpts);
-  task.pid = child.pid;
+  function spawnOnce() {
+    if (task.status === STATUS.CANCELED) return;
+    task.attempt += 1;
+    const env = { ...process.env, ...(def.env || {}), ATTEMPT: String(task.attempt) };
+    const spawnOpts = {
+      cwd: def.cwd,
+      env,
+      shell: !!def.shell,
+    };
+    child = spawn(def.cmd, def.args || [], spawnOpts);
+    task.pid = child.pid;
+
+    const onData = (buf) => {
+      const text = buf.toString();
+      text.split(/\r?\n/).forEach((line) => appendLog(task, line));
+    };
+    child.stdout?.on('data', onData);
+    child.stderr?.on('data', onData);
+
+    child.on('error', (err) => {
+      appendLog(task, `ERROR: ${err.message}`);
+    });
+
+    child.on('close', (code) => {
+      appendLog(task, `\nProcess exited with code ${code}`);
+      if (task.status === STATUS.CANCELED) {
+        task.endTime = new Date().toISOString();
+        emitSSE(task.id, { type: 'status', status: task.status, code });
+        return;
+      }
+      if (code === 0) {
+        task.status = STATUS.SUCCESS;
+        task.endTime = new Date().toISOString();
+        emitSSE(task.id, { type: 'status', status: task.status, code });
+      } else if (retryCfg && task.attempt < (retryCfg.maxRetries || 0)) {
+        const delay = typeof retryCfg.backoffMs === 'function'
+          ? retryCfg.backoffMs(task.attempt)
+          : (retryCfg.backoffMs || 100);
+        appendLog(task, `Retrying in ${delay}ms (attempt ${task.attempt + 1} of ${retryCfg.maxRetries})`);
+        backoffTimer = setTimeout(() => {
+          backoffTimer = null;
+          spawnOnce();
+        }, delay);
+      } else {
+        task.status = STATUS.ERROR;
+        task.endTime = new Date().toISOString();
+        task.error = `Exited with code ${code}`;
+        emitSSE(task.id, { type: 'status', status: task.status, code });
+      }
+    });
+  }
+
   task.kill = () => {
     try {
-      if (process.platform === 'win32') {
-        spawn('taskkill', ['/PID', String(child.pid), '/T', '/F']);
-      } else {
-        child.kill('SIGTERM');
+      if (backoffTimer) {
+        clearTimeout(backoffTimer);
+        backoffTimer = null;
+      }
+      if (child && child.pid) {
+        if (process.platform === 'win32') {
+          spawn('taskkill', ['/PID', String(child.pid), '/T', '/F']);
+        } else {
+          child.kill('SIGTERM');
+        }
       }
       task.status = STATUS.CANCELED;
       task.endTime = new Date().toISOString();
@@ -200,31 +269,7 @@ function runTask(task) {
     }
   };
 
-  const onData = (buf) => {
-    const text = buf.toString();
-    text.split(/\r?\n/).forEach((line) => appendLog(task, line));
-  };
-
-  child.stdout?.on('data', onData);
-  child.stderr?.on('data', onData);
-
-  child.on('error', (err) => {
-    task.status = STATUS.ERROR;
-    task.error = err.message;
-    task.endTime = new Date().toISOString();
-    appendLog(task, `ERROR: ${err.message}`);
-    emitSSE(task.id, { type: 'status', status: task.status, error: task.error });
-  });
-
-  child.on('close', (code) => {
-    if (task.status !== STATUS.CANCELED) {
-      task.status = code === 0 ? STATUS.SUCCESS : STATUS.ERROR;
-    }
-    task.endTime = new Date().toISOString();
-    appendLog(task, `\nProcess exited with code ${code}`);
-    emitSSE(task.id, { type: 'status', status: task.status, code });
-  });
-
+  spawnOnce();
   return task.id;
 }
 

@@ -32,7 +32,8 @@ describe('Customer Checkout and Payment', () => {
     cy.get('input[name="country"]').clear().type('US');
 
     // Prefer COD for deterministic, no-external dependency checkout
-    cy.intercept('GET', '/api/payments/methods', (req) => {
+  // Use wildcard to match absolute or relative backend URL
+  cy.intercept('GET', '**/payments/methods*', (req) => {
       req.reply({
         body: {
           methods: [
@@ -53,7 +54,8 @@ describe('Customer Checkout and Payment', () => {
     });
 
     // Intercept order creation to avoid backend timing flakiness and assert payload shape
-    cy.intercept('POST', '/api/orders', (req) => {
+  // Match absolute or relative order creation URL
+  cy.intercept('POST', '**/orders', (req) => {
       // If app posts paymentMethod, ensure COD is respected
       if (req.body && req.body.paymentMethod) {
         expect(req.body.paymentMethod).to.match(/cod|cash/i);

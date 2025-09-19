@@ -13,6 +13,7 @@ describe('♿ A11y smoke', () => {
     it(`has no critical violations on ${path} @a11y`, () => {
       cy.visit(path);
       // Scope to body; include only serious/critical for speed
+      if (cy.injectAxe) cy.injectAxe();
       cy.checkA11y ? cy.checkA11y('body', {
         runOnly: {
           type: 'tag',

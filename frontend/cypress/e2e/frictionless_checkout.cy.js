@@ -5,12 +5,12 @@ describe('Frictionless Checkout Flow', () => {
 
   it('allows a buyer without auth to checkout and see confirmation (COD path) @smoke', () => {
     // 1. Add a product to the cart
-    cy.intercept('GET', '/api/products*').as('products');
+  cy.intercept('GET', '**/api/products*').as('products');
     // Register intercepts EARLY so we don't miss initial requests on checkout mount
-    cy.intercept('GET', '**/api/payments/methods*', (req) => {
+    cy.intercept('GET', '**/payments/methods*', (req) => {
       req.reply({ body: { methods: [ { code: 'cod', displayName: 'Cash on Delivery' } ] } });
     }).as('methods');
-    cy.intercept('POST', '**/api/orders', (req) => {
+    cy.intercept('POST', '**/orders', (req) => {
       req.reply({ statusCode: 200, body: { success: true, message: 'Order placed', order: { _id: 'o-guest-1' } } });
     }).as('createOrder');
 
