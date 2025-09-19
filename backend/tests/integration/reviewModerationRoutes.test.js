@@ -5,7 +5,7 @@ const mongoose = require('mongoose');
 let adminToken;
 let userToken;
 
-describe('Review Moderation Routes', () => {
+describe('Review Moderation Routes @admin', () => {
   let productId;
   let reviewId;
 

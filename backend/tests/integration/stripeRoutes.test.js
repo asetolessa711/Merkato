@@ -20,7 +20,7 @@ beforeAll(async () => {
   userToken = `Bearer ${userLogin.token}`;
 });
 
-describe('Stripe Routes', () => {
+describe('Stripe Routes @payments', () => {
   // ----------------------------
   // Checkout Session
   // ----------------------------
@@ -123,6 +123,33 @@ describe('Stripe Routes', () => {
         .send(payload);
 
       expect([200, 400, 401, 403, 404, 501]).toContain(res.statusCode);
+    });
+
+    test('should treat duplicate event IDs as idempotent (no double processing)', async () => {
+      const eventId = `evt_dup_${Date.now()}`;
+      const { payload, signature } = mockStripeEvent({
+        id: eventId,
+        type: 'payment_intent.succeeded',
+        data: { object: { id: 'pi_test_dup', amount: 1000, currency: 'usd' } }
+      });
+
+      const first = await request(app)
+        .post('/api/stripe/webhook')
+        .set('Stripe-Signature', signature)
+        .set('Content-Type', 'application/json')
+        .send(payload);
+      expect([200, 400, 401, 403, 404]).toContain(first.statusCode);
+
+      const second = await request(app)
+        .post('/api/stripe/webhook')
+        .set('Stripe-Signature', signature)
+        .set('Content-Type', 'application/json')
+        .send(payload);
+      expect([200, 400, 401, 403, 404]).toContain(second.statusCode);
+      if (second.statusCode === 200) {
+        expect(second.body).toHaveProperty('duplicate', true);
+        expect(second.body).toHaveProperty('id', eventId);
+      }
     });
 
     test('should return 400 for unsupported event type', async () => {

@@ -61,6 +61,7 @@ const invoiceRoutes = require("./routes/invoiceRoutes");
 const featureFlagRoutes = require("./routes/featureFlagRoutes");
 const behaviorRoutes = require("./routes/behaviorRoutes");
 const megaMenuRoutes = require("./routes/megaMenuRoutes");
+const themeRoutes = require("./routes/themeRoutes");
 const devSeedRoute = require("./routes/devSeedRoute");
 const testSeedOrdersRoute = require("./routes/testSeedOrdersRoute");
 const testSeedInvoicesRoute = require("./routes/testSeedInvoicesRoute");
@@ -109,8 +110,8 @@ app.use("/api/admin/reviews", reviewModerationRoutes);
 app.use("/api/customer", customerRoutes);
 app.use("/api/email", emailInvoiceRoutes);
 app.use("/api/feature-flags", featureFlagRoutes);
-// Mega Menu (public categories + admin management)
 app.use("/api", megaMenuRoutes);
+app.use("/api", themeRoutes);
 
 app.use("/api/invoices", invoiceRoutes);
 if (bundlesRoutes) app.use("/api/products", bundlesRoutes);
@@ -143,51 +144,86 @@ app.get("/api", (req, res) => {
   res.status(200).json({ message: "Backend is running ✅" });
 });
 
-// 🚦 MongoDB Connection (always connect, only start HTTP server if not in test mode)
-if (!process.env.MONGO_URI) {
-  console.error("❌ MONGO_URI is not set in environment variables.");
-  process.exit(1);
+// �️ MongoDB Connection (resilient with fallback)
+function getMongoUriCandidates() {
+  const primary = process.env.MONGO_URI || "";
+  const fallback = process.env.MONGO_URI_FALLBACK || ""; // e.g., a direct mongodb://host:port/db
+  const local = process.env.MONGO_URI_LOCAL || process.env.MONGO_LOCAL || ""; // local dev convenience
+  const list = [];
+  if (primary) list.push(primary);
+  if (fallback && fallback !== primary) list.push(fallback);
+  if (local && local !== primary && local !== fallback) list.push(local);
+  return list;
 }
 
-if (!IS_TEST)
-  console.log(
-    `🔍 [server.js] About to connect to MongoDB: ${process.env.MONGO_URI}`,
-  );
-mongoose
-  .connect(process.env.MONGO_URI, {
+async function connectMongoWithFallback() {
+  const uris = getMongoUriCandidates();
+  if (!uris.length) {
+    console.error("❌ No MongoDB URI provided. Set MONGO_URI (and optionally MONGO_URI_FALLBACK or MONGO_URI_LOCAL).");
+    process.exit(1);
+  }
+
+  const opts = {
+    // modern driver uses these by default; include explicit timeouts
     useNewUrlParser: true,
     useUnifiedTopology: true,
-  })
-  .then(() => {
-    tlog("✅ [server.js] MongoDB connected");
+    serverSelectionTimeoutMS: Number(process.env.MONGO_SERVER_SELECTION_TIMEOUT_MS || 10000),
+    connectTimeoutMS: Number(process.env.MONGO_CONNECT_TIMEOUT_MS || 10000),
+    socketTimeoutMS: Number(process.env.MONGO_SOCKET_TIMEOUT_MS || 45000),
+  };
 
-    if (require.main === module) {
-      const PORT = process.env.PORT || 5000;
-      const server = app.listen(PORT, () => {
-        console.log(`🚀 Server running on port ${PORT}`);
-      });
-
-      // 🔄 Graceful Shutdown Handling
-      const shutdown = () => {
-        console.log("\n🛑 Shutting down server...");
-        if (server) {
-          server.close(() => {
-            mongoose.connection.close(false, () => {
-              console.log("🛑 MongoDB connection closed.");
-              process.exit(0);
-            });
-          });
-        }
-      };
-
-      process.on("SIGINT", shutdown);
-      process.on("SIGTERM", shutdown);
+  let lastErr;
+  for (const uri of uris) {
+    if (!IS_TEST) console.log(`🔍 [server.js] About to connect to MongoDB: ${uri}`);
+    try {
+      await mongoose.connect(uri, opts);
+      tlog("✅ [server.js] MongoDB connected");
+      return; // success
+    } catch (err) {
+      lastErr = err;
+      const msg = (err && err.message) || String(err);
+      terror("❌ [server.js] MongoDB connection failed:", msg);
+      // Special guidance for SRV/DNS issues common on Windows/corporate networks
+      if (/querySrv\s+ESERVFAIL|ENOTFOUND|EAI_AGAIN/i.test(msg) && /mongodb\+srv/i.test(uri)) {
+        console.error(
+          "ℹ️ SRV lookup failed. Consider: (1) switching DNS (e.g., 8.8.8.8), (2) using a direct mongodb:// URI in MONGO_URI_FALLBACK, or (3) running a local MongoDB and setting MONGO_URI_LOCAL."
+        );
+      }
     }
-  })
-  .catch((err) => {
-    terror("❌ [server.js] MongoDB connection failed:", err.message);
-    process.exit(1);
-  });
+  }
+
+  // If all candidates failed, exit (nodemon will retry). In CI, fail fast.
+  if (lastErr) {
+    process.exitCode = 1;
+    // Give a moment for logs to flush before exit in some environments
+    setTimeout(() => process.exit(1), 100);
+  }
+}
+
+connectMongoWithFallback().then(() => {
+  if (require.main === module) {
+    const PORT = process.env.PORT || 5000;
+    const server = app.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+    });
+
+    // 🔄 Graceful Shutdown Handling
+    const shutdown = () => {
+      console.log("\n🛑 Shutting down server...");
+      if (server) {
+        server.close(() => {
+          mongoose.connection.close(false, () => {
+            console.log("🛑 MongoDB connection closed.");
+            process.exit(0);
+          });
+        });
+      }
+    };
+
+    process.on("SIGINT", shutdown);
+    process.on("SIGTERM", shutdown);
+  }
+});
 
 // Attach mongoose connection logs only outside of test environment to avoid noisy post-run logs
 if (process.env.NODE_ENV !== "test") {

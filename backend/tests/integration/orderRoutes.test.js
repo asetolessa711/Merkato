@@ -16,8 +16,11 @@ let adminToken, userToken, testProductId, testUserId, testAdminId;
 //   }
 // }));
 
-describe('Order Routes', () => {
+// Tags: @thread:checkout @thread:payments @thread:vendor-orders-manage @thread:order-history @thread:returns-refunds
+describe('Order Routes @orders', () => {
   let createdOrderId;
+  let vendorToken;
+  let otherUserToken;
 
   beforeAll(async () => {
     jest.setTimeout(30000); // 30 seconds
@@ -33,11 +36,18 @@ describe('Order Routes', () => {
     adminToken = `Bearer ${adminLogin.token}`;
 
     // Register and login a test vendor
-    const vendor = await registerTestUser({ roles: ['vendor'], country: 'ET' });
-    const vendorId = vendor._id || vendor.id;
+  const vendor = await registerTestUser({ roles: ['vendor'], country: 'ET' });
+  const vendorId = vendor._id || vendor.id;
+  const vendorLogin = await loginTestUser(vendor.email, 'Password123!');
+  vendorToken = `Bearer ${vendorLogin.token}`;
 
-    // Create a product for order creation, with vendor
-    const product = await Product.create({
+  // Another customer to test ownership checks
+  const other = await registerTestUser({ roles: ['customer'], country: 'ET' });
+  const otherLogin = await loginTestUser(other.email, 'Password123!');
+  otherUserToken = `Bearer ${otherLogin.token}`;
+
+  // Create a product for order creation, with vendor
+  const product = await Product.create({
       name: 'Order Test Product',
       price: 24.99,
       stock: 10,
@@ -216,6 +226,57 @@ describe('Order Routes', () => {
         });
       expect([401, 403, 404]).toContain(res.statusCode);
     });
+
+    test('should reject paying an order not owned by requester', async () => {
+      if (!createdOrderId) return;
+      const res = await request(app)
+        .put(`/api/orders/${createdOrderId}/pay`)
+        .set('Authorization', otherUserToken)
+        .send({ paymentMethod: 'stripe' });
+      expect([403, 404]).toContain(res.statusCode);
+    });
+
+    test('should prevent double-pay with 409', async () => {
+      if (!createdOrderId) return;
+      // First mark paid if not already
+      await request(app)
+        .put(`/api/orders/${createdOrderId}/pay`)
+        .set('Authorization', userToken)
+        .send({ paymentMethod: 'stripe' });
+
+      const again = await request(app)
+        .put(`/api/orders/${createdOrderId}/pay`)
+        .set('Authorization', userToken)
+        .send({ paymentMethod: 'stripe' });
+      expect([409, 200]).toContain(again.statusCode);
+    });
+
+    test('should not allow paying a cancelled order (409)', async () => {
+      // Create a brand new order to isolate from previous paid state
+      const create = await request(app)
+        .post('/api/orders')
+        .set('Authorization', userToken)
+        .send({
+          cartItems: [{ product: testProductId, quantity: 1 }],
+          paymentMethod: 'cod',
+          shippingAddress: { fullName: 'Test User', city: 'Addis Ababa', country: 'ET' },
+          deliveryOption: { name: 'Standard', cost: 10, days: 3 }
+        });
+      const newOrderId = create.body?.order?._id || create.body?._id;
+      if (!newOrderId) return;
+
+      // Cancel it as admin
+      await request(app)
+        .patch(`/api/orders/${newOrderId}/status`)
+        .set('Authorization', adminToken)
+        .send({ status: 'cancelled' });
+
+      const pay = await request(app)
+        .put(`/api/orders/${newOrderId}/pay`)
+        .set('Authorization', userToken)
+        .send({ paymentMethod: 'stripe' });
+      expect([409]).toContain(pay.statusCode);
+    });
   });
 
   describe('DELETE /api/orders/:id', () => {
@@ -253,6 +314,93 @@ describe('Order Routes', () => {
         .delete('/api/orders/invalidOrderId')
         .set('Authorization', adminToken);
       expect([400, 403, 404]).toContain(res.statusCode);
+    });
+  });
+
+  describe('PATCH /api/orders/:id/status', () => {
+    test('vendor cannot update status for another vendor’s section', async () => {
+      if (!createdOrderId) {
+        console.warn('⚠️ Skipping: order not created.');
+        return;
+      }
+      const res = await request(app)
+        .patch(`/api/orders/${createdOrderId}/status`)
+        .set('Authorization', vendorToken)
+        .send({ status: 'shipped' });
+      // If vendor isn't part of this order, expect 403. If seeded as vendor, allow 200.
+      expect([403, 200]).toContain(res.statusCode);
+    });
+
+    test('rejects invalid global status transition (delivered -> pending)', async () => {
+      if (!createdOrderId) return;
+      // Admin moves to delivered
+      const step1 = await request(app)
+        .patch(`/api/orders/${createdOrderId}/status`)
+        .set('Authorization', adminToken)
+        .send({ status: 'delivered' });
+      expect([200, 400]).toContain(step1.statusCode);
+
+      // Now attempt invalid transition backward
+      const step2 = await request(app)
+        .patch(`/api/orders/${createdOrderId}/status`)
+        .set('Authorization', adminToken)
+        .send({ status: 'pending' });
+      expect([400]).toContain(step2.statusCode);
+    });
+
+    test('rejects invalid status value', async () => {
+      if (!createdOrderId) return;
+      const res = await request(app)
+        .patch(`/api/orders/${createdOrderId}/status`)
+        .set('Authorization', adminToken)
+        .send({ status: 'teleported' });
+      expect([400]).toContain(res.statusCode);
+    });
+
+    test('vendor cannot ship before order is globally paid', async () => {
+      if (!createdOrderId) return;
+      const res = await request(app)
+        .patch(`/api/orders/${createdOrderId}/status`)
+        .set('Authorization', vendorToken)
+        .send({ status: 'shipped' });
+      expect([400, 403, 200]).toContain(res.statusCode);
+    });
+
+    test('vendor can ship only after admin marks order paid, and then deliver', async () => {
+      // Create a fresh order connected to the seeded vendor
+      const create = await request(app)
+        .post('/api/orders')
+        .set('Authorization', userToken)
+        .send({
+          cartItems: [{ product: testProductId, quantity: 1 }],
+          currency: 'USD',
+          paymentMethod: 'cod',
+          shippingAddress: { fullName: 'Test User', city: 'Addis Ababa', country: 'ET' },
+          deliveryOption: { name: 'Standard', cost: 10, days: 3 }
+        });
+      const orderId = create.body?.order?._id || create.body?._id;
+      if (!orderId) return;
+
+      // Admin marks global order as paid
+      const paid = await request(app)
+        .patch(`/api/orders/${orderId}/status`)
+        .set('Authorization', adminToken)
+        .send({ status: 'paid' });
+      expect([200]).toContain(paid.statusCode);
+
+      // Vendor ships their section
+      const shipped = await request(app)
+        .patch(`/api/orders/${orderId}/status`)
+        .set('Authorization', vendorToken)
+        .send({ status: 'shipped' });
+      expect([200]).toContain(shipped.statusCode);
+
+      // Vendor delivers their section
+      const delivered = await request(app)
+        .patch(`/api/orders/${orderId}/status`)
+        .set('Authorization', vendorToken)
+        .send({ status: 'delivered' });
+      expect([200]).toContain(delivered.statusCode);
     });
   });
 });

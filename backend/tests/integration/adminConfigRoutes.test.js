@@ -6,7 +6,7 @@ const app = require('../../server');
 const { registerTestUser, loginTestUser } = require('../utils/testUserUtils');
 const PromoCode = require('../../models/PromoCode');
 
-describe('Admin Config & Promo Routes', () => {
+describe('Admin Config & Promo Routes @admin', () => {
   let adminToken;
 
   beforeAll(async () => {

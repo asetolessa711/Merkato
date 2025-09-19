@@ -60,9 +60,7 @@ describe('utils/codexAgent.runCodex', () => {
 
   test('invokes OpenAI and returns content when client is available (mocked)', async () => {
     process.env.OPENAI_API_KEY = 'test-key';
-    process.env.OPENAI_MOCK = '1';
     const { runCodex } = await loadCodexAgent({ withMockOpenAI: true });
-    const out = await runCodex('generate something');
-    expect(['mocked-response', '[codex-disabled]']).toContain(out);
+    await expect(runCodex('generate something')).resolves.toBe('mocked-response');
   });
 });

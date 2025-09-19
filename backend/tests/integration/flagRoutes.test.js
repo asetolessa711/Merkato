@@ -6,7 +6,7 @@ const mongoose = require('mongoose');
 let userToken;
 let adminToken;
 
-describe('Flag Routes', () => {
+describe('Flag Routes @admin', () => {
 
   let testProductId;
   let testReviewId;

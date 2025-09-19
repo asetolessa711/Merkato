@@ -1,5 +1,4 @@
 # Merkato Marketplace
-
 Welcome to Merkato — a modern B2B and D2C commerce platform.
 
 ![Backend Tests](https://github.com/asetolessa711/merkato/actions/workflows/backend-tests.yml/badge.svg)
@@ -7,6 +6,25 @@ Welcome to Merkato — a modern B2B and D2C commerce platform.
 ![E2E Cypress Tests](https://github.com/asetolessa711/merkato/actions/workflows/e2e-cypress.yml/badge.svg)
 
 ---
+
+---
+
+### Accessibility (A11y)
+
+- Local a11y smoke (critical-only):
+  - From `frontend/` on Windows PowerShell: `npm run e2e:a11y`
+  - Artifacts are written to `frontend/cypress-results/a11y-summary.json` and timestamped under `frontend/test-report/`.
+- PR Gate: A dedicated workflow runs the a11y smoke on pull requests to `main`/`dev` and fails on critical violations.
+
+### PR E2E Smoke Gate: Label-driven scope
+
+- Default scope includes `@smoke` and excludes `@flaky`.
+- You can tune scope by adding PR labels (case-insensitive):
+  - Include tags: `e2e-include-admin`, `e2e-include-vendor`, `e2e-include-buyer`, `e2e-include-a11y`, `e2e-include-negative`
+  - Include flows: `e2e-include-checkout`, `e2e-include-auth`, `e2e-include-refund`
+  - Exclude: `e2e-exclude-slow`, `e2e-exclude-payments`
+- The workflow comments back the computed tag include/exclude for traceability.
+- Artifacts include a scope report at `frontend/scope-report.{json,txt}` and under `frontend/test-report/<timestamp>/`.
 
 ## Features
 
@@ -120,6 +138,40 @@ We support two primary modes:
 - Build-and-Serve (beta/CI): the E2E runner starts backend, seeds DB, builds the frontend, serves static assets, and runs Cypress (deterministic).
 
 Optional: set `E2E_EPHEMERAL=true` so each run uses a unique Mongo database (clean state, no cross-run drift). See `docs/E2E_STRATEGY.md` for details and commands.
+
+### Frontend Coverage (Tiered Strategy)
+
+Current Tier: 2 (unit + key integration flows: ShopPage, VendorOrders, CustomerOrders)
+
+Latest Metrics (post Tier 2 uplift):
+
+| Metric | Percent |
+|--------|---------|
+| Lines  | ~34%    |
+| Statements | ~33% |
+| Functions | ~27% |
+| Branches | ~27%  |
+
+Enforced Minimum Thresholds (ratchet baseline):
+
+| Metric | Min |
+|--------|-----|
+| Lines  | 32  |
+| Statements | 32 |
+| Functions | 25 |
+| Branches | 25 |
+
+Thresholds sit a few points below current to avoid churn; they will be raised incrementally as Tier 3 expands scenario and edge coverage.
+
+Run locally:
+
+```bash
+cd frontend
+npm run test:coverage
+npm run coverage:summary
+```
+
+Compact JSON summary: `frontend/coverage/coverage-compact.json` (used in PR comments workflow).
 
 ### E2E Commands
 Common workflows are documented in `docs/E2E_COMMANDS.md`:

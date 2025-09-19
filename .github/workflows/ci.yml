@@ -24,8 +24,6 @@ jobs:
       - name: Install backend deps
         working-directory: backend
         run: npm ci
-      - name: Ensure backend dir exists
-        run: mkdir -p backend
       - name: Create backend/.env.test
         run: |
           echo "NODE_ENV=test" >> backend/.env.test

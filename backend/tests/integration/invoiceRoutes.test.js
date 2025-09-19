@@ -65,7 +65,7 @@ beforeAll(() => {
     );
   }
 });
-describe('Invoice Routes', () => {
+describe('Invoice Routes @orders @checkout', () => {
   let testOrderId;
   let lazyOrderId;
   let productId;

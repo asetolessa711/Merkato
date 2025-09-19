@@ -7,6 +7,9 @@ const User = require('../models/User');
 const Order = require('../models/Order');
 const { protect, authorize } = require('../middleware/authMiddleware');
 const { Parser } = require('json2csv');
+const VendorLead = require('../models/VendorLead');
+const InviteToken = require('../models/InviteToken');
+const jwt = require('jsonwebtoken');
 
 // Create a new product (vendor only)
 router.post('/products', protect, authorize('vendor'), async (req, res) => {
@@ -248,3 +251,90 @@ router.put('/profile', protect, authorize('vendor'), async (req, res) => {
 });
 
 module.exports = router;
+// --- Onboarding: Public Vendor Registration ---
+router.post('/register', async (req, res) => {
+  try {
+    const {
+      business_name,
+      contact_person,
+      phone,
+      email,
+      region,
+      city,
+      product_category,
+      storefront_description,
+      referral_source,
+      consent
+    } = req.body || {};
+
+    if (!business_name || business_name.length > 100) return res.status(422).json({ code: 'INVALID_BUSINESS_NAME' });
+    if (!contact_person || contact_person.length < 2) return res.status(422).json({ code: 'INVALID_CONTACT_PERSON' });
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(422).json({ code: 'INVALID_EMAIL' });
+    if (!phone || !/^\+?[1-9]\d{7,14}$/.test(phone)) return res.status(422).json({ code: 'INVALID_PHONE' });
+    if (!region || !city) return res.status(422).json({ code: 'INVALID_REGION_CITY' });
+    if (!product_category) return res.status(422).json({ code: 'INVALID_PRODUCT_CATEGORY' });
+    if (storefront_description && storefront_description.length > 500) return res.status(422).json({ code: 'INVALID_STOREFRONT_DESC' });
+
+    // Enforce uniqueness on email/phone among leads
+    const dup = await VendorLead.findOne({ $or: [{ email }, { phone }] });
+    if (dup) return res.status(409).json({ code: 'DUPLICATE_LEAD' });
+
+    const lead = await VendorLead.create({
+      business_name,
+      contact_person,
+      phone,
+      email,
+      region,
+      city,
+      product_category,
+      storefront_description,
+      referral_source,
+      consent: !!consent,
+      status: 'new'
+    });
+
+    res.status(201).json({ message: 'Lead submitted', id: lead._id });
+  } catch (err) {
+    res.status(400).json({ code: 'INVALID_INPUT', error: err.message });
+  }
+});
+
+// Verify onboarding invite token and mark as used (single-use)
+router.post('/invite/verify', async (req, res) => {
+  try {
+    const { token } = req.body;
+    if (!token) return res.status(400).json({ code: 'MISSING_TOKEN' });
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (e) {
+      return res.status(401).json({ code: 'INVALID_TOKEN' });
+    }
+    const record = await InviteToken.findOne({ token });
+    if (!record) return res.status(404).json({ code: 'TOKEN_NOT_FOUND' });
+    if (record.used) return res.status(410).json({ code: 'TOKEN_ALREADY_USED' });
+    if (record.expiresAt && record.expiresAt < new Date()) return res.status(410).json({ code: 'TOKEN_EXPIRED' });
+
+    record.used = true;
+    record.usedAt = new Date();
+    await record.save();
+
+    res.json({ ok: true, leadId: decoded.leadId, email: decoded.email });
+  } catch (err) {
+    res.status(500).json({ code: 'VERIFY_FAILED' });
+  }
+});
+
+// Mark onboarding complete for current vendor (requires MFA confirmation in future)
+router.post('/onboarding/complete', protect, authorize('vendor'), async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    user.vendorStatus = 'onboarded';
+    await user.save();
+    res.json({ message: 'Onboarding marked complete' });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to complete onboarding' });
+  }
+});
+

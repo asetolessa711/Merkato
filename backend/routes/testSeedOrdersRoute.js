@@ -9,18 +9,20 @@ const { ensureAuth } = require('../middleware/authMiddleware');
 // POST /api/test/seed-orders — simple order seeding for E2E
 router.post('/test/seed-orders', ensureAuth, async (req, res) => {
   try {
-    const customer = await User.findOne({ roles: { $in: ['customer'] } });
-    // Prefer currently authenticated vendor for deterministic vendor views
+    // Prefer canonical users seeded by /api/dev/seed to keep flows deterministic
+    // Fall back to role-based lookup if not present yet
+    const customer = (await User.findOne({ email: 'customer@test.com' })) || (await User.findOne({ roles: { $in: ['customer'] } }));
+    // Prefer currently authenticated vendor for deterministic vendor views; else canonical vendor@test.com; else any vendor
     let vendor = null;
     const roles = req.user?.roles || [];
-    if (roles.includes('vendor')) {
+    if (Array.isArray(roles) && roles.includes('vendor')) {
       vendor = req.user;
     } else {
-      vendor = await User.findOne({ roles: { $in: ['vendor'] } });
+      vendor = (await User.findOne({ email: 'vendor@test.com' })) || (await User.findOne({ roles: { $in: ['vendor'] } }));
     }
     const product = await Product.findOne();
 
-    if (!customer || !vendor || !product) {
+  if (!customer || !vendor || !product) {
       return res.status(400).json({ message: 'Missing customer, vendor, or product to seed orders.' });
     }
 
@@ -52,8 +54,9 @@ router.post('/test/seed-orders', ensureAuth, async (req, res) => {
         total: product.price * 1.15 + 5,
         totalAfterDiscount: product.price * 1.15 + 5,
         discount: 0,
-        currency: 'USD',
-        paymentMethod: 'card',
+  currency: 'USD',
+  // Use a valid enum value from Order.paymentMethod to avoid validation errors
+  paymentMethod: 'cod',
         shippingAddress: { fullName: 'Seeded User', city: 'Testville', country: 'US' },
         deliveryOption: { name: 'Standard', cost: 5, days: 3 },
         status: 'pending',
@@ -61,9 +64,18 @@ router.post('/test/seed-orders', ensureAuth, async (req, res) => {
       }
     ];
 
-    await Order.create(orders);
+    const created = await Order.create(orders);
+    const createdOrder = Array.isArray(created) ? created[0] : created;
+    try {
+      console.log('[seed-orders] Created order:', createdOrder && createdOrder._id ? createdOrder._id.toString() : createdOrder);
+    } catch (_) {}
 
-    res.status(200).json({ message: 'Test orders seeded successfully.' });
+    res.status(200).json({
+      message: 'Test orders seeded successfully.',
+      orderId: createdOrder && createdOrder._id ? createdOrder._id.toString() : null,
+      buyerId: customer && customer._id ? customer._id.toString() : null,
+      vendorId: vendor && vendor._id ? vendor._id.toString() : null
+    });
   } catch (err) {
     res.status(500).json({ error: err.message || 'Failed to seed test orders.' });
   }

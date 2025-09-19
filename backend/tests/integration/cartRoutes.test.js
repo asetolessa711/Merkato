@@ -2,7 +2,7 @@ const request = require('supertest');
 const app = require('../../server');
 const mongoose = require('mongoose');
 
-describe('Cart Routes', () => {
+describe('Cart Routes @checkout', () => {
   let userToken;
   let adminToken;
   let productId;

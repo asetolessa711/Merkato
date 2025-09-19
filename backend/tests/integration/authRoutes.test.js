@@ -5,7 +5,7 @@ const app = require('../../server');
 const testEmail = process.env.TEST_USER_EMAIL || 'testuser@example.com';
 const testPassword = process.env.TEST_USER_PASSWORD || 'TestPass123!';
 
-describe('Auth Routes', () => {
+describe('Auth Routes @auth', () => {
   let userToken;
 
   describe('POST /api/auth/register', () => {
