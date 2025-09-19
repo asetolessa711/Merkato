@@ -2,11 +2,12 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Outlet } from 'react-router-dom';
-import NavbarUniversal from '../components/NavbarUniversal';
+import MerkatoNavbar from '../components/MerkatoNavbar';
 
 import styles from './PublicLayout.module.css';
 import MerkatoFooter from '../components/MerkatoFooter';
 import { Link } from 'react-router-dom';
+import { ROUTES } from '../config/routes';
 
 function PublicLayout({ user, onLogout, lang, onLangChange }) {
   const isCypress = typeof window !== 'undefined' && window.Cypress;
@@ -20,13 +21,13 @@ function PublicLayout({ user, onLogout, lang, onLangChange }) {
           display: 'flex', gap: 8, alignItems: 'center'
         }}>
           <span style={{ fontSize: 12, opacity: 0.75 }}>Test Shortcuts:</span>
-          <Link data-testid="e2e-register-link" to="/register" style={{ color: '#ffd700', textDecoration: 'underline' }}>Register</Link>
-          <Link data-testid="e2e-login-link" to="/login" style={{ color: '#ffd700', textDecoration: 'underline' }}>Login</Link>
+          <Link data-testid="e2e-register-link" to={ROUTES.register} style={{ color: '#ffd700', textDecoration: 'underline' }}>Register</Link>
+          <Link data-testid="e2e-login-link" to={ROUTES.login} style={{ color: '#ffd700', textDecoration: 'underline' }}>Login</Link>
         </div>
       )}
 
-  {/* Universal Navbar */}
-  <NavbarUniversal />
+  {/* Merkato Navbar */}
+  <MerkatoNavbar role="public" />
 
       {/* Main content area for pages like HomePage, Shop, etc. */}
       <main className={styles.container}>

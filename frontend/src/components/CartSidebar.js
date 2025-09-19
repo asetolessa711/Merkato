@@ -1,6 +1,7 @@
 
 
 import React from 'react';
+import ROUTES from '../config/routes';
 
 const CartSidebar = ({ isOpen, items = [], onClose, onRemove }) => {
   if (!isOpen) return null;
@@ -58,7 +59,7 @@ const CartSidebar = ({ isOpen, items = [], onClose, onRemove }) => {
         data-testid="checkout-btn"
         style={{ marginTop: 12, width: '100%' }}
         disabled={!items.length}
-        onClick={() => { window.location.href = '/checkout'; }}
+  onClick={() => { window.location.href = ROUTES.checkout; }}
       >
         Checkout
       </button>

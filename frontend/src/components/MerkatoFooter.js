@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { ROUTES } from '../config/routes';
 import PropTypes from 'prop-types';
 import styles from './MerkatoFooter.module.css';
 
@@ -19,9 +20,9 @@ const MerkatoFooter = ({ showSocials = true }) => (
       </div>
       {/* Center: About, Terms, Privacy */}
       <div className={styles.footerLinks}>
-        <Link to="/about">About</Link>
-        <Link to="/terms">Terms</Link>
-        <Link to="/privacy">Privacy</Link>
+  <Link to={ROUTES.about}>About</Link>
+  <Link to={ROUTES.terms}>Terms</Link>
+  <Link to={ROUTES.privacy}>Privacy</Link>
       </div>
       {/* Right: Socials and Contact */}
       {showSocials && (
@@ -41,7 +42,7 @@ const MerkatoFooter = ({ showSocials = true }) => (
           <a href="https://tiktok.com/@merkato" target="_blank" rel="noopener noreferrer" aria-label="TikTok">
             TikTok
           </a>
-          <Link to="/contact">Contact</Link>
+          <Link to={ROUTES.contact}>Contact</Link>
         </div>
       )}
     </div>

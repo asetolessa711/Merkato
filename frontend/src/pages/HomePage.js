@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { ROUTES } from '../config/routes';
 import axios from 'axios';
 import './HomePage.css';
 import ProductCard from '../components/ProductCard'; // ✅ Already imported
@@ -29,8 +30,8 @@ function HomePage() {
   }, []);
 
   // Hero CTA handlers
-  const goShop = () => navigate('/shop');
-  const goCategories = () => navigate('/shop?view=categories');
+  const goShop = () => navigate(ROUTES.shop);
+  const goCategories = () => navigate(`${ROUTES.shop}?view=categories`);
 
   const handleAddToCart = (product) => {
     try {
@@ -100,7 +101,7 @@ function HomePage() {
           <section className="flash-deals">
             <div className="section-header">
               <h2>🔥 Flash Deals</h2>
-              <Link to="/shop?sort=deals" className="view-all-link">View All</Link>
+              <Link to={`${ROUTES.shop}?sort=deals`} className="view-all-link">View All</Link>
             </div>
             <div className="products-row-scroll">
               {flashDeals.length > 0 ? (

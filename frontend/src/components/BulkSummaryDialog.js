@@ -23,7 +23,7 @@ function BulkSummaryDialog({ summary, onClose, onRetryStatus, onRetryEmail }) {
         <strong>Action:</strong> {summary.actionType || 'Bulk'}
       </div>
       <div style={{ marginBottom: 16 }}>
-        <strong>Success:</strong> {summary.success?.length || 0}
+        <strong>Success:</strong> <span data-testid="bulk-summary-success-count">{summary.success?.length || 0}</span>
         {summary.success?.length > 0 && (
           <ul style={{ color: 'green' }}>
             {summary.success.map((id, i) => (

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import MEGA_MENU from '../config/megaMenu';
-import MegaMenuPromoPanel from './MegaMenuPromoPanel';
+import MegaMenuPromoPanel from './MegaMenuPromoPanel.js';
 import MicroBanner from './MicroBanner';
 
 // Merkato-style, accessible, test-stable navbar
@@ -501,7 +501,7 @@ function MerkatoNavbar({ role: roleProp = 'public', showCategories: showCategori
             {/* Hamburger (mobile) */}
             <button className="mobile-only" aria-label="Open menu" onClick={() => setShowDrawer(true)} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.35)', color: '#fff', padding: '6px 10px', borderRadius: 6, cursor: 'pointer' }}>☰</button>
             <Link to="/" style={{ color: 'var(--color-warning)', fontWeight: 800, fontSize: 22, textDecoration: 'none', fontFamily: 'inherit' }}>Merkato</Link>
-            {!isVendor && location.pathname !== '/' && (
+            {!isVendor && (
               <Link to="/" data-navlink style={{ color: 'rgba(255,255,255,0.85)', textDecoration: 'none', fontSize: 14, fontFamily: 'inherit', ...isActive('/') }}>Home</Link>
             )}
             {/* Desktop Shop by Category trigger (not in vendor mode) */}

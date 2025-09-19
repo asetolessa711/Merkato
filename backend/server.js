@@ -60,6 +60,7 @@ const emailInvoiceRoutes = require("./routes/emailInvoiceRoutes");
 const invoiceRoutes = require("./routes/invoiceRoutes");
 const featureFlagRoutes = require("./routes/featureFlagRoutes");
 const behaviorRoutes = require("./routes/behaviorRoutes");
+const megaMenuRoutes = require("./routes/megaMenuRoutes");
 const devSeedRoute = require("./routes/devSeedRoute");
 const testSeedOrdersRoute = require("./routes/testSeedOrdersRoute");
 const testSeedInvoicesRoute = require("./routes/testSeedInvoicesRoute");
@@ -108,6 +109,8 @@ app.use("/api/admin/reviews", reviewModerationRoutes);
 app.use("/api/customer", customerRoutes);
 app.use("/api/email", emailInvoiceRoutes);
 app.use("/api/feature-flags", featureFlagRoutes);
+// Mega Menu (public categories + admin management)
+app.use("/api", megaMenuRoutes);
 
 app.use("/api/invoices", invoiceRoutes);
 if (bundlesRoutes) app.use("/api/products", bundlesRoutes);

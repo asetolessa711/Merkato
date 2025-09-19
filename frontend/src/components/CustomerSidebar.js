@@ -1,17 +1,18 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { ROUTES } from '../config/routes';
 import PropTypes from 'prop-types';
 
 function CustomerSidebar({ user }) {
   const location = useLocation();
 
   const menuItems = [
-    { path: '/account', icon: '👤', label: 'Dashboard' },
-    { path: '/account/orders', icon: '📦', label: 'My Orders' },
-    { path: '/favorites', icon: '❤️', label: 'Wishlist' },
-    { path: '/account/inbox', icon: '💬', label: 'Messages' },
-  { path: '/account/addresses', icon: '📍', label: 'Addresses' },
-    { path: '/account/guide', icon: '📖', label: 'Guide' }
+    { path: ROUTES.account, icon: '👤', label: 'Dashboard' },
+    { path: ROUTES.accountOrders, icon: '📦', label: 'My Orders' },
+    { path: ROUTES.favorites, icon: '❤️', label: 'Wishlist' },
+    { path: ROUTES.accountInbox, icon: '💬', label: 'Messages' },
+    { path: ROUTES.accountAddresses, icon: '📍', label: 'Addresses' },
+    { path: ROUTES.accountGuide, icon: '📖', label: 'Guide' }
   ];
 
   return (
@@ -66,7 +67,7 @@ function CustomerSidebar({ user }) {
 
       {/* Support CTA */}
       <Link
-        to="/support"
+        to={ROUTES.support}
         style={{
           display: 'flex',
           alignItems: 'center',

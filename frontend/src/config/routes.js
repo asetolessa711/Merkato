@@ -15,11 +15,13 @@ export const ROUTES = {
   register: '/register',
   forgotPassword: '/forgot-password',
   resetPassword: '/reset-password',
+  editProfile: '/edit-profile',
   upload: '/upload',
   cart: '/cart',
   checkout: '/checkout',
   checkoutSuccess: '/checkout-success',
   orderConfirmation: '/order-confirmation',
+  productDetail: '/product/:id',
   support: '/support',
   codex: '/codex',
   tasks: '/tasks',
@@ -39,7 +41,6 @@ export const ROUTES = {
   vendorOnboarding: '/vendor/onboarding',
   vendorOrders: '/vendor/orders',
   vendorProducts: '/vendor/products',
-  vendorUpload: '/vendor/upload',
   vendorProductUpload: '/vendor/products/upload',
   vendorGuide: '/vendor/guide',
   vendorAnalytics: '/vendor/analytics',
@@ -64,6 +65,8 @@ export const ROUTES = {
   adminDeliveryOptions: '/admin/delivery-options',
   adminInvoicesReport: '/admin/invoices/report',
   adminInvoices: '/admin/invoices',
+  adminMegaMenu: '/admin/mega-menu',
+  vendorStore: '/vendor/:id',
 };
 
 export const buildRoute = {

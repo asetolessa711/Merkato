@@ -192,7 +192,7 @@ function Hero({
         </div>
       </div>
       {/* Section-level arrows for full-bleed banner to ensure visibility */}
-      {hasSlides && safeSlides.length > 1 && (
+      {hasSlides && safeSlides.length > 1 && fullBleed && (
         <>
           <button
             aria-label="Previous"
