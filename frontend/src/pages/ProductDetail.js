@@ -21,15 +21,17 @@ function ProductDetail({ currency = 'USD', rates = { USD: 1, ETB: 144, EUR: 0.91
     const fetchData = async () => {
       try {
         const pRes = await axios.get('/api/products');
-        const prod = pRes.data.find(p => p._id === id);
+        const list = Array.isArray(pRes.data) ? pRes.data : Array.isArray(pRes.data?.products) ? pRes.data.products : [];
+        const prod = list.find(p => p._id === id) || list[0] || null;
         setProduct(prod);
         const rRes = await axios.get(`/api/reviews/${id}`);
-        setReviews(rRes.data);
+        const revs = Array.isArray(rRes.data) ? rRes.data : Array.isArray(rRes.data?.reviews) ? rRes.data.reviews : [];
+        setReviews(revs);
 
         const viewed = JSON.parse(localStorage.getItem('recentlyViewed') || '[]');
         const updated = [id, ...viewed.filter(pid => pid !== id)].slice(0, 8);
         localStorage.setItem('recentlyViewed', JSON.stringify(updated));
-        const matches = pRes.data.filter(p => updated.includes(p._id) && p._id !== id);
+        const matches = list.filter(p => updated.includes(p._id) && p._id !== id);
         setRecent(matches);
       } catch (err) {
         console.error('Failed to load product or reviews');

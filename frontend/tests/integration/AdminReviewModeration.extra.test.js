@@ -5,8 +5,7 @@ import axios from 'axios';
 import { MessageProvider } from '../../src/context/MessageContext';
 import ReviewModeration from '../../src/components/admin/ReviewModeration';
 
-jest.mock('axios');
-axios.patch = jest.fn();
+// Use global axios manual mock; per-test overrides below
 
 describe('AdminReviewModeration (Extra Scenarios)', () => {
   beforeEach(() => {

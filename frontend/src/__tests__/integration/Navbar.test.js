@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import Navbar from '../../components/Navbar';
+import NavbarUniversal from '../../components/NavbarUniversal.jsx';
 import { MemoryRouter } from 'react-router-dom';
 import '@testing-library/jest-dom';
 
@@ -22,7 +22,7 @@ describe('\ud83d\udd17 Navbar Component', () => {
   test('renders navigation links for public user', () => {
     render(
       <MemoryRouter>
-        <Navbar />
+  <NavbarUniversal />
       </MemoryRouter>
     );
     expect(screen.getByRole('navigation')).toBeInTheDocument();
@@ -35,7 +35,7 @@ describe('\ud83d\udd17 Navbar Component', () => {
     mockAuth('customer');
     render(
       <MemoryRouter>
-        <Navbar />
+  <NavbarUniversal />
       </MemoryRouter>
     );
     expect(screen.getByRole('link', { name: /dashboard/i })).toBeInTheDocument();
@@ -46,7 +46,7 @@ describe('\ud83d\udd17 Navbar Component', () => {
     mockAuth('vendor');
     render(
       <MemoryRouter>
-        <Navbar />
+  <NavbarUniversal />
       </MemoryRouter>
     );
     // ...rest of the test code...

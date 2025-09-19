@@ -6,8 +6,6 @@ import { MessageContext } from '../../context/MessageContext';
 import VendorInvoices from '../VendorInvoices';
 import { MemoryRouter } from 'react-router-dom';
 
-jest.mock('axios');
-
 const mockShowMessage = jest.fn();
 const renderWithContext = (ui) =>
   render(

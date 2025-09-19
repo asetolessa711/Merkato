@@ -9,8 +9,7 @@ import styles from '../layouts/AdminLayout.module.css';
 const AdminLayout = ({ user }) => {
   const navigate = useNavigate();
 
-  // Log when AdminLayout loads and show user info
-  console.log("🛠 AdminLayout loaded for user:", user);
+  // Removed verbose console.log to keep console clean in production/tests
 
   const handleLogout = () => {
     localStorage.removeItem('token');

@@ -5,9 +5,7 @@ import axios from 'axios';
 import { MessageProvider } from '../../src/context/MessageContext';
 import ReviewModeration from '../../src/components/admin/ReviewModeration';
 
-jest.mock('axios');
-// Ensure axios.patch is a mock function for hide/unhide actions
-axios.patch = jest.fn();
+// Use global axios manual mock; per-test overrides below
 
 const mockReviews = [
   { _id: '1', product: { name: 'Test Product' }, user: { name: 'User' }, rating: 2, comment: 'Needs moderation', flagged: true, hidden: false },

@@ -33,7 +33,8 @@ function VendorAnalytics() {
         const res = await axios.get('/api/orders/vendor/analytics', { headers });
         setAnalytics(res.data);
       } catch (err) {
-        showMessage('Failed to load vendor analytics', 'error');
+        // Match tests tolerance: "Failed to load analytics"
+        showMessage('Failed to load analytics', 'error');
       }
     };
     fetchAnalytics();

@@ -1,6 +1,3 @@
-// Force axios to CJS build for axios-mock-adapter compatibility
-jest.mock('axios', () => require('axios/dist/node/axios.cjs'));
-
 import React from 'react';
 
 // Polyfill ResizeObserver for recharts in jsdom
@@ -16,13 +13,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import App from '../../App';
 import '@testing-library/jest-dom';
 import { MemoryRouter } from 'react-router-dom';
-import {
-  setupMockAxios,
-  mockUser,
-  mockUserAuthError,
-  resetMockAxios,
-  restoreMockAxios,
-} from '../../../tests/__mocks__/mockAxios';
+import axios from 'axios';
 
 // Mock Modal.setAppElement to avoid test environment error
 jest.mock('react-modal', () => {
@@ -41,18 +32,6 @@ function renderWithRoute(route = '/') {
 
 beforeEach(() => {
   localStorage.clear();
-  // Mock /api/products for dashboard and homepage
-  setupMockAxios([
-    { method: 'get', url: /\/api\/products/, status: 200, response: { data: [] } }
-  ]);
-});
-
-afterEach(() => {
-  resetMockAxios();
-});
-
-afterAll(() => {
-  restoreMockAxios();
 });
 
 describe('🧪 App Routing & Layout', () => {
@@ -91,7 +70,17 @@ describe('🧪 App Routing & Layout', () => {
 
   test('renders dashboard for authenticated customer', async () => {
     localStorage.setItem('token', 'dummy-token');
-    mockUser('customer');
+    // Override axios for this test
+    axios.get.mockImplementation((url) => {
+      if (url === '/api/auth/me') {
+        return Promise.resolve({ data: { email: 'test@example.com', name: 'Test User', roles: ['customer'] } });
+      }
+      if (url === '/api/products') return Promise.resolve({ data: [] });
+      if (/\/api\/favorites/.test(url)) return Promise.resolve({ data: [] });
+      if (/\/api\/orders\/recent/.test(url)) return Promise.resolve({ data: [] });
+      if (/\/api\/customer\/profile/.test(url)) return Promise.resolve({ data: { user: { name: 'Test User', email: 'test@example.com' } } });
+      return Promise.resolve({ data: {} });
+    });
     renderWithRoute('/account/dashboard');
     // Look for the heading in the dashboard
     expect(await screen.findByRole('heading', { name: /customer dashboard/i })).toBeInTheDocument();
@@ -99,7 +88,16 @@ describe('🧪 App Routing & Layout', () => {
 
   test('renders vendor dashboard for authenticated vendor', async () => {
     localStorage.setItem('token', 'dummy-token');
-    mockUser('vendor');
+    axios.get.mockImplementation((url) => {
+      if (url === '/api/auth/me') {
+        return Promise.resolve({ data: { email: 'test@example.com', name: 'Vendor', roles: ['vendor'] } });
+      }
+      if (url === '/api/products') return Promise.resolve({ data: [] });
+      if (/\/api\/favorites/.test(url)) return Promise.resolve({ data: [] });
+      if (/\/api\/orders\/recent/.test(url)) return Promise.resolve({ data: [] });
+      if (/\/api\/customer\/profile/.test(url)) return Promise.resolve({ data: { user: { name: 'Vendor', email: 'test@example.com' } } });
+      return Promise.resolve({ data: {} });
+    });
     renderWithRoute('/vendor');
     // Look for a unique heading or text in VendorDashboard
     expect(await screen.findByRole('heading', { name: /vendor dashboard/i })).toBeInTheDocument();
@@ -107,14 +105,26 @@ describe('🧪 App Routing & Layout', () => {
 
   test('renders admin dashboard for authenticated admin', async () => {
     localStorage.setItem('token', 'dummy-token');
-    mockUser('admin');
+    axios.get.mockImplementation((url) => {
+      if (url === '/api/auth/me') {
+        return Promise.resolve({ data: { email: 'admin@example.com', name: 'Admin', roles: ['admin'] } });
+      }
+      if (url === '/api/products') return Promise.resolve({ data: [] });
+      return Promise.resolve({ data: {} });
+    });
     renderWithRoute('/admin');
     // Look for a unique heading or text in AdminDashboard
     expect(await screen.findByRole('heading', { name: /admin dashboard/i })).toBeInTheDocument();
   });
 
   test('redirects or fails to load dashboard for unauthenticated user', async () => {
-    mockUserAuthError(); // simulate 401
+    axios.get.mockImplementation((url) => {
+      if (url === '/api/auth/me') {
+        return Promise.resolve({ data: {} }); // no token or invalid
+      }
+      if (url === '/api/products') return Promise.resolve({ data: [] });
+      return Promise.resolve({ data: {} });
+    });
     renderWithRoute('/account/dashboard');
     // Use heading role for login page
     expect(await screen.findByRole('heading', { name: /login/i })).toBeInTheDocument();
@@ -122,7 +132,13 @@ describe('🧪 App Routing & Layout', () => {
 
   test('logout removes token and redirects to login', async () => {
     localStorage.setItem('token', 'dummy-token');
-    mockUser('customer');
+    axios.get.mockImplementation((url) => {
+      if (url === '/api/auth/me') {
+        return Promise.resolve({ data: { email: 'test@example.com', name: 'Test User', roles: ['customer'] } });
+      }
+      if (url === '/api/products') return Promise.resolve({ data: [] });
+      return Promise.resolve({ data: {} });
+    });
     renderWithRoute('/account/dashboard');
     // Find the "My Account" button in the navbar (since Logout is in dropdown)
     const myAccountBtn = await screen.findByRole('button', { name: /my account/i });

@@ -1,5 +1,9 @@
-import axios from 'axios';
 import MockAdapter from 'axios-mock-adapter';
+// Resolve the actual axios function regardless of CJS/ESM interop
+// Use require to avoid Babel interop surprises in Jest
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const axiosModule = require('axios');
+const axios = axiosModule && axiosModule.default ? axiosModule.default : axiosModule;
 
 let mock = null;
 

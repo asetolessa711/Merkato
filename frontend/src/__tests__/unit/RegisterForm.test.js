@@ -7,8 +7,6 @@ import '@testing-library/jest-dom';
 import axios from 'axios';
 import { MessageProvider } from '../../context/MessageContext';
 
-jest.mock('axios');
-
 describe('\ud83d\udcdd Register Form Validation', () => {
   beforeEach(() => {
     jest.clearAllMocks();

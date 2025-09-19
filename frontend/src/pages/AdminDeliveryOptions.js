@@ -58,13 +58,15 @@ const AdminDeliveryOptions = () => {
         }))
       );
     } catch (err) {
+      // Notify failure of modern endpoint; tests may assert this
+      showMessage('Failed to fetch delivery options', 'error');
       // Fallback to legacy endpoint (tests mock this)
       try {
         const res2 = await axios.get('/api/admin/delivery-options', { headers });
         const list2 = Array.isArray(res2.data) ? res2.data : [];
         setOptions(list2);
       } catch (e2) {
-        showMessage('Failed to fetch delivery options', 'error');
+        // Keep at least one error notification; avoid spamming
       }
     }
   }

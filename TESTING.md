@@ -10,6 +10,14 @@
   npm test
   ```
 
+#### Axios mocking standard (important)
+- We use a single global manual mock for `axios` activated in `frontend/src/setupTests.js` and implemented at `frontend/src/__mocks__/axios.js`.
+- All axios methods (get/post/put/patch/delete/create) always return Promises. This contract is locked by `frontend/src/__tests__/unit/__meta__/axios.global-mock.contract.test.js`.
+- In tests, do not write `jest.mock('axios')`. Instead, import axios normally and set per-test overrides, for example:
+  - `axios.get.mockResolvedValueOnce({ data: [] })`
+  - `axios.post.mockRejectedValueOnce(new Error('fail'))`
+- This avoids ESM/CJS interop issues and keeps behavior consistent across all suites.
+
 ### End-to-End Tests (Cypress)
 - Open Cypress UI:
   ```sh

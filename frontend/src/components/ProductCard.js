@@ -72,9 +72,13 @@ ProductCard.propTypes = {
       isPromoted: PropTypes.bool,
       badgeText: PropTypes.string,
     }),
-    vendor: PropTypes.shape({
-      name: PropTypes.string,
-    }),
+    // Accept either a vendor object { name } or a simple string vendor name (legacy fixtures)
+    vendor: PropTypes.oneOfType([
+      PropTypes.shape({
+        name: PropTypes.string,
+      }),
+      PropTypes.string,
+    ]),
     stock: PropTypes.number,
   }).isRequired,
   type: PropTypes.oneOf(['standard', 'deal']),

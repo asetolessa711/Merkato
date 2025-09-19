@@ -5,11 +5,7 @@ import '@testing-library/jest-dom';
 import { MemoryRouter } from 'react-router-dom';
 import axios from 'axios';
 
-jest.mock('axios', () => ({
-  __esModule: true,
-  default: { post: jest.fn() },
-  post: jest.fn(),
-}));
+// Use global axios manual mock activated in setupTests.js
 
 describe('\ud83d\udd10 Login Page', () => {
   beforeEach(() => {

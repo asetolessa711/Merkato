@@ -14,9 +14,8 @@ jest.mock('react-router-dom', () => {
 import RegisterPage from '../RegisterPage';
 import { MessageProvider } from '../../context/MessageContext';
 
-// Mock axios
-jest.mock('axios');
-const axios = require('axios');
+// Use global axios manual mock
+import axios from 'axios';
 
 describe('RegisterPage (customer)', () => {
   beforeEach(() => {

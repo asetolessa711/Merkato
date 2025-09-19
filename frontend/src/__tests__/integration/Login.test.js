@@ -5,18 +5,7 @@ import '@testing-library/jest-dom';
 import { MemoryRouter } from 'react-router-dom';
 import axios from 'axios';
 
-// Manual mock for axios using CJS build to avoid ESM import error
-jest.mock('axios', () => {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const actualAxios = require('axios/dist/node/axios.cjs');
-  return {
-    ...actualAxios,
-    post: jest.fn(),
-    create: () => actualAxios,
-  };
-});
-
-jest.mock('axios');
+// Use global axios manual mock activated in setupTests.js
 
 describe('\ud83d\udd10 Login Page', () => {
   beforeEach(() => {

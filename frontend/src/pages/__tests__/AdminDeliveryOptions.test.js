@@ -5,7 +5,6 @@ import axios from 'axios';
 import { MessageContext } from '../../context/MessageContext';
 import AdminDeliveryOptions from '../../pages/AdminDeliveryOptions';
 
-jest.mock('axios');
 
 const mockShowMessage = jest.fn();
 const renderWithContext = (ui) =>

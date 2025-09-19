@@ -13,17 +13,7 @@ jest.mock('@stripe/stripe-js', () => {
     default: loadStripe,
   };
 });
-jest.mock('axios', () => {
-  const mockAxios = {
-    create: jest.fn(() => mockAxios),
-    get: jest.fn(() => Promise.resolve({ data: {} })),
-    post: jest.fn(() => Promise.resolve({ data: {} })),
-    put: jest.fn(() => Promise.resolve({ data: {} })),
-    delete: jest.fn(() => Promise.resolve({ data: {} })),
-  };
-  mockAxios.default = mockAxios;
-  return mockAxios;
-});
+// Use global axios manual mock
 
 import React from 'react';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';

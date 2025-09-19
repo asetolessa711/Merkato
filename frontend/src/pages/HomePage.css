@@ -30,17 +30,7 @@
   background: linear-gradient(135deg, #f6f9fc 0%, #e0e7ff 40%, #ffe0f7 100%);
   /* Remove overflow: hidden to allow vertical scroll */
 }
-.homepage-navbar-fixed {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  background: #fff;
-  z-index: 102;
-  border-bottom: 1px solid #eaeaea;
-  text-align: center;
-  padding: 12px 0 0 0;
-}
+/* Legacy .homepage-navbar-fixed removed to avoid double navbars */
 .homepage-heading {
   font-size: 2rem;
   font-weight: bold;
@@ -97,102 +87,7 @@
     max-width: 90vw;
   }
 }
-.top-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 16px;
-  background: #001F54;      /* Use your navy blue here */
-  border-bottom: 1px solid #eaeaea;
-  font-family: 'Segoe UI', sans-serif;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  z-index: 100;
-  min-height: 42px;
-  box-sizing: border-box;
-}
-.dropdown-menu, .dropdown-content {
-  position: absolute;
-  z-index: 9999; /* Must be higher than .category-bar-fixed (which is 101) */
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-}
-/* .home-page margin-top: 200px removed; see later definition for correct value */
-
-.top-left, .top-center, .top-right {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.top-center {
-  flex: 1;
-  justify-content: center;
-}
-.logo.colored-logo span {
-  font-size: 1.7rem;
-  font-weight: bold;
-  letter-spacing: 1px;
-}
-.search-label {
-  font-weight: 600;
-  margin-right: 8px;
-  color: #00b894;
-  font-size: 1rem;
-}
-.search-bar {
-  width: 260px;
-  padding: 6px 12px;
-  border-radius: 5px;
-  border: 1.5px solid #00b894;
-  background: #eafaf3;
-  font-size: 1rem;
-  color: #0984e3;
-}
-.btn-link {
-  font-size: 1rem;
-  color: #007bff;
-  font-weight: 600;
-  padding: 4px 8px;
-  text-decoration: none;
-}
-.btn-link:hover {
-  text-decoration: underline;
-  color: #00b894;
-}
-.colored-select {
-  color: #e17055;
-  border: 1.5px solid #fdcb6e;
-  background: #fffbe6;
-  font-weight: 600;
-  margin-left: 8px;
-  padding: 4px 10px;
-  border-radius: 4px;
-  font-size: 1rem;
-}
-.colored-select:focus {
-  outline: 2px solid #fdcb6e;
-}
-
-/* Responsive: stack only on mobile */
-@media (max-width: 600px) {
-  .top-bar {
-    flex-direction: column;
-    align-items: stretch;
-    min-height: unset;
-    padding: 4px 2px;
-    gap: 4px;
-  }
-  .top-left, .top-center, .top-right {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 4px;
-  }
-  .search-bar {
-    width: 100%;
-  }
-}
+/* Legacy top-bar and dropdown styles removed to prevent duplicate navbars */
 
 /* === CTA Buttons === */
 .btn-primary {
@@ -238,7 +133,7 @@
   background-color: #fff; /* or #f8f8f8, #fdf6f0, etc. */
   padding: 18px 6px;
   text-align: center;
-  margin-top: 42px; /* match your top-bar min-height */
+  /* Removed margin-top coupled to legacy top-bar */
 }
 .hero h2 {
   font-size: 1.1rem;          /* Smaller headline */
@@ -538,46 +433,7 @@
   text-decoration: underline;
 }
 
-/* === Final Top Bar Polish === */
-.top-bar-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 36px;
-  max-width: 1440px;
-  margin: 0 auto;
-  flex-wrap: wrap;
-  color: white;
-}
-
-.search-label {
-  color: white;
-}
-
-.btn-link,
-.dropdown-toggle {
-  color: white;
-}
-
-.btn-link:hover,
-.dropdown-toggle:hover {
-  color: #00b894;
-}
-
-.colored-select {
-  background: #fffbe6;
-  border: 1px solid #fdcb6e;
-  font-weight: bold;
-  padding: 5px 10px;
-  border-radius: 5px;
-  color: #e17055;
-}
-
-.logo.colored-logo span {
-  color: #f1c40f;
-  font-weight: bold;
-  font-size: 1.6rem;
-}
+/* Legacy .top-bar-content styles removed */
 
 /* === Responsive Tweaks === */
 @media (max-width: 900px) {
@@ -592,16 +448,6 @@
   }
 }
 @media (max-width: 600px) {
-  .top-bar {
-    flex-direction: column;
-    align-items: flex-start;
-    min-height: unset;
-    padding: 4px 2px;
-    gap: 4px;
-  }
-  .top-left, .top-center, .top-right {
-    gap: 4px;
-  }
   .products-grid {
     grid-template-columns: 1fr;
   }
@@ -636,105 +482,7 @@
     gap: 4px;
   }
 }
-/* === Fixed Category Bar Under Top Bar === */
-.category-bar-fixed {
-  position: fixed;
-  top: 56px; /* Adjust this to match your .top-bar height (e.g. 56px or 60px or 72px) */
-  left: 0;
-  width: 100vw;
-  z-index: 101;
-  background: #001F54;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-}
-
-.category-bar-outer {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  background: #001F54;
-  min-height: 56px;
-  padding: 0 12px;
-  box-sizing: border-box;
-}
-
-.category-bar {
-  display: flex;
-  overflow-x: auto;
-  gap: 8px;
-  padding: 8px 8px 8px 8px;
-  margin-bottom: 0;
-  scroll-snap-type: x mandatory;
-  scroll-behavior: smooth;
-  outline: none;
-}
-.category-btn {
-  background: #fff;
-  border: none;
-  border-radius: 24px;
-  padding: 7px 18px;
-  font-weight: 600;
-  font-size: 0.60rem; /* smaller font */
-  color: #001F54;
-  cursor: pointer;
-  transition: background 0.18s, color 0.18s, box-shadow 0.18s;
-  white-space: nowrap;
-  margin: 0 0;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-}
-
-.category-btn.active,
-.category-btn:hover {
-  background: #0984e3;
-  color: #fff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.10);
-}
-
-.scroll-btn {
-  background: #fff;
-  border: none;
-  border-radius: 50%;
-  width: 38px;
-  height: 38px;
-  font-size: 1.5rem;
-  color: #001F54;
-  margin: 0 8px;
-  cursor: pointer;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-  z-index: 2;
-  transition: background 0.18s;
-}
-
-.scroll-btn:hover {
-  background: #eaf6ff;
-}
-
-/* Add enough margin-top to .home-page for both bars */
-.home-page {
-  margin-top: 120px; /* top bar height + category bar height (adjust as needed) */
-  padding: 0 24px;
-  max-width: 1440px;
-  margin-left: auto;
-  margin-right: auto;
-  box-sizing: border-box;
-}
-
-/* Responsive: stack category bar vertically on mobile if needed */
-@media (max-width: 700px) {
-  .category-bar {
-    gap: 16px;
-    padding: 8px 0;
-  }
-  .category-btn {
-    padding: 8px 16px;
-    font-size: 1rem;
-  }
-  .category-bar-fixed {
-    top: 70px; /* Adjust if your top-bar is taller on mobile */
-  }
-  .home-page {
-    margin-top: 120px;
-  }
-}
+/* Legacy category bar styles removed */
 .product-vendor {
   font-size: 0.85rem;
   color: #555;

@@ -5,8 +5,7 @@ import '@testing-library/jest-dom';
 import ShopPage from '../../pages/ShopPage';
 import { MemoryRouter } from 'react-router-dom';
 
-jest.mock('axios');
-const axios = require('axios');
+import axios from 'axios';
 
 // Silence alert popups during tests
 beforeAll(() => {
