@@ -106,6 +106,24 @@ const TASK_DEFS = {
   },
 };
 
+// Lightweight tasks for test environment to avoid spawning heavy processes during Jest runs
+if (process.env.JEST_WORKER_ID || process.env.NODE_ENV === 'test') {
+  TASK_DEFS['test:noop'] = {
+    label: 'Test Noop (fast exit)',
+    // Use current Node to execute a short inline script
+    cmd: process.execPath,
+    args: ['-e', 'console.log("NOOP start"); setTimeout(()=>{ console.log("NOOP done"); }, 20);'],
+    cwd: repoRoot,
+  };
+  TASK_DEFS['test:hold'] = {
+    label: 'Test Hold (cancelable)',
+    // Keep process alive printing ticks so we can cancel it deterministically
+    cmd: process.execPath,
+    args: ['-e', 'let i=0; const t=setInterval(()=>{ console.log(`tick ${++i}`); }, 200); process.on("SIGTERM", ()=>{ clearInterval(t); console.log("received SIGTERM"); }); setTimeout(()=>{}, 1<<30);'],
+    cwd: repoRoot,
+  };
+}
+
 function toId() {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
