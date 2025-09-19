@@ -24,25 +24,25 @@ const VendorSidebar = () => {
     <div className="vendor-sidebar">
       <h3 className="sidebar-header">🧑‍💼 Vendor Menu</h3>
       <nav className="sidebar-nav">
-        <NavLink to="/vendor" style={linkStyle} activeStyle={activeStyle} end>
+        <NavLink to="/vendor" end style={({ isActive }) => (isActive ? activeStyle : linkStyle)}>
           🏬 Store Overview
         </NavLink>
-        <NavLink to="/vendor/products" style={linkStyle} activeStyle={activeStyle}>
+        <NavLink to="/vendor/products" style={({ isActive }) => (isActive ? activeStyle : linkStyle)}>
           📦 Product Management
         </NavLink>
-        <NavLink to="/vendor/orders" style={linkStyle} activeStyle={activeStyle}>
+        <NavLink to="/vendor/orders" style={({ isActive }) => (isActive ? activeStyle : linkStyle)}>
           📬 Order Management
         </NavLink>
-        <NavLink to="/vendor/marketing" style={linkStyle} activeStyle={activeStyle}>
+        <NavLink to="/vendor/marketing" style={({ isActive }) => (isActive ? activeStyle : linkStyle)}>
           📣 Marketing Tools
         </NavLink>
-        <NavLink to="/vendor/customers" style={linkStyle} activeStyle={activeStyle}>
+        <NavLink to="/vendor/customers" style={({ isActive }) => (isActive ? activeStyle : linkStyle)}>
           💬 Customer Interaction
         </NavLink>
-        <NavLink to="/vendor/finance" style={linkStyle} activeStyle={activeStyle}>
+        <NavLink to="/vendor/finance" style={({ isActive }) => (isActive ? activeStyle : linkStyle)}>
           💰 Finance & Payouts
         </NavLink>
-        <NavLink to="/vendor/store" style={linkStyle} activeStyle={activeStyle}>
+        <NavLink to="/vendor/store" style={({ isActive }) => (isActive ? activeStyle : linkStyle)}>
           🛒 Vendor Store
         </NavLink>
       </nav>

@@ -29,18 +29,18 @@ const AdminSidebar = () => {
     }}>
       <h3 style={{ marginBottom: '20px' }}>🛠 Admin Panel</h3>
 
-      <NavLink to="/admin/dashboard" style={linkStyle} activeStyle={activeStyle} end>📊 Dashboard</NavLink>
-      <NavLink to="/admin/vendors" style={linkStyle} activeStyle={activeStyle}>🏪 Vendors</NavLink>
-      <NavLink to="/admin/orders" style={linkStyle} activeStyle={activeStyle}>🛍 Orders</NavLink>
-      <NavLink to="/admin/invoices/report" style={linkStyle} activeStyle={activeStyle}>📄 Invoices</NavLink>
-      <NavLink to="/admin/expenses" style={linkStyle} activeStyle={activeStyle}>💸 Expenses</NavLink>
-      <NavLink to="/admin/feedback" style={linkStyle} activeStyle={activeStyle}>💬 Feedback</NavLink>
-      <NavLink to="/admin/support" style={linkStyle} activeStyle={activeStyle}>🆘 Support</NavLink>
-      <NavLink to="/admin/analytics" style={linkStyle} activeStyle={activeStyle}>📈 Analytics</NavLink>
-      <NavLink to="/admin/promo-codes" style={linkStyle} activeStyle={activeStyle}>🎟 Promo Codes</NavLink>
-      <NavLink to="/admin/mega-menu" style={linkStyle} activeStyle={activeStyle}>🧭 Mega Menu</NavLink>
-      <NavLink to="/admin/microbanner" style={linkStyle} activeStyle={activeStyle}>🪧 Microbanner</NavLink>
-      <NavLink to="/admin/trust-ticker" style={linkStyle} activeStyle={activeStyle}>✅ Trust Ticker</NavLink>
+  <NavLink to="/admin/dashboard" end style={({ isActive }) => (isActive ? activeStyle : linkStyle)}>📊 Dashboard</NavLink>
+  <NavLink to="/admin/vendors" style={({ isActive }) => (isActive ? activeStyle : linkStyle)}>🏪 Vendors</NavLink>
+  <NavLink to="/admin/orders" style={({ isActive }) => (isActive ? activeStyle : linkStyle)}>🛍 Orders</NavLink>
+  <NavLink to="/admin/invoices/report" style={({ isActive }) => (isActive ? activeStyle : linkStyle)}>📄 Invoices</NavLink>
+  <NavLink to="/admin/expenses" style={({ isActive }) => (isActive ? activeStyle : linkStyle)}>💸 Expenses</NavLink>
+  <NavLink to="/admin/feedback" style={({ isActive }) => (isActive ? activeStyle : linkStyle)}>💬 Feedback</NavLink>
+  <NavLink to="/admin/support" style={({ isActive }) => (isActive ? activeStyle : linkStyle)}>🆘 Support</NavLink>
+  <NavLink to="/admin/analytics" style={({ isActive }) => (isActive ? activeStyle : linkStyle)}>📈 Analytics</NavLink>
+  <NavLink to="/admin/promo-codes" style={({ isActive }) => (isActive ? activeStyle : linkStyle)}>🎟 Promo Codes</NavLink>
+  <NavLink to="/admin/mega-menu" style={({ isActive }) => (isActive ? activeStyle : linkStyle)}>🧭 Mega Menu</NavLink>
+  <NavLink to="/admin/microbanner" style={({ isActive }) => (isActive ? activeStyle : linkStyle)}>🪧 Microbanner</NavLink>
+  <NavLink to="/admin/trust-ticker" style={({ isActive }) => (isActive ? activeStyle : linkStyle)}>✅ Trust Ticker</NavLink>
     </div>
   );
 };

@@ -9,7 +9,7 @@ import MerkatoFooter from '../components/MerkatoFooter';
 import { Link } from 'react-router-dom';
 import { ROUTES } from '../config/routes';
 
-function PublicLayout({ user, onLogout, lang, onLangChange }) {
+function PublicLayout({ user = null, onLogout, lang = 'en', onLangChange = () => {} }) {
   const isCypress = typeof window !== 'undefined' && window.Cypress;
   return (
     <div className="public-layout">
@@ -45,10 +45,6 @@ PublicLayout.propTypes = {
   onLangChange: PropTypes.func
 };
 
-PublicLayout.defaultProps = {
-  user: null,
-  lang: 'en',
-  onLangChange: () => {}
-};
+// Note: defaultProps removed for function component; defaults are applied via parameters above.
 
 export default PublicLayout;

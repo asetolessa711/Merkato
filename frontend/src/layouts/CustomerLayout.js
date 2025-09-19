@@ -115,7 +115,7 @@ function CustomerLayout({ children, user, onLogout, lang, onLangChange }) {
 }
 
 CustomerLayout.propTypes = {
-  children: PropTypes.node.isRequired,
+  children: PropTypes.node,
   user: PropTypes.shape({
     name: PropTypes.string,
     lastLogin: PropTypes.string,
@@ -125,9 +125,9 @@ CustomerLayout.propTypes = {
     rewardPoints: PropTypes.number,
     hasNewNotifications: PropTypes.bool
   }),
-  onLogout: PropTypes.func.isRequired,
-  lang: PropTypes.string.isRequired,
-  onLangChange: PropTypes.func.isRequired
+  onLogout: PropTypes.func,
+  lang: PropTypes.string,
+  onLangChange: PropTypes.func
 };
 
 class CustomerLayoutErrorBoundary extends React.Component {
