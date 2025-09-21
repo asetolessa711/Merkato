@@ -1,6 +1,6 @@
 // src/pages/AdminTrustTicker.jsx
 import React, { useEffect, useMemo, useState } from 'react';
-import { DEFAULT_TRUST_MESSAGES, TRUST_MESSAGES_KEY } from '../components/MicroBanner';
+import { DEFAULT_TRUST_MESSAGES, TRUST_MESSAGES_KEY } from '../components/MicroBanner.jsx';
 
 function AdminTrustTicker() {
   const [items, setItems] = useState([]);

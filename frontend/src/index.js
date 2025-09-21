@@ -2,14 +2,35 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
+import { CartProvider } from "./cart/CartContext";
 import "./quietConsole"; // Quiet noisy logs in test/prod
 import "./index.css"; // Import global styles
 import "./styles/tokens.css"; // Design tokens (CSS variables)
+import "./styles/utilities.css"; // Token-based utility classes
 import axios from "axios";
 
 // Google Fonts are loaded once via public/index.html to avoid duplicates.
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
+
+// Apply navbar theme from localStorage (optional): 'default' | 'navy' | 'cool'
+try {
+  const html = document.documentElement;
+  const cls = String(localStorage.getItem('nav-theme') || 'default').toLowerCase();
+  html.classList.remove('theme-nav-navy', 'theme-nav-cool');
+  if (cls === 'navy') html.classList.add('theme-nav-navy');
+  else if (cls === 'cool') html.classList.add('theme-nav-cool');
+  // Expose quick setter for designers/devs
+  window.__setNavTheme = (name) => {
+    try {
+      const n = String(name || 'default').toLowerCase();
+      localStorage.setItem('nav-theme', n);
+      html.classList.remove('theme-nav-navy', 'theme-nav-cool');
+      if (n === 'navy') html.classList.add('theme-nav-navy');
+      else if (n === 'cool') html.classList.add('theme-nav-cool');
+    } catch(_) {}
+  };
+} catch(_) {}
 
 // Wire API base URL for axios and (optionally) fetch
 // Priority order:
@@ -96,6 +117,8 @@ axios.interceptors.request.use((config) => {
 
 root.render(
   <React.StrictMode>
-    <App />
+    <CartProvider>
+      <App />
+    </CartProvider>
   </React.StrictMode>,
 );

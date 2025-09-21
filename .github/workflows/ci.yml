@@ -51,6 +51,9 @@ jobs:
       - name: Install frontend deps
         working-directory: frontend
         run: npm ci
+      - name: Guard against duplicate basenames (.js/.jsx)
+        working-directory: frontend
+        run: npm run -s dup:guard
       - name: Run frontend tests
         working-directory: frontend
         env:

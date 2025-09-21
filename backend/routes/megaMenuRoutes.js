@@ -4,11 +4,19 @@ const fs = require('fs');
 const fsp = require('fs/promises');
 const path = require('path');
 const router = express.Router();
+const { withETag } = require('../utils/etag');
+const {
+  buildTaxonomy,
+  filterAndSort,
+  computeChildren,
+  getAttributesForSlug,
+} = require('../utils/taxonomy');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
 const DATA_DIR = path.join(__dirname, '..', 'uploads');
 const DATA_FILE = path.join(DATA_DIR, 'mega-menu.json');
 const AUDIT_FILE = path.join(DATA_DIR, 'mega-menu-audit.log.jsonl');
+const TAXO_LOG = path.join(DATA_DIR, 'taxonomy-events.log.jsonl');
 
 // Default seed structure if no file exists
 const defaultMenu = [
@@ -88,27 +96,156 @@ async function appendAudit(user, action, snapshot) {
   }
 }
 
+// Helpers for taxonomy enrichment and filtering
+function labelFor(cat, lang) {
+  const l = lang && cat.locales && cat.locales[lang] && cat.locales[lang].name;
+  return l || cat.name;
+}
+
+async function obsLog(event) {
+  try {
+    await fsp.mkdir(DATA_DIR, { recursive: true });
+    await fsp.appendFile(TAXO_LOG, JSON.stringify({ ts: new Date().toISOString(), ...event }) + '\n', 'utf8');
+  } catch (_) {
+    // best-effort only
+  }
+}
+
 // Public endpoint: GET /api/categories -> simplified active menu for frontend
 router.get('/categories', async (req, res) => {
   try {
-    const data = await readMenuFile();
-    // Filter out hidden items if status provided
-    const simplified = (data.menu || [])
-      .filter(col => col.status !== 'hidden')
-      .map(col => ({
-        title: col.title,
-        title_en: col.title_en,
-        title_am: col.title_am,
-        title_or: col.title_or,
-        icon: col.icon,
-        thumb: col.thumb,
-        links: (Array.isArray(col.links) ? col.links : [])
-          .filter(l => l.status !== 'hidden')
-          .map(l => ({ label: l.label, label_en: l.label_en, label_am: l.label_am, label_or: l.label_or, to: l.to, icon: l.icon, thumb: l.thumb })),
-      }));
-    res.json({ menu: simplified, updatedAt: data.updatedAt, version: data.version });
+    const { menuDoc, simplified, categories } = await buildTaxonomy();
+    const filtered = filterAndSort(categories, { visibleIn: req.query.visibleIn, country: req.query.country });
+
+    if (filtered.length === 0) {
+      obsLog({ level: 'warn', type: 'empty_categories', endpoint: '/api/categories', query: req.query });
+    }
+
+    res.setHeader('X-Taxonomy-Version', '2');
+    res.setHeader('Sunset', 'Wed, 15 Jan 2026 00:00:00 GMT');
+    res.setHeader('Link', '</api/categories>; rel="successor-version"');
+    res.setHeader('Cache-Control', 'public, s-maxage=120, stale-while-revalidate=600');
+
+    const payload = JSON.stringify({ menu: simplified, categories: filtered, updatedAt: menuDoc.updatedAt, version: menuDoc.version });
+    if (withETag(req, res, payload)) return;
+    res.type('application/json').send(payload);
   } catch (err) {
     res.status(500).json({ message: 'Failed to read categories' });
+  }
+});
+
+// GET /api/categories/tree?visibleIn=mega&country=ET&lang=en
+router.get('/categories/tree', async (req, res) => {
+  try {
+    const { visibleIn, country, lang } = req.query;
+    const { menuDoc, categories } = await buildTaxonomy();
+    const filtered = filterAndSort(categories, { visibleIn, country });
+    const { children } = computeChildren(filtered);
+    const langCode = (lang || '').toString().toLowerCase();
+
+    const nodeFor = (c) => ({
+      id: c.id,
+      name: labelFor(c, langCode),
+      slug: c.slug,
+      icon: c.icon,
+      displayOrder: c.displayOrder || 0,
+      children: (children.get(c.id) || []).map(nodeFor),
+    });
+    const roots = filtered.filter(c => !c.parentId);
+    const tree = roots.map(nodeFor);
+
+    if (tree.length === 0) {
+      obsLog({ level: 'warn', type: 'empty_tree', endpoint: '/api/categories/tree', query: req.query });
+    }
+
+    res.setHeader('X-Taxonomy-Version', '2');
+    res.setHeader('Sunset', 'Wed, 15 Jan 2026 00:00:00 GMT');
+    res.setHeader('Link', '</api/categories>; rel="successor-version"');
+    res.setHeader('Cache-Control', 'public, s-maxage=120, stale-while-revalidate=600');
+    const payload = JSON.stringify({ tree, updatedAt: menuDoc.updatedAt });
+    if (withETag(req, res, payload)) return;
+    res.type('application/json').send(payload);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to build category tree' });
+  }
+});
+
+// GET /api/categories/:slug/children
+router.get('/categories/:slug/children', async (req, res) => {
+  try {
+    const slug = (req.params.slug || '').toLowerCase();
+    const { country, visibleIn } = req.query;
+    const { categories } = await buildTaxonomy();
+    const filtered = filterAndSort(categories, { visibleIn, country });
+    const maps = computeChildren(filtered);
+    const parent = filtered.find(c => c.slug === slug || c.id === slug);
+    const children = parent ? (maps.children.get(parent.id) || []) : [];
+    res.setHeader('X-Taxonomy-Version', '2');
+    res.setHeader('Sunset', 'Wed, 15 Jan 2026 00:00:00 GMT');
+    res.setHeader('Link', '</api/categories>; rel="successor-version"');
+    res.setHeader('Cache-Control', 'public, s-maxage=120, stale-while-revalidate=600');
+    const body = JSON.stringify({ parent, children });
+    if (withETag(req, res, body)) return;
+    res.type('application/json').send(body);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to get children' });
+  }
+});
+
+// GET /api/categories/:slug/attributes
+router.get('/categories/:slug/attributes', async (req, res) => {
+  try {
+    const slug = (req.params.slug || '').toLowerCase();
+    const { categories } = await buildTaxonomy();
+    const attributes = getAttributesForSlug(categories, slug);
+    res.setHeader('X-Taxonomy-Version', '2');
+    res.setHeader('Sunset', 'Wed, 15 Jan 2026 00:00:00 GMT');
+    res.setHeader('Link', '</api/categories>; rel="successor-version"');
+    res.setHeader('Cache-Control', 'public, s-maxage=120, stale-while-revalidate=600');
+    const body = JSON.stringify({ slug, attributes });
+    if (withETag(req, res, body)) return;
+    res.type('application/json').send(body);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to get attributes' });
+  }
+});
+
+// GET /api/categories/leaves?visibleIn=upload&country=ET
+router.get('/categories/leaves', async (req, res) => {
+  try {
+    const { visibleIn, country } = req.query;
+    const { categories, menuDoc } = await buildTaxonomy();
+    const filtered = filterAndSort(categories, { visibleIn, country });
+    const leaves = require('../utils/taxonomy').getLeaves(filtered, visibleIn);
+    if (leaves.length === 0) {
+      obsLog({ level: 'info', type: 'no_leaves', endpoint: '/api/categories/leaves', query: req.query });
+    }
+    res.setHeader('Cache-Control', 'public, s-maxage=120, stale-while-revalidate=600');
+    const payload = JSON.stringify({ updatedAt: menuDoc.updatedAt, categories: leaves });
+    if (withETag(req, res, payload)) return;
+    res.type('application/json').send(payload);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to get leaf categories' });
+  }
+});
+
+// GET /api/categories/sitemap - flat sitemap-friendly list of category paths
+router.get('/categories/sitemap', async (req, res) => {
+  try {
+    const { categories, menuDoc } = await buildTaxonomy();
+    const filtered = filterAndSort(categories, { visibleIn: req.query.visibleIn, country: req.query.country });
+    const { byId } = computeChildren(filtered);
+    const entries = filtered.map(c => {
+      const pathIds = Array.isArray(c.path) ? c.path.slice() : [];
+      const pathSlugs = pathIds.map(id => byId.get(id)?.slug).filter(Boolean);
+      return { id: c.id, slug: c.slug, pathIds, pathSlugs };
+    });
+    res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=1200');
+    const payload = JSON.stringify({ updatedAt: menuDoc.updatedAt, entries });
+    if (withETag(req, res, payload)) return;
+    res.type('application/json').send(payload);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to build sitemap' });
   }
 });
 
@@ -158,3 +295,5 @@ router.get('/admin/mega-menu/audit', protect, authorize('admin', 'global_admin')
 });
 
 module.exports = router;
+// Keep module.exports at end; additional routes can be appended above
+

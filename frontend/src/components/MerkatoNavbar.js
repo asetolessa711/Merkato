@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import MEGA_MENU from '../config/megaMenu';
 import MegaMenuPromoPanel from './MegaMenuPromoPanel.js';
-import MicroBanner from './MicroBanner';
+import MicroBanner from './MicroBanner.jsx';
 
 // Merkato-style, accessible, test-stable navbar
 // Keeps existing E2E selectors: cart-link, navbar-register-link, and My Account button

@@ -1,7 +1,7 @@
 import React from 'react';
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import { render, screen, fireEvent, within, act } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
-import MerkatoNavbar from '../../../components/MerkatoNavbar';
+import MerkatoNavbar from '../../../components/MerkatoNavbar.jsx';
 
 function App() {
   return (
@@ -15,12 +15,17 @@ function App() {
 
 describe('MerkatoNavbar (vendor search)', () => {
   beforeEach(() => {
+    jest.useFakeTimers();
     localStorage.clear();
     // Seed vendor products to drive suggestions
     localStorage.setItem('uploadedProducts', JSON.stringify([
       { id: 'p1', name: 'Red Sneakers', sku: 'RS-100', tags: ['shoes', 'sneakers'] },
       { id: 'p2', name: 'Blue Hat', sku: 'BH-200' },
     ]));
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   test('shows suggestions for product query', async () => {
@@ -31,8 +36,10 @@ describe('MerkatoNavbar (vendor search)', () => {
     // Focus to open suggestions
     fireEvent.focus(input);
 
-    // Slight debounce is used; run timers
-    jest.runAllTimers?.();
+    // Slight debounce is used; advance timers to flush suggestions
+    await act(async () => {
+      jest.advanceTimersByTime(200);
+    });
 
     // Look for our seeded item
     const items = await screen.findAllByTestId('vendor-suggest-item');

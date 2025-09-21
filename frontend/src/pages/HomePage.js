@@ -17,16 +17,57 @@ function HomePage() {
   const navigate = useNavigate();
   const isCypress = typeof window !== 'undefined' && window.Cypress;
   const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const [selectedCategory] = useState(categories[0]);
   // Get promo video URL from localStorage (set by admin upload)
   const promoVideoUrl = localStorage.getItem('promoVideoUrl') || '';
 
   useEffect(() => {
-    const loadProducts = async () => {
-      const all = await axios.get('/api/products');
-      setProducts(all.data);
+    let cancelled = false;
+
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    const fetchWithRetry = async (retries = 2, baseDelayMs = 800) => {
+      for (let attempt = 0; attempt <= retries; attempt++) {
+        try {
+          const res = await axios.get('/api/products', { timeout: 8000 });
+          return res.data;
+        } catch (e) {
+          // Only retry on network/timeout/5xx
+          const status = e?.response?.status;
+          const isRetryable = !status || (status >= 500 && status < 600);
+          if (attempt < retries && isRetryable) {
+            const backoff = baseDelayMs * Math.pow(2, attempt);
+            // eslint-disable-next-line no-await-in-loop
+            await sleep(backoff);
+            continue;
+          }
+          throw e;
+        }
+      }
     };
+
+    const loadProducts = async () => {
+      setLoading(true);
+      setError('');
+      try {
+        const data = await fetchWithRetry();
+        if (!cancelled) setProducts(Array.isArray(data) ? data : []);
+      } catch (e) {
+        if (!cancelled) {
+          console.error('Failed to load products:', e?.message || e);
+          setError('We’re having trouble loading products right now. Please try again shortly.');
+          setProducts([]);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
     loadProducts();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Hero CTA handlers
@@ -71,6 +112,24 @@ function HomePage() {
 
   return (
     <div className="homepage-outer">
+      {error && (
+        <div
+          role="alert"
+          aria-live="polite"
+          style={{
+            margin: '12px auto',
+            maxWidth: 1200,
+            background: '#FFF4E5',
+            color: '#663C00',
+            border: '1px solid #FFD8A8',
+            borderRadius: 8,
+            padding: '10px 14px'
+          }}
+          data-testid="products-error-banner"
+        >
+          {error}
+        </div>
+      )}
       {/* Hero / CTA section */}
       <Hero
         title="Shop Local. Save Big."
@@ -122,22 +181,25 @@ function HomePage() {
           </section>
         )}
         {/* General Category Products Row (Horizontal Scroll) */}
-        {selectedCategory !== "Flash Deals" && filteredProducts.length > 0 && (
+        {selectedCategory !== "Flash Deals" && (loading || filteredProducts.length > 0) && (
           <section className="best-sellers">
             <div className="section-header">
               <h2>Featured Products</h2>
             </div>
             <div className="products-row-scroll">
-              {filteredProducts.map(product => (
-                <ProductCard
-                  key={product._id}
-                  product={product}
-                  type="standard"
-                  size="md"
-                  colorOptions={product.colors || []}
-                  onAddToCart={handleAddToCart}
-                />
-              ))}
+              {loading && (
+                <p style={{ padding: '8px 0', color: '#666' }}>Loading featured products…</p>
+              )}
+              {!loading && filteredProducts.map(product => (
+                  <ProductCard
+                    key={product._id}
+                    product={product}
+                    type="standard"
+                    size="md"
+                    colorOptions={product.colors || []}
+                    onAddToCart={handleAddToCart}
+                  />
+                ))}
             </div>
           </section>
         )}

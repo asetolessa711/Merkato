@@ -1,13 +1,12 @@
 /* MerkatoFooter Styles */
 .footer {
-  background: #001F54;
-  color: #fff;
-  font-family: 'Poppins', sans-serif;
-  border-top: 1px solid #e2e8f0;
+  background: var(--nav-bg);
+  color: var(--nav-text);
+  border-top: 1px solid var(--nav-border);
   /* Prefer sticky/static footer to avoid overlapping action targets in tests */
   position: sticky;
   bottom: 0;
-  width: 100vw;
+  width: 100%;
   z-index: 5;
   padding: 0.2rem 0.5rem 0.2rem 0.5rem;
   margin-top: 0;
@@ -41,7 +40,7 @@
 .column h4 {
   margin-bottom: 1rem;
   font-weight: bold;
-  color: #2d3748;
+  color: var(--ink);
   font-size: clamp(1.1rem, 1.2vw, 1.25rem);
 }
 
@@ -63,7 +62,7 @@
 }
 
 .socialLinks a {
-  color: #fff;
+  color: var(--nav-text);
   text-decoration: none;
   transition: all 0.2s ease-in-out;
   font-size: 1.1rem;
@@ -71,12 +70,12 @@
 
 .socialLinks a:hover,
 .socialLinks a:focus {
-  color: #00B894;
+  color: var(--brand);
   text-decoration: underline;
 }
 
 .socialLinks a:focus {
-  outline: 2px solid #00B894;
+  outline: 2px solid var(--brand-ring);
   outline-offset: 2px;
 }
 
@@ -90,7 +89,7 @@
 }
 
 .footerLinks a {
-  color: #fff;
+  color: var(--nav-text);
   text-decoration: none;
   font-weight: 500;
   font-size: 1rem;
@@ -99,18 +98,18 @@
 
 .footerLinks a:hover,
 .footerLinks a:focus {
-  color: #00B894;
+  color: var(--brand);
   text-decoration: underline;
 }
 
 .footerLinks a:focus {
-  outline: 2px solid #00B894;
+  outline: 2px solid var(--brand-ring);
   outline-offset: 2px;
 }
 
 .downloadBtn {
   display: inline-block;
-  background: #00B894;
+  background: var(--brand);
   color: white;
   padding: 0.5rem 1rem;
   margin-top: 0.5rem;
@@ -122,18 +121,18 @@
 
 .downloadBtn:hover,
 .downloadBtn:focus {
-  background: #009b7b;
+  background: var(--brand-hover);
 }
 
 .downloadBtn:focus {
-  outline: 2px solid #00B894;
+  outline: 2px solid var(--brand-ring);
   outline-offset: 2px;
 }
 
 .legalSection {
   margin-top: 2rem;
   padding-top: 1rem;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--nav-border);
   width: 100%;
 }
 
@@ -143,11 +142,11 @@
   padding: 0;
   border-top: none;
   font-size: 0.95rem;
-  color: #fff;
+  color: var(--nav-text);
 }
 
 .brand {
-  color: #FFD700;
+  color: var(--accent);
   font-weight: 600;
   font-size: 1.1rem;
 }
@@ -161,7 +160,7 @@
 .copyrightYear {
   display: block;
   margin-top: 5px;
-  color: #fff;
+  color: var(--nav-text);
 }
 
 @media (max-width: 768px) {

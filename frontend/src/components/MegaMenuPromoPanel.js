@@ -224,14 +224,12 @@ export default function MegaMenuPromoPanel({ activeCategory, activeSubcategory }
 
   const isMinimal = panelMode === 'minimal';
   const cardBg = isMinimal
-    // Blend with dropdown/menu background; fall back to a subtle translucent layer
-    ? 'var(--mega-promo-bg, rgba(255,255,255,0.04))'
-    // Default colorful gradient
-    : 'var(--mega-promo-bg, linear-gradient(135deg, #FFE08A, #FF9CD3))';
+    ? 'var(--mega-promo-bg, var(--surface))'
+    : 'var(--mega-promo-bg, linear-gradient(90deg, var(--grad-bolt-start), var(--grad-bolt-end)))';
   const borderCol = isMinimal
-    ? 'var(--mega-promo-border, rgba(255,255,255,0.10))'
-    : 'var(--mega-promo-border, rgba(255,255,255,0.18))';
-  const baseFg = isMinimal ? 'var(--mega-promo-fg, #e5e7eb)' : 'var(--mega-promo-fg, #111)';
+    ? 'var(--mega-promo-border, var(--border))'
+    : 'var(--mega-promo-border, color-mix(in srgb, #000 15%, transparent))';
+  const baseFg = isMinimal ? 'var(--mega-promo-fg, var(--slate))' : 'var(--mega-promo-fg, #fff)';
 
   return (
     <aside
@@ -280,16 +278,7 @@ export default function MegaMenuPromoPanel({ activeCategory, activeSubcategory }
           {selected.ctaText && (
             <button
               type="button"
-              style={{
-                // Outline/subtle button in minimal mode to avoid heavy accents
-                background: isMinimal ? 'transparent' : 'var(--mega-promo-cta-bg, #111827)',
-                color: isMinimal ? 'var(--mega-promo-cta-fg, #e5e7eb)' : 'var(--mega-promo-cta-fg, #fff)',
-                border: isMinimal ? '1px solid rgba(255,255,255,0.35)' : 0,
-                padding: '10px 14px',
-                borderRadius: 10,
-                fontWeight: 800,
-                boxShadow: isMinimal ? 'none' : '0 6px 14px rgba(17,24,39,0.25)',
-              }}
+              className={isMinimal ? 'btn btn-secondary' : 'btn btn-primary'}
               onClick={handleClick}
             >
               {selected.ctaText}

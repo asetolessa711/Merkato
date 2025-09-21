@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import Modal from 'react-modal';
 import { fetchPaymentMethods } from '../utils/paymentsClient';
+import CheckoutHeader from '../components/checkout/CheckoutHeader';
+import CheckoutFooter from '../components/checkout/CheckoutFooter';
 
 function CheckoutPage() {
   const [cart, setCart] = useState([]);
@@ -313,29 +315,21 @@ function CheckoutPage() {
   };
 
   return (
-    <div style={{ maxWidth: 720, margin: '40px auto', padding: 20 }}>
-      <h2>Checkout</h2>
+    <>
+      <CheckoutHeader country={shipping.country || 'Ethiopia'} step={2} />
+      <main className="container" style={{ padding: '24px 16px' }}>
+        <h1 className="h2" style={{ display: 'none' }}>Checkout</h1>
 
       {cart.length === 0 && (
         <p>Your cart is empty.</p>
       )}
-      <>
-          {/* Cart summary list */}
-          <div style={{ border: '1px solid #eee', padding: 12, marginBottom: 16 }}>
-            <h3>Cart</h3>
-            <ul>
-              {cart.map((item, idx) => (
-                <li key={(item._id || item.id || idx)}>
-                  <span>{item.name}</span> — <span>{item.quantity || 1}</span> × <span>{`$${Number(item.price || 0)}`}</span>
-                </li>
-              ))}
-            </ul>
-            <div style={{ fontWeight: 'bold' }}>Total: {formatMoney(subtotal)}</div>
-          </div>
 
-  <form onSubmit={handleSubmit}>
-            <fieldset style={{ border: '1px solid #ddd', padding: 16, marginBottom: 20 }}>
-              <legend>Shipping</legend>
+      <div className="checkout-grid">
+        {/* LEFT: form sections */}
+        <section className="checkout-left">
+          <form id="checkout-form" onSubmit={handleSubmit}>
+            <fieldset className="card card--p" style={{ marginBottom: 20 }}>
+              <legend className="card-title">Shipping</legend>
               {/* Saved addresses for authenticated users */}
               {isAuthed && savedAddresses.length > 0 && (
                 <div style={{ marginBottom: 12 }}>
@@ -396,8 +390,8 @@ function CheckoutPage() {
             </fieldset>
 
             {/* Delivery options */}
-            <fieldset style={{ border: '1px solid #ddd', padding: 16, marginBottom: 20 }}>
-              <legend>Delivery</legend>
+            <fieldset className="card card--p" style={{ marginBottom: 20 }}>
+              <legend className="card-title">Delivery</legend>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {(deliveryDefaults.shippingOptions && deliveryDefaults.shippingOptions.length
                   ? deliveryDefaults.shippingOptions
@@ -423,8 +417,8 @@ function CheckoutPage() {
               </div>
             </fieldset>
 
-            <fieldset style={{ border: '1px solid #ddd', padding: 16, marginBottom: 20 }}>
-              <legend>Payment</legend>
+            <fieldset className="card card--p" style={{ marginBottom: 20 }}>
+              <legend className="card-title">Payment</legend>
               {(methods.length ? methods : [
                 { code: 'cod', displayName: 'Cash on Delivery' },
                 { code: 'stripe', displayName: 'Pay with Card (Stripe)' },
@@ -458,11 +452,11 @@ function CheckoutPage() {
             </fieldset>
 
             {/* Always render a submit button so Cypress can click it for both guest and logged-in flows */}
-            <button type="submit" disabled={submitting} data-testid="submit-order-btn">
+            <button className="btn btn-primary" type="submit" disabled={submitting} data-testid="submit-order-btn">
               {submitting ? 'Placing order…' : 'Place Order'}
             </button>
             {/* Button to open guest summary modal without submitting the form */}
-            <button type="button" onClick={openSummaryForGuest} data-testid="guest-summary-btn" style={{ marginLeft: 8 }}>
+            <button className="btn btn-secondary" type="button" onClick={openSummaryForGuest} data-testid="guest-summary-btn" style={{ marginLeft: 8 }}>
               Review Order
             </button>
           </form>
@@ -470,8 +464,8 @@ function CheckoutPage() {
           {/* Minimal guest checkout section to satisfy guest_checkout.cy.js selectors
               Also keep inputs outside any conditionals or hidden containers. */}
           <div style={{ marginTop: 16 }}>
-            <fieldset style={{ border: '1px solid #eee', padding: 12 }}>
-              <legend>Buyer Details</legend>
+            <fieldset className="card card--p">
+              <legend className="card-title">Buyer Details</legend>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <label htmlFor="guestName">Guest Full Name</label>
                 <input id="guestName" name="name" placeholder="Name" value={shipping.name} onChange={handleChange} />
@@ -481,23 +475,69 @@ function CheckoutPage() {
               </div>
             </fieldset>
           </div>
+        </section>
 
-          {message && (
-            <div data-testid="order-confirm-msg" style={{ marginTop: 20 }}>
-              {message}
-            </div>
-          )}
-          {/* Legacy success text used by some older Cypress specs */}
-          {message && (
-            <p>Order placed successfully</p>
-          )}
-          {/* Also include plain text variations that some specs assert against */}
-          {message && (
-            <>
-              <p>Order has been placed</p>
-              <p>Thank you for your order</p>
-            </>
-          )}
+        {/* RIGHT: order summary */}
+        <aside className="card card--p checkout-summary">
+          <h3 className="card-title">Order Summary</h3>
+          <div className="divider" />
+          <h4 style={{ marginTop: 0 }}>Cart</h4>
+          <ul style={{ paddingLeft: 16 }}>
+            {cart.map((item, idx) => (
+              <li key={(item._id || item.id || idx)}>
+                <span>{item.name}</span> — <span>{item.quantity || 1}</span> × <span>{`$${Number(item.price || 0)}`}</span>
+              </li>
+            ))}
+          </ul>
+          <div className="sumrow" style={{ borderBottom: 'none' }}>
+            <span>Subtotal</span>
+            <span className="sumrow__val">{formatMoney(subtotal)}</span>
+          </div>
+
+          {/* Coupon (optional) */}
+          <div className="coupon">
+            <input
+              className="input coupon__input"
+              placeholder="Promo code"
+              aria-label="Promo code"
+              value={promoCode}
+              onChange={(e) => setPromoCode(e.target.value)}
+            />
+            <button className="btn btn-ghost coupon__btn" onClick={applyPromo}>Apply</button>
+          </div>
+          {promoApplied && <div className="badge badge-success">Promo applied</div>}
+
+          <p className="text-muted text-sm">Taxes and shipping calculated at checkout.</p>
+
+          {/* Submit from summary using external form attribute */}
+          <button className="btn btn-primary w-full" type="submit" form="checkout-form" style={{ marginTop: 8 }}>
+            Place Order
+          </button>
+
+          <div className="trust" style={{ marginTop: 10 }}>
+            <span>🔒 Secure checkout</span>
+            <span>↺ Free returns</span>
+            <span>⭐ Buyer protection</span>
+          </div>
+        </aside>
+      </div>
+
+      {message && (
+        <div data-testid="order-confirm-msg" style={{ marginTop: 20 }}>
+          {message}
+        </div>
+      )}
+      {/* Legacy success text used by some older Cypress specs */}
+      {message && (
+        <p>Order placed successfully</p>
+      )}
+      {/* Also include plain text variations that some specs assert against */}
+      {message && (
+        <>
+          <p>Order has been placed</p>
+          <p>Thank you for your order</p>
+        </>
+      )}
 
           {/* Summary Modal (react-modal is mocked in tests to render children) */}
           <Modal isOpen={showSummary} onRequestClose={() => setShowSummary(false)} ariaHideApp={false}>
@@ -541,14 +581,15 @@ function CheckoutPage() {
             )}
           </Modal>
 
-          {/* Guest CTA: encourage registration after successful guest checkout */}
-          {message && !isAuthed && (
-            <div style={{ marginTop: 16 }}>
-              <a href="/register" style={{ color: '#0984e3' }}>Create an account to save your order and track it</a>
-            </div>
-          )}
-        </>
-    </div>
+      {/* Guest CTA: encourage registration after successful guest checkout */}
+      {message && !isAuthed && (
+        <div style={{ marginTop: 16 }}>
+          <a href="/register" className="link">Create an account to save your order and track it</a>
+        </div>
+      )}
+      </main>
+      <CheckoutFooter />
+    </>
   );
 }
 

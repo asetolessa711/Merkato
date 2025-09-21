@@ -9,7 +9,7 @@
   border-radius: 16px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.06);
   transition: transform 0.2s, box-shadow 0.2s;
-  background: #fff;
+  background: var(--surface);
   cursor: pointer;
   overflow: hidden;
   position: relative;
@@ -30,7 +30,7 @@
   position: relative;
   width: 100%;
   aspect-ratio: 4 / 5;
-  background: #f8f8f8;
+  background: color-mix(in srgb, var(--border) 30%, transparent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -51,25 +51,25 @@
   position: absolute;
   top: 8px;
   right: 8px;
-  background: rgba(255,255,255,0.8);
+  background: color-mix(in srgb, var(--canvas) 80%, transparent);
   border: none;
   border-radius: 50%;
   font-size: 1.1rem;
   cursor: pointer;
-  color: #e17055;
+  color: var(--danger);
   transition: background 0.2s;
 }
 
 .favorite-btn:hover {
-  background: #ffeaa7;
+  background: color-mix(in srgb, var(--warning) 25%, transparent);
 }
 
 .discount-badge {
   position: absolute;
   top: 8px;
   left: 8px;
-  background: #e74c3c;
-  color: #fff;
+  background: var(--danger);
+  color: var(--canvas);
   border-radius: 6px;
   padding: 2px 8px;
   font-size: 0.8rem;
@@ -86,6 +86,7 @@
   font-size: 1rem;
   font-weight: 600;
   margin: 0 0 4px 0;
+  color: var(--ink);
 }
 
 .product-meta {
@@ -97,19 +98,19 @@
 }
 
 .price, .product-price {
-  color: #00b894;
+  color: var(--brand);
   font-weight: bold;
   font-size: 1rem;
 }
 
 .stars {
-  color: #f1c40f;
+  color: var(--warning);
   font-size: 0.95rem;
 }
 
 .shop-btn {
-  background: #0984e3;
-  color: #fff;
+  background: var(--brand);
+  color: var(--canvas);
   border: none;
   border-radius: 8px;
   padding: 8px 18px;
@@ -120,7 +121,7 @@
 }
 
 .shop-btn:hover {
-  background: #00b894;
+  background: var(--brand-hover);
 }
 
 /* Sizes (adaptive, use rem for scaling) */
@@ -139,7 +140,7 @@
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  border: 1px solid #ccc;
+  border: 1px solid var(--border);
 }
 
 .color-swatch:hover {
@@ -156,6 +157,20 @@
   padding: 8px 6px;
   justify-content: center;
   align-items: stretch;
+}
+
+/* Responsive grid fallbacks */
+@media (max-width: 1280px) {
+  .products-grid { grid-template-columns: repeat(6, 1fr); }
+}
+@media (max-width: 1024px) {
+  .products-grid { grid-template-columns: repeat(4, 1fr); }
+}
+@media (max-width: 768px) {
+  .products-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 480px) {
+  .products-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 1100px) {

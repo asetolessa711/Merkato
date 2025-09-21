@@ -4,6 +4,9 @@ echo "husky pre-commit: guard + backend/frontend tests (quick)"
 export CI=true
 node scripts/check-focused-tests.js || exit 1
 
+# Prevent duplicate basenames (.js/.jsx) in frontend which breaks on Windows
+npm --prefix frontend run -s dup:guard || exit 1
+
 # Run backend tests; retry once with detectOpenHandles if they fail (flaky guard)
 if ! npm --prefix backend run -s test; then
 	echo "Backend tests failed. Retrying with --detectOpenHandles..."

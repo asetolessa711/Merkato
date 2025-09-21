@@ -16,6 +16,11 @@
     "coverage:summary": "node ./scripts/print-coverage-summary.js",
     "coverage:summary:ci": "node ./scripts/print-coverage-summary.js --ci",
     "coverage:recommend": "node ./scripts/recommend-coverage-bump.js",
+  "dup:scan": "node ./scripts/detect-duplicate-basenames.js",
+  "dup:guard": "node ./scripts/guard-duplicate-basenames.js",
+  "imports:scan": "node ./scripts/find-ambiguous-imports.js",
+  "imports:fix:dry": "node ./scripts/fix-ambiguous-imports.js --dry",
+  "imports:fix": "node ./scripts/fix-ambiguous-imports.js",
     "cypress": "cypress open",
     "cy:open": "cypress open",
     "start:e2e": "node scripts/start-e2e.js",
@@ -74,6 +79,8 @@
     "@babel/runtime": "^7.27.6",
     "@craco/craco": "^5.9.0",
     "@stripe/stripe-js": "^7.8.0",
+    "ajv": "6.12.6",
+    "ajv-keywords": "3.5.2",
   "@testing-library/dom": "10.4.1",
   "@testing-library/jest-dom": "6.8.0",
   "@testing-library/react": "16.3.0",
@@ -95,14 +102,15 @@
     "postcss-flexbugs-fixes": "^5.0.2",
     "postcss-preset-env": "^10.2.1",
     "process": "^0.11.10",
-    "react-scripts": "^5.0.1",
+  "react-scripts": "^5.0.1",
+  "babel-loader": "8.2.5",
+  "terser-webpack-plugin": "5.3.1",
     "resolve-url-loader": "^5.0.0",
     "serve": "^14.2.4",
     "source-map-loader": "^5.0.0",
-    "wait-on": "^8.0.2",
-    "webpack": "^5.99.9",
-    "webpack-dev-server": "^5.2.2"
+    "wait-on": "^8.0.2"
   },
+  
   "proxy": "http://localhost:5000",
   "browserslist": {
     "production": [

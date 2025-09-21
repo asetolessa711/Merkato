@@ -28,14 +28,11 @@ function NavbarUniversal() {
   const isActive = (path) => location.pathname === path ? { textDecoration: 'underline' } : undefined;
 
   return (
-    <nav data-testid="navbar" aria-label="Primary" style={{
+    <nav data-testid="navbar" aria-label="Primary" className="navbar" style={{
       position: 'relative',
       width: '100%',
-      background: '#0b1020',
-      color: '#fff',
       padding: '10px 16px',
       boxSizing: 'border-box',
-      borderBottom: '1px solid #222',
       zIndex: 10
     }}>
       <div style={{
@@ -48,37 +45,37 @@ function NavbarUniversal() {
       }}>
         {/* Left: Brand */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <Link to="/" style={{ color: '#ffd700', fontWeight: 700, fontSize: 20, textDecoration: 'none' }}>Merkato</Link>
+          <Link to="/" className="nav-link" style={{ color: 'var(--accent)', fontWeight: 700, fontSize: 20 }}>Merkato</Link>
         </div>
 
         {/* Center: Core links */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <Link to="/" style={{ color: '#fff', textDecoration: 'none', ...isActive('/') }}>Home</Link>
-          <Link to="/shop" style={{ color: '#fff', textDecoration: 'none', ...isActive('/shop') }}>Shop</Link>
-          <Link to="/favorites" style={{ color: '#fff', textDecoration: 'none', ...isActive('/favorites') }}>Favorites</Link>
-          <Link to="/cart" data-testid="cart-link" style={{ color: '#fff', textDecoration: 'none', ...isActive('/cart') }}>Cart</Link>
+          <Link to="/" className="nav-link" style={isActive('/')}>Home</Link>
+          <Link to="/shop" className="nav-link" style={isActive('/shop')}>Shop</Link>
+          <Link to="/favorites" className="nav-link" style={isActive('/favorites')}>Favorites</Link>
+          <Link to="/cart" data-testid="cart-link" className="nav-link" style={isActive('/cart')}>Cart</Link>
         </div>
 
         {/* Right: Auth / Dashboard */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           {dashLink && (
-            <Link to={dashLink} style={{ color: '#fff', textDecoration: 'none' }}>Dashboard</Link>
+            <Link to={dashLink} className="nav-link">Dashboard</Link>
           )}
           {/* Expose "My Account" button for customer to satisfy existing unit tests */}
           {role === 'customer' && (
             <button type="button" aria-label="My Account" style={{
-              background: 'transparent', border: '1px solid #555', color: '#fff', padding: '6px 10px', borderRadius: 6, cursor: 'pointer'
+              background: 'transparent', border: '1px solid var(--nav-border)', color: 'var(--nav-text)', padding: '6px 10px', borderRadius: 6, cursor: 'pointer'
             }}>My Account</button>
           )}
           {user ? (
             <button onClick={handleLogout} style={{
-              background: 'transparent', border: '1px solid #555', color: '#fff', padding: '6px 10px', borderRadius: 6, cursor: 'pointer'
+              background: 'transparent', border: '1px solid var(--nav-border)', color: 'var(--nav-text)', padding: '6px 10px', borderRadius: 6, cursor: 'pointer'
             }}>Logout</button>
           ) : (
             <>
-              <Link to="/login" style={{ color: '#fff', textDecoration: 'none' }}>Login</Link>
+              <Link to="/login" className="nav-link">Login</Link>
               {/* Simple Register link only (dropdown removed) */}
-              <Link to="/register?role=customer" data-testid="navbar-register-link" style={{ color: '#fff', textDecoration: 'none' }}>Register</Link>
+              <Link to="/register?role=customer" data-testid="navbar-register-link" className="nav-link">Register</Link>
             </>
           )}
         </div>

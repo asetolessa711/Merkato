@@ -52,11 +52,13 @@ module.exports = (() => {
   if (!disableThreshold) {
     cfg.coverageThreshold = {
       global: {
-        // Thresholds aligned with current stable coverage; raise incrementally
-        branches: 60,
-        functions: 75,
-        lines: 76,
-        statements: 75,
+        // Thresholds ratcheted slightly under latest stable coverage snapshot
+        // Current approx: Lines ~79.5, Branches ~64.7, Funcs ~79.7, Stmts ~77.6
+        // Keep a small buffer to avoid flakiness across environments.
+        branches: 64,
+        functions: 79,
+        lines: 79,
+        statements: 77,
       },
     };
   }

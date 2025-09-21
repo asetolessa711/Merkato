@@ -1,3 +1,11 @@
+/* White CTA for 'Sell on Merkato' */
+.ctaWhite {
+  background: #fff !important;
+  color: var(--color-primary, #0A2540) !important;
+  border: 2px solid var(--color-primary, #0A2540) !important;
+  font-weight: 700;
+  font-family: inherit;
+}
 /* Navbar.module.css – Scoped Styles for Merkato Navbar */
 
 /* Base Navbar */

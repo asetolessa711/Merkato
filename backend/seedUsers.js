@@ -4,7 +4,6 @@ const fs = require('fs');
 const path = require('path');
 const dotenv = require('dotenv');
 const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
 // Load environment variables in priority: .env.test.local > .env.test > .env
 const envPaths = ['.env.test.local', '.env.test', '.env'];
 let loaded = false;
@@ -76,11 +75,8 @@ async function seed() {
     console.log('🧹 Existing users removed');
 
     for (const user of users) {
-      const hashedPassword = await bcrypt.hash(user.password, 10);
-      const newUser = new User({
-        ...user,
-        password: hashedPassword
-      });
+      // Let the User model's pre-save hook hash the plain password
+      const newUser = new User(user);
       await newUser.save();
       console.log(`✅ Created user: ${user.email}`);
     }

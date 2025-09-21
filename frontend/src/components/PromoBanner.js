@@ -9,7 +9,7 @@ const PROMO_MESSAGES = [
   '🎁 Gift Cards Now Available!'
 ];
 
-function PromoBanner({ initialMessage, rotationInterval = 5000 }) {
+function PromoBanner({ initialMessage = PROMO_MESSAGES[0], rotationInterval = 5000 }) {
   const [isVisible, setIsVisible] = useState(true);
   const [currentMessage, setCurrentMessage] = useState(initialMessage);
   const [messageIndex, setMessageIndex] = useState(0);
@@ -53,9 +53,6 @@ PromoBanner.propTypes = {
   rotationInterval: PropTypes.number
 };
 
-PromoBanner.defaultProps = {
-  initialMessage: PROMO_MESSAGES[0],
-  rotationInterval: 5000
-};
+// defaultProps removed in favor of default parameters
 
 export default React.memo(PromoBanner);

@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 
 // Mock useNavigate for vendor redirect test
@@ -89,7 +89,9 @@ describe('RegisterPage (customer)', () => {
 
   it('shows loading state during registration', async () => {
     jest.useFakeTimers();
-    axios.post.mockImplementation(() => new Promise(resolve => setTimeout(() => resolve({ data: { token: 'abc', user: {} } }), 1000)));
+    axios.post.mockImplementation(
+      () => new Promise((resolve) => setTimeout(() => resolve({ data: { token: 'abc', user: {} } }), 1000))
+    );
     setup();
     fireEvent.change(screen.getByLabelText(/full name/i), { target: { value: 'Test User' } });
     fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'test@example.com' } });
@@ -99,7 +101,11 @@ describe('RegisterPage (customer)', () => {
     fireEvent.click(screen.getByRole('button', { name: /register/i }));
     // Assert loading spinner or disabled button
     expect(screen.getByRole('button', { name: /\.\.\./i })).toBeDisabled();
-    jest.runAllTimers();
+    // Advance timers and flush microtasks within act
+    await act(async () => {
+      jest.advanceTimersByTime(1000);
+      await Promise.resolve();
+    });
     jest.useRealTimers();
   });
 
@@ -113,7 +119,9 @@ describe('RegisterPage (customer)', () => {
     fireEvent.change(screen.getByLabelText(/country/i), { target: { value: 'Ethiopia' } });
     fireEvent.change(screen.getByLabelText(/register as/i), { target: { value: 'customer' } });
     fireEvent.click(screen.getByRole('button', { name: /register/i }));
-    expect(await screen.findByTestId('email-error')).toHaveTextContent(/invalid email address/i);
+    await waitFor(() => {
+      expect(screen.getByTestId('email-error')).toHaveTextContent(/invalid email address/i);
+    });
   });
 
   it('global message has role alert for accessibility', async () => {
@@ -166,7 +174,9 @@ describe('RegisterPage (customer)', () => {
     fireEvent.change(screen.getByLabelText(/country/i), { target: { value: 'Ethiopia' } });
     fireEvent.change(screen.getByLabelText(/register as/i), { target: { value: 'customer' } });
     fireEvent.click(screen.getByRole('button', { name: /register/i }));
-    expect(await screen.findByTestId('email-error')).toHaveTextContent(/invalid email address/i);
+    await waitFor(() => {
+      expect(screen.getByTestId('email-error')).toHaveTextContent(/invalid email address/i);
+    });
     expect(await screen.findByText(/weak password/i)).toBeInTheDocument();
   });
 
@@ -189,7 +199,9 @@ describe('RegisterPage (customer)', () => {
 
   it('disables all inputs and button during loading', async () => {
     jest.useFakeTimers();
-    axios.post.mockImplementation(() => new Promise(resolve => setTimeout(() => resolve({ data: { token: 'abc', user: {} } }), 1000)));
+    axios.post.mockImplementation(
+      () => new Promise((resolve) => setTimeout(() => resolve({ data: { token: 'abc', user: {} } }), 1000))
+    );
     setup();
     fireEvent.change(screen.getByLabelText(/full name/i), { target: { value: 'Test User' } });
     fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'test@example.com' } });
@@ -203,7 +215,11 @@ describe('RegisterPage (customer)', () => {
     expect(screen.getByLabelText(/country/i)).toBeDisabled();
     expect(screen.getByLabelText(/register as/i)).toBeDisabled();
     expect(screen.getByRole('button', { name: /\.{3}/i })).toBeDisabled();
-    jest.runAllTimers();
+    // Advance timers and flush microtasks within act
+    await act(async () => {
+      jest.advanceTimersByTime(1000);
+      await Promise.resolve();
+    });
     jest.useRealTimers();
   });
 

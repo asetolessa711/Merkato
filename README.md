@@ -202,6 +202,39 @@ Features:
 - See `docs/testing-system.md` for test architecture & coverage.
 - Use `docs/` for additional architecture, API, and usage docs.
 
+### MicroBanner (Promo/Trust bar)
+
+The slim bar displayed above the navbar rotates promotional and trust messages. It is enabled across all layouts (public, customer, vendor, admin).
+
+- Admin pages
+  - Manage promos: `/admin/microbanner`
+  - Manage trust messages: `/admin/trust-ticker`
+- Storage keys (local, auto-broadcast to open tabs)
+  - Promos: `merkato-microbanners`
+  - Trust: `merkato-trust-messages`
+- Promo item fields (per row)
+  - `text` (required)
+  - `type`: `promo` | `info` | `cultural`
+  - `action`: `link` | `modal`
+    - When `link`: `href` supports internal paths (e.g., `/shop?sort=new`) or full URLs
+    - When `modal`: `modalTitle`, `modalBody`
+  - `cta`: optional inline button label (e.g., "Shop now")
+  - `bg`, `fg`: optional CSS color overrides (hex or CSS variables like `var(--microbanner-bg)`)
+  - `startAt`, `endAt`: optional ISO date/time window (inclusive)
+  - `enabled`: boolean
+- Trust messages
+  - Managed separately in `/admin/trust-ticker`. These interleave 1:1 with promos by default. Set mode to off with localStorage key `trust-ticker-mode = off` if needed.
+- Theming (CSS variables in `frontend/src/styles/tokens.css`)
+  - `--microbanner-bg` / `--microbanner-fg` (promo default)
+  - `--microbanner-bg-info` / `--microbanner-fg-info`
+  - `--microbanner-bg-cultural` / `--microbanner-fg-cultural`
+  - `--microbanner-bg-trust` / `--microbanner-fg-trust`
+  - Navbar background is a deep navy: `--nav-bg: #0F1424`
+
+Contrast tips
+- Prefer dark foregrounds on light translucent backgrounds (defaults already tuned). If overriding, verify WCAG contrast (~AA) for small text.
+- Use `var(--ink)` for dark text and `var(--success)` for trust highlights.
+
 ---
 
 ## Customer Strategy

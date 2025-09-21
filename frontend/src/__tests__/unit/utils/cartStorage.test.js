@@ -45,4 +45,30 @@ describe('cartStorage', () => {
     saveCart([{ id: 'p1' }], true);
     expect(isCartExpired(true)).toBe(false);
   });
+
+  test('isCartExpired falls back to cart timestamp when TTL invalid JSON', () => {
+    // Save a valid cart but corrupt TTL
+    localStorage.setItem('merkato-cart', JSON.stringify({ items: [{ id: 'p1' }], timestamp: Date.now() - 10000 }));
+    localStorage.setItem('merkato-cart-ttl', '{not-json');
+    // Should not throw and should use cart timestamp path
+    expect(() => require('../../../utils/cartStorage')).not.toThrow();
+    const { isCartExpired } = require('../../../utils/cartStorage');
+    expect(isCartExpired(false)).toBe(false);
+  });
+
+  test('saveCart safe if JSON.stringify throws', () => {
+    const original = JSON.stringify;
+    // Force JSON.stringify to throw only for objects containing items
+    // eslint-disable-next-line no-global-assign
+    JSON.stringify = (v) => {
+      if (v && typeof v === 'object' && 'items' in v) throw new Error('boom');
+      return original(v);
+    };
+    const { saveCart, loadCart } = require('../../../utils/cartStorage');
+    // Should not throw despite JSON issue
+    expect(() => saveCart([{ id: 'x' }], false)).not.toThrow();
+    // Load still returns default if nothing persisted
+    expect(loadCart()).toEqual({ items: [], timestamp: 0 });
+    JSON.stringify = original;
+  });
 });

@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate, useLocation } from 'react-router-dom';
 import styles from './CustomerLayout.module.css';
 
-import NavbarUniversal from '../components/NavbarUniversal';
+import MerkatoNavbar from '../components/MerkatoNavbar.jsx';
+import MicroBanner from '../components/MicroBanner.jsx';
 import CustomerSidebar from '../components/CustomerSidebar';
 import MerkatoFooter from '../components/MerkatoFooter';
 import Breadcrumb from '../components/Breadcrumb';
@@ -15,22 +16,20 @@ const EmptyState = ({ message }) => (
   </div>
 );
 
-const LoadingSkeleton = () => (
-  <div className={styles.loadingSkeleton}>
-    <div className={styles.skeletonHeader} />
-    <div className={styles.skeletonStats}>
-      {[1, 2, 3, 4].map(i => (
-        <div key={i} className={styles.skeletonCard} />
-      ))}
-    </div>
-  </div>
-);
+// Loading skeleton removed per design request to avoid showing placeholder bars/cards.
+const LoadingSkeleton = () => null;
 
 function CustomerLayout({ children, user, onLogout, lang, onLangChange }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  // Deliver-to state (moved from Navbar)
+  const [regionOpen, setRegionOpen] = useState(false);
+  const [region, setRegion] = useState(() => {
+    try { return localStorage.getItem('merkato-region') || ''; } catch { return ''; }
+  });
+  const regionRef = useRef(null);
 
   // Memoized stats
   const quickStats = useMemo(() => [
@@ -57,11 +56,30 @@ function CustomerLayout({ children, user, onLogout, lang, onLangChange }) {
     if (user) setIsLoading(false);
   }, [user]);
 
+  // Persist region selection
+  useEffect(() => {
+    try {
+      if (region) localStorage.setItem('merkato-region', region);
+    } catch {}
+  }, [region]);
+
+  // Close on outside click
+  useEffect(() => {
+    if (!regionOpen) return;
+    const onDoc = (e) => {
+      if (!regionRef.current) return;
+      if (!regionRef.current.contains(e.target)) setRegionOpen(false);
+    };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, [regionOpen]);
+
   if (isLoading) {
     const isCypress = typeof window !== 'undefined' && window.Cypress;
     return (
       <div className={styles.container}>
-        <NavbarUniversal />
+  <MicroBanner alwaysShow />
+  <MerkatoNavbar role="customer" />
         <div className={styles.mainContent}>
           <CustomerSidebar user={null} activePath={location.pathname} />
           <main className={styles.contentArea}>
@@ -77,7 +95,7 @@ function CustomerLayout({ children, user, onLogout, lang, onLangChange }) {
                 Customer Dashboard
               </h1>
             )}
-            <LoadingSkeleton />
+            {/* Intentionally render no hero bar or cards while loading. */}
           </main>
         </div>
       </div>
@@ -97,7 +115,37 @@ function CustomerLayout({ children, user, onLogout, lang, onLangChange }) {
 
   return (
     <div className={styles.container}>
-      <NavbarUniversal />
+  <MicroBanner alwaysShow />
+  <MerkatoNavbar role="customer" />
+      {/* Deliver to chip and modal */}
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '8px 16px' }}>
+        <button
+          type="button"
+          aria-haspopup="dialog"
+          aria-expanded={regionOpen}
+          onClick={() => setRegionOpen(v => !v)}
+          style={{ background: 'rgba(0,0,0,0.06)', color: '#111827', border: '1px solid #e5e7eb', padding: '6px 10px', borderRadius: 6, cursor: 'pointer' }}
+        >
+          Deliver to: {region || 'Select country'} ▾
+        </button>
+        {regionOpen && (
+          <div ref={regionRef} role="dialog" aria-label="Select delivery country" style={{ position: 'relative', zIndex: 10 }}>
+            <div style={{ position: 'absolute', top: 8, left: 0, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, boxShadow: '0 10px 24px rgba(0,0,0,0.15)', padding: 12, width: 320 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <strong>Select country</strong>
+                <button onClick={() => setRegionOpen(false)} style={{ background: 'transparent', border: 0, cursor: 'pointer' }} aria-label="Close">✕</button>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 6 }}>
+                {['Ethiopia', 'Kenya', 'Uganda', 'Tanzania', 'Rwanda', 'Somalia', 'Eritrea', 'Sudan', 'South Sudan', 'Djibouti', 'United States', 'United Kingdom', 'Germany', 'France'].map((c) => (
+                  <button key={c} onClick={() => { setRegion(c); setRegionOpen(false); }} style={{ textAlign: 'left', background: 'transparent', border: 0, padding: '6px 8px', cursor: 'pointer', borderRadius: 6 }}>
+                    {c}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
       {/* Fixed heading at the top */}
       <header className={styles.fixedHeader}>
         <h1 data-testid="customer-dashboard-title">Customer Dashboard</h1>

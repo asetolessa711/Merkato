@@ -11,6 +11,7 @@ if (typeof window !== 'undefined' && !window.ResizeObserver) {
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 
 import App from '../../App';
+import { CartProvider } from '../../cart/CartContext';
 import '@testing-library/jest-dom';
 import { MemoryRouter } from 'react-router-dom';
 import axios from 'axios';
@@ -27,7 +28,11 @@ jest.mock('react-modal', () => {
 
 function renderWithRoute(route = '/') {
   window.history.pushState({}, '', route);
-  render(<App />);
+  render(
+    <CartProvider>
+      <App />
+    </CartProvider>
+  );
 }
 
 beforeEach(() => {

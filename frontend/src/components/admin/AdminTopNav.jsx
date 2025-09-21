@@ -63,7 +63,7 @@ function AdminTopNav() {
   };
 
   return (
-    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 10000, background: 'var(--header-bg, var(--color-nav))', color: 'var(--header-link, #fff)' }}>
+    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 10000, background: 'var(--nav-bg, var(--header-bg, var(--color-nav)))', color: 'var(--nav-text, var(--header-link, #fff))', borderBottom: '1px solid var(--nav-border, rgba(255,255,255,0.08))' }}>
       {/* primary row */}
   <nav aria-label="Admin top navigation" style={{ maxWidth: 1200, margin: '0 auto', display: 'grid', gridTemplateColumns: '200px auto auto', padding: '6px 10px', gap: 8, alignItems: 'center', minHeight: 56, whiteSpace: 'nowrap' }}>
         {/* Left: brand only */}

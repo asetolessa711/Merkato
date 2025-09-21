@@ -5,17 +5,17 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  font-family: 'Poppins', sans-serif;
+  font-family: var(--font-sans, 'Poppins', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif);
 }
 
 .mainContent {
   display: flex;
-  flex-grow: 1;
-  min-height: calc(100vh - 60px); /* Adjust if navbar height differs */
+  flex: 1 1 auto;
+  min-height: 0; /* allow children to manage their own overflow */
 }
 
 .contentArea {
-  flex: 1;
+  flex: 1 1 auto;
   padding: 30px;
   overflow-y: auto;
   background-color: #ffffff;

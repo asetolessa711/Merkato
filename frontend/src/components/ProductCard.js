@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import './ProductCard.css';
+import { useCart } from '../cart/CartContext';
 
 function ProductCard({
   product,
@@ -10,6 +11,7 @@ function ProductCard({
   colorOptions = [], // e.g. ['#FF0000', '#000']
   onAddToCart,
 }) {
+  const { add } = useCart();
   const isDeal = type === 'deal' || product.promotion?.isPromoted || product.discount > 0;
   const discountText = product.discount > 0 ? `-${product.discount}%` : '';
   const finalPrice = product.price.toFixed(2);
@@ -17,6 +19,23 @@ function ProductCard({
   const theme = product.theme || 'mint'; // fallback
   const isOutOfStock = product.stock === 0;
   const isCypress = typeof window !== 'undefined' && window.Cypress;
+
+  const handleAddToCart = () => {
+    if (isOutOfStock && !isCypress) return;
+    // Allow existing prop callback for any side-effects/tests
+    if (typeof onAddToCart === 'function') {
+      try { onAddToCart(product); } catch (_) {}
+    }
+    try {
+      const sku = String(product.sku || product._id || product.id || product.name);
+      const title = String(product.name || product.title || 'Untitled');
+      const price = Number(product.price) || 0;
+      const image = product.image;
+      add({ sku, title, price, image }, 1);
+      // Notify any legacy listeners
+      try { window.dispatchEvent(new Event('cart:updated')); } catch (_) {}
+    } catch (_) { /* no-op */ }
+  };
 
   return (
     <div
@@ -44,7 +63,7 @@ function ProductCard({
         {/* Add to Cart Button */}
         <button
           type="button"
-          onClick={() => (isOutOfStock && !isCypress) ? undefined : (typeof onAddToCart === 'function' ? onAddToCart(product) : undefined)}
+          onClick={handleAddToCart}
           disabled={isOutOfStock && !isCypress}
           aria-label="Add to Cart"
           data-testid="add-to-cart-btn"

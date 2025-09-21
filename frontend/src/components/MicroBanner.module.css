@@ -1,0 +1,115 @@
+/* Responsive styles for MicroBanner using design tokens */
+
+.microbanner {
+  border-bottom: 1px solid var(--border);
+  padding: 4px 10px;
+  font-weight: 600;
+  font-size: clamp(11px, 1.4vw, 13px);
+  cursor: pointer;
+  position: relative;
+  min-height: 28px;
+  max-height: 32px;
+  display: flex;
+  align-items: center;
+}
+
+.container {
+  max-width: var(--container-max, 1280px);
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(6px, 1.2vw, 12px);
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: clamp(6px, 1.2vw, 12px);
+  min-width: 0; /* allow text to ellipsize on tiny screens */
+}
+
+.typeChip {
+  font-size: clamp(9px, 1.1vw, 10px);
+  padding: 1px 6px;
+  border: 1px solid var(--brand);
+  border-radius: 999px;
+  background: var(--canvas);
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dots { display: none; }
+
+.cta {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--ink);
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.cta:hover {
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 30%, transparent);
+}
+
+.dotActive {
+  background: color-mix(in srgb, var(--ink) 65%, transparent);
+}
+
+@media (max-width: 480px) {
+  .typeChip { display: none; }
+  .container { gap: 8px; }
+}
+
+/* Modal styles */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 11000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+}
+
+.modalCard {
+  background: var(--surface);
+  color: var(--ink);
+  max-width: 520px;
+  width: 100%;
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border);
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.closeBtn {
+  background: transparent;
+  border: 1px solid var(--border);
+  padding: 2px 8px;
+  border-radius: 6px;
+  color: var(--slate);
+}

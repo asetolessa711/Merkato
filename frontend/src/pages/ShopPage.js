@@ -4,6 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
 import VendorCard from '../components/VendorCard'; // ✅ Integrated import
 import ProductCard from '../components/ProductCard';
 import './ShopPage.css';
+import { getCanonicalTaxonomy, getCategoryListFrom, matchesCategory } from '../utils/taxonomy';
 
 function ShopPage() {
   const location = useLocation();
@@ -31,6 +32,8 @@ function ShopPage() {
   const itemsPerPage = 100; // show many items so test product appears on page 1
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [hoveredCategory, setHoveredCategory] = useState('');
+  const [canonCats, setCanonCats] = useState([]);
+  const [lang, setLang] = useState(() => localStorage.getItem('merkato-lang') || 'en');
 
   const currency = 'USD';
   const rates = { USD: 1, ETB: 56.5, EUR: 0.91 };
@@ -70,6 +73,14 @@ function ShopPage() {
   };
 
   useEffect(() => {
+    (async () => {
+      try {
+        const countryName = (() => { try { return localStorage.getItem('merkato-region') || ''; } catch { return ''; } })();
+        const country = countryName === 'Ethiopia' ? 'ET' : '';
+        const cats = await getCanonicalTaxonomy({ country, lang });
+        setCanonCats(cats);
+      } catch (_) {}
+    })();
     const fetchProducts = async () => {
       try {
         setLoading(true);
@@ -115,7 +126,9 @@ function ShopPage() {
   useEffect(() => {
     let result = products;
 
-    if (filters.category) result = result.filter(p => p.category?.toLowerCase() === filters.category.toLowerCase());
+    if (filters.category) {
+      result = result.filter(p => matchesCategory(p.category, filters.category));
+    }
     if (filters.gender) result = result.filter(p => p.gender?.toLowerCase() === filters.gender.toLowerCase());
     if (filters.ageGroup) result = result.filter(p => p.ageGroup === filters.ageGroup);
     if (filters.priceMin) result = result.filter(p => p.price >= parseFloat(filters.priceMin));
@@ -202,7 +215,7 @@ function ShopPage() {
       {/* Filters, Promoted, Product List, Pagination ... */}
       {/* ... (same as your existing JSX structure above) */}
 
-      {/* Example Filter Section */}
+  {/* Example Filter Section */}
       <div className="filters">
         {/* Simple search input to filter products by name (used in tests) */}
         <input
@@ -212,6 +225,14 @@ function ShopPage() {
           value={filters.search}
           onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
         />
+        {/* Category selector that mirrors the Shop by Category taxonomy */}
+        <label htmlFor="filter-category">Filter by Category</label>
+        <select id="filter-category" name="category" value={filters.category} onChange={handleFilterChange} aria-label="Filter products by category">
+          <option value="">All Categories</option>
+          {getCategoryListFrom(canonCats, lang).map((title) => (
+            <option key={`cat-${title}`} value={(title || '').toLowerCase()}>{title}</option>
+          ))}
+        </select>
         {/* ...other filters... */}
   {/* Replace input with select for vendor */}
   <label htmlFor="filter-vendor">Filter products by vendor</label>

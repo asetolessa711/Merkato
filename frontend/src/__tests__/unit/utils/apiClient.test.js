@@ -34,4 +34,24 @@ describe('apiClient', () => {
     const err = { response: { data: { message: 'Nope' } } };
     await expect(errorHandler(err)).rejects.toMatchObject({ message: 'Nope' });
   });
+
+  test('omits Authorization header when no token present', async () => {
+    localStorage.clear();
+    jest.isolateModules(() => {
+      require('../../../utils/apiClient');
+    });
+    const reqUse = axios.interceptors?.request?.use;
+    const [[handler]] = reqUse.mock.calls;
+    const cfg = await handler({ headers: {} });
+    expect(cfg.headers.Authorization).toBeUndefined();
+  });
+
+  test('maps server error to include message (fallback when missing)', async () => {
+    jest.isolateModules(() => {
+      require('../../../utils/apiClient');
+    });
+    const [[, errorHandler]] = axios.interceptors.response.use.mock.calls;
+    const err = { response: { status: 500, data: {} }, message: '' };
+    await expect(errorHandler(err)).rejects.toMatchObject({ message: 'Request failed' });
+  });
 });

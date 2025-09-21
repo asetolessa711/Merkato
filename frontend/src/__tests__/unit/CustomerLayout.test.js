@@ -11,14 +11,15 @@ describe('CustomerLayout @persona-ui', () => {
     onLangChange: jest.fn()
   };
 
-  it('renders loading skeleton when user not yet loaded', () => {
+  it('does not render loading skeleton when user not yet loaded', () => {
     const { container } = render(
       <MemoryRouter>
         <CustomerLayout {...baseProps} user={null} />
       </MemoryRouter>
     );
-    // Loading state renders skeleton container, not the visible dashboard header
-    expect(container.querySelector('.loadingSkeleton')).toBeTruthy();
+    // Loading state should NOT render any skeleton or the visible dashboard header
+    expect(container.querySelector('.loadingSkeleton')).toBeNull();
+    expect(screen.queryByTestId('customer-dashboard-title')).toBeNull();
   });
 
   it('renders dashboard title when user present', () => {

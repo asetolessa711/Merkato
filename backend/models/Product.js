@@ -10,7 +10,15 @@ const productSchema = new mongoose.Schema(
       enum: ['USD', 'ETB', 'EUR'],
       default: 'USD'
     },
+    // Backward-compat simple category label
     category: { type: String },
+    // Canonical taxonomy persistence (optional)
+    categoryId: { type: String },
+    categorySlug: { type: String },
+    categoryPathIds: { type: [String], default: [] },
+    categoryPathSlugs: { type: [String], default: [] },
+    // Images: support multiple while keeping legacy single image
+    images: { type: [String], default: [] },
     image: { type: String, default: '' },
     stock: { type: Number, default: 0 },
     vendor: {
@@ -23,6 +31,8 @@ const productSchema = new mongoose.Schema(
       enum: ['en', 'am', 'or', 'it'],
       default: 'en'
     },
+    // Dynamic vendor attributes keyed by taxonomy
+    attributes: { type: mongoose.Schema.Types.Mixed, default: {} },
 
   // 🚚 Delivery ETA (Phase 1)
   // Estimated time (in days) to ship/deliver this product. If not set, use global default from DeliverySettings.

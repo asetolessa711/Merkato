@@ -2,7 +2,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Outlet } from 'react-router-dom';
-import MerkatoNavbar from '../components/MerkatoNavbar';
+import MerkatoNavbar from '../components/MerkatoNavbar.jsx';
 
 import styles from './PublicLayout.module.css';
 import MerkatoFooter from '../components/MerkatoFooter';
@@ -26,7 +26,7 @@ function PublicLayout({ user = null, onLogout, lang = 'en', onLangChange = () =>
         </div>
       )}
 
-  {/* Merkato Navbar */}
+  {/* Public pages use MerkatoNavbar with MicroBanner and Mega Menu */}
   <MerkatoNavbar role="public" />
 
       {/* Main content area for pages like HomePage, Shop, etc. */}

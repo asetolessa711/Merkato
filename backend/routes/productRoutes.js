@@ -5,6 +5,7 @@ const Product = require('../models/Product');
 const { protect, authorize } = require('../middleware/authMiddleware');
 const Flag = require('../models/Flag');
 const DeliverySettings = require('../models/DeliverySettings');
+const { buildTaxonomy, filterAndSort, computeChildren } = require('../utils/taxonomy');
 
 // Get all products (public)
 router.get('/', async (req, res) => {
@@ -55,8 +56,46 @@ router.get('/vendor/:id', async (req, res) => {
 // Upload new product (Vendor/Admin)
 router.post('/', protect, authorize('vendor', 'admin'), async (req, res) => {
   try {
+    const body = req.body || {};
+    // 1) Validate category against taxonomy: must be a leaf and visible for upload
+    const { categories } = await buildTaxonomy();
+    const filtered = filterAndSort(categories, { visibleIn: 'upload', country: (req.user.country || '').toUpperCase() });
+    const { byId, children } = computeChildren(filtered);
+    // Allow selection by slug or id; fallback to simple label string
+    const chosenSlug = body.categorySlug || body.category;
+    const chosen = [...byId.values()].find(c => c.slug === chosenSlug || c.id === chosenSlug || c.name === body.category);
+    if (!chosen) {
+      return res.status(400).json({ message: 'Invalid or unsupported category' });
+    }
+    if ((children.get(chosen.id) || []).length > 0) {
+      return res.status(400).json({ message: 'Please choose a more specific category' });
+    }
+
+    // 2) Validate dynamic attributes: required fields present
+    const attrs = Array.isArray(chosen.attributes) ? chosen.attributes : [];
+    const attrObj = body.attributes || {};
+    for (const a of attrs) {
+      if (a.required) {
+        const val = attrObj[a.key];
+        if (val === undefined || val === null || val === '') {
+          return res.status(400).json({ message: `${a.label || a.key} is required` });
+        }
+      }
+    }
+
+    // Compute category path slugs for SEO
+    const pathIds = Array.isArray(chosen.path) ? chosen.path.slice() : [];
+    const pathSlugs = pathIds.map(id => byId.get(id)?.slug).filter(Boolean);
+
     const product = new Product({
-      ...req.body,
+      ...body,
+      category: body.category || chosen.name,
+      categoryId: chosen.id,
+      categorySlug: chosen.slug,
+      categoryPathIds: pathIds,
+      categoryPathSlugs: pathSlugs,
+      attributes: attrObj,
+      images: Array.isArray(body.images) ? body.images : (body.image ? [body.image] : []),
       vendor: req.user._id,
       vendorCountry: req.user.country || 'global'
     });
@@ -89,9 +128,43 @@ router.post('/', protect, authorize('vendor', 'admin'), async (req, res) => {
 // Update product
 router.put('/:id', protect, authorize('vendor', 'admin'), async (req, res) => {
   try {
+    const body = req.body || {};
+    const update = { ...body };
+    // If category changes, re-validate leaf-only and attributes
+    if (body.category || body.categorySlug || body.attributes) {
+      const { categories } = await buildTaxonomy();
+      const filtered = filterAndSort(categories, { visibleIn: 'upload', country: (req.user.country || '').toUpperCase() });
+      const { byId, children } = computeChildren(filtered);
+      const chosenSlug = body.categorySlug || body.category;
+      const chosen = chosenSlug ? [...byId.values()].find(c => c.slug === chosenSlug || c.id === chosenSlug || c.name === body.category) : null;
+      if (chosen) {
+        if ((children.get(chosen.id) || []).length > 0) {
+          return res.status(400).json({ message: 'Please choose a more specific category' });
+        }
+        const attrs = Array.isArray(chosen.attributes) ? chosen.attributes : [];
+        const attrObj = body.attributes || {};
+        for (const a of attrs) {
+          if (a.required) {
+            const val = attrObj[a.key];
+            if (val === undefined || val === null || val === '') {
+              return res.status(400).json({ message: `${a.label || a.key} is required` });
+            }
+          }
+        }
+        const pathIds = Array.isArray(chosen.path) ? chosen.path.slice() : [];
+        const pathSlugs = pathIds.map(id => byId.get(id)?.slug).filter(Boolean);
+        update.category = body.category || chosen.name;
+        update.categoryId = chosen.id;
+        update.categorySlug = chosen.slug;
+        update.categoryPathIds = pathIds;
+        update.categoryPathSlugs = pathSlugs;
+        update.attributes = attrObj;
+      }
+    }
+
     const product = await Product.findOneAndUpdate(
       { _id: req.params.id, vendor: req.user._id },
-      req.body,
+      update,
       { new: true }
     );
     if (!product) return res.status(404).json({ message: 'Product not found or not authorized' });

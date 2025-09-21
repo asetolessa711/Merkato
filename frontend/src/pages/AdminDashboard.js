@@ -7,6 +7,11 @@ import {
 
 function AdminDashboard() {
   const isCypress = typeof window !== 'undefined' && window.Cypress;
+  // Temporary: hide middle content (cards/charts/lists) during redesign.
+  // Set localStorage 'ui:hide-admin-middle' to 'false' to re-enable.
+  const hideMiddle = (typeof window !== 'undefined'
+    && window.localStorage
+    && window.localStorage.getItem('ui:hide-admin-middle') === 'false') ? false : true;
   const [users, setUsers] = useState([]);
   const [products, setProducts] = useState([]);
   const [flags, setFlags] = useState([]);
@@ -112,6 +117,7 @@ function AdminDashboard() {
         </div>
       )}
 
+      {!hideMiddle && (
       <Card title="Financial Overview">
         <ResponsiveContainer width="100%" height={250}>
           <BarChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 5 }} aria-label="Financial Chart">
@@ -123,8 +129,9 @@ function AdminDashboard() {
           </BarChart>
         </ResponsiveContainer>
       </Card>
+      )}
 
-      {countryData ? (
+      {!hideMiddle && countryData ? (
         <Card title="Country Admin Summary">
           <ul>
             <li><strong>Users:</strong> {fallback(countryData.totalUsers)}</li>
@@ -134,6 +141,7 @@ function AdminDashboard() {
           </ul>
         </Card>
       ) : (
+        !hideMiddle ? (
         <>
           <Card title="Flagged Products (AI Escalation)">
             {flags.length === 0 ? <p role="status">No issues found.</p> : (
@@ -177,6 +185,7 @@ function AdminDashboard() {
             </ul>
           </Card>
         </>
+        ) : null
       )}
   </div>
   );

@@ -62,6 +62,8 @@ const featureFlagRoutes = require("./routes/featureFlagRoutes");
 const behaviorRoutes = require("./routes/behaviorRoutes");
 const megaMenuRoutes = require("./routes/megaMenuRoutes");
 const themeRoutes = require("./routes/themeRoutes");
+const geoRoutes = require("./routes/geoRoutes");
+const searchRoutes = require("./routes/searchRoutes");
 const devSeedRoute = require("./routes/devSeedRoute");
 const testSeedOrdersRoute = require("./routes/testSeedOrdersRoute");
 const testSeedInvoicesRoute = require("./routes/testSeedInvoicesRoute");
@@ -112,6 +114,8 @@ app.use("/api/email", emailInvoiceRoutes);
 app.use("/api/feature-flags", featureFlagRoutes);
 app.use("/api", megaMenuRoutes);
 app.use("/api", themeRoutes);
+app.use("/api/geo", geoRoutes);
+app.use("/api", searchRoutes);
 
 app.use("/api/invoices", invoiceRoutes);
 if (bundlesRoutes) app.use("/api/products", bundlesRoutes);

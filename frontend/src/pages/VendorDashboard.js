@@ -15,6 +15,11 @@ const USE_MOCK_VENDOR = true; // Set to false for real API
 
 function VendorDashboard() {
   const isCypress = typeof window !== 'undefined' && window.Cypress;
+  // Temporary: hide middle content (cards/charts/rows) during redesign.
+  // Set localStorage 'ui:hide-vendor-middle' to 'false' to re-enable.
+  const hideMiddle = (typeof window !== 'undefined'
+    && window.localStorage
+    && window.localStorage.getItem('ui:hide-vendor-middle') === 'false') ? false : true;
   const [products, setProducts] = useState([]);
   const [analytics, setAnalytics] = useState(null);
   const [msg, setMsg] = useState('');
@@ -97,6 +102,7 @@ function VendorDashboard() {
   return (
     <div className={styles.contentArea}>
   <h1 data-testid="vendor-dashboard-title" style={isCypress ? {} : {display:'none'}}>Vendor Dashboard</h1>
+      {!hideMiddle && (
       <div style={{ textAlign: 'center', marginBottom: 30, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <select
@@ -142,9 +148,10 @@ function VendorDashboard() {
           Choose a card style for your new product (matches Merkato's taste!)
         </span>
       </div>
+      )}
       <div data-cy="dashboard-content" data-testid="dashboard-content">
         <h3 style={{display:'none'}}>Welcome back, Vendor</h3>
-        {vendorProfile && (
+        {!hideMiddle && vendorProfile && (
           <Card title="🛍️ Shop Profile Preview">
             <VendorCard vendor={vendorProfile} size="md" theme="mint" />
           </Card>
@@ -165,28 +172,29 @@ function VendorDashboard() {
           <p>Loading dashboard...</p>
         ) : (
           <>
-            {!analytics && products.length === 0 && (
+            {!hideMiddle && !analytics && products.length === 0 && (
               <div style={{ textAlign: 'center', color: '#e74c3c', marginBottom: '20px' }}>
                 <p>⚠️ Something went wrong. Please try refreshing or logging in again.</p>
               </div>
             )}
-            {analytics && (
+            {!hideMiddle && analytics && (
               <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', marginBottom: '24px' }}>
                 <Card title="💵 Monthly Revenue"><p><strong>${analytics.totalRevenue}</strong></p></Card>
                 <Card title="📈 Order Success Rate"><p><strong>{analytics.successRate || '94%'}</strong></p></Card>
                 <Card title="🏆 Best-Selling Product"><p>{analytics.bestProduct || 'TBD'}</p></Card>
               </div>
             )}
-            {/* Charts remain unchanged */}
-            <div style={{ margin: '32px 0 0 0' }}>
-              <ProductRowSection
-                title="Your Products"
-                products={products}
-                emptyText="No products to display."
-                type="standard"
-                size="md"
-              />
-            </div>
+            {!hideMiddle && (
+              <div style={{ margin: '32px 0 0 0' }}>
+                <ProductRowSection
+                  title="Your Products"
+                  products={products}
+                  emptyText="No products to display."
+                  type="standard"
+                  size="md"
+                />
+              </div>
+            )}
           </>
         )}
       </div>

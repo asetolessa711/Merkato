@@ -18,10 +18,10 @@ export function loadCart() {
 
 export function saveCart(items, isAuthed) {
   const ts = Date.now();
-  localStorage.setItem('merkato-cart', JSON.stringify({ items, timestamp: ts }));
+  try { localStorage.setItem('merkato-cart', JSON.stringify({ items, timestamp: ts })); } catch {}
   // Optional mirror for legacy code paths
-  localStorage.setItem('cart', JSON.stringify(items));
-  localStorage.setItem('merkato-cart-ttl', JSON.stringify({ ts, maxAge: isAuthed ? USER_MAX_AGE_MS : GUEST_MAX_AGE_MS }));
+  try { localStorage.setItem('cart', JSON.stringify(items)); } catch {}
+  try { localStorage.setItem('merkato-cart-ttl', JSON.stringify({ ts, maxAge: isAuthed ? USER_MAX_AGE_MS : GUEST_MAX_AGE_MS })); } catch {}
 }
 
 export function clearCart() {

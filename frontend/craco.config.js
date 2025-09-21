@@ -2,6 +2,10 @@ const webpack = require('webpack');
 const path = require('path');
 
 module.exports = {
+  // Disable ESLint integration in CRACO to avoid eslint-loader expectation on CRA 5
+  eslint: {
+    enable: false,
+  },
   jest: {
     configure: (jestConfig) => {
       const fs = require('fs');
@@ -10,6 +14,8 @@ module.exports = {
         '<rootDir>/src',
         ...(hasExtraTestsDir ? ['<rootDir>/tests'] : [])
       ];
+      // Prefer .jsx over .js to avoid basename collisions selecting the wrong file
+      jestConfig.moduleFileExtensions = ['jsx', 'js', 'json', 'node'];
       return jestConfig;
     }
   },
@@ -59,6 +65,15 @@ module.exports = {
         /Failed to parse source map/,
         /source map loader/,
       ];
+
+      // Prefer resolving .jsx before .js to avoid accidental picks in basename duplicates
+      if (webpackConfig.resolve && Array.isArray(webpackConfig.resolve.extensions)) {
+        const exts = webpackConfig.resolve.extensions.filter(Boolean);
+        const ordered = ['.jsx', '.js', '.json', '.mjs'];
+        // Merge keeping preferred order first then remaining
+        const rest = exts.filter((e) => !ordered.includes(e));
+        webpackConfig.resolve.extensions = [...ordered, ...rest];
+      }
 
       // Let CRA manage devServer; sanitize any problematic keys if present
       if (webpackConfig.devServer) {

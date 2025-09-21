@@ -1,6 +1,6 @@
 // src/pages/AdminMicroBanner.jsx
 import React, { useEffect, useMemo, useState } from 'react';
-import { MICRO_BANNER_KEY } from '../components/MicroBanner';
+import { MICRO_BANNER_KEY } from '../components/MicroBanner.jsx';
 
 function AdminMicroBanner() {
   const [items, setItems] = useState([]);
@@ -23,7 +23,7 @@ function AdminMicroBanner() {
 
   const add = () => {
     const id = `mb-${Date.now()}`;
-    persist([{ id, text: '', type: 'promo', action: 'link', href: '/', enabled: true }, ...items]);
+  persist([{ id, text: '', type: 'promo', action: 'link', href: '/', cta: 'Learn more', bg: '', fg: '', enabled: true }, ...items]);
   };
   const update = (id, patch) => persist(items.map(it => it.id === id ? { ...it, ...patch } : it));
   const remove = (id) => persist(items.filter(it => it.id !== id));
@@ -90,6 +90,18 @@ function AdminMicroBanner() {
                   </label>
                 </>
               )}
+              <label style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ fontSize: 12, opacity: 0.7 }}>CTA Label</span>
+                <input value={it.cta || ''} onChange={(e)=>update(it.id, { cta: e.target.value })} placeholder="e.g., Shop now" />
+              </label>
+              <label style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ fontSize: 12, opacity: 0.7 }}>BG Color (optional)</span>
+                <input value={it.bg || ''} onChange={(e)=>update(it.id, { bg: e.target.value })} placeholder="e.g., #FFF3C4 or var(--microbanner-bg)" />
+              </label>
+              <label style={{ display: 'flex', flexDirection: 'column' }}>
+                <span style={{ fontSize: 12, opacity: 0.7 }}>FG Color (optional)</span>
+                <input value={it.fg || ''} onChange={(e)=>update(it.id, { fg: e.target.value })} placeholder="e.g., #111 or var(--ink)" />
+              </label>
               <label style={{ display: 'flex', flexDirection: 'column' }}>
                 <span style={{ fontSize: 12, opacity: 0.7 }}>Start</span>
                 <input type="datetime-local" value={it.startAt || ''} onChange={(e)=>update(it.id, { startAt: e.target.value })} />

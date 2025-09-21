@@ -18,6 +18,18 @@
   - `axios.post.mockRejectedValueOnce(new Error('fail'))`
 - This avoids ESM/CJS interop issues and keeps behavior consistent across all suites.
 
+#### Jest fake timers: best practices
+- Prefer fake timers for components with debounce/throttle, polling, or setTimeout/setInterval usage.
+- Setup and cleanup per test:
+  - `beforeEach(() => jest.useFakeTimers());`
+  - `afterEach(() => jest.useRealTimers());`
+- Advance time inside React act to flush updates:
+  - `await act(async () => { jest.advanceTimersByTime(250); });`
+- Flush pending microtasks between timer advances (for Promises/async effects):
+  - `await act(async () => { await Promise.resolve(); });`
+- Avoid `jest.runAllTimers()` in React 18 + RTL; prefer targeted `advanceTimersByTime` with act to avoid state update warnings.
+- If a test relies on real Date.now or performance.now behavior, temporarily switch to real timers for that test and restore afterward.
+
 ### End-to-End Tests (Cypress)
 - Open Cypress UI:
   ```sh

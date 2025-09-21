@@ -1,93 +1,39 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { ROUTES } from '../config/routes';
 import PropTypes from 'prop-types';
+import { NavLink } from 'react-router-dom';
+import { ROUTES } from '../config/routes';
+import styles from './CustomerSidebar.module.css';
 
 function CustomerSidebar({ user }) {
-  const location = useLocation();
-
-  const menuItems = [
-    { path: ROUTES.account, icon: '👤', label: 'Dashboard' },
-    { path: ROUTES.accountOrders, icon: '📦', label: 'My Orders' },
-    { path: ROUTES.favorites, icon: '❤️', label: 'Wishlist' },
-    { path: ROUTES.accountInbox, icon: '💬', label: 'Messages' },
-    { path: ROUTES.accountAddresses, icon: '📍', label: 'Addresses' },
-    { path: ROUTES.accountGuide, icon: '📖', label: 'Guide' }
+  const links = [
+    { to: ROUTES.accountDashboard, label: 'Dashboard', icon: '🏠' },
+    { to: ROUTES.accountOrders, label: 'My Orders', icon: '📦' },
+    { to: ROUTES.accountWallet, label: 'Wallet', icon: '💰' },
+    { to: ROUTES.accountRewards, label: 'Rewards', icon: '🎯' },
+    { to: ROUTES.accountNotifications, label: 'Notifications', icon: '🔔' },
+    { to: ROUTES.accountAddresses, label: 'Addresses', icon: '📍' },
+    { to: ROUTES.accountInbox, label: 'Inbox', icon: '💬' },
+    { to: ROUTES.editProfile, label: 'Profile', icon: '👤' },
   ];
 
   return (
-    <aside
-      role="navigation"
-      style={{
-        width: '240px',
-        backgroundColor: 'white',
-        padding: '20px 0',
-        borderRight: '1px solid #eee',
-        minHeight: '100vh',
-        boxShadow: '2px 0 4px rgba(0,0,0,0.05)',
-        position: 'sticky',
-        top: 0,
-        zIndex: 1
-      }}
-    >
-      {menuItems.map(item => {
-        const isActive = location.pathname.startsWith(item.path);
-        return (
-          <Link
-            key={item.path}
-            to={item.path}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              padding: '12px 24px',
-              textDecoration: 'none',
-              color: isActive ? '#00b894' : '#4a5568',
-              backgroundColor: isActive ? '#f0f9ff' : 'transparent',
-              fontSize: '0.95rem',
-              gap: '12px',
-              fontWeight: isActive ? '600' : '400',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#f0f9ff';
-              e.currentTarget.style.color = '#00b894';
-            }}
-            onMouseLeave={(e) => {
-              if (!isActive) {
-                e.currentTarget.style.backgroundColor = 'transparent';
-                e.currentTarget.style.color = '#4a5568';
-              }
-            }}
-          >
-            <span style={{ fontSize: '1.2rem' }}>{item.icon}</span>
-            <span>{item.label}</span>
-          </Link>
-        );
-      })}
+    <aside role="navigation" className={styles.sidebar}>
+      {links.map((l) => (
+        <NavLink
+          key={l.to}
+          to={l.to}
+          end
+          className={({ isActive }) => `${styles.link} ${isActive ? styles.active : ''}`}
+        >
+          <span className={styles.icon} aria-hidden="true">{l.icon}</span>
+          <span>{l.label}</span>
+        </NavLink>
+      ))}
 
-      {/* Support CTA */}
-      <Link
-        to={ROUTES.support}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          margin: '20px 24px',
-          padding: '12px',
-          textDecoration: 'none',
-          color: 'white',
-          backgroundColor: '#00b894',
-          borderRadius: '8px',
-          fontSize: '0.95rem',
-          gap: '8px',
-          justifyContent: 'center',
-          transition: 'background-color 0.2s ease'
-        }}
-        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#00a383'}
-        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#00b894'}
-      >
-        <span>🎯</span>
+      <a href={ROUTES.support} className={styles.supportCta}>
+        <span aria-hidden="true">🎯</span>
         <span>Get Support</span>
-      </Link>
+      </a>
     </aside>
   );
 }

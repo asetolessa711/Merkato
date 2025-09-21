@@ -67,6 +67,7 @@ import AdminInvoices from './pages/AdminInvoices';
 import AdminMegaMenu from './pages/AdminMegaMenu';
 import AdminMicroBanner from './pages/AdminMicroBanner';
 import AdminTrustTicker from './pages/AdminTrustTicker';
+import AdminCategories from './pages/AdminCategories';
 
 
 import AdminPromoCodes from './components/admin/AdminPromoCodes';
@@ -171,6 +172,8 @@ function App() {
           </div>
         )}
         <Routes>
+          {/* Checkout: render outside PublicLayout to keep it minimal (no heavy nav/micro-banner) */}
+          <Route path={ROUTES.checkout} element={<CheckoutPage />} />
           {/* Public Pages */}
           <Route path={ROUTES.home} element={
             <PublicLayout user={user} onLogout={handleLogout} lang={lang} onLangChange={handleLangChange} />
@@ -181,7 +184,6 @@ function App() {
             <Route path="vendors" element={<VendorsPage />} />
             <Route path="favorites" element={<FavoritesPage />} />
             <Route path="checkout-success" element={<CheckoutSuccess />} />
-            <Route path="checkout" element={<CheckoutPage />} />
             <Route path="order-confirmation" element={<OrderConfirmation />} />
             <Route path="product/:id" element={<ProductDetail currency={currency} rates={rates} />} />
             <Route path="support" element={<SupportForm />} />
@@ -262,6 +264,7 @@ function App() {
             <Route path="mega-menu" element={<AdminMegaMenu />} />
             <Route path="microbanner" element={<AdminMicroBanner />} />
             <Route path="trust-ticker" element={<AdminTrustTicker />} />
+            <Route path="catalog/categories" element={<AdminCategories />} />
           </Route>
         </Routes>
 

@@ -1,33 +1,41 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useEffect, useState } from 'react';
 import apiClient from '../utils/apiClient';
 
 export function useApi() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => { isMounted.current = false; };
+  }, []);
 
   const get = useCallback(async (url, config) => {
-    setLoading(true); setError(null);
+    if (isMounted.current) setLoading(true);
+    if (isMounted.current) setError(null);
     try {
       const res = await apiClient.get(url, config);
       return res.data;
     } catch (e) {
-      setError(e.message || 'Request failed');
+      if (isMounted.current) setError(e.message || 'Request failed');
       throw e;
     } finally {
-      setLoading(false);
+      if (isMounted.current) setLoading(false);
     }
   }, []);
 
   const post = useCallback(async (url, body, config) => {
-    setLoading(true); setError(null);
+    if (isMounted.current) setLoading(true);
+    if (isMounted.current) setError(null);
     try {
       const res = await apiClient.post(url, body, config);
       return res.data;
     } catch (e) {
-      setError(e.message || 'Request failed');
+      if (isMounted.current) setError(e.message || 'Request failed');
       throw e;
     } finally {
-      setLoading(false);
+      if (isMounted.current) setLoading(false);
     }
   }, []);
 

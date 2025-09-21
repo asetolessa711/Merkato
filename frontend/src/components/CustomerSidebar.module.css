@@ -1,0 +1,76 @@
+/* Tokenized, responsive CustomerSidebar */
+
+.sidebar {
+  width: 240px;
+  background: var(--surface);
+  color: var(--slate);
+  padding: 20px 0;
+  border-right: 1px solid var(--border);
+  min-height: 100vh;
+  box-shadow: 2px 0 4px rgba(0,0,0,0.05);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.link {
+  display: flex;
+  align-items: center;
+  padding: 12px 24px;
+  text-decoration: none;
+  color: var(--slate);
+  background: transparent;
+  font-size: 0.95rem;
+  gap: 12px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.link:hover,
+.link:focus {
+  background: color-mix(in srgb, var(--info) 8%, transparent);
+  color: var(--brand);
+  outline: none;
+}
+
+.active {
+  color: var(--brand);
+  background: color-mix(in srgb, var(--brand) 8%, transparent);
+  font-weight: 600;
+}
+
+.icon {
+  font-size: 1.2rem;
+}
+
+.supportCta {
+  display: flex;
+  align-items: center;
+  margin: 20px 24px;
+  padding: 12px;
+  text-decoration: none;
+  color: #fff;
+  background: var(--brand);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  gap: 8px;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+}
+
+.supportCta:hover,
+.supportCta:focus {
+  background: var(--brand-hover);
+  outline: 2px solid var(--brand-ring);
+  outline-offset: 2px;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    position: static;
+    width: 100%;
+    min-height: auto;
+    box-shadow: none;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+}

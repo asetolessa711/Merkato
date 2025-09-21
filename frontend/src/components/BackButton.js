@@ -26,8 +26,4 @@ BackButton.propTypes = {
   label: PropTypes.string
 };
 
-BackButton.defaultProps = {
-  label: '← Back'
-};
-
 export default BackButton;

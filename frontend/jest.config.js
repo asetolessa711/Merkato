@@ -36,6 +36,8 @@ module.exports = {
     '<rootDir>/src/**/*.{js,jsx}',
     '!<rootDir>/src/index.js',
     '!<rootDir>/src/setupProxy.js',
+    // Exclude test-only console silencer and similar utilities from coverage denominator
+    '!<rootDir>/src/quietConsole.js',
     '!<rootDir>/src/**/__stories__/**',
     '!<rootDir>/src/**/*.{stories,story}.{js,jsx,ts,tsx}',
     '!<rootDir>/src/**/__mocks__/**',
@@ -45,30 +47,31 @@ module.exports = {
   ],
   coverageThreshold: {
     global: {
-      // Current coverage: Lines ~34.5, Branches ~27.2, Funcs ~24.5, Stmts ~32.0
-      // Set conservative gates slightly below to enforce and pass today; we can raise later.
-      branches: 25,
-      functions: 22,
-      lines: 33,
+      // Current coverage (from coverage-compact.json):
+      //   Lines ~34.5, Branches ~27.2, Funcs ~24.5, Stmts ~32.0
+      // Ratchet gates to ~1 point below current to keep a small buffer.
+      branches: 26,
+      functions: 23,
+      lines: 34,
       statements: 31,
     },
     // Per-folder nudges: keep these safely below current folder coverage
     // We will ratchet these up gradually (e.g., +1-2 points weekly) once the suite remains green.
     // Tip: use `npm run coverage:recommend` to compute next safe global gates from the latest run.
     './src/utils/**/*.js': {
-      // Utils current (approx): Lines ~27, Branches ~18, Funcs ~13, Stmts ~24
-      // Keep thresholds a bit under to avoid flakiness while we backfill tests.
-      branches: 15,
-      functions: 10,
-      lines: 25,
-      statements: 22,
+      // Utils now strong (approx): Lines ~89, Branches ~61, Funcs ~83, Stmts ~89
+      // Keep conservative but meaningful gates well below current to allow evolution.
+      branches: 45,
+      functions: 50,
+      lines: 70,
+      statements: 65,
     },
     './src/hooks/**/*.js': {
       // Hooks current (approx): Lines ~43, Branches ~29, Funcs ~33, Stmts ~41
-      branches: 25,
-      functions: 30,
-      lines: 40,
-      statements: 38,
+      branches: 28,
+      functions: 31,
+      lines: 41,
+      statements: 39,
     },
   },
   coverageDirectory: '<rootDir>/coverage',

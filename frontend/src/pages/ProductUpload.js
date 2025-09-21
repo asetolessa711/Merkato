@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { uploadProductImage } from '../utils/uploadImage';
 import { useMessage } from '../context/MessageContext';
+import { getCanonicalTaxonomy } from '../utils/taxonomy';
+import { fetchCategoryAttributes, fetchLeafCategories } from '../api/categories';
 
 // === MOCK MODE: Set to true to use mock upload (no backend required) ===
 const USE_MOCK_UPLOAD = true; // Set to false for real API
@@ -29,8 +31,47 @@ function ProductUpload() {
   const [imageUrls, setImageUrls] = useState([]);
   const [testMsg, setTestMsg] = useState('');
   const [hadInvalidImage, setHadInvalidImage] = useState(false);
+  const [canonCats, setCanonCats] = useState([]);
+  const [selectedCat, setSelectedCat] = useState('');
+  const [catAttrs, setCatAttrs] = useState([]);
   const navigate = useNavigate();
   const { showMessage } = useMessage();
+  const noUploadCats = Array.isArray(canonCats) && canonCats.length === 0;
+  // Load canonical categories for picker
+  useEffect(() => {
+    (async () => {
+      try {
+        const countryName = (() => { try { return localStorage.getItem('merkato-region') || ''; } catch { return ''; } })();
+        const country = countryName === 'Ethiopia' ? 'ET' : '';
+        const lang = (() => { try { return localStorage.getItem('merkato-lang') || 'en'; } catch { return 'en'; } })();
+        // Prefer strict leaf-only categories where visible for upload
+        let cats = await fetchLeafCategories({ country, visibleIn: 'upload' });
+        if (!cats || !cats.length) {
+          // fallback to canonical filtered by visibleIn, then to all
+          cats = await getCanonicalTaxonomy({ country, lang, visibleIn: 'upload' });
+          if (!cats || !cats.length) {
+            cats = await getCanonicalTaxonomy({ country, lang });
+          }
+        }
+        setCanonCats(cats);
+      } catch (_) {}
+    })();
+  }, []);
+
+  // Load attributes when category changes
+  useEffect(() => {
+    let cancelled = false;
+    if (!selectedCat) { setCatAttrs([]); return undefined; }
+    (async () => {
+      try {
+        const attrs = await fetchCategoryAttributes(selectedCat);
+        if (!cancelled) setCatAttrs(attrs);
+      } catch (_) {
+        if (!cancelled) setCatAttrs([]);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [selectedCat]);
 
   // Align with app convention: use 'token'
   const token = localStorage.getItem('token');
@@ -94,6 +135,22 @@ function ProductUpload() {
       setTestMsg('required');
       return;
     }
+    if (!selectedCat) {
+      showMessage('Please select a category.', 'error');
+      setTestMsg('required');
+      return;
+    }
+    // Validate dynamic required attributes
+    for (const a of (catAttrs || [])) {
+      if (a.required) {
+        const val = form[a.key];
+        if (val === undefined || val === null || val === '') {
+          showMessage(`${a.label || a.key} is required`, 'error');
+          setTestMsg('required');
+          return;
+        }
+      }
+    }
     if (!imageUrls.length) {
       showMessage('Please upload at least one image first.', 'error');
       // If user previously selected an invalid image, keep that visible for the test assertion
@@ -107,13 +164,15 @@ function ProductUpload() {
       showMessage(`(Mock) Product "${form.name}" uploaded successfully!`, 'success');
       setTestMsg('Product uploaded successfully');
       const existing = JSON.parse(localStorage.getItem('uploadedProducts') || '[]');
-      const next = [...existing, { name: form.name, price: Number(form.price||0), images: imageUrls }];
+      const next = [...existing, { name: form.name, price: Number(form.price||0), images: imageUrls, category: selectedCat, ...catAttrs.reduce((acc, a) => { acc[a.key] = form[a.key] ?? ''; return acc; }, {}) }];
       localStorage.setItem('uploadedProducts', JSON.stringify(next));
       setForm({
         name: '', description: '', price: '', stock: '', category: '',
         gender: '', ageGroup: '', currency: 'USD', language: 'en',
         promotion: { isPromoted: false, badgeText: '' }
       });
+      setSelectedCat('');
+      setCatAttrs([]);
       setImageFiles([]);
       setPreviewImages([]);
       setImageUrls([]);
@@ -125,7 +184,7 @@ function ProductUpload() {
     try {
       const res = await axios.post(
         '/api/products',
-        { ...form, images: imageUrls },
+        { ...form, images: imageUrls, category: selectedCat, attributes: catAttrs.reduce((acc, a) => { acc[a.key] = form[a.key] ?? ''; return acc; }, {}) },
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -137,7 +196,9 @@ function ProductUpload() {
         gender: '', ageGroup: '', currency: 'USD', language: 'en',
         promotion: { isPromoted: false, badgeText: '' }
       });
-      setImageFiles([]);
+  setSelectedCat('');
+  setCatAttrs([]);
+  setImageFiles([]);
       setPreviewImages([]);
       setImageUrls([]);
 
@@ -167,7 +228,53 @@ function ProductUpload() {
           <option value="EUR">EUR</option>
         </select>
 
-        <input name="category" placeholder="Category (e.g. Fashion, Tech)" value={form.category} onChange={handleChange} />
+        {/* Dynamic Category Picker */}
+        <label>
+          <span style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 4 }}>Category</span>
+          {noUploadCats ? (
+            <div style={{ background: '#fff7ed', border: '1px solid #fed7aa', color: '#9a3412', borderRadius: 8, padding: '10px 12px' }}>
+              No uploadable categories are available yet. Please try again later or contact support.
+            </div>
+          ) : (
+            <select value={selectedCat} onChange={(e) => setSelectedCat(e.target.value)} required>
+              <option value="">Select a category</option>
+              {canonCats.map(c => (
+                <option key={c.id} value={c.slug}>{c.name}</option>
+              ))}
+            </select>
+          )}
+        </label>
+
+        {/* Render dynamic attributes */}
+        {catAttrs.map((a) => {
+          const common = {
+            name: a.key,
+            value: form[a.key] ?? (a.type.includes('select') ? '' : ''),
+            onChange: handleChange,
+            required: !!a.required,
+          };
+          return (
+            <label key={a.key} style={{ display: 'block' }}>
+              <span style={{ display: 'block', fontSize: 12, color: '#6b7280', marginBottom: 4 }}>{a.label || a.key}{a.required ? ' *' : ''}</span>
+              {a.type === 'text' && (<input type="text" placeholder={a.label || a.key} {...common} />)}
+              {a.type === 'number' && (<input type="number" placeholder={a.label || a.key} {...common} />)}
+              {a.type === 'select' && (
+                <select {...common}>
+                  <option value="">Select {a.label || a.key}</option>
+                  {(a.options || []).map(opt => (<option key={opt} value={opt}>{opt}</option>))}
+                </select>
+              )}
+              {a.type === 'multiselect' && (
+                <select {...common} multiple onChange={(e) => {
+                  const opts = Array.from(e.target.options).filter(o => o.selected).map(o => o.value);
+                  setForm(prev => ({ ...prev, [a.key]: opts }));
+                }}>
+                  {(a.options || []).map(opt => (<option key={opt} value={opt}>{opt}</option>))}
+                </select>
+              )}
+            </label>
+          );
+        })}
 
         <select name="gender" value={form.gender} onChange={handleChange}>
           <option value="">Select Gender</option>
@@ -227,7 +334,7 @@ function ProductUpload() {
           </div>
         )}
 
-        <button type="submit" style={{
+        <button type="submit" disabled={noUploadCats} style={{
           marginTop: '20px',
           backgroundColor: '#0984e3',
           color: 'white',
