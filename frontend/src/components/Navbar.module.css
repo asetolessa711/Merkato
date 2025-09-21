@@ -10,7 +10,7 @@
 
 /* Base Navbar */
 .navbar {
-  background: #001F54;
+  background: var(--nav-bg);
   padding: 10px 20px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   display: flex;
@@ -53,14 +53,14 @@
 }
 
 .link:hover {
-  background-color: #003366;
-  color: #fff;
+  background-color: var(--nav-border);
+  color: var(--nav-text);
 }
 
 
 .activeLink {
   background-color: #00e676;
-  color: #001F54;
+  color: var(--nav-bg);
   font-weight: bold;
   position: relative;
   box-shadow: 0 2px 8px rgba(0,230,118,0.15);

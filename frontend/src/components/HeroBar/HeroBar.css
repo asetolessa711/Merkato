@@ -1,0 +1,94 @@
+/* Full-bleed section below the dark navbar */
+.hero{
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  width: 100vw;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Horizontal rail */
+.hero__rail{
+  display: flex;
+  will-change: transform;
+}
+
+/* Slide shell */
+.hero__slide{
+  min-width: 100vw;
+  display: block;
+}
+
+/* Inside each slide: two columns (copy + media) */
+.hero__inner{
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px 20px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+}
+.hero__copy{ max-width: 640px; padding: 8px 0 0; }
+.hero__title{
+  font: 700 clamp(2.25rem, 1.6rem + 2.4vw, 3.5rem)/1.1 "Space Grotesk", Inter, sans-serif;
+  color: #0B1220; /* Ink for bright backgrounds */
+  letter-spacing: -0.012em;
+  margin: 0 0 8px;
+}
+.hero__sub{
+  color: #334155; /* slate */
+  font: 400 1.125rem/1.6 Inter, system-ui, sans-serif;
+  margin: 0 0 16px;
+}
+.hero__ctas{ display: flex; gap: 12px; }
+
+.hero__media{ justify-self: end; padding-right: 16px; }
+.hero__media img{
+  height: clamp(160px, 20vw, 280px);
+  width: auto;
+  object-fit: contain;
+  background: #fff; /* image fallback to prevent color flicker */
+  filter: drop-shadow(0 10px 24px rgba(0,0,0,.18));
+}
+
+/* Arrows overlay (match Amazon feel) */
+.hero__arrow{
+  position: absolute; top: 50%; transform: translateY(calc(-50% + 1px)); /* 1px optical center tweak */
+  width: 44px; height: 44px; border-radius: 999px;
+  border: 1px solid rgba(0,0,0,.15);
+  background: rgba(255,255,255,.85);
+  color: #0B1220; font-size: 26px; display:grid; place-items:center;
+  cursor: pointer;
+}
+.hero__arrow:hover{ background: #fff; }
+.hero__arrow--left{ left: 12px; }
+.hero__arrow--right{ right: 12px; }
+
+/* Dots */
+.hero__dots{
+  position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 8px;
+}
+.hero__dot{
+  width: 10px; height: 10px; border-radius: 999px; border: 0;
+  background: rgba(0,0,0,.25);
+}
+.hero__dot.is-active{ background: #0B1220; }
+
+/* Mobile: stack content, hide large media */
+@media (max-width: 768px){
+  .hero__inner{ grid-template-columns: 1fr; }
+  .hero__media{ display:none; }
+  /* Larger tap targets for dots on mobile while keeping visual size */
+  .hero__dots .hero__dot{ padding: 6px; background-clip: content-box; }
+}
+
+/* Buttons (use your tokens) */
+.btn{ display:inline-flex; align-items:center; justify-content:center; padding:10px 16px;
+      border-radius:10px; font:600 .95rem/1 Inter; border:1px solid transparent; }
+.btn--primary{ background: var(--brand); color:#fff; }
+.btn--primary:hover{ background: var(--brand-hover); }
+.btn--secondary{ color: var(--brand); border-color: var(--brand); background: transparent; }
+.btn--secondary:hover{ background: color-mix(in srgb, var(--brand) 10%, transparent); }
+.btn--ghost{ color: #0B1220; background: transparent; border-color: rgba(0,0,0,.1); }
+.btn--ghost:hover{ background: rgba(0,0,0,.05); }

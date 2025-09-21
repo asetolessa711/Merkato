@@ -445,9 +445,9 @@ function MerkatoNavbar({ role: roleProp = 'public', showCategories: showCategori
   }, [isVendor, vendorType, searchText]);
 
   return (
-    <header style={{ position: 'fixed', top: 0, left: 0, right: 0, width: '100%', zIndex: 10000, background: 'var(--header-bg, var(--color-nav))', isolation: 'isolate' }}>
+    <header style={{ position: 'fixed', top: 0, left: 0, right: 0, width: '100%', zIndex: 10000, background: 'var(--nav-bg)', isolation: 'isolate' }}>
       <style>{`
-  a[data-navlink]:hover { text-decoration: underline; color: var(--header-hover, var(--color-primary)); }
+  a[data-navlink]:hover { text-decoration: underline; color: var(--brand-gold); }
         a[data-catlink]:hover { background: rgba(255,255,255,0.10); border-radius: 6px; }
   .suggest-panel { position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 8px; z-index: 4000; box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
   .suggest-item { display: block; width: 100%; text-align: left; background: transparent; border: 0; color: #111827; padding: 8px 10px; border-radius: 6px; cursor: pointer; }
@@ -460,7 +460,7 @@ function MerkatoNavbar({ role: roleProp = 'public', showCategories: showCategori
   .vs-actions { display: flex; gap: 6px; flex-wrap: wrap; }
   .vs-actions button { background: #f3f4f6; border: 1px solid #e5e7eb; color: #374151; padding: 4px 8px; border-radius: 6px; cursor: pointer; font-size: 12px; }
   .vs-actions button:hover { background: #e5e7eb; }
-  .mic-btn { background: transparent; border: 1px solid rgba(255,255,255,0.35); color: var(--header-link, #fff); padding: 6px 10px; border-radius: 6px; cursor: pointer; }
+  .mic-btn { background: transparent; border: 1px solid rgba(255,255,255,0.35); color: var(--nav-text, #fff); padding: 6px 10px; border-radius: 6px; cursor: pointer; }
         /* Responsive helpers */
         .desktop-only { display: block; }
         .mobile-only { display: none; }
@@ -470,18 +470,18 @@ function MerkatoNavbar({ role: roleProp = 'public', showCategories: showCategori
         }
         /* Mobile drawer */
   .drawer-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 11000; }
-        .drawer { position: fixed; top: 0; left: 0; width: 82vw; max-width: 360px; height: 100vh; background: #1f2236; color: #fff; z-index: 11001; box-shadow: 2px 0 16px rgba(0,0,0,0.4); display: flex; flex-direction: column; }
-        .drawer header { padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,0.12); display: flex; justify-content: space-between; align-items: center; }
-        .drawer section { padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.08); }
-        .drawer a, .drawer button { color: #fff; text-decoration: none; background: transparent; border: 0; padding: 8px 0; text-align: left; width: 100%; }
-        .drawer a:hover, .drawer button:hover { color: var(--color-primary); }
+    .drawer { position: fixed; top: 0; left: 0; width: 82vw; max-width: 360px; height: 100vh; background: var(--nav-bg); color: var(--nav-text); z-index: 11001; box-shadow: 2px 0 16px rgba(0,0,0,0.4); display: flex; flex-direction: column; }
+    .drawer header { padding: 14px 16px; border-bottom: 1px solid var(--nav-border); display: flex; justify-content: space-between; align-items: center; }
+    .drawer section { padding: 10px 16px; border-bottom: 1px solid var(--nav-border); }
+    .drawer a, .drawer button { color: var(--nav-text); text-decoration: none; background: transparent; border: 0; padding: 8px 0; text-align: left; width: 100%; }
+    .drawer a:hover, .drawer button:hover { color: var(--brand-gold); }
         /* Mega menu */
         .mega-wrapper { position: relative; }
-  .mega-panel { position: absolute; left: 16px; right: 16px; top: 100%; background: var(--header-dropdown-bg, #1f2236); border: 1px solid rgba(255,255,255,0.12); border-radius: 12px; padding: 14px; color: #fff; box-shadow: 0 12px 24px rgba(0,0,0,0.25); z-index: 5000; overflow-x: auto; }
+  .mega-panel { position: absolute; left: 16px; right: 16px; top: 100%; background: var(--nav-bg); border: 1px solid var(--nav-border); border-radius: 12px; padding: 14px; color: var(--nav-text); box-shadow: 0 12px 24px rgba(0,0,0,0.25); z-index: 5000; overflow-x: auto; }
         .mega-panel-full { left: 0; right: 0; border-radius: 0 0 12px 12px; }
   /* Layered mega menu */
   .mega-layered { display: grid; grid-template-columns: 260px 1fr; gap: 12px; min-height: 290px; }
-  .mega-left { border-right: 1px solid rgba(255,255,255,0.12); padding-right: 8px; display: flex; flex-direction: column; }
+  .mega-left { border-right: 1px solid var(--nav-border); padding-right: 8px; display: flex; flex-direction: column; }
   .mega-tab { display: flex; align-items: center; gap: 8px; background: transparent; color: #e5e7eb; border: 0; text-align: left; padding: 8px 10px; border-radius: 8px; cursor: pointer; font-size: 14px; }
   .mega-tab[aria-selected="true"] { background: rgba(255,255,255,0.08); color: #fff; }
   .mega-right { padding-left: 4px; }
@@ -494,13 +494,13 @@ function MerkatoNavbar({ role: roleProp = 'public', showCategories: showCategori
   {!isVendor && <MicroBanner />}
 
   {/* Main bar: brand, search, actions (solid background) */}
-  <nav aria-label="Primary" style={{ background: 'var(--header-bg, var(--color-nav))', color: 'var(--header-link, #fff)', borderBottom: '1px solid rgba(255,255,255,0.08)', position: 'relative', fontFamily: 'var(--font-sans, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif)' }} data-testid="navbar">
+  <nav aria-label="Primary" style={{ background: 'var(--nav-bg)', color: 'var(--nav-text, #fff)', borderBottom: '1px solid var(--nav-border)', position: 'relative', fontFamily: 'inherit' }} data-testid="navbar">
         <div style={{ maxWidth: 1280, margin: '0 auto', display: 'grid', gridTemplateColumns: '240px 1fr 360px', gap: 12, alignItems: 'center', padding: '10px 16px' }}>
           {/* Brand */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             {/* Hamburger (mobile) */}
-            <button className="mobile-only" aria-label="Open menu" onClick={() => setShowDrawer(true)} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.35)', color: '#fff', padding: '6px 10px', borderRadius: 6, cursor: 'pointer' }}>☰</button>
-            <Link to="/" style={{ color: 'var(--color-warning)', fontWeight: 800, fontSize: 22, textDecoration: 'none', fontFamily: 'inherit' }}>Merkato</Link>
+            <button className="mobile-only" aria-label="Open menu" onClick={() => setShowDrawer(true)} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.35)', color: 'var(--nav-text, #fff)', padding: '6px 10px', borderRadius: 6, cursor: 'pointer' }}>☰</button>
+            <Link to="/" style={{ color: 'var(--nav-text, #fff)', fontWeight: 600, fontSize: 22, textDecoration: 'none', fontFamily: 'inherit' }}>Merkato</Link>
             {!isVendor && (
               <Link to="/" data-navlink style={{ color: 'rgba(255,255,255,0.85)', textDecoration: 'none', fontSize: 14, fontFamily: 'inherit', ...isActive('/') }}>Home</Link>
             )}
@@ -514,14 +514,14 @@ function MerkatoNavbar({ role: roleProp = 'public', showCategories: showCategori
               aria-controls="mega-panel"
               onMouseEnter={() => setShowMega(true)}
               onClick={() => setShowMega((v) => !v)}
-              style={{ background: 'rgba(0,0,0,0.25)', color: 'var(--header-link, #fff)', border: '1px solid rgba(255,255,255,0.2)', padding: '6px 10px', borderRadius: 6, cursor: 'pointer', whiteSpace: 'nowrap' }}
+              style={{ background: 'rgba(0,0,0,0.25)', color: 'var(--nav-text, #fff)', border: '1px solid rgba(255,255,255,0.2)', padding: '6px 10px', borderRadius: 6, cursor: 'pointer', whiteSpace: 'nowrap' }}
             >
               Shop by Category ▾
             </button>
             )}
             {/* Mobile Shop by Category trigger */}
             {!isVendor && (
-              <button className="mobile-only" aria-label="Shop by Category" onClick={() => setShowCatDrawer(true)} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.35)', color: 'var(--header-link, #fff)', padding: '6px 10px', borderRadius: 6, cursor: 'pointer' }}>Shop by Category ▾</button>
+              <button className="mobile-only" aria-label="Shop by Category" onClick={() => setShowCatDrawer(true)} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.35)', color: 'var(--nav-text, #fff)', padding: '6px 10px', borderRadius: 6, cursor: 'pointer' }}>Shop by Category ▾</button>
             )}
             {/* Vendor navbar keeps only the essentials; hide quick links */}
             {!isVendor && (
@@ -591,7 +591,7 @@ function MerkatoNavbar({ role: roleProp = 'public', showCategories: showCategori
             rec.start();
           } catch (_) {}
         }}>🎙</button>
-  <button type="submit" aria-label="Search" title="Search" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: 'var(--color-primary)', color: '#fff', border: 0, padding: '0 10px', fontWeight: 700, cursor: 'pointer' }}>
+  <button type="submit" aria-label="Search" title="Search" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: 'var(--brand-gold)', color: '#111827', border: '1px solid var(--nav-bg)', padding: '0 10px', fontWeight: 600, cursor: 'pointer' }}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
             <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
             <line x1="20" y1="20" x2="16.65" y2="16.65" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -654,7 +654,7 @@ function MerkatoNavbar({ role: roleProp = 'public', showCategories: showCategori
           ))}
         </select>
   <input id="global-search" name="search" placeholder="Search Merkato" value={searchText} onChange={(e) => setSearchText(e.target.value)} onFocus={() => setShowSuggest(true)} onBlur={() => setTimeout(() => setShowSuggest(false), 150)} style={{ flex: 1, background: 'transparent', color: '#111827', padding: '8px 10px', outline: 'none', border: 'none', fontFamily: 'inherit' }} />
-        <button type="submit" aria-label="Search" title="Search" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: 'var(--color-primary)', color: '#fff', border: 0, padding: '0 14px', fontWeight: 700, cursor: 'pointer' }}>
+  <button type="submit" aria-label="Search" title="Search" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: 'var(--brand-gold)', color: '#111827', border: '1px solid var(--nav-bg)', padding: '0 14px', fontWeight: 600, cursor: 'pointer' }}>
           {/* search icon */}
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
             <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
@@ -688,19 +688,19 @@ function MerkatoNavbar({ role: roleProp = 'public', showCategories: showCategori
           {/* Actions */}
           <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 12, fontFamily: 'inherit' }}>
             {/* Language and Currency selectors */}
-            <select aria-label="Language" value={lang} onChange={(e) => onLangChange(e.target.value)} style={{ background: 'rgba(0,0,0,0.25)', color: 'var(--header-link, #fff)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 8, padding: '8px 10px', fontSize: 14, minWidth: 64, fontFamily: 'inherit' }}>
+            <select aria-label="Language" value={lang} onChange={(e) => onLangChange(e.target.value)} style={{ background: 'rgba(0,0,0,0.25)', color: 'var(--nav-text, #fff)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 8, padding: '8px 10px', fontSize: 14, minWidth: 64, fontFamily: 'inherit' }}>
               <option value="en">EN</option>
               <option value="am">AM</option>
               <option value="or">OR</option>
             </select>
-            <select aria-label="Currency" value={currency} onChange={(e) => onCurrencyChange(e.target.value)} style={{ background: 'rgba(0,0,0,0.25)', color: 'var(--header-link, #fff)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 8, padding: '8px 10px', fontSize: 14, minWidth: 80, fontFamily: 'inherit' }}>
+            <select aria-label="Currency" value={currency} onChange={(e) => onCurrencyChange(e.target.value)} style={{ background: 'rgba(0,0,0,0.25)', color: 'var(--nav-text, #fff)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 8, padding: '8px 10px', fontSize: 14, minWidth: 80, fontFamily: 'inherit' }}>
               <option value="USD">USD</option>
               <option value="ETB">ETB</option>
               <option value="EUR">EUR</option>
             </select>
             {/* System Status (vendor) */}
             {isVendor && (
-              <span title={`Uptime: ${status.uptime} | Sync: ${status.sync} | Moderation: ${status.moderation}${status.note ? ' \n' + status.note : ''}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 8px', borderRadius: 999, border: '1px solid rgba(255,255,255,0.25)', color: 'var(--header-link,#fff)' }}>
+              <span title={`Uptime: ${status.uptime} | Sync: ${status.sync} | Moderation: ${status.moderation}${status.note ? ' \n' + status.note : ''}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 8px', borderRadius: 999, border: '1px solid rgba(255,255,255,0.25)', color: 'var(--nav-text,#fff)' }}>
                 <span aria-label={`Uptime ${status.uptime}`} style={{ width: 8, height: 8, borderRadius: '50%', background: statusColor(status.uptime) }} />
                 <span aria-label={`Sync ${status.sync}`} style={{ width: 8, height: 8, borderRadius: '50%', background: statusColor(status.sync) }} />
                 <span aria-label={`Moderation ${status.moderation}`} style={{ width: 8, height: 8, borderRadius: '50%', background: statusColor(status.moderation) }} />
@@ -715,11 +715,11 @@ function MerkatoNavbar({ role: roleProp = 'public', showCategories: showCategori
                 aria-controls="vendor-notif-panel"
                 onClick={() => setShowNotif(v => !v)}
                 title="Notifications"
-                style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.35)', color: 'var(--header-link, #fff)', padding: '6px 10px', borderRadius: 6, cursor: 'pointer', position: 'relative' }}
+                style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.35)', color: 'var(--nav-text, #fff)', padding: '6px 10px', borderRadius: 6, cursor: 'pointer', position: 'relative' }}
               >
                 🔔
                 {totalAlertCount > 0 && (
-                  <span aria-label={`${totalAlertCount} new notifications`} style={{ position: 'absolute', top: -4, right: -4, background: 'var(--color-primary)', color: '#fff', borderRadius: 999, fontSize: 10, lineHeight: '14px', padding: '0 5px', minWidth: 14, textAlign: 'center', fontWeight: 700 }}>{Math.min(99, totalAlertCount)}</span>
+                  <span aria-label={`${totalAlertCount} new notifications`} style={{ position: 'absolute', top: -4, right: -4, background: 'var(--brand-gold)', color: '#111827', border: '1px solid var(--nav-bg)', borderRadius: 999, fontSize: 10, lineHeight: '14px', padding: '0 5px', minWidth: 14, textAlign: 'center', fontWeight: 600 }}>{Math.min(99, totalAlertCount)}</span>
                 )}
               </button>
               {showNotif && (
@@ -769,7 +769,7 @@ function MerkatoNavbar({ role: roleProp = 'public', showCategories: showCategori
                   aria-expanded={showProfile}
                   aria-controls="vendor-profile-menu"
                   onClick={() => setShowProfile(v => !v)}
-                  style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'transparent', border: '1px solid rgba(255,255,255,0.35)', color: 'var(--header-link, #fff)', padding: '6px 10px', borderRadius: 6, cursor: 'pointer' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'transparent', border: '1px solid rgba(255,255,255,0.35)', color: 'var(--nav-text, #fff)', padding: '6px 10px', borderRadius: 6, cursor: 'pointer' }}
                 >
                   <div aria-hidden="true" style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(255,255,255,0.25)', display: 'grid', placeItems: 'center', fontWeight: 700 }}>
                     {(user?.name || user?.username || 'V').toString().slice(0,1).toUpperCase()}
@@ -801,20 +801,20 @@ function MerkatoNavbar({ role: roleProp = 'public', showCategories: showCategori
                 {roleNav.slice(2).map((lnk) => (
                   <Link key={lnk.to} to={lnk.to} data-navlink style={{ color: 'rgba(255,255,255,0.85)', textDecoration: 'none', fontSize: 14, ...isActive(lnk.to) }}>{lnk.label}</Link>
                 ))}
-                {dashLink && (<Link to={dashLink} style={{ color: 'var(--header-link, #fff)', textDecoration: 'none' }}>Dashboard</Link>)}
+                {dashLink && (<Link to={dashLink} style={{ color: 'var(--nav-text, #fff)', textDecoration: 'none' }}>Dashboard</Link>)}
                 {/* Public CTA moved to MicroBanner promo */}
                 {role === 'customer' && (
-                  <button type="button" aria-label="My Account" style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.35)', color: 'var(--header-link, #fff)', padding: '6px 10px', borderRadius: 6, cursor: 'pointer' }}>My Account</button>
+                  <button type="button" aria-label="My Account" style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.35)', color: 'var(--nav-text, #fff)', padding: '6px 10px', borderRadius: 6, cursor: 'pointer' }}>My Account</button>
                 )}
                 {user ? (
-                  <button onClick={handleLogout} data-testid="logout-btn" style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.35)', color: 'var(--header-link, #fff)', padding: '6px 10px', borderRadius: 6, cursor: 'pointer' }}>Logout</button>
+                  <button onClick={handleLogout} data-testid="logout-btn" style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.35)', color: 'var(--nav-text, #fff)', padding: '6px 10px', borderRadius: 6, cursor: 'pointer' }}>Logout</button>
                 ) : (
                   <>
-                    <Link to="/login" style={{ color: 'var(--header-link, #fff)', textDecoration: 'none', fontFamily: 'inherit' }}>Login</Link>
-                    <Link to="/register?role=customer" data-testid="navbar-register-link" style={{ color: 'var(--color-primary)', textDecoration: 'none', fontWeight: 700, fontFamily: 'inherit' }}>Register</Link>
+                    <Link to="/login" style={{ color: 'var(--nav-text, #fff)', textDecoration: 'none', fontFamily: 'inherit' }}>Login</Link>
+                    <Link to="/register?role=customer" data-testid="navbar-register-link" style={{ color: 'var(--brand-gold)', textDecoration: 'none', fontWeight: 600, fontFamily: 'inherit' }}>Register</Link>
                   </>
                 )}
-                <Link to="/cart" data-testid="cart-link" style={{ color: 'var(--header-link, #fff)', textDecoration: 'none', fontFamily: 'inherit' }}>Cart</Link>
+                <Link to="/cart" data-testid="cart-link" style={{ color: 'var(--nav-text, #fff)', textDecoration: 'none', fontFamily: 'inherit' }}>Cart</Link>
               </>
             )}
           </div>
@@ -901,7 +901,7 @@ function MerkatoNavbar({ role: roleProp = 'public', showCategories: showCategori
                     {effectiveMegaMenu.map((c) => (<option key={`m-${c.title}`} value={(c.title || '').toLowerCase()}>{c.title}</option>))}
                   </select>
                   <input placeholder="Search Merkato" value={searchText} onChange={(e) => setSearchText(e.target.value)} style={{ flex: 1, background: 'transparent', color: '#111827', border: 0, padding: '8px 10px', fontFamily: 'inherit' }} />
-                  <button type="submit" aria-label="Search" title="Search" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: 'var(--color-primary)', color: '#fff', border: 0, padding: '0 12px' }}>
+                  <button type="submit" aria-label="Search" title="Search" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: 'var(--brand-gold)', color: '#111827', border: '1px solid var(--nav-bg)', padding: '0 12px' }}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
                       <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
                       <line x1="20" y1="20" x2="16.65" y2="16.65" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />

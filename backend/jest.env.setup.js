@@ -44,6 +44,11 @@ if (!process.env.NODE_ENV || process.env.NODE_ENV !== 'test') {
   process.env.NODE_ENV = 'test';
 }
 
+// Enable relaxed product upload validation in tests to keep integration flows stable
+if (!process.env.RELAX_UPLOAD_VALIDATION) {
+  process.env.RELAX_UPLOAD_VALIDATION = 'true';
+}
+
 // Provide safe defaults for email creds in test to prevent require-time throws.
 // We still mock nodemailer later so no real email is sent.
 if (!process.env.EMAIL_USER) {

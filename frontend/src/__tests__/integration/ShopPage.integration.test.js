@@ -1,9 +1,9 @@
 // Tags: @thread:product-browse @thread:search
 import React from 'react';
-import { render, screen, waitFor, within, fireEvent } from '@testing-library/react';
+import { screen, waitFor, within, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import ShopPage from '../../pages/ShopPage';
-import { MemoryRouter } from 'react-router-dom';
+import { renderWithProviders } from '../../test/renderWithProviders';
 
 import axios from 'axios';
 
@@ -21,11 +21,7 @@ afterAll(() => {
 });
 
 function renderPage() {
-  return render(
-    <MemoryRouter initialEntries={['/shop']}>
-      <ShopPage />
-    </MemoryRouter>
-  );
+  return renderWithProviders(<ShopPage />, { route: '/shop' });
 }
 
 describe('ShopPage integration (@persona:customer)', () => {

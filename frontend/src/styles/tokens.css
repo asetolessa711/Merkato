@@ -15,10 +15,10 @@
   --canvas: #F8FAFC;           /* Page background */
 
   /* Dark chrome (Navbar & dark surfaces) */
-  /* Approved navbar palette: default to Cool Ink (#0D1B2A) */
-  --nav-bg: #0D1B2A;           /* Cool Ink (default) */
+  /* Standardize to Home navbar palette */
+  --nav-bg: #001F54;           /* Home navbar blue */
   --nav-text: #FFFFFF;
-  --nav-border: #1B2634;       /* Cool Ink border */
+  --nav-border: #003366;       /* Hover/darker border tone */
 
   /* Semantics */
   --success: #10B981;
@@ -29,6 +29,7 @@
   /* Promo accents */
   --accent: #FFC247;           /* Signal Amber */
   --mint: #00D3A7;
+  --brand-gold: #FFC247;       /* Merkato gold (accent) */
 
   /* Gradients */
   --grad-bolt-start: #2D7CFF;
@@ -81,6 +82,15 @@
   --shadow-md: 0 6px 16px rgba(0,0,0,0.08);
   --shadow-lg: 0 10px 24px rgba(0,0,0,0.10);
 }
+
+/* Hero background presets */
+:root{
+  --hero-sky:#EAF7FF; --hero-lilac:#F3E8FF; --hero-amber:#FEF3C7; --hero-mint:#ECFDF5; --hero-rose:#FDECF4;
+}
+/* examples for slides.bg */
+.bg-sky-lilac { background: linear-gradient(90deg, var(--hero-sky), var(--hero-lilac)); }
+.bg-mint-sky { background: linear-gradient(90deg, var(--hero-mint), #E0F2FE); }
+.bg-amber { background: var(--hero-amber); }
 
 [data-theme="dark"] {
   /* Keep simple dark theme mapping consistent with new tokens */

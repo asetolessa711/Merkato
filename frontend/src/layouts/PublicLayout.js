@@ -1,7 +1,7 @@
 // src/layouts/PublicLayout.js
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import MerkatoNavbar from '../components/MerkatoNavbar.jsx';
 
 import styles from './PublicLayout.module.css';
@@ -11,6 +11,8 @@ import { ROUTES } from '../config/routes';
 
 function PublicLayout({ user = null, onLogout, lang = 'en', onLangChange = () => {} }) {
   const isCypress = typeof window !== 'undefined' && window.Cypress;
+  const location = useLocation();
+  const isHome = location.pathname === '/' || location.pathname === '/home';
   return (
     <div className="public-layout">
   {isCypress && (
@@ -30,7 +32,7 @@ function PublicLayout({ user = null, onLogout, lang = 'en', onLangChange = () =>
   <MerkatoNavbar role="public" />
 
       {/* Main content area for pages like HomePage, Shop, etc. */}
-      <main className={styles.container}>
+      <main className={`${styles.container} ${isHome ? styles.containerTight : ''}`}>
         <Outlet />
       </main>
       <MerkatoFooter />

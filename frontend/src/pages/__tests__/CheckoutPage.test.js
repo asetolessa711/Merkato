@@ -1,6 +1,6 @@
 import React from 'react';
 import '@testing-library/jest-dom';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import CheckoutPage from '../CheckoutPage';
 
 // Mock useNavigate from react-router-dom
@@ -35,10 +35,17 @@ describe('CheckoutPage', () => {
       { _id: '1', name: 'Test Product', price: 10, quantity: 2 }
     ]));
     render(<CheckoutPage />);
-    expect(screen.getByText('Test Product')).toBeInTheDocument();
-    expect(screen.getByText('2')).toBeInTheDocument();
-    expect(screen.getByText('$10')).toBeInTheDocument();
-    expect(screen.getByText(/total: \$20/i)).toBeInTheDocument();
+    const sidebar = screen.getByTestId('sidebar-order-summary');
+    expect(within(sidebar).getByText('Test Product')).toBeInTheDocument();
+    // Locate the specific row for this product to avoid matching breakdown values
+    const productCell = within(sidebar).getByText('Test Product');
+    const itemRow = productCell.closest('[role="row"]');
+    expect(itemRow).toBeTruthy();
+    // Qty cell specifically
+    expect(within(itemRow).getByRole('cell', { name: '2' })).toBeInTheDocument();
+    // Unit price and row total (allow optional .00)
+    expect(within(itemRow).getByText(/\$10(\.00)?/i)).toBeInTheDocument();
+    expect(within(itemRow).getByText(/\$20(\.00)?/i)).toBeInTheDocument();
   });
 
   it('shows buyer details form if not logged in', () => {
@@ -63,8 +70,8 @@ describe('CheckoutPage', () => {
     fireEvent.change(screen.getByLabelText(/shipping address/i), { target: { value: '123 Main St' } });
     fireEvent.change(screen.getByLabelText(/country/i), { target: { value: 'USA' } });
     fireEvent.click(screen.getByTestId('guest-summary-btn'));
-    // Modal should show
-    await waitFor(() => expect(screen.getByText(/order summary/i)).toBeInTheDocument());
+  // Modal should show (disambiguate from sidebar heading)
+  await waitFor(() => expect(screen.getByTestId('modal-order-summary-title')).toBeInTheDocument());
     // Apply promo code
     fireEvent.change(screen.getByPlaceholderText(/promo code/i), { target: { value: 'SAVE10' } });
     fireEvent.click(screen.getByText(/apply/i));

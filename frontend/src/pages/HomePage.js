@@ -4,7 +4,8 @@ import { ROUTES } from '../config/routes';
 import axios from 'axios';
 import './HomePage.css';
 import ProductCard from '../components/ProductCard'; // ✅ Already imported
-import Hero from '../components/Hero.jsx';
+import HeroBar from '../components/HeroBar/HeroBar.jsx';
+import '../components/HeroBar/HeroBar.css';
 
 const categories = [
   "Today's Deals", "Flash Deals", "Trending", "Season's Favorites", "Top Vendors",
@@ -130,22 +131,85 @@ function HomePage() {
           {error}
         </div>
       )}
-      {/* Hero / CTA section */}
-      <Hero
-        title="Shop Local. Save Big."
-        subtitle="Discover fashion, electronics, home, and more — curated for you."
-        ctaText="Shop Now"
-        onCtaClick={goShop}
-        secondaryCtaText="Explore Categories"
-        onSecondaryCtaClick={goCategories}
-        variant="banner"
+      {/* HeroBar: full-bleed, infinite, arrows, dots, swipe, auto-advance */}
+      <HeroBar
+        autoMs={6000}
+        height={294}
         slides={[
-          { title: 'Shop Local. Save Big.', subtitle: 'Daily deals across top categories.', ctaText: 'Shop Now', onCtaClick: goShop, secondaryCtaText: 'Explore Categories', onSecondaryCtaClick: goCategories, imageSrc: '/images/hero-kitchen.jpg', imageAlt: 'Kitchen and dining deals', bg: '#FFF6D6', variant: 'banner' },
-          { title: 'Upgrade Your Tech', subtitle: 'Phones, laptops, and gadgets at smart prices.', ctaText: 'Browse Tech', onCtaClick: () => navigate('/shop?category=Electronics'), secondaryCtaText: 'All Categories', onSecondaryCtaClick: goCategories, imageSrc: '/images/hero-tech.jpg', imageAlt: 'Electronics and gadgets', bg: '#E6F4FF', variant: 'split' },
-          { title: 'Make Home Cozy', subtitle: 'Furniture, decor, and essentials for every room.', ctaText: 'Shop Home & Living', onCtaClick: () => navigate('/shop?category=Home%20%26%20Living'), secondaryCtaText: 'Popular Picks', onSecondaryCtaClick: () => navigate('/shop?sort=popular'), imageSrc: '/images/hero-home.jpg', imageAlt: 'Home and living ideas', bg: '#F3F0FF', variant: 'overlay' },
+          {
+            id: 'kitchen',
+            title: 'Shop Local. Save Big.',
+            subtitle: 'Daily deals across top categories.',
+            bg: 'var(--hero-amber)',
+            image: '/images/hero-kitchen.jpg',
+            imageAlt: 'Kitchen and dining deals',
+            ctas: [
+              { label: 'Shop Now', href: '/shop', variant: 'primary' },
+              { label: 'Explore Categories', href: '/shop?view=categories', variant: 'ghost' }
+            ],
+          },
+          {
+            id: 'tech',
+            title: 'Upgrade Your Tech',
+            subtitle: 'Phones, laptops, and gadgets at smart prices.',
+            bg: 'linear-gradient(90deg, var(--hero-mint), #E0F2FE)',
+            image: '/images/hero-tech.jpg',
+            imageAlt: 'Electronics and gadgets',
+            ctas: [
+              { label: 'Browse Tech', href: '/shop?category=Electronics', variant: 'primary' },
+              { label: 'All Categories', href: '/shop?view=categories', variant: 'ghost' }
+            ],
+          },
+          {
+            id: 'home',
+            title: 'Make Home Cozy',
+            subtitle: 'Furniture, decor, and essentials for every room.',
+            bg: 'linear-gradient(90deg, var(--hero-sky), var(--hero-lilac))',
+            image: '/images/hero-home.jpg',
+            imageAlt: 'Home and living ideas',
+            ctas: [
+              { label: 'Shop Home & Living', href: '/shop?category=Home%20%26%20Living', variant: 'primary', ariaLabel: 'Browse Living' },
+              { label: 'Popular Picks', href: '/shop?sort=popular', variant: 'ghost' }
+            ],
+          },
+          // New bright slides
+          {
+            id: 'beauty',
+            title: 'Glow Everyday',
+            subtitle: 'Top skincare and beauty picks under one roof.',
+            bg: 'linear-gradient(90deg, var(--hero-rose), #FFE4E6)',
+            image: '/images/hero-beauty.jpg',
+            imageAlt: 'Skincare and beauty products',
+            ctas: [
+              { label: 'Shop Beauty', href: '/shop?category=Beauty', variant: 'primary', ariaLabel: 'Browse Beauty' },
+              { label: 'Best Sellers', href: '/shop?sort=top', variant: 'ghost' }
+            ],
+          },
+          {
+            id: 'sports',
+            title: 'Move In Style',
+            subtitle: 'Activewear and gear for every workout.',
+            bg: 'linear-gradient(90deg, var(--hero-mint), #D1FAE5)',
+            image: '/images/hero-sport.jpg',
+            imageAlt: 'Sportswear and gear',
+            ctas: [
+              { label: 'Shop Sports', href: '/shop?category=Sports', variant: 'primary', ariaLabel: 'Browse Sports' },
+              { label: 'New Arrivals', href: '/shop?sort=new', variant: 'ghost' }
+            ],
+          },
+          {
+            id: 'fashion',
+            title: 'Fresh Fits Daily',
+            subtitle: 'Trendy looks and timeless essentials.',
+            bg: 'linear-gradient(90deg, var(--hero-amber), #FEF3C7)',
+            image: '/images/hero-fashion.jpg',
+            imageAlt: 'Fashion outfits',
+            ctas: [
+              { label: 'Shop Fashion', href: '/shop?category=Fashion', variant: 'primary', ariaLabel: 'Browse Fashion' },
+              { label: 'Trending Now', href: '/shop?sort=trending', variant: 'ghost' }
+            ],
+          },
         ]}
-        fullBleed={false}
-        containerWidth={1200}
       />
       {/* Promotional Video (if available) */}
       {promoVideoUrl && (

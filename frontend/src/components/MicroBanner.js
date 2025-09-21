@@ -183,7 +183,7 @@ function MicroBanner({ messagesOverride }) {
         }}
         onClick={handleClick}
       >
-        <div style={{ maxWidth: 1280, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+  <div style={{ maxWidth: 1320, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
             {/* Tiny type chip for subtle context */}
             <span aria-hidden="true" style={{ fontSize: 10, padding: '2px 6px', border: '1px solid rgba(0,0,0,0.15)', borderRadius: 999, background: 'rgba(255,255,255,0.6)', color: '#111' }}>

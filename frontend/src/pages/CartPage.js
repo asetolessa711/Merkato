@@ -1,6 +1,8 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../cart/CartContext";
+import CheckoutHeader from "../components/checkout/CheckoutHeader.jsx";
+import CheckoutFooter from "../components/checkout/CheckoutFooter.jsx";
 
 export default function CartPage() {
   const { items, setQty, remove, clear, subtotal, totalQty, distinctCount } = useCart();
@@ -11,19 +13,17 @@ export default function CartPage() {
   const progress = Math.min(100, Math.round((subtotal / FREE_AT) * 100));
   const remaining = Math.max(0, FREE_AT - subtotal);
 
-  if (!items.length) {
-    return (
-      <main className="container" style={{ padding: "24px 16px" }}>
-        <h1 className="h2">Your Cart</h1>
-        <div className="card card--p" style={{ maxWidth: 560 }}>
-          <p className="text-muted">Your cart is empty.</p>
-          <Link to="/shop" className="btn btn-primary" style={{ marginTop: 8 }}>Start shopping</Link>
-        </div>
-      </main>
-    );
-  }
+  const EmptyState = (
+    <main className="container" style={{ padding: "24px 16px" }}>
+      <h1 className="h2">Your Cart</h1>
+      <div className="card card--p" style={{ maxWidth: 560 }}>
+        <p className="text-muted">Your cart is empty.</p>
+        <Link to="/shop" className="btn btn-primary" style={{ marginTop: 8 }}>Start shopping</Link>
+      </div>
+    </main>
+  );
 
-  return (
+  const FilledState = (
     <main className="container" style={{ padding: "24px 16px" }}>
       <h1 className="h2">Your Cart</h1>
 
@@ -111,7 +111,12 @@ export default function CartPage() {
 
           <p className="text-muted text-sm">Taxes and shipping calculated at checkout.</p>
 
-          <button className="btn btn-primary w-full" onClick={() => nav("/checkout")} style={{ marginTop: 8 }}>
+          <button
+            className="btn btn-primary w-full"
+            data-testid="checkout-btn"
+            onClick={() => nav("/checkout")}
+            style={{ marginTop: 8 }}
+          >
             Checkout
           </button>
 
@@ -124,5 +129,15 @@ export default function CartPage() {
         </aside>
       </div>
     </main>
+  );
+
+  const country = (() => { try { return localStorage.getItem('merkato-region') || 'Ethiopia'; } catch { return 'Ethiopia'; } })();
+
+  return (
+    <>
+      <CheckoutHeader country={country} step={0} />
+      {items.length ? FilledState : EmptyState}
+      <CheckoutFooter />
+    </>
   );
 }

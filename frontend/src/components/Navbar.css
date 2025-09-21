@@ -3,14 +3,14 @@
   position: fixed;
   top: 0;
   width: 100%;
-  background-color: #001F54; /* Vibrant Navy Blue */
-  color: #fff;
+  background-color: var(--nav-bg); /* Home navbar navy */
+  color: var(--nav-text);
   z-index: 1000;
-  font-family: 'Segoe UI', Arial, sans-serif;
+  font-family: inherit; /* inherit Poppins from body */
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
   padding: 12px 0;
   font-size: 0.95rem;
-  border-bottom: 1px solid #D0D3D9;
+  border-bottom: 1px solid var(--nav-border);
 }
 
 /* === Top Bar Grid Layout === */
@@ -22,7 +22,7 @@
   margin: 0 auto;
   padding: 0 20px;
   gap: 32px;
-  background: #001F54;
+  background: var(--nav-bg);
 }
 
 /* === Left: Logo + Tagline === */
@@ -36,17 +36,17 @@
 .logo {
   font-weight: 700;
   font-size: 1.8rem;
-  color: #FFD700 !important; /* Golden */
+  color: var(--brand-gold, #FFC247) !important; /* Merkato Gold */
   text-decoration: none;
   letter-spacing: 1px;
-  font-family: 'Segoe UI', Arial, sans-serif;
+  font-family: inherit;
 }
 
 .tagline {
   font-size: 1.05rem;
-  color: #fff !important;
+  color: var(--nav-text) !important;
   margin-left: 16px;
-  font-family: 'Segoe UI', Arial, sans-serif;
+  font-family: inherit;
 }
 
 /* === Center: Search === */
@@ -61,8 +61,8 @@
 .top-search label {
   font-size: 0.95rem;
   font-weight: 500;
-  color: #fff;
-  font-family: 'Segoe UI', Arial, sans-serif;
+  color: var(--nav-text);
+  font-family: inherit;
 }
 
 .search-input {
@@ -74,7 +74,7 @@
   max-width: 360px;
   background-color: #F5F7FA;
   color: #2C2C2E;
-  font-family: 'Segoe UI', Arial, sans-serif;
+  font-family: inherit;
 }
 
 /* === Center-Right: Nav Links === */
@@ -87,16 +87,16 @@
 .top-link, .dropdown-toggle {
   text-decoration: none;
   font-weight: 500;
-  color: #fff !important;
+  color: var(--nav-text) !important;
   transition: color 0.2s;
   background: none;
   border: none;
   cursor: pointer;
-  font-family: 'Segoe UI', Arial, sans-serif;
+  font-family: inherit;
 }
 
 .top-link:hover, .dropdown-toggle:hover {
-  color: #FFD700 !important; /* Golden */
+  color: var(--brand-gold, #FFC247) !important; /* Golden */
   text-decoration: underline;
 }
 
@@ -127,16 +127,16 @@
 
 .dropdown-menu a {
   padding: 8px 14px;
-  color: #001F54 !important; /* Navy for dropdown items */
+  color: var(--nav-bg) !important; /* Navy for dropdown items */
   text-decoration: none;
   background: none;
   font-weight: 500;
-  font-family: 'Segoe UI', Arial, sans-serif;
+  font-family: inherit;
 }
 
 .dropdown-menu a:hover {
   background-color: #F5F7FA;
-  color: #FFD700 !important;
+  color: var(--brand-gold, #FFC247) !important;
 }
 
 /* === Right: Language & Currency === */
@@ -151,19 +151,19 @@
   padding: 6px 18px;
   border-radius: 6px;
   font-size: 0.95rem;
-  background-color: #001F54;
-  border: 1px solid #FFD700;
-  color: #fff;
+  background-color: var(--nav-bg);
+  border: 1px solid var(--brand-gold, #FFC247);
+  color: var(--nav-text);
   min-width: 70px;
   appearance: none;
   text-align: center;
-  font-family: 'Segoe UI', Arial, sans-serif;
+  font-family: inherit;
 }
 
 .lang-toggle option,
 .currency-toggle option {
   background-color: #fff;
-  color: #001F54;
+  color: var(--nav-bg);
 }
 
 /* === Responsive === */

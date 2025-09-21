@@ -50,9 +50,9 @@ function CustomerOrders() {
     if (content) {
       const printWindow = window.open('', '', 'width=800,height=600');
       printWindow.document.write('<html><head><title>Invoice</title>');
-      printWindow.document.write('<style>');
-      printWindow.document.write('body { font-family: sans-serif; padding: 20px; }');
-      printWindow.document.write('.header { font-size: 1.5rem; font-weight: bold; margin-bottom: 20px; color: #00B894; }');
+  printWindow.document.write('<style>');
+  printWindow.document.write("body { font-family: Poppins, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif; padding: 20px; }\n p, li, small { font-weight: 400; }\n");
+  printWindow.document.write('.header { font-size: 1.5rem; font-weight: 600; margin-bottom: 20px; color: var(--brand, #00B894); }');
       printWindow.document.write('.order-details { margin-bottom: 15px; }');
       printWindow.document.write('.product-line { margin-bottom: 10px; }');
       printWindow.document.write('</style>');

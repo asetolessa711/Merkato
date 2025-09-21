@@ -6,9 +6,14 @@
 .container {
   padding: 20px;
   /* Prevent fixed/sticky headers from overlapping content when navigating to top */
-  padding-top: 120px;
+  padding-top: 92px;
   max-width: 1200px;     /* Content width control */
   margin: 0 auto;        /* Center the layout horizontally */
+}
+
+/* On the Home route we want the hero to sit right under the navbar */
+.containerTight {
+  padding-top: 0;
 }
 
 .welcomeTitle {

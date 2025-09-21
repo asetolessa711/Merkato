@@ -118,7 +118,7 @@ function CustomerLayout({ children, user, onLogout, lang, onLangChange }) {
   <MicroBanner alwaysShow />
   <MerkatoNavbar role="customer" />
       {/* Deliver to chip and modal */}
-      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '8px 16px' }}>
+  <div style={{ maxWidth: 1320, margin: '0 auto', padding: '8px 16px' }}>
         <button
           type="button"
           aria-haspopup="dialog"

@@ -11,6 +11,7 @@
   max-height: 32px;
   display: flex;
   align-items: center;
+  margin-bottom: 0; /* avoid introducing gap above hero on home */
 }
 
 .container {

@@ -146,8 +146,8 @@
 }
 
 .brand {
-  color: var(--accent);
-  font-weight: 600;
+  color: var(--brand-gold);
+  font-weight: 700;
   font-size: 1.1rem;
 }
 

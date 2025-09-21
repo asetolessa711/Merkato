@@ -269,7 +269,10 @@ function App() {
         </Routes>
 
         <FeedbackPopup visible={showFeedback} onClose={() => setShowFeedback(false)} lang={lang} />
-        <FloatingPromoButton setShowFeedback={setShowFeedback} />
+        {/* Hide FAB on checkout to avoid obstruction */}
+        {window.location && !/\/checkout(\b|$)/.test(window.location.pathname) && (
+          <FloatingPromoButton setShowFeedback={setShowFeedback} />
+        )}
       </MessageProvider>
     </BrowserRouter>
   );
