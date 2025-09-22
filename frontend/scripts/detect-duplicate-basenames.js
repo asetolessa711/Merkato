@@ -36,6 +36,7 @@ function main() {
   }
 
   const collisions = [];
+  const CODE_EXTS = new Set(['.js', '.jsx', '.ts', '.tsx']);
   for (const [dir, list] of byDir.entries()) {
     const byBase = new Map();
     for (const f of list) {
@@ -47,9 +48,11 @@ function main() {
     }
     for (const [key, arr] of byBase.entries()) {
       if (arr.length > 1) {
-        const exts = new Set(arr.map((p) => path.extname(p)));
-        if (exts.size > 1) {
-          collisions.push({ dir, base: key, files: arr });
+        // Focus on collisions between code files only (ignore .css, images, etc.)
+        const codeFiles = arr.filter((p) => CODE_EXTS.has(path.extname(p)));
+        const codeExts = new Set(codeFiles.map((p) => path.extname(p)));
+        if (codeFiles.length > 1 && codeExts.size > 1) {
+          collisions.push({ dir, base: key, files: codeFiles });
         }
       }
     }
@@ -60,7 +63,7 @@ function main() {
     return;
   }
 
-  console.log('⚠️  Potential Windows collisions detected (same basename, different extensions):');
+  console.log('⚠️  Potential Windows collisions detected (same basename, different code extensions):');
   for (const c of collisions) {
     console.log(`\nDir: ${c.dir}`);
     console.log(`Base: ${c.base}`);
