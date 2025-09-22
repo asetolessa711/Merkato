@@ -3,9 +3,11 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Outlet, useLocation } from 'react-router-dom';
 import MerkatoNavbar from '../components/MerkatoNavbar.jsx';
+import MicroBanner from '../components/MicroBanner.jsx';
 
 import styles from './PublicLayout.module.css';
 import MerkatoFooter from '../components/MerkatoFooter';
+import { Flags } from '../utils/featureFlags';
 import { Link } from 'react-router-dom';
 import { ROUTES } from '../config/routes';
 
@@ -13,6 +15,8 @@ function PublicLayout({ user = null, onLogout, lang = 'en', onLangChange = () =>
   const isCypress = typeof window !== 'undefined' && window.Cypress;
   const location = useLocation();
   const isHome = location.pathname === '/' || location.pathname === '/home';
+  const microBelow = Flags.HOME_MICRO_BELOW && isHome;
+  const tallNav = Flags.NAVBAR_TALL;
   return (
     <div className="public-layout">
   {isCypress && (
@@ -29,10 +33,17 @@ function PublicLayout({ user = null, onLogout, lang = 'en', onLangChange = () =>
       )}
 
   {/* Public pages use MerkatoNavbar with MicroBanner and Mega Menu */}
-  <MerkatoNavbar role="public" />
+  <MerkatoNavbar role="public" tall={tallNav} microInline={!microBelow} />
+
+      {/* Optionally render MicroBanner below the navbar on Home when flagged */}
+      {microBelow && (
+        <div style={{ position: 'relative', zIndex: 9999 }}>
+          <MicroBanner alwaysShow />
+        </div>
+      )}
 
       {/* Main content area for pages like HomePage, Shop, etc. */}
-      <main className={`${styles.container} ${isHome ? styles.containerTight : ''}`}>
+      <main className={`${styles.container} ${isHome ? styles.containerTight : ''}`} style={{ paddingTop: tallNav ? 112 : undefined }}>
         <Outlet />
       </main>
       <MerkatoFooter />

@@ -9,7 +9,7 @@ import MicroBanner from './MicroBanner.jsx';
 
 // Merkato-style, accessible, test-stable navbar
 // Keeps existing E2E selectors: cart-link, navbar-register-link, and My Account button
-function MerkatoNavbar({ role: roleProp = 'public', showCategories: showCategoriesProp }) {
+function MerkatoNavbar({ role: roleProp = 'public', showCategories: showCategoriesProp, microInline = true, tall = false }) {
 	const location = useLocation();
 	const navigate = useNavigate();
 	// removed legacy All Categories panel to avoid duplication with mega menu
@@ -564,11 +564,11 @@ function MerkatoNavbar({ role: roleProp = 'public', showCategories: showCategori
 	.mega-link { display: block; padding: 6px 8px; border-radius: 8px; color: #cbd5e1; text-decoration: none; font-size: 14px; }
 	.mega-link:hover { background: rgba(255,255,255,0.08); color: #fff; }
 			`}</style>
-	{/* Dynamic microbanner system (hidden for vendor to reduce noise) */}
-	{!isVendor && <MicroBanner />}
+	{/* Dynamic microbanner system (hidden for vendor to reduce noise). Allow layout to override placement. */}
+	{microInline && !isVendor && <MicroBanner />}
 
 	{/* Main bar: brand, search, actions (solid background) */}
-	<nav aria-label="Primary" style={{ background: 'var(--nav-bg, var(--header-bg, var(--color-nav)))', color: 'var(--nav-text, #fff)', borderBottom: '1px solid var(--nav-border, rgba(255,255,255,0.08))', position: 'relative', fontFamily: 'inherit', fontWeight: 400, boxShadow: scrolled ? '0 2px 8px rgba(0,0,0,0.12)' : 'none' }} data-testid="navbar">
+	<nav aria-label="Primary" style={{ background: 'var(--nav-bg, var(--header-bg, var(--color-nav)))', color: 'var(--nav-text, #fff)', borderBottom: '1px solid var(--nav-border, rgba(255,255,255,0.08))', position: 'relative', fontFamily: 'inherit', fontWeight: 400, boxShadow: scrolled ? '0 2px 8px rgba(0,0,0,0.12)' : 'none', paddingTop: tall ? 4 : undefined, paddingBottom: tall ? 4 : undefined }} data-testid="navbar">
 				<div style={{ maxWidth: 1320, margin: '0 auto', display: 'grid', gridTemplateColumns: 'auto 1fr auto', gap: 12, alignItems: 'center', padding: '10px 16px' }}>
 					{/* Brand */}
 					<div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'nowrap' }}>

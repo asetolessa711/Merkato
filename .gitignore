@@ -64,3 +64,4 @@ backend/tests/fixtures/**/*.png
 # Local backup archives (not source)
 backups/
 backups-archives/
+**/_backup_*/
