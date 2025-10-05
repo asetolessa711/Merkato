@@ -1,0 +1,27 @@
+.promo-card{
+  display:block;
+  background:#fff;
+  border:1px solid #E5E7EB;
+  border-radius:12px;
+  text-decoration:none;
+  color:#0F273D;
+  transition: box-shadow .16s ease, transform .06s ease;
+}
+.promo-card:hover{ box-shadow:0 6px 18px rgba(0,0,0,.06); transform: translateY(-1px); }
+.promo-card__body{ display:flex; align-items:center; gap:14px; padding:16px 18px; }
+.promo-card__icon{ width:48px; height:48px; display:grid; place-items:center; border-radius:10px; background:#F3F4F6; color:#0F273D; font-size:24px; }
+.promo-card__text{ flex:1 1 auto; min-width:0; }
+.promo-card__title{ font-weight:700; font-size:1.05rem; margin:0 0 4px; }
+.promo-card__sub{ color:#475569; font-size:.95rem; margin:0; }
+.promo-card__count{ margin-top:6px; color:#334155; font-weight:600; font-size:.95rem; }
+.promo-card__arrow{ font-size:24px; color:#0F273D; padding-left:6px; }
+
+/* Variant accents */
+.promo-card--deals .promo-card__icon{ background:#FEF3C7; color:#B45309; }
+.promo-card--collection .promo-card__icon{ background:#E0F2FE; color:#0369A1; }
+.promo-card--category .promo-card__icon{ background:#E9FFE9; color:#047857; }
+
+/* Grid helper (3-up desktop, 2-up tablet, 1-up mobile) */
+.promo-grid{ display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 16px; }
+@media (max-width: 1024px){ .promo-grid{ grid-template-columns: repeat(2, minmax(0,1fr)); } }
+@media (max-width: 640px){ .promo-grid{ grid-template-columns: 1fr; } }

@@ -5,7 +5,7 @@
 import React from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import CustomerOrders from '../../pages/CustomerOrders';
+import CustomerOrders from '../../pages/CustomerOrders'';
 import { MemoryRouter } from 'react-router-dom';
 
 jest.mock('axios', () => ({ get: jest.fn(), post: jest.fn() }));

@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import BulkSummaryDialog from '../../components/BulkSummaryDialog';
+import BulkSummaryDialog from '../../components/BulkSummaryDialog'';
 
 describe('BulkSummaryDialog @trust-ui', () => {
   const summary = { success: ['1','2'], failed: ['3'], actionType: 'shipped' };

@@ -5,6 +5,8 @@ const path = require('path');
 // Simple in-memory task store and SSE subscriptions
 const tasks = new Map(); // id -> task
 const sseClients = new Map(); // id -> Set(res)
+// Track timers to ensure we can clear them during Jest teardown (Windows CI stability)
+const runtimeTimers = new Set();
 
 const STATUS = {
   IDLE: 'idle',
@@ -119,7 +121,8 @@ if (process.env.JEST_WORKER_ID || process.env.NODE_ENV === 'test') {
     label: 'Test Hold (cancelable)',
     // Keep process alive printing ticks so we can cancel it deterministically
     cmd: process.execPath,
-    args: ['-e', 'let i=0; const t=setInterval(()=>{ console.log(`tick ${++i}`); }, 200); process.on("SIGTERM", ()=>{ clearInterval(t); console.log("received SIGTERM"); }); setTimeout(()=>{}, 1<<30);'],
+    // Auto exit after ~1s to prevent lingering open handles if tests forget to cancel
+    args: ['-e', 'let i=0; const t=setInterval(()=>{ console.log(`tick ${++i}`); if(i>=5){ clearInterval(t); console.log("auto-exit"); } }, 180); process.on("SIGTERM", ()=>{ clearInterval(t); console.log("received SIGTERM"); }); setTimeout(()=>{ /* safety */ }, 1500);'],
     cwd: repoRoot,
   };
   TASK_DEFS['test:flaky-once'] = {
@@ -205,7 +208,7 @@ function runTask(task) {
       env,
       shell: !!def.shell,
     };
-    child = spawn(def.cmd, def.args || [], spawnOpts);
+  child = spawn(def.cmd, def.args || [], spawnOpts);
     task.pid = child.pid;
 
     const onData = (buf) => {
@@ -224,6 +227,7 @@ function runTask(task) {
       if (task.status === STATUS.CANCELED) {
         task.endTime = new Date().toISOString();
         emitSSE(task.id, { type: 'status', status: task.status, code });
+        try { child.unref && child.unref(); } catch(_){}
         return;
       }
       if (code === 0) {
@@ -239,6 +243,8 @@ function runTask(task) {
           backoffTimer = null;
           spawnOnce();
         }, delay);
+        runtimeTimers.add(backoffTimer);
+        try { backoffTimer.unref && backoffTimer.unref(); } catch(_) {}
       } else {
         task.status = STATUS.ERROR;
         task.endTime = new Date().toISOString();
@@ -250,23 +256,21 @@ function runTask(task) {
 
   task.kill = () => {
     try {
-      if (backoffTimer) {
-        clearTimeout(backoffTimer);
-        backoffTimer = null;
-      }
+      if (backoffTimer) { clearTimeout(backoffTimer); backoffTimer = null; }
       if (child && child.pid) {
         if (process.platform === 'win32') {
-          spawn('taskkill', ['/PID', String(child.pid), '/T', '/F']);
+          spawn('taskkill', ['/PID', String(child.pid), '/T', '/F']).on('close', ()=>{ try { child.unref && child.unref(); } catch(_){} });
         } else {
+          child.once('close', ()=>{ try { child.unref && child.unref(); } catch(_){} });
           child.kill('SIGTERM');
+          // force kill after grace period
+          const t = setTimeout(()=>{ try { process.kill(child.pid,'SIGKILL'); } catch(_){} }, 500);
+          runtimeTimers.add(t);
+          try { t.unref && t.unref(); } catch(_) {}
         }
       }
-      task.status = STATUS.CANCELED;
-      task.endTime = new Date().toISOString();
-      emitSSE(task.id, { type: 'status', status: task.status });
-    } catch (e) {
-      // ignore
-    }
+      task.status = STATUS.CANCELED; task.endTime = new Date().toISOString(); emitSSE(task.id, { type: 'status', status: task.status });
+    } catch(_){}
   };
 
   spawnOnce();
@@ -301,4 +305,21 @@ module.exports = {
   listTaskDefs,
   subscribe,
   unsubscribe,
+  // Test-only utility to ensure no lingering child processes or timers keep Jest open
+  _shutdownAllTasks: () => {
+    try {
+      for (const task of tasks.values()) {
+        try {
+          if (task && task.status === STATUS.RUNNING && typeof task.kill === 'function') {
+            task.kill();
+          }
+        } catch (_) {}
+      }
+      tasks.clear();
+      sseClients.clear();
+      // Clear any outstanding timers created internally
+      for (const t of runtimeTimers) { try { clearTimeout(t); } catch(_) {} }
+      runtimeTimers.clear();
+    } catch (_) {}
+  },
 };

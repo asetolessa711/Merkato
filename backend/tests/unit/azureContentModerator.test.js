@@ -32,6 +32,7 @@ describe('azureContentModerator utility', () => {
   });
 
   test('returns Azure response data on success', async () => {
+    process.env.AZURE_CM_TEST_REAL = 'true';
     process.env.AZURE_CM_ENDPOINT = 'https://example.cognitive.azure.com';
     process.env.AZURE_CM_KEY = 'real-key';
     // Mock axios
@@ -46,6 +47,7 @@ describe('azureContentModerator utility', () => {
   });
 
   test('throws with message when Azure returns error response', async () => {
+    process.env.AZURE_CM_TEST_REAL = 'true';
     process.env.AZURE_CM_ENDPOINT = 'https://example.cognitive.azure.com';
     process.env.AZURE_CM_KEY = 'real-key';
     jest.doMock('axios', () => ({
@@ -57,6 +59,7 @@ describe('azureContentModerator utility', () => {
   });
 
   test('throws with original error message on timeout', async () => {
+    process.env.AZURE_CM_TEST_REAL = 'true';
     process.env.AZURE_CM_ENDPOINT = 'https://example.cognitive.azure.com';
     process.env.AZURE_CM_KEY = 'real-key';
     jest.doMock('axios', () => ({

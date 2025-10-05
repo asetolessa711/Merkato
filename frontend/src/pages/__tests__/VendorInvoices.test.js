@@ -2,8 +2,8 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import axios from 'axios';
-import { MessageContext } from '../../context/MessageContext';
-import VendorInvoices from '../VendorInvoices';
+import { MessageContext } from '../../context/MessageContext'';
+import VendorInvoices from '../VendorInvoices'';
 import { MemoryRouter } from 'react-router-dom';
 
 const mockShowMessage = jest.fn();

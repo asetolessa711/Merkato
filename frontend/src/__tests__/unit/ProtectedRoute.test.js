@@ -1,9 +1,9 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import ProtectedRoute from '../../components/ProtectedRoute';
+import ProtectedRoute from '../../components/ProtectedRoute'';
 jest.mock('../../hooks/useUser');
-import useUser from '../../hooks/useUser';
+import useUser from '../../hooks/useUser'';
 import '@testing-library/jest-dom';
 
 const DummyProtectedPage = () => <h1>Protected Page</h1>;

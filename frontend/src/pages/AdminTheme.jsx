@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { fetchActiveTheme, fetchThemes, saveAdminTheme } from '../api/theme';
+import { fetchActiveTheme, fetchThemes, saveAdminTheme } from '../api/theme'';
 
 const presets = [
   { key: 'merkato-classic', name: 'Merkato Classic', colors: { primary: '#6C63FF', primary600: '#6C63FF', primary700: '#534BE6', bg: '#FDFDFD', surface: '#FDFDFD', text: '#6E7E91', textMuted: '#8A97A8', nav: '#2C2E43', footer: '#2C2E43', accentRed: '#FF6B6B', success: '#A0E7E5', warning: '#F4C430', danger: '#FF6B6B', info: '#6C63FF' } },

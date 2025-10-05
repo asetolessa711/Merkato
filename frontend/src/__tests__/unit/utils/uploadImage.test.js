@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { uploadProductImage } from '../../../utils/uploadImage';
+import { uploadProductImage } from '../../../utils/uploadImage'';
 
 describe('uploadImage', () => {
   beforeEach(() => {

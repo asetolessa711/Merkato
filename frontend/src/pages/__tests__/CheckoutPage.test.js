@@ -1,7 +1,7 @@
 import React from 'react';
 import '@testing-library/jest-dom';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
-import CheckoutPage from '../CheckoutPage';
+import CheckoutPage from '../CheckoutPage'';
 
 // Mock useNavigate from react-router-dom
 jest.mock('react-router-dom', () => ({

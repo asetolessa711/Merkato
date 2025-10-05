@@ -55,6 +55,8 @@ async function main() {
   // In attach mode, we do not start backend or build/serve frontend
   let backend = null;
   let frontend = null;
+  // Stop function for the in-process static server
+  let frontendStop = null;
   let backendPort, apiUrl, ephemeralDbName = null;
   let mongoBase = null;
   if (attachMode) {
@@ -106,8 +108,11 @@ async function main() {
   }
   const cleanup = () => {
     console.log('\n[e2e] Cleaning up processes...');
-    try { if (frontend && !frontend.killed) killProcessTree(frontend.pid); } catch {}
-    try { if (backend && !backend.killed) killProcessTree(backend.pid); } catch {}
+    try {
+      if (frontendStop) { frontendStop(); frontendStop = null; }
+      else if (frontend && !frontend.killed && frontend.pid) { killProcessTree(frontend.pid); }
+    } catch {}
+    try { if (backend && !backend.killed && backend.pid) { killProcessTree(backend.pid); } } catch {}
   };
   process.on('SIGINT', () => { cleanup(); process.exit(130); });
   process.on('SIGTERM', () => { cleanup(); process.exit(143); });
@@ -197,8 +202,9 @@ async function main() {
       const frontendPort = await findFreePort(3000);
       baseUrl = `http://localhost:${frontendPort}`;
       console.log(`[e2e] Serving frontend from temp dir on ${baseUrl} ...`);
-      const frontendServer = await startStaticServer(tempServeDir, frontendPort);
-      frontend = { pid: null, killed: false, kill: () => { try { frontendServer.close(); } catch (_) {} } };
+  const frontendServer = await startStaticServer(tempServeDir, frontendPort);
+  frontendStop = () => { try { frontendServer.close(); } catch (_) {} };
+  frontend = { pid: null, killed: false };
       console.log(`[e2e] Waiting for frontend ${baseUrl} ...`);
       await waitOn({ resources: [baseUrl], timeout: 60000 });
     }
@@ -207,9 +213,11 @@ async function main() {
   // Allow selecting browser via E2E_BROWSER, default to electron for portability
   const e2eBrowser = String(process.env.E2E_BROWSER || 'electron');
   console.log(`[e2e] Running Cypress (${e2eBrowser} headless, video off)...`);
-  // In CI or task-driven full runs, force running all specs unless explicitly disabled with E2E_USE_ALL=false
+  // In CI or task-driven full runs, force running all specs unless explicitly disabled with E2E_USE_ALL=false.
+  // Always honor an explicit E2E_SPEC selection.
   const isCI = String(process.env.CI || '').toLowerCase() === 'true';
-  const forceAll = isCI && String(process.env.E2E_USE_ALL || 'true').toLowerCase() !== 'false';
+  const hasExplicitSpec = !!process.env.E2E_SPEC;
+  const forceAll = isCI && String(process.env.E2E_USE_ALL || 'true').toLowerCase() !== 'false' && !hasExplicitSpec;
   const cyEnv = { ...process.env, CYPRESS_API_URL: apiUrl, CYPRESS_video: isCI ? 'true' : 'false', CYPRESS_CACHE_FOLDER: cypressCache, npm_config_cache: npmCache };
   // Pass through exclude tag (e.g., @flaky) from env in a Cypress-friendly way
   if (process.env.CYPRESS_EXCLUDE_TAG) {
@@ -221,7 +229,7 @@ async function main() {
   }
   // If a stray CYPRESS_spec is present in the environment, it can override --spec and
   // point to an invalid path (e.g., repo root). Clear it unless E2E_SPEC is explicitly provided.
-  if (forceAll || !process.env.E2E_SPEC) {
+  if (forceAll || !hasExplicitSpec) {
     // Remove any CYPRESS_* vars that can force spec selection (spec, specs, specPattern, testFiles, integrationFolder)
     const scrubKeys = new Set([
       'cypress_spec',

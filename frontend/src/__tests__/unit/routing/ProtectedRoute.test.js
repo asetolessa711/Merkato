@@ -1,8 +1,8 @@
 import React from 'react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { render, screen } from '@testing-library/react';
-import ProtectedRoute from '../../../components/ProtectedRoute';
-import useUser from '../../../hooks/useUser';
+import ProtectedRoute from '../../../components/ProtectedRoute'';
+import useUser from '../../../hooks/useUser'';
 
 jest.mock('../../../hooks/useUser', () => ({ __esModule: true, default: jest.fn() }));
 

@@ -9,6 +9,9 @@ const router = express.Router();
 const DATA_DIR = path.join(__dirname, '..', 'uploads');
 const DATA_FILE = path.join(DATA_DIR, 'mega-menu.json');
 const SEARCH_LOG = path.join(DATA_DIR, 'search-events.log.jsonl');
+// Hard cap files we parse to avoid accidental OOMs if a file grows too large (e.g., from previous test runs)
+const MAX_MENU_BYTES = Number(process.env.SEARCH_MAX_MENU_BYTES || 512 * 1024); // 512KB default
+const MAX_OVERRIDES_BYTES = Number(process.env.SEARCH_MAX_OVERRIDES_BYTES || 256 * 1024); // 256KB default
 
 async function ensureFile() {
   try {
@@ -21,6 +24,12 @@ async function ensureFile() {
 async function readMenuFile() {
   await ensureFile();
   try {
+    // Check file size first to avoid reading/parsing very large files into memory
+    const stat = await fsp.stat(DATA_FILE);
+    if (stat && typeof stat.size === 'number' && stat.size > MAX_MENU_BYTES) {
+      // Best-effort: if the file is unexpectedly large, treat as empty to protect test/CI memory
+      return { version: 1, updatedAt: new Date().toISOString(), menu: [] };
+    }
     const raw = await fsp.readFile(DATA_FILE, 'utf8');
     const parsed = JSON.parse(raw);
     if (parsed && Array.isArray(parsed.menu)) return parsed;
@@ -98,17 +107,21 @@ router.get('/search/suggest', async (req, res) => {
     // Apply overrides for synonyms/locales/etc.
     try {
       const overridesPath = path.join(DATA_DIR, 'categories-overrides.json');
-      const raw = await fsp.readFile(overridesPath, 'utf8');
-      const overrides = JSON.parse(raw);
-      if (Array.isArray(overrides)) {
-        const map = new Map(categories.map(c => [c.id, c]));
-        for (const o of overrides) {
-          const id = o.id || o.slug || (o.name && slugify(o.name));
-          if (!id) continue;
-          const base = map.get(id);
-          if (base) map.set(id, { ...base, ...o, id: base.id, slug: base.slug });
+      // Guard against unexpectedly large overrides file
+      const st = await fsp.stat(overridesPath).catch(() => null);
+      if (st && typeof st.size === 'number' && st.size <= MAX_OVERRIDES_BYTES) {
+        const raw = await fsp.readFile(overridesPath, 'utf8');
+        const overrides = JSON.parse(raw);
+        if (Array.isArray(overrides)) {
+          const map = new Map(categories.map(c => [c.id, c]));
+          for (const o of overrides) {
+            const id = o.id || o.slug || (o.name && slugify(o.name));
+            if (!id) continue;
+            const base = map.get(id);
+            if (base) map.set(id, { ...base, ...o, id: base.id, slug: base.slug });
+          }
+          categories = Array.from(map.values());
         }
-        categories = Array.from(map.values());
       }
     } catch (_) {}
 

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
-import { MEGA_MENU as DEFAULT_MENU } from '../config/megaMenu';
+import { MEGA_MENU as DEFAULT_MENU } from '../config/megaMenu'';
 
 // Reusable text input
 function TextInput({ label, value, onChange, placeholder, style, ...rest }) {
@@ -47,7 +47,7 @@ function LinkRow({ colIndex, index, link, onChange, onRemove }) {
         label="Target URL (to)"
         value={link.to || ''}
         onChange={(v) => onChange({ ...link, to: v })}
-        placeholder="/shop?search=..."
+  placeholder="/search?q=..."
       />
       <label style={{ display: 'block' }}>
         <div style={{ fontSize: 12, color: '#555' }}>Status</div>

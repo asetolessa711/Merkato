@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import './Navbar.css'; // optional external styles
-import { useUser } from '../hooks/useUser'; // custom hook or state context
+import { useUser } from '../hooks/useUser''; // custom hook or state context
 
 function Navbar() {
   const { user, logout } = useUser(); // assume role is in user?.role
@@ -15,7 +15,7 @@ function Navbar() {
 
   const navLinks = [
     { to: '/', label: 'Home' },
-    { to: '/shop', label: 'Shop' },
+  { to: '/discover', label: 'Shop' },
     ...(user?.role === 'vendor' ? [{ to: '/vendor', label: 'Dashboard' }] : []),
     ...(user?.role === 'admin' ? [{ to: '/admin', label: 'Admin' }] : []),
     ...(user?.role === 'customer' ? [{ to: '/account/dashboard', label: 'Dashboard' }] : []),

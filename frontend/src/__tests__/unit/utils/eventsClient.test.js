@@ -7,7 +7,7 @@ jest.mock('../../../utils/featureFlags', () => ({
   isTestEnv: () => true, // keep track() from flushing automatically
 }));
 
-import { Events } from '../../../utils/eventsClient';
+import { Events } from '../../../utils/eventsClient'';
 
 const STORAGE_KEY = 'merkato-events-buffer';
 
@@ -51,7 +51,7 @@ describe('eventsClient', () => {
       Flags: { GAMIFICATION: false, BEHAVIORAL_PROMOS: true },
       isTestEnv: () => true,
     }));
-    const { Events: E2 } = require('../../../utils/eventsClient');
+    const { Events: E2 } = require('../../../utils/eventsClient'');
     const res = await E2.checkIn('t');
     expect(res).toEqual({ disabled: true });
   });

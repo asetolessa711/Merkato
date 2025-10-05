@@ -31,7 +31,7 @@ module.exports = defineConfig({
         });
       }
 
-      // Register custom db:seed task for E2E tests via HTTP
+      // Register custom tasks for E2E tests via HTTP and logging from browser context
       on('task', {
         async 'db:seed'() {
           try {
@@ -43,6 +43,22 @@ module.exports = defineConfig({
             console.error('❌ Seed failed', e.message);
             return false;
           }
+        },
+        'a11y:log'(msg) {
+          try {
+            console.log(String(msg));
+          } catch (_) {
+            // noop
+          }
+          return null;
+        },
+        'a11y:warn'(msg) {
+          try {
+            console.warn(String(msg));
+          } catch (_) {
+            // noop
+          }
+          return null;
         }
       });
       return config;

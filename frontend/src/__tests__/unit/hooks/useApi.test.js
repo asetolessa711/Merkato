@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { render, screen, act } from '@testing-library/react';
 import axios from 'axios';
-import useApi from '../../../hooks/useApi';
+import useApi from '../../../hooks/useApi'';
 
 function Harness() {
   const api = useApi();

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import MegaMenuPromoPanel, { MEGA_PROMOS_KEY } from '../components/MegaMenuPromoPanel';
+import MegaMenuPromoPanel, { MEGA_PROMOS_KEY } from '../components/MegaMenuPromoPanel'';
 
 // Helper to safely read JSON from localStorage
 function readJson(key, fallback) {
@@ -170,7 +170,7 @@ export default function AdminMegaPromos() {
                 </label>
                 <label style={{ display: 'flex', flexDirection: 'column' }}>
                   <span style={{ fontSize: 12, opacity: 0.7 }}>Href</span>
-                  <input value={it.href || ''} onChange={(e) => update(it.id, { href: e.target.value })} placeholder="/shop?sort=best or https://..." />
+                  <input value={it.href || ''} onChange={(e) => update(it.id, { href: e.target.value })} placeholder="Use LinkBuilder routes like /discover or a full https:// URL" />
                 </label>
                 <label style={{ display: 'flex', flexDirection: 'column', minWidth: 240 }}>
                   <span style={{ fontSize: 12, opacity: 0.7 }}>Image URL</span>

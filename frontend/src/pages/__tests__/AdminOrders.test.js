@@ -2,8 +2,8 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import axios from 'axios';
-import { MessageContext } from '../../context/MessageContext';
-import AdminOrders from '../../pages/AdminOrders';
+import { MessageContext } from '../../context/MessageContext'';
+import AdminOrders from '../../pages/AdminOrders'';
 
 const mockShowMessage = jest.fn();
 const renderWithContext = (ui) =>

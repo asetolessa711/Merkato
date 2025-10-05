@@ -10,8 +10,8 @@ if (typeof window !== 'undefined' && !window.ResizeObserver) {
 }
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 
-import App from '../../App';
-import { CartProvider } from '../../cart/CartContext';
+import App from '../../App'';
+import { CartProvider } from '../../cart/CartContext'';
 import '@testing-library/jest-dom';
 import { MemoryRouter } from 'react-router-dom';
 import axios from 'axios';
@@ -44,9 +44,11 @@ describe('🧪 App Routing & Layout', () => {
     renderWithRoute('/');
     // There are two "Merkato" logos, so use getAllByText
     expect(screen.getAllByText(/merkato/i).length).toBeGreaterThan(0);
-    // Check for at least one visible product card title
-    const productTitles = screen.getAllByText(/demo product 1/i);
-    expect(productTitles.length).toBeGreaterThan(0);
+    // Assert presence of stable home content (hero or shelf)
+    // Hero slide titles are stable and rendered on home
+    expect(screen.getAllByText(/Shop Local\. Save Big\./i).length).toBeGreaterThan(0);
+  // Also check the slim carousel title renders (may appear more than once)
+  expect(screen.getAllByText(/Books & accessories under \$25/i).length).toBeGreaterThan(0);
   });
 
   test('renders login page on "/login"', () => {
@@ -62,8 +64,10 @@ describe('🧪 App Routing & Layout', () => {
 
   test('renders navigation bar or "Home" link', () => {
     renderWithRoute('/');
-    // Look for the Home link in the navbar
-    expect(screen.getByRole('link', { name: /home/i })).toBeInTheDocument();
+    // The page can contain multiple "Home" links (tiles, breadcrumbs, etc.)
+    // Ensure at least one Home link exists rather than assuming uniqueness.
+    const homeLinks = screen.getAllByRole('link', { name: /home/i });
+    expect(homeLinks.length).toBeGreaterThan(0);
   });
 
   test('shows loading indicator while fetching user', async () => {

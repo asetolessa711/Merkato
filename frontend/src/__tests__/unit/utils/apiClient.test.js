@@ -13,7 +13,7 @@ describe('apiClient', () => {
     localStorage.setItem('token', 'abc');
     // Re-require apiClient to register interceptors freshly in this isolated module context
     jest.isolateModules(() => {
-      require('../../../utils/apiClient');
+      require('../../../utils/apiClient'');
     });
     const reqUse = axios.interceptors?.request?.use;
     expect(reqUse).toBeDefined();
@@ -25,7 +25,7 @@ describe('apiClient', () => {
 
   test('rejects with normalized message', async () => {
     jest.isolateModules(() => {
-      require('../../../utils/apiClient');
+      require('../../../utils/apiClient'');
     });
     const resUse = axios.interceptors?.response?.use;
     expect(resUse).toBeDefined();
@@ -38,7 +38,7 @@ describe('apiClient', () => {
   test('omits Authorization header when no token present', async () => {
     localStorage.clear();
     jest.isolateModules(() => {
-      require('../../../utils/apiClient');
+      require('../../../utils/apiClient'');
     });
     const reqUse = axios.interceptors?.request?.use;
     const [[handler]] = reqUse.mock.calls;
@@ -48,7 +48,7 @@ describe('apiClient', () => {
 
   test('maps server error to include message (fallback when missing)', async () => {
     jest.isolateModules(() => {
-      require('../../../utils/apiClient');
+      require('../../../utils/apiClient'');
     });
     const [[, errorHandler]] = axios.interceptors.response.use.mock.calls;
     const err = { response: { status: 500, data: {} }, message: '' };

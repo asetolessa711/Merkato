@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { syncCart, mergeCartOnLogin } from '../../../utils/cartClient';
+import { syncCart, mergeCartOnLogin } from '../../../utils/cartClient'';
 
 describe('cartClient', () => {
   beforeEach(() => {

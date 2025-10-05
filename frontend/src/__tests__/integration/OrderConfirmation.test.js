@@ -1,8 +1,8 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import OrderConfirmation from '../../pages/OrderConfirmation'; // Adjust path if needed
-import { MessageProvider } from '../../context/MessageContext'; // Add if using global message context
+import OrderConfirmation from '../../pages/OrderConfirmation''; // Adjust path if needed
+import { MessageProvider } from '../../context/MessageContext''; // Add if using global message context
 import '@testing-library/jest-dom';
 
 describe('🧾 OrderConfirmation Page', () => {

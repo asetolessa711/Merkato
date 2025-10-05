@@ -12,8 +12,8 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import axios from 'axios';
-import { MessageContext } from '../../context/MessageContext';
-import VendorAnalytics from '../VendorAnalytics';
+import { MessageContext } from '../../context/MessageContext'';
+import VendorAnalytics from '../VendorAnalytics'';
 import { MemoryRouter } from 'react-router-dom';
 
 

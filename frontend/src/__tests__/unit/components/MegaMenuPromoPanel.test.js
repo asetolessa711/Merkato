@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, act } from '@testing-library/react';
-import MegaMenuPromoPanel, { MEGA_PROMOS_KEY } from '../../../components/MegaMenuPromoPanel';
+import MegaMenuPromoPanel, { MEGA_PROMOS_KEY } from '../../../components/MegaMenuPromoPanel'';
 
 describe('MegaMenuPromoPanel', () => {
   beforeEach(() => {
@@ -22,9 +22,9 @@ describe('MegaMenuPromoPanel', () => {
 
   test('subcategory match takes priority over category/global', () => {
     const promos = [
-      { id: 'g1', title: 'Global Promo', text: 'G', type: 'text', enabled: true, href: '/shop' },
-      { id: 'c1', title: 'Category Promo', text: 'C', type: 'text', enabled: true, categories: ['Electronics'], href: '/shop?cat=electronics' },
-      { id: 's1', title: 'Subcategory Promo', text: 'S', type: 'text', enabled: true, subcategories: ['Laptops'], href: '/shop?cat=electronics&sub=laptops' },
+  { id: 'g1', title: 'Global Promo', text: 'G', type: 'text', enabled: true, href: '/discover' },
+  { id: 'c1', title: 'Category Promo', text: 'C', type: 'text', enabled: true, categories: ['Electronics'], href: '/c/electronics?sort=best' },
+  { id: 's1', title: 'Subcategory Promo', text: 'S', type: 'text', enabled: true, subcategories: ['Laptops'], href: '/c/electronics/laptops?sort=best' },
     ];
     localStorage.setItem(MEGA_PROMOS_KEY, JSON.stringify(promos));
     render(<MegaMenuPromoPanel activeCategory="Electronics" activeSubcategory="Laptops" />);
@@ -35,8 +35,8 @@ describe('MegaMenuPromoPanel', () => {
   // Enable rotation by switching to default (non-minimal) mode
   localStorage.setItem('merkato-mega-promo-mode', 'default');
     const promos = [
-      { id: 's1', title: 'Laptop Deal 1', text: 'A', type: 'text', enabled: true, subcategories: ['Laptops'], href: '/shop?a=1' },
-      { id: 's2', title: 'Laptop Deal 2', text: 'B', type: 'text', enabled: true, subcategories: ['Laptops'], href: '/shop?a=2' },
+  { id: 's1', title: 'Laptop Deal 1', text: 'A', type: 'text', enabled: true, subcategories: ['Laptops'], href: '/c/electronics/laptops?sort=best&a=1' },
+  { id: 's2', title: 'Laptop Deal 2', text: 'B', type: 'text', enabled: true, subcategories: ['Laptops'], href: '/c/electronics/laptops?sort=best&a=2' },
     ];
     localStorage.setItem(MEGA_PROMOS_KEY, JSON.stringify(promos));
     render(<MegaMenuPromoPanel activeCategory="Electronics" activeSubcategory="Laptops" />);
@@ -63,14 +63,14 @@ describe('MegaMenuPromoPanel', () => {
 
   test('emits SPA navigate intent for internal href on click', () => {
     const promos = [
-      { id: 'p1', title: 'Click Me', text: 'Go', type: 'cta', enabled: true, href: '/shop?sort=best' },
+      { id: 'p1', title: 'Click Me', text: 'Go', type: 'cta', enabled: true, href: '/c/electronics?sort=best' },
     ];
     localStorage.setItem(MEGA_PROMOS_KEY, JSON.stringify(promos));
     const navSpy = jest.fn();
     window.addEventListener('mega-promo:navigate', (e) => navSpy(e.detail?.href));
     render(<MegaMenuPromoPanel activeCategory="" activeSubcategory="" />);
-    fireEvent.click(screen.getByRole('button', { name: /click me|go|shop|best/i }));
-    expect(navSpy).toHaveBeenCalledWith('/shop?sort=best');
+  fireEvent.click(screen.getByRole('button', { name: /click me|go|shop|best|electronics/i }));
+  expect(navSpy).toHaveBeenCalledWith('/c/electronics?sort=best');
   });
 
   test('clicking promo navigates to hovered main category when no explicit href', () => {
@@ -80,10 +80,10 @@ describe('MegaMenuPromoPanel', () => {
     localStorage.setItem(MEGA_PROMOS_KEY, JSON.stringify(promos));
     const navSpy = jest.fn();
     window.addEventListener('mega-promo:navigate', (e) => navSpy(e.detail?.href));
-    render(<MegaMenuPromoPanel activeCategory="Electronics" activeSubcategory="" />);
+  render(<MegaMenuPromoPanel activeCategory="Electronics" activeSubcategory="" />);
   // Click inside the card by targeting the title text (no CTA required)
-  fireEvent.click(screen.getByText('Category Focus'));
-    expect(navSpy).toHaveBeenCalledWith('/shop?category=electronics');
+    fireEvent.click(screen.getByText('Category Focus'));
+    expect(navSpy).toHaveBeenCalledWith('/c/electronics?sort=best');
   });
 
   test('no tip text is rendered under the promo card', () => {

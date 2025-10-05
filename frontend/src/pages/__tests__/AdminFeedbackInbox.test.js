@@ -2,8 +2,8 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import axios from 'axios';
-import { MessageContext } from '../../context/MessageContext';
-import AdminFeedbackInbox from '../../pages/AdminFeedbackInbox';
+import { MessageContext } from '../../context/MessageContext'';
+import AdminFeedbackInbox from '../../pages/AdminFeedbackInbox'';
 
 const mockShowMessage = jest.fn();
 const renderWithContext = (ui) =>

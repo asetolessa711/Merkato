@@ -7,10 +7,14 @@ const protect = async (req, res, next) => {
 
   if (
     req.headers.authorization &&
-    req.headers.authorization.startsWith('Bearer')
+    req.headers.authorization.toLowerCase().startsWith('bearer')
   ) {
     try {
-      token = req.headers.authorization.split(' ')[1];
+      // Tolerate headers like "Bearer <token>" and accidental "Bearer Bearer <token>"
+      const parts = req.headers.authorization.split(' ').filter(Boolean);
+      const bearerIdx = parts.findIndex(p => p.toLowerCase() === 'bearer');
+      const candidate = parts[parts.length - 1];
+      token = parts[bearerIdx + 1] && parts[bearerIdx + 1].toLowerCase() !== 'bearer' ? parts[bearerIdx + 1] : candidate;
       // In test env, allow expired tokens to be used to avoid brittle token fixtures
       const verifyOpts = process.env.NODE_ENV === 'test' ? { ignoreExpiration: true } : {};
       const decoded = jwt.verify(token, process.env.JWT_SECRET, verifyOpts);

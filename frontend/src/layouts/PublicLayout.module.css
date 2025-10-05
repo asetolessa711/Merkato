@@ -1,20 +1,105 @@
+/* ================= Global guard ================= */
+:root, html, body, .layout {
+  /* Guard rail: never allow page-wide horizontal scroll */
+  overflow-x: hidden;
+}
+
+/* ================= Page wrapper ================= */
 .layout {
   background-color: #f8f9fa;
   min-height: 100vh;
 }
 
+/* ================= Main content container ================= */
 .container {
-  padding: 20px;
+  /* Unified content container */
+  max-width: var(--content-max, 1320px);                /* site-wide content width */
+  margin: 0 auto;                   /* center horizontally */
+  padding-inline: 16px;             /* gutters */
   /* Prevent fixed/sticky headers from overlapping content when navigating to top */
-  padding-top: 92px;
-  max-width: 1200px;     /* Content width control */
-  margin: 0 auto;        /* Center the layout horizontally */
+  padding-top: var(--navbar-height, 92px);
+  box-sizing: border-box;
+}
+
+/* When a full-bleed micro outer is rendered above, main no longer needs the navbar offset */
+.hasMicroAbove {
+  padding-top: 0;
 }
 
 /* On the Home route we want the hero to sit right under the navbar */
-.containerTight {
-  padding-top: 0;
+.containerTight { padding-top: 0; }
+
+/* When placing MicroBanner between navbar and hero, add a small margin
+   to avoid the hero appearing glued to the microbar */
+.microBelowSep {
+  margin: 2px 0 8px 0;          /* tighter gap above/below */
 }
+
+/* Compact MicroBanner variant when placed between navbar and hero */
+.microTight {
+  padding: 2px 8px !important;
+  min-height: 24px !important;
+  max-height: 28px !important;
+  font-size: clamp(10px, 1.2vw, 12px) !important;
+}
+
+/* ================= Micro bar (full-bleed strip + centered content) ================= */
+
+/* Full-bleed micro-bar strip directly under navbar */
+.microOuter {
+  /* token for the strip background (neutral by default) */
+  --micro-bg: var(--mb-neutral-bg, #F8FAFC);
+  position: relative;
+  z-index: 2;                   /* above page bg */
+  margin-top: 0;                /* flush to nav */
+  isolation: isolate;           /* create a stacking context for ::before */
+}
+
+/* Create edge-to-edge background WITHOUT causing overflow */
+.microOuter::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  left: 50%;
+  width: 100vw;                 /* spans viewport width */
+  transform: translateX(-50%);  /* centers the 100vw plane */
+  background: var(--micro-bg);
+  z-index: -1;                  /* behind .microInner content */
+  border-bottom: 1px solid rgba(0,0,0,.06); /* subtle divider */
+  pointer-events: none;
+}
+
+/* Centered content inside the strip (matches page container) */
+.microInner {
+  max-width: var(--content-max, 1320px);            /* same as .container */
+  margin: 0 auto;
+  padding-inline: 16px;         /* same side gutters */
+  min-height: 28px;             /* compact height */
+  display: flex;
+  align-items: center;
+}
+
+/* Optional: trim extra padding when MicroBanner uses compact variant */
+.microInner :global(.microCompact) {
+  min-height: 28px !important;
+  padding-block: 4px !important;
+}
+
+/* Ensure the banner element itself doesn't introduce a gap */
+:global(.microbanner) {
+  margin-top: 0 !important;
+}
+
+/* Neutralize any bottom spacing on navbar so microbar sits flush (update class if needed) */
+:global(.navbar),
+:global(.merkatoNavbar) {
+  margin-bottom: 0 !important;
+  /* Remove decorative underline/border/shadow to avoid a hairline gap above the hero */
+  border-bottom: none !important;
+  box-shadow: none !important;
+}
+
+/* ================= Optional utilities kept from your file ================= */
 
 .welcomeTitle {
   font-size: clamp(1.5rem, 2vw, 2rem);  /* Responsive title */
@@ -39,42 +124,22 @@
 }
 
 @media (max-width: 768px) {
-  .container {
-    padding: 1rem;
-  }
-
-  .promoBanner {
-    font-size: 0.95rem;
-  }
+  .container { padding: 1rem; }
+  .promoBanner { font-size: 0.95rem; }
 }
 
 /* Animation keyframes */
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
-
 @keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 /* Accessibility: respect reduced motion preference */
 @media (prefers-reduced-motion: reduce) {
   .welcomeTitle,
-  .promoBanner {
-    animation: none;
-  }
+  .promoBanner { animation: none; }
 }

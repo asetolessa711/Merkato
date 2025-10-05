@@ -3,7 +3,7 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { MemoryRouter } from 'react-router-dom';
-import ProductDetail from '../../pages/ProductDetail';
+import ProductDetail from '../../pages/ProductDetail'';
 
 jest.mock('axios', () => ({ get: jest.fn((url) => {
   if (/\/api\/products\//.test(url)) return Promise.resolve({ data: { name: 'PDemo', price: 10, _id: 'p1' } });

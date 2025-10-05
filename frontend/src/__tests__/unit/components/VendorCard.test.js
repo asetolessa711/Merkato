@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import VendorCard from '../../../components/VendorCard';
+import VendorCard from '../../../components/VendorCard'';
 
 describe('VendorCard', () => {
   const vendor = {

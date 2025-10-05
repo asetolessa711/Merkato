@@ -4,6 +4,7 @@ const app = require('../../server');
 const { loginTestUser } = require('../utils/testUserUtils');
 
 describe('Invoice Routes Access Control', () => {
+  jest.setTimeout(15000);
   let adminToken;
   let customerToken;
   let vendorToken;

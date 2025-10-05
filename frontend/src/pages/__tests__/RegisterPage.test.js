@@ -11,8 +11,8 @@ jest.mock('react-router-dom', () => {
     useNavigate: () => mockNavigate,
   };
 });
-import RegisterPage from '../RegisterPage';
-import { MessageProvider } from '../../context/MessageContext';
+import RegisterPage from '../RegisterPage'';
+import { MessageProvider } from '../../context/MessageContext'';
 
 // Use global axios manual mock
 import axios from 'axios';

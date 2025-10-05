@@ -2,7 +2,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import CustomersPage from '../../pages/CustomersPage';
+import CustomersPage from '../../pages/CustomersPage'';
 
 describe('Notifications UI (customers page tab)', () => {
   test('renders Notifications section when selected', () => {

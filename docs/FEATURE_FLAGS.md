@@ -2,7 +2,7 @@
 
 Environment variables to gate new engagement features. Keep them conservative (false) by default for CI/E2E stability.
 
-- Frontend envs: `REACT_APP_FEATURE_GAMIFICATION`, `REACT_APP_FEATURE_BEHAVIORAL_PROMOS`
+- Frontend envs: `REACT_APP_FEATURE_GAMIFICATION`, `REACT_APP_FEATURE_BEHAVIORAL_PROMOS`, `REACT_APP_MICROBAR_ENABLED`
 - Backend envs (optional overrides): `FEATURE_GAMIFICATION`, `FEATURE_BEHAVIORAL_PROMOS`
 
 Backend public endpoint
@@ -13,3 +13,11 @@ Enable locally by creating `frontend/.env.local` (and/or backend `.env.local`) w
 
 REACT_APP_FEATURE_GAMIFICATION=true
 REACT_APP_FEATURE_BEHAVIORAL_PROMOS=true
+
+# Microbar (top compact strip)
+# Disabled by default. Set to true to enable rendering.
+REACT_APP_MICROBAR_ENABLED=true
+
+Notes
+- If `REACT_APP_MICROBAR_ENABLED` is not set (or set to `false`), the microbar will not render at all, avoiding visual/layout risk during CI, E2E, and local dev.
+- When enabled, the microbar content is sourced from admin-configured messages when available; otherwise it falls back to safe defaults.

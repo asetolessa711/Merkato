@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import NavbarUniversal from '../../components/NavbarUniversal.jsx';
+import NavbarUniversal from '../../components/NavbarUniversal'';
 import { MemoryRouter } from 'react-router-dom';
 import '@testing-library/jest-dom';
 

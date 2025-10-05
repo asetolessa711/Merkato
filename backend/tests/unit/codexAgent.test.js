@@ -5,16 +5,18 @@ async function loadCodexAgent({ withMockOpenAI, throwOpenAIOnRequire } = {}) {
   jest.resetModules();
   // Optionally mock the 'openai' package
   if (withMockOpenAI) {
+    process.env.CODEX_FORCE_MOCK = 'true';
     jest.doMock('openai', () => {
       class MockOpenAI {
-        constructor() {}
-        chat = {
-          completions: {
-            create: jest.fn(async () => ({
-              choices: [{ message: { content: 'mocked-response' } }],
-            })),
-          },
-        };
+        constructor() {
+          this.chat = {
+            completions: {
+              create: jest.fn(async () => ({
+                choices: [{ message: { content: 'mocked-response' } }],
+              })),
+            },
+          };
+        }
       }
       return { OpenAI: MockOpenAI };
     }, { virtual: true });
@@ -53,13 +55,13 @@ describe('utils/codexAgent.runCodex', () => {
 
   test('returns disabled stub when OPENAI module is missing (MODULE_NOT_FOUND)', async () => {
     // Simulate having an API key, but without installing the package
-    process.env.OPENAI_API_KEY = 'test-key';
+    process.env.OPENAI_API_KEY = 'test-key'; // safe stub; module will be mocked to throw
     const { runCodex } = await loadCodexAgent({ throwOpenAIOnRequire: true });
     await expect(runCodex('hello')).resolves.toBe('[codex-disabled]');
   });
 
   test('invokes OpenAI and returns content when client is available (mocked)', async () => {
-    process.env.OPENAI_API_KEY = 'test-key';
+    process.env.OPENAI_API_KEY = 'test-key'; // stubbed; mocked openai returns deterministic response
     const { runCodex } = await loadCodexAgent({ withMockOpenAI: true });
     await expect(runCodex('generate something')).resolves.toBe('mocked-response');
   });

@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
-import BackButton from '../../../components/BackButton';
+import BackButton from '../../../components/BackButton'';
 
 function Wrapper({ initialEntries = ['/account'] }) {
   return (

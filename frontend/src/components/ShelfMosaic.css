@@ -1,0 +1,72 @@
+.shelf{ margin: 16px auto 32px; }
+.shelf__card{
+  background: #fff; border-radius: 10px; box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 4px 10px rgba(0,0,0,.03);
+  border: 1px solid var(--border, #E5E7EB);
+  padding: 12px; color: var(--ink, #0B1220);
+  display: flex; flex-direction: column; /* uniform vertical structure */
+  height: 100%; box-sizing: border-box;
+  transition: box-shadow .18s ease, transform .18s ease, border-color .18s ease;
+}
+.shelf__head{ margin-bottom: 8px; }
+.shelf__title{
+  font: 700 1.375rem/1.2 'Poppins', system-ui, sans-serif; margin: 0 0 6px;
+  /* Reserve up to 2 lines to avoid pushing grid */
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden;
+  min-height: calc(1.375rem * 1.2 * 2);
+}
+.shelf__grid{ display: grid; gap: 10px; flex: 1 1 auto; }
+.shelf--2x2 .shelf__grid{ grid-template-columns: repeat(2, minmax(0,1fr)); grid-auto-rows: minmax(210px, auto); }
+.shelf--3x3 .shelf__grid{ grid-template-columns: repeat(3, minmax(0,1fr)); grid-auto-rows: minmax(210px, auto); }
+.shelf__tile{ display:block; text-decoration:none; color:inherit; }
+.shelf__imgwrap{ background:#f7f7f8; border-radius:8px; overflow:hidden; border:1px solid #EAECEE; }
+.shelf__imgwrap img{ width:100%; height:144px; object-fit:cover; display:block; aspect-ratio: 4 / 3; }
+/* Two-line caption clamp with fixed block height to align tiles exactly */
+.shelf__caption{ margin-top:4px; font: 500 .95rem/1.4 'Inter', system-ui, sans-serif; color:#334155; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; line-clamp:2; overflow:hidden; min-height: calc(1.4em * 2); }
+/* Lock CTA/footer row height for baseline alignment */
+.shelf__foot{ margin-top:10px; min-height: 24px; height: 24px; display:flex; align-items:flex-end; }
+.shelf__more,
+.shelf__more:link,
+.shelf__more:visited{ color: #0B1220 !important; text-decoration: underline; font-weight:600; }
+.shelf__more:hover,
+.shelf__more:active,
+.shelf__more:focus{ color: #0B1220 !important; text-decoration: underline; }
+
+@media (max-width: 720px){
+  .shelf__imgwrap img{ height:120px; }
+}
+
+/* Allow using ShelfMosaic inside an outer grid without extra margins */
+.shelf.shelf--inline{ margin: 0; height: 100%; display:flex; }
+.shelf.shelf--inline .shelf__card{ flex:1; }
+
+/* Slightly shorter thumbs for 3x3 to keep card compact */
+@media (min-width: 1024px){
+  .shelf--3x3 .shelf__imgwrap img{ height: 128px; }
+}
+
+/* Hover/focus polish: subtle lift and border tint */
+.shelf__card:hover,
+.shelf__card:focus-within{ transform: translateY(-1px); box-shadow: 0 2px 6px rgba(0,0,0,.06), 0 8px 18px rgba(0,0,0,.04); border-color: #DBE2EA; }
+.shelf__tile:focus-visible{ outline: 2px solid #1B63E0; outline-offset: 2px; border-radius: 6px; }
+
+/* Optional full-bleed background strip while keeping inner card aligned to container */
+.shelf.full-bleed{ margin-left: 0; margin-right: 0; padding-block: 8px; background: linear-gradient(180deg,#F9FAFB, #FFFFFF); }
+
+/* Compact variant: gently reduce vertical footprint without affecting non-compact rows */
+.shelf--compact .shelf__card{ padding: 10px; }
+.shelf--compact .shelf__head{ margin-bottom: 6px; }
+.shelf--compact .shelf__title{ font-size: 1.25rem; min-height: calc(1.25rem * 1.2 * 2); }
+.shelf--compact .shelf__grid{ gap: 8px; }
+.shelf--compact.shelf--2x2 .shelf__grid{ grid-auto-rows: minmax(196px, auto); }
+.shelf--compact.shelf--3x3 .shelf__grid{ grid-auto-rows: minmax(196px, auto); }
+.shelf--compact .shelf__imgwrap img{ height: 132px; }
+.shelf--compact .shelf__caption{ margin-top: 3px; }
+.shelf--compact .shelf__foot{ margin-top: 8px; height: 22px; min-height: 22px; }
+
+@media (max-width: 720px){
+  .shelf--compact .shelf__imgwrap img{ height: 112px; }
+}
+
+@media (min-width: 1024px){
+  .shelf--compact.shelf--3x3 .shelf__imgwrap img{ height: 120px; }
+}

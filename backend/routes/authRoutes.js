@@ -86,7 +86,15 @@ router.post('/register', async (req, res) => {
       token: generateToken(user)
     });
   } catch (err) {
-    console.error('Registration failed:', { error: err.message });
+    // Handle duplicate email race (unique index) gracefully
+    if (err && (err.code === 11000 || /duplicate key/i.test(err.message||''))) {
+      return res.status(400).json({ message: 'Email already in use' });
+    }
+    // Log full error for better diagnostics in tests
+    console.error('Registration failed:', { message: err.message, name: err.name, code: err.code, errors: err.errors });
+    if (process.env.NODE_ENV === 'test') {
+      return res.status(500).json({ message: 'Registration failed. Please try again.', error: { message: err.message, name: err.name, code: err.code } });
+    }
     res.status(500).json({ message: 'Registration failed. Please try again.' });
   }
 });

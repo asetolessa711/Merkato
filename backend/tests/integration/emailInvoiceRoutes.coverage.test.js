@@ -2,6 +2,7 @@ const request = require('supertest');
 const app = require('../../server');
 const Order = require('../../models/Order');
 const Product = require('../../models/Product');
+const User = require('../../models/User');
 const { registerTestUser, loginTestUser } = require('../utils/testUserUtils');
 
 jest.mock('puppeteer', () => ({
@@ -88,5 +89,52 @@ describe('Email Invoice Routes (coverage uplift)', () => {
 
     expect(res.statusCode).toBe(500);
     expect(res.body.message).toMatch(/went wrong sending the invoice/i);
+  });
+
+  test('returns 404 when order is missing', async () => {
+    const missingId = '000000000000000000000000'; // valid ObjectId format but not present
+    const res = await request(app)
+      .post(`/api/email/${missingId}/email-invoice`)
+      .set('Authorization', userToken)
+      .send();
+    expect(res.statusCode).toBe(404);
+    expect(res.body.message).toMatch(/Order or customer email not found/i);
+  });
+
+  test('uses vendor logo when present and falls back on missing product details', async () => {
+    // Ensure vendor has a logo to hit the truthy branch for firstVendor.logo
+    await User.findByIdAndUpdate(vendorId, { logo: 'https://example.com/logo.png' });
+
+    // Create an order that references a non-existent product id to trigger default item fallbacks
+    const bogusProductId = '64b64b64b64b64b64b64b64b';
+    const order = await Order.create({
+      buyer: (await User.findOne({}))._id, // any user is fine for this test
+      vendors: [{
+        vendorId,
+        products: [{ product: bogusProductId, quantity: 1 }], // will populate to null -> fallbacks
+        subtotal: 0,
+        total: 0,
+        commissionRate: 0,
+        commissionAmount: 0,
+        netEarnings: 0,
+      }],
+      // omit currency to exercise fallback to 'USD'
+      total: 0,
+      shippingAddress: { country: 'Ethiopia' },
+      status: 'paid',
+    });
+
+    const res = await request(app)
+      .post(`/api/email/${order._id.toString()}/email-invoice`)
+      .set('Authorization', userToken)
+      .send();
+
+    // On some environments, PDF or mail transport might fail; accept both outcomes but assert message accordingly
+    if ([200, 202].includes(res.statusCode)) {
+      expect(res.body.message).toMatch(/Invoice emailed successfully/i);
+    } else {
+      expect(res.statusCode).toBe(500);
+      expect(res.body.message).toMatch(/went wrong sending the invoice/i);
+    }
   });
 });

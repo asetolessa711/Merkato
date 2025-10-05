@@ -3,7 +3,7 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { MemoryRouter } from 'react-router-dom';
-import VendorProducts from '../../pages/VendorProducts';
+import VendorProducts from '../../pages/VendorProducts'';
 
 jest.mock('axios', () => ({ get: jest.fn(() => Promise.resolve({ data: [
   { _id: 'p1', name: 'Prod A', price: 10, stock: 5, category: 'Cat' },

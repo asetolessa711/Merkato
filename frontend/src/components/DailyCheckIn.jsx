@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Flags } from '../utils/featureFlags';
-import { Events } from '../utils/eventsClient';
+import { Flags } from '../utils/featureFlags'';
+import { Events } from '../utils/eventsClient'';
 
 export default function DailyCheckIn() {
   const [status, setStatus] = useState('idle');

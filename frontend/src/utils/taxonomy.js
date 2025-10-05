@@ -1,4 +1,4 @@
-import { fetchCanonicalCategories } from '../api/categories';
+import { fetchCanonicalCategories } from '../api/categories'';
 
 let cache = { ts: 0, categories: [], country: '', lang: '', visibleIn: '' };
 const TTL_MS = 2 * 60 * 1000; // small cache to avoid repeated calls
@@ -37,10 +37,27 @@ export function getLabel(category, lang) {
 }
 
 // Derive preselected category id from URL like /c/:slug
+// @allow-hardcode - utility matches legacy '/c/' path for selection logic in admin/tools
 export function preselectFromUrl(canonical, pathname) {
   const m = (pathname || '').match(/^\/c\/([^\/?#]+)/);
   if (!m) return 'all';
   const slug = decodeURIComponent(m[1]);
   const cat = (Array.isArray(canonical) ? canonical : []).find(c => c.slug === slug);
   return cat?.id || 'all';
+}
+
+// Map category slug to taxonomy object (id, name). Returns null if not found.
+export function findCategoryBySlug(canonical, slug) {
+  const cats = Array.isArray(canonical) ? canonical : [];
+  const key = String(slug || '').toLowerCase();
+  return cats.find(c => String(c.slug).toLowerCase() === key) || null;
+}
+
+// Map subcategory slug under given category slug; returns taxonomy object or null
+export function findSubcategoryBySlug(canonical, categorySlug, subcatSlug) {
+  const cat = findCategoryBySlug(canonical, categorySlug);
+  if (!cat) return null;
+  const subs = Array.isArray(cat.children) ? cat.children : [];
+  const key = String(subcatSlug || '').toLowerCase();
+  return subs.find(s => String(s.slug).toLowerCase() === key) || null;
 }

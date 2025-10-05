@@ -5,8 +5,8 @@ const path = require("path");
 require("dotenv").config();
 
 // 🛠 Mongoose Config
-mongoose.set("strictQuery", false);
 const IS_TEST = !!process.env.JEST_WORKER_ID || process.env.NODE_ENV === "test";
+mongoose.set("strictQuery", false);
 const tlog = (...args) => {
   if (!IS_TEST) console.log(...args);
 };
@@ -45,6 +45,7 @@ const uploadRoutes = require("./routes/uploadRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const adminOrdersRoutes = require("./routes/adminOrders");
 const vendorRoutes = require("./routes/vendorRoutes");
+const galleryRoutes = require("./routes/galleryRoutes");
 const vendorPromoRoutes = require("./routes/vendorPromoRoutes");
 const favoriteRoutes = require("./routes/favoriteRoutes");
 const supportRoutes = require("./routes/supportRoutes");
@@ -60,8 +61,10 @@ const emailInvoiceRoutes = require("./routes/emailInvoiceRoutes");
 const invoiceRoutes = require("./routes/invoiceRoutes");
 const featureFlagRoutes = require("./routes/featureFlagRoutes");
 const behaviorRoutes = require("./routes/behaviorRoutes");
+const metricsRoutes = require("./routes/metricsRoutes");
 const megaMenuRoutes = require("./routes/megaMenuRoutes");
 const themeRoutes = require("./routes/themeRoutes");
+const railsRoutes = require("./routes/railsRoutes");
 const geoRoutes = require("./routes/geoRoutes");
 const searchRoutes = require("./routes/searchRoutes");
 const devSeedRoute = require("./routes/devSeedRoute");
@@ -86,7 +89,18 @@ app.use(express.json());
 app.use(cors());
 app.use("/uploads", express.static(path.join(__dirname, "/uploads")));
 
-// 📦 API Routes
+// � Derivative Queue metrics (enabled only when IMG_DERIVATIVES_ENABLED)
+let derivativeQueue;
+if (String(process.env.IMG_DERIVATIVES_ENABLED || 'false').toLowerCase() === 'true') {
+  try {
+    derivativeQueue = require('./utils/derivativeQueue');
+    tlog('[server] Derivative queue initialized');
+  } catch (e) {
+    terror('[server] Derivative queue failed to init:', e.message);
+  }
+}
+
+// �📦 API Routes
 app.use("/api", codexRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
@@ -95,6 +109,7 @@ app.use("/api/admin", adminRoutes);
 // Mount dedicated Admin Orders routes under /api/admin/orders
 app.use("/api/admin/orders", adminOrdersRoutes);
 app.use("/api/vendor", vendorRoutes);
+app.use("/api", galleryRoutes);
 app.use("/api/vendor-promos", vendorPromoRoutes);
 app.use("/api/favorites", favoriteRoutes);
 app.use("/api/support", supportRoutes);
@@ -114,8 +129,10 @@ app.use("/api/email", emailInvoiceRoutes);
 app.use("/api/feature-flags", featureFlagRoutes);
 app.use("/api", megaMenuRoutes);
 app.use("/api", themeRoutes);
+app.use("/api", railsRoutes);
 app.use("/api/geo", geoRoutes);
 app.use("/api", searchRoutes);
+app.use("/api", metricsRoutes);
 
 app.use("/api/invoices", invoiceRoutes);
 if (bundlesRoutes) app.use("/api/products", bundlesRoutes);
@@ -132,8 +149,12 @@ app.use((err, req, res, next) => {
   if (res.headersSent) {
     return next(err);
   }
-  res.status(err.status || 500).json({
-    message: err.message || "Internal Server Error",
+  const msg = String(err.message || "");
+  if (/Invalid filename|Only image files are allowed|Unsupported file type/i.test(msg)) {
+    return res.status(400).json({ message: msg });
+  }
+  return res.status(err.status || 500).json({
+    message: msg || "Internal Server Error",
     error: process.env.NODE_ENV === "production" ? undefined : err.stack,
   });
 });
@@ -146,6 +167,13 @@ app.get("/", (req, res) => {
 // 🌐 API Health Check (for CI wait-on)
 app.get("/api", (req, res) => {
   res.status(200).json({ message: "Backend is running ✅" });
+});
+
+// 🧭 Simple metrics endpoint
+app.get('/api/metrics/derivatives', (req, res) => {
+  const enabled = String(process.env.IMG_DERIVATIVES_ENABLED || 'false').toLowerCase() === 'true';
+  if (!derivativeQueue) return res.status(200).json({ enabled });
+  return res.json({ enabled, ...derivativeQueue.metrics() });
 });
 
 // �️ MongoDB Connection (resilient with fallback)
@@ -164,6 +192,10 @@ async function connectMongoWithFallback() {
   const uris = getMongoUriCandidates();
   if (!uris.length) {
     console.error("❌ No MongoDB URI provided. Set MONGO_URI (and optionally MONGO_URI_FALLBACK or MONGO_URI_LOCAL).");
+    if (IS_TEST) {
+      // In test, do not terminate the entire Jest run; surface the error to the caller
+      throw new Error("No MongoDB URI provided");
+    }
     process.exit(1);
   }
 
@@ -174,6 +206,10 @@ async function connectMongoWithFallback() {
     serverSelectionTimeoutMS: Number(process.env.MONGO_SERVER_SELECTION_TIMEOUT_MS || 10000),
     connectTimeoutMS: Number(process.env.MONGO_CONNECT_TIMEOUT_MS || 10000),
     socketTimeoutMS: Number(process.env.MONGO_SOCKET_TIMEOUT_MS || 45000),
+    // Keep driver pools tiny and IPv4-only during tests to reduce open handles
+    maxPoolSize: Number(process.env.MONGO_MAX_POOL_SIZE || (IS_TEST ? 2 : 10)),
+    minPoolSize: Number(process.env.MONGO_MIN_POOL_SIZE || (IS_TEST ? 0 : 0)),
+    family: Number(process.env.MONGO_DNS_FAMILY || 4),
   };
 
   let lastErr;
@@ -198,6 +234,10 @@ async function connectMongoWithFallback() {
 
   // If all candidates failed, exit (nodemon will retry). In CI, fail fast.
   if (lastErr) {
+    if (IS_TEST) {
+      // In test, let the require()/startup fail without killing the Jest process
+      throw lastErr;
+    }
     process.exitCode = 1;
     // Give a moment for logs to flush before exit in some environments
     setTimeout(() => process.exit(1), 100);

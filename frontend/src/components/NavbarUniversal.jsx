@@ -51,7 +51,7 @@ function NavbarUniversal() {
         {/* Center: Core links */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <Link to="/" className="nav-link" style={isActive('/')}>Home</Link>
-          <Link to="/shop" className="nav-link" style={isActive('/shop')}>Shop</Link>
+          <Link to="/discover" className="nav-link" style={isActive('/discover')}>Shop</Link>
           <Link to="/favorites" className="nav-link" style={isActive('/favorites')}>Favorites</Link>
           <Link to="/cart" data-testid="cart-link" className="nav-link" style={isActive('/cart')}>Cart</Link>
         </div>

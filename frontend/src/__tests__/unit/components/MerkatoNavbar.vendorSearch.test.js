@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, within, act } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
-import MerkatoNavbar from '../../../components/MerkatoNavbar.jsx';
+import MerkatoNavbar from '../../../components/MerkatoNavbar'';
 
 function App() {
   return (

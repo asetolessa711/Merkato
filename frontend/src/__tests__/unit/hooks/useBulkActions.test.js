@@ -1,7 +1,7 @@
 import React from 'react';
 import { renderHook, act } from '@testing-library/react';
 import axios from 'axios';
-import { useBulkActions } from '../../../hooks/useBulkActions';
+import { useBulkActions } from '../../../hooks/useBulkActions'';
 
 function setup({ orders, selected }) {
   const state = {

@@ -1,26 +1,75 @@
 /* Responsive styles for MicroBanner using design tokens */
 
 .microbanner {
+  /* Thin divider for boundary clarity */
   border-bottom: 1px solid var(--border);
-  padding: 4px 10px;
-  font-weight: 600;
-  font-size: clamp(11px, 1.4vw, 13px);
+  /* Slim, readable density */
+  padding: 4px 12px; /* slimmer vertical spacing */
+  font-weight: 600; /* medium */
+  font-size: 14px; /* on-brand body size */
   cursor: pointer;
   position: relative;
-  min-height: 28px;
-  max-height: 32px;
+  /* Slimmer height for a compact appearance */
+  min-height: 32px; /* allow to grow to 2 lines on small screens */
   display: flex;
   align-items: center;
-  margin-bottom: 0; /* avoid introducing gap above hero on home */
+  margin-bottom: 0; /* spacing handled by layout wrapper */
+  /* No shadow per spec */
+  width: 100%;
+  box-sizing: border-box;
+  overflow-x: clip; /* default guard; overridden in full-bleed */
+}
+
+/* Sticky on desktop screens (opt-in per-message) */
+.stickyDesktop {
+  position: sticky;
+  top: var(--navbar-height, 56px);
+  z-index: 1010;
+}
+
+@media (max-width: 1023px) {
+  .stickyDesktop {
+    position: static;
+  }
 }
 
 .container {
-  max-width: var(--container-max, 1280px);
+  max-width: var(--container-max, 1200px);
   margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: clamp(6px, 1.2vw, 12px);
+}
+
+/* Compact variant: slimmer height and text */
+.microCompact {
+  min-height: 28px;
+  padding-block: 4px;
+}
+.microCompact .text { font-size: 13px; font-weight: 600; }
+.microCompact .typeChip { display: none; }
+.microCompact .cta { padding: 1px 8px; font-size: 11.5px; }
+
+/* Full-bleed background strip with centered content */
+.microFullBleed {
+  position: relative;
+  isolation: isolate; /* create stacking context */
+  overflow: visible; /* allow ::before to extend beyond container */
+  /* Robust full-bleed: extend the element to the viewport edges even inside a centered container */
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+}
+.microFullBleed::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  left: 50%;
+  width: 100vw;
+  transform: translateX(-50%);
+  background: inherit; /* use same bg color as bar */
+  z-index: -1; /* sit behind inner container */
+  pointer-events: none; /* do not block clicks */
 }
 
 .left {

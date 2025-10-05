@@ -7,7 +7,7 @@ function Hero({
   onCtaClick,
   secondaryCtaText = 'Explore Categories',
   onSecondaryCtaClick,
-  imageSrc = '/images/hero-default.jpg',
+  imageSrc = '/images/default-product.svg',
   imageAlt = 'Featured promotion',
   variant = 'split', // 'split' | 'overlay' | 'banner'
   // Optional carousel slides; if provided, hero becomes a carousel

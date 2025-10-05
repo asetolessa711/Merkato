@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import BulkActionsToolbar from '../../components/BulkActionsToolbar';
+import BulkActionsToolbar from '../../components/BulkActionsToolbar'';
 
 describe('BulkActionsToolbar @trust-ui', () => {
   const baseProps = {

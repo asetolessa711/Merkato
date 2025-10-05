@@ -3,7 +3,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import LanguageSwitcher from '../../../components/LanguageSwitcher';
+import LanguageSwitcher from '../../../components/LanguageSwitcher'';
 
 describe('LanguageSwitcher', () => {
   it('renders all language options', () => {

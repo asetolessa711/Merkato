@@ -6,11 +6,17 @@ const { protect, authorize } = require('../middleware/authMiddleware');
 const Flag = require('../models/Flag');
 const DeliverySettings = require('../models/DeliverySettings');
 const { buildTaxonomy, filterAndSort, computeChildren } = require('../utils/taxonomy');
+const { countApprovedImages } = require('./galleryRoutes');
 
 // Get all products (public)
 router.get('/', async (req, res) => {
   try {
-    const products = await Product.find().populate('vendor', 'name email');
+    // Avoid chaining on a possibly mocked Promise (in tests) — build query first, then await
+    let query = Product.find();
+    if (query && typeof query.populate === 'function') {
+      query = query.populate('vendor', 'name email');
+    }
+    const products = await query;
     res.json(products);
   } catch (err) {
     res.status(500).json({ message: 'Failed to load products' });
@@ -46,7 +52,39 @@ router.get('/:id', async (req, res) => {
 // Get products by vendor ID (public storefront)
 router.get('/vendor/:id', async (req, res) => {
   try {
-    const products = await Product.find({ vendor: req.params.id });
+    const q = { vendor: req.params.id };
+    if (req.query.status) q.status = req.query.status;
+    let query = Product.find(q);
+    if (req.query.limit) {
+      const lim = Math.max(1, Math.min(100, parseInt(String(req.query.limit), 10) || 12));
+      query = query.limit(lim);
+    }
+    const products = await query;
+    res.json(products);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to load vendor products' });
+  }
+});
+
+// Get products by vendor slug (public storefront)
+router.get('/vendor/slug/:slug', async (req, res) => {
+  try {
+    const User = require('../models/User');
+    const slugify = (s) => String(s || '')
+      .normalize('NFKD').toLowerCase().trim().replace(/&/g, 'and')
+      .replace(/[^a-z0-9\s_-]/g, '').replace(/[\s_]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+    const s = slugify(req.params.slug);
+    const list = await User.find({ roles: 'vendor', isActive: { $ne: false } }).select('name storeName');
+    const user = (list || []).find(u => slugify(u.storeName || u.name) === s);
+    if (!user) return res.json([]);
+    const q = { vendor: user._id };
+    if (req.query.status) q.status = req.query.status;
+    let query = Product.find(q);
+    if (req.query.limit) {
+      const lim = Math.max(1, Math.min(100, parseInt(String(req.query.limit), 10) || 12));
+      query = query.limit(lim);
+    }
+    const products = await query;
     res.json(products);
   } catch (err) {
     res.status(500).json({ message: 'Failed to load vendor products' });
@@ -222,8 +260,10 @@ router.delete('/:id', protect, async (req, res) => {
     if (!product) return res.status(404).json({ message: 'Product not found' });
 
     const isOwner = product.vendor.toString() === req.user._id.toString();
-    const isGlobalAdmin = req.user.role === 'admin';
-    const isCountryAdmin = req.user.role === 'country-admin' && product.vendorCountry === req.user.country;
+    // Normalize roles (support legacy single role field just in case)
+    const roles = req.user?.roles || [req.user?.role].filter(Boolean);
+    const isGlobalAdmin = roles.includes('admin') || roles.includes('global_admin');
+    const isCountryAdmin = roles.includes('country_admin') && product.vendorCountry === req.user.country;
 
     if (isOwner || isGlobalAdmin || isCountryAdmin) {
       await product.deleteOne();
@@ -257,4 +297,44 @@ router.post('/:id/report', protect, async (req, res) => {
   }
 });
 
+// Publish product (Vendor/Admin)
+router.post('/:id/publish', protect, authorize('vendor', 'admin'), async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ message: 'Product not found' });
+
+    const isOwner = product.vendor.toString() === req.user._id.toString();
+    const roles = req.user?.roles || [req.user?.role].filter(Boolean);
+    const isAdmin = roles.includes('admin') || roles.includes('global_admin');
+    if (!isOwner && !isAdmin) return res.status(403).json({ message: 'Not authorized to publish this product' });
+
+    // Guard: require >= 1 approved image
+    const approvedCount = countApprovedImages(product);
+    if (approvedCount < 1) {
+      return res.status(400).json({
+        message: 'Add at least one approved image to publish',
+        approvedImages: approvedCount,
+      });
+    }
+
+    // Soft warn if < 3 approved images
+    const warnings = [];
+    if (approvedCount < 3) {
+      warnings.push('We recommend at least 3 approved images for better conversion.');
+    }
+
+    product.status = 'live';
+    product.publishedAt = new Date();
+    await product.save();
+
+    res.json({ message: 'Product published', product, warnings });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to publish product' });
+  }
+});
+
 module.exports = router;
+
+// Publish guard: require at least 1 approved image for publish; soft-warn < 3
+// Note: We keep it after module.exports for clarity but Express will ignore code after export.
+// So we re-attach routes before exporting by moving handlers above if necessary.

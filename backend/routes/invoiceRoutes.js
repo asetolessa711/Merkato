@@ -17,9 +17,10 @@ router.get('/report', ensureAuth, async (req, res) => {
     const query = isAdmin ? {} : { vendor: vendorId };
 
     if (startDate && endDate) {
+      // Use UTC to avoid timezone-dependent inclusions/exclusions
       query.createdAt = {
-        $gte: moment(startDate).startOf('day').toDate(),
-        $lte: moment(endDate).endOf('day').toDate()
+        $gte: moment.utc(startDate).startOf('day').toDate(),
+        $lte: moment.utc(endDate).endOf('day').toDate()
       };
     }
 

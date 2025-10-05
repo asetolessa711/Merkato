@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useCart } from '../cart/CartContext';
+import { useCart } from '../cart/CartContext'';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import MEGA_MENU from '../config/megaMenu';
-import { getCanonicalTaxonomy, getCategoryListFrom } from '../utils/taxonomy';
-import MegaMenuPromoPanel from './MegaMenuPromoPanel.js';
-import { fetchSearchSuggest, logSearchEvent } from '../api/search';
-import MicroBanner from './MicroBanner.jsx';
+import MEGA_MENU from '../config/megaMenu'';
+import { LinkBuilder } from '../config/routes'';
+import { getCanonicalTaxonomy, getCategoryListFrom } from '../utils/taxonomy'';
+import MegaMenuPromoPanel from './MegaMenuPromoPanel'';
+import { fetchSearchSuggest, logSearchEvent } from '../api/search'';
+import MicroBanner from './MicroBanner'';
 
 // Merkato-style, accessible, test-stable navbar
 // Keeps existing E2E selectors: cart-link, navbar-register-link, and My Account button
@@ -441,7 +442,7 @@ function MerkatoNavbar({ role: roleProp = 'public', showCategories: showCategori
 						href: '/vendor/products',
 						actions: [
 							{ label: 'Edit', href: `/vendor/products?edit=${encodeURIComponent(p.id || p._id || '')}` },
-							{ label: 'View', href: `/shop?search=${encodeURIComponent(p.name || '')}` },
+							{ label: 'View', href: LinkBuilder.toSearch(p.name || '') },
 							{ label: 'Duplicate', onClick: () => { try { const copy = { ...p, id: undefined, _id: undefined, name: `${p.name || 'Copy'} (Copy)` }; const next = [copy, ...products]; localStorage.setItem('uploadedProducts', JSON.stringify(next)); } catch (_) {} } },
 							{ label: 'Promote', href: `/vendor/analytics/products?promote=${encodeURIComponent(p.id || p._id || '')}` },
 						]
@@ -568,12 +569,12 @@ function MerkatoNavbar({ role: roleProp = 'public', showCategories: showCategori
 	{microInline && !isVendor && <MicroBanner />}
 
 	{/* Main bar: brand, search, actions (solid background) */}
-	<nav aria-label="Primary" style={{ background: 'var(--nav-bg, var(--header-bg, var(--color-nav)))', color: 'var(--nav-text, #fff)', borderBottom: '1px solid var(--nav-border, rgba(255,255,255,0.08))', position: 'relative', fontFamily: 'inherit', fontWeight: 400, boxShadow: scrolled ? '0 2px 8px rgba(0,0,0,0.12)' : 'none', paddingTop: tall ? 4 : undefined, paddingBottom: tall ? 4 : undefined }} data-testid="navbar">
+	<nav aria-label="Primary" className={`navbar is-sticky${tall ? ' navbar--tall' : ''}`} style={{ background: 'var(--nav-bg, var(--header-bg, var(--color-nav)))', color: 'var(--nav-text, #fff)', borderBottom: '0', position: 'relative', fontFamily: 'inherit', fontWeight: 400, boxShadow: 'none', paddingTop: tall ? 4 : undefined, paddingBottom: tall ? 4 : undefined }} data-testid="navbar">
 				<div style={{ maxWidth: 1320, margin: '0 auto', display: 'grid', gridTemplateColumns: 'auto 1fr auto', gap: 12, alignItems: 'center', padding: '10px 16px' }}>
 					{/* Brand */}
 					<div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'nowrap' }}>
 						{/* Hamburger (mobile) */}
-						<button className="mobile-only" aria-label="Open menu" onClick={() => setShowDrawer(true)} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.35)', color: 'var(--nav-text, #fff)', padding: '6px 10px', borderRadius: 6, cursor: 'pointer' }}>☰</button>
+						<button className="mobile-only nav-icon-btn" aria-label="Open menu" onClick={() => setShowDrawer(true)} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.35)', color: 'var(--nav-text, #fff)', padding: '6px 10px', borderRadius: 6, cursor: 'pointer' }}>☰</button>
 						<Link to="/" style={{ color: 'var(--brand-gold, #FFC247)', fontWeight: 700, fontSize: 22, textDecoration: 'none', fontFamily: 'inherit' }}>Merkato</Link>
 						{/* Accessibility-only Home link retained for tests */}
 						<Link to="/" style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0 }}>Merkato Home</Link>
@@ -592,7 +593,7 @@ function MerkatoNavbar({ role: roleProp = 'public', showCategories: showCategori
 						{!isVendor && (
 						<button
 							ref={megaTriggerRef}
-							className="desktop-only"
+							className="desktop-only nav-chip"
 							aria-haspopup="dialog"
 							aria-expanded={showMega}
 							aria-controls="mega-panel"
@@ -603,9 +604,19 @@ function MerkatoNavbar({ role: roleProp = 'public', showCategories: showCategori
 							Shop by Category ▾
 						</button>
 						)}
+						{/* Desktop Discover entry point */}
+						{!isVendor && (
+							<Link
+								to="/discover"
+								data-navlink
+								style={{ color: '#cbd5e1', textDecoration: 'none', fontSize: 14, marginLeft: 6, ...isActive('/discover') }}
+							>
+								Discover
+							</Link>
+						)}
 						{/* Mobile Shop by Category trigger */}
 						{!isVendor && (
-							<button className="mobile-only" aria-label="Shop by Category" onClick={() => setShowCatDrawer(true)} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.35)', color: 'var(--nav-text, #fff)', padding: '6px 10px', borderRadius: 6, cursor: 'pointer' }}>Shop by Category ▾</button>
+							<button className="mobile-only nav-icon-btn" aria-label="Shop by Category" onClick={() => setShowCatDrawer(true)} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.35)', color: 'var(--nav-text, #fff)', padding: '6px 10px', borderRadius: 6, cursor: 'pointer' }}>Shop by Category ▾</button>
 						)}
 						{/* Vendor navbar keeps only the essentials; hide quick links */}
 						{!isVendor && (
@@ -652,7 +663,7 @@ function MerkatoNavbar({ role: roleProp = 'public', showCategories: showCategori
 				else go('/vendor/help');
 	}} style={{ maxWidth: 460, margin: '0 auto', width: '100%', position: 'relative' }}>
 						<label htmlFor="global-search" className="sr-only" style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0 }}>Search</label>
-			<div onFocusCapture={() => setSearchFocus(true)} onBlurCapture={() => setSearchFocus(false)} style={{ display: 'flex', background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: 12, overflow: 'hidden', boxShadow: searchFocus ? '0 6px 18px rgba(0,0,0,0.08)' : 'none' }}>
+			<div className="search-group" onFocusCapture={() => setSearchFocus(true)} onBlurCapture={() => setSearchFocus(false)} style={{ display: 'flex', background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: 12, overflow: 'hidden', boxShadow: searchFocus ? '0 6px 18px rgba(0,0,0,0.08)' : 'none' }}>
 				<select aria-label="Type" data-testid="vendor-search-type" value={vendorType} onChange={(e) => setVendorType(e.target.value)} style={{ background: '#f3f4f6', color: '#111827', border: 0, borderRight: '1px solid #e5e7eb', padding: '0 8px', fontSize: 14, fontFamily: 'inherit' }}>
 					<option value="product">Product</option>
 					<option value="order">Order</option>
@@ -728,9 +739,9 @@ function MerkatoNavbar({ role: roleProp = 'public', showCategories: showCategori
 			)}
 			</form>
 		) : (
-			<form role="search" aria-label="Site" onSubmit={(e) => { e.preventDefault(); const v = searchText.trim(); const cat = searchCat && searchCat !== 'all' ? `&category=${encodeURIComponent(searchCat)}` : ''; addRecent(v); setShowSuggest(false); navigate(v ? `/shop?search=${encodeURIComponent(v)}${cat}` : (cat ? `/shop?${cat.slice(1)}` : '/shop')); }} style={{ maxWidth: 320, margin: '0 auto', width: '100%', position: 'relative' }}>
+			<form role="search" aria-label="Site" onSubmit={(e) => { e.preventDefault(); const v = searchText.trim(); addRecent(v); setShowSuggest(false); navigate(v ? LinkBuilder.toSearch(v) : '/discover'); }} style={{ maxWidth: 320, margin: '0 auto', width: '100%', position: 'relative' }}>
 						<label htmlFor="global-search" className="sr-only" style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0 }}>Search</label>
-			<div onFocusCapture={() => setSearchFocus(true)} onBlurCapture={() => setSearchFocus(false)} style={{ display: 'flex', background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: 12, overflow: 'hidden', boxShadow: searchFocus ? '0 6px 18px rgba(0,0,0,0.08)' : 'none', height: 40 }}>
+			<div className="search-group" onFocusCapture={() => setSearchFocus(true)} onBlurCapture={() => setSearchFocus(false)} style={{ display: 'flex', background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: 12, overflow: 'hidden', boxShadow: searchFocus ? '0 6px 18px rgba(0,0,0,0.08)' : 'none', height: 40 }}>
 				<select aria-label="Category filter" value={searchCat} onChange={(e) => setSearchCat(e.target.value)} style={{ background: '#f3f4f6', color: '#111827', border: 0, borderRight: '1px solid #e5e7eb', padding: '0 10px', fontSize: 14, fontFamily: 'inherit', height: '100%' }}>
 					<option value="all">All</option>
                     {getCategoryListFrom(canonCats, lang).map((title) => (
@@ -750,7 +761,7 @@ function MerkatoNavbar({ role: roleProp = 'public', showCategories: showCategori
 						{showSuggest && (recent?.length > 0 || searchText) && (
 							<div ref={suggestRef} className="suggest-panel">
 								{searchText && (
-									<button type="button" className="suggest-item" onMouseDown={(e) => e.preventDefault()} onClick={() => { addRecent(searchText); setShowSuggest(false); navigate(`/shop?search=${encodeURIComponent(searchText)}${searchCat !== 'all' ? `&category=${encodeURIComponent(searchCat)}` : ''}`); }}>
+									<button type="button" className="suggest-item" onMouseDown={(e) => e.preventDefault()} onClick={() => { addRecent(searchText); setShowSuggest(false); navigate(LinkBuilder.toSearch(searchText)); }}>
 										Search “{searchText}” {searchCat !== 'all' ? `in ${searchCat}` : ''}
 									</button>
 								)}
@@ -761,12 +772,13 @@ function MerkatoNavbar({ role: roleProp = 'public', showCategories: showCategori
 																type="button"
 																className="suggest-item"
 																onMouseDown={(e) => e.preventDefault()}
-																onClick={() => {
+															  onClick={() => {
 																	const countryName = (() => { try { return localStorage.getItem('merkato-region') || ''; } catch { return ''; } })();
 																	const country = countryName === 'Ethiopia' ? 'ET' : '';
 																	logSearchEvent({ type: 'category_suggest_clicked', slug: c.slug, pos: idx + 1, role, country, q: searchText.trim() });
 																	setShowSuggest(false);
-																	navigate(`/shop?category=${encodeURIComponent(c.slug)}`);
+																  const href = LinkBuilder.toCategory(c.slug, { sort: 'best' }) || '/discover';
+																  navigate(href);
 																}}
 															>
 																{c.name}
@@ -774,7 +786,7 @@ function MerkatoNavbar({ role: roleProp = 'public', showCategories: showCategori
 														))}
 
 														{recent.map((r) => (
-									<button key={r.q} type="button" className="suggest-item" onMouseDown={(e) => e.preventDefault()} onClick={() => { setSearchText(r.q); setShowSuggest(false); navigate(`/shop?search=${encodeURIComponent(r.q)}${searchCat !== 'all' ? `&category=${encodeURIComponent(searchCat)}` : ''}`); }}>
+									<button key={r.q} type="button" className="suggest-item" onMouseDown={(e) => e.preventDefault()} onClick={() => { setSearchText(r.q); setShowSuggest(false); navigate(LinkBuilder.toSearch(r.q)); }}>
 										{r.q}
 									</button>
 								))}
@@ -839,13 +851,9 @@ function MerkatoNavbar({ role: roleProp = 'public', showCategories: showCategori
 							)}
 						</div>
 						{/* System Status (vendor) */}
-						{isVendor && (
-							<span title={`Uptime: ${status.uptime} | Sync: ${status.sync} | Moderation: ${status.moderation}${status.note ? ' \n' + status.note : ''}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 8px', borderRadius: 999, border: '1px solid rgba(255,255,255,0.25)', color: 'var(--nav-text,#fff)' }}>
-								<span aria-label={`Uptime ${status.uptime}`} style={{ width: 8, height: 8, borderRadius: '50%', background: statusColor(status.uptime) }} />
-								<span aria-label={`Sync ${status.sync}`} style={{ width: 8, height: 8, borderRadius: '50%', background: statusColor(status.sync) }} />
-								<span aria-label={`Moderation ${status.moderation}`} style={{ width: 8, height: 8, borderRadius: '50%', background: statusColor(status.moderation) }} />
-							</span>
-						)}
+						{/* Home label removed in favor of Brand; Discover is exposed separately */}
+						<span aria-label={`Sync ${status.sync}`} style={{ width: 8, height: 8, borderRadius: '50%', background: statusColor(status.sync) }} />
+						<span aria-label={`Moderation ${status.moderation}`} style={{ width: 8, height: 8, borderRadius: '50%', background: statusColor(status.moderation) }} />
 						{/* Role-aware CTA: keep vendor/admin only (public CTA moved to left chip) */}
 						{role === 'vendor' ? (
 							<Link to="/vendor" style={{ background: 'var(--brand-gold, #FFC247)', color: '#111827', textDecoration: 'none', padding: '8px 12px', borderRadius: 8, fontWeight: 500, fontFamily: 'inherit' }}>Vendor Dashboard</Link>
@@ -1075,7 +1083,7 @@ function MerkatoNavbar({ role: roleProp = 'public', showCategories: showCategori
 									<button aria-label="Close" onClick={() => setShowDrawer(false)} style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.35)', color: 'var(--nav-text, #fff)', padding: '6px 10px', borderRadius: 6, cursor: 'pointer' }}>✕</button>
 						</header>
 						<section>
-							<form onSubmit={(e) => { e.preventDefault(); const v = searchText.trim(); const cat = searchCat && searchCat !== 'all' ? `&category=${encodeURIComponent(searchCat)}` : ''; addRecent(v); setShowDrawer(false); navigate(v ? `/shop?search=${encodeURIComponent(v)}${cat}` : (cat ? `/shop?${cat.slice(1)}` : '/shop')); }}>
+							<form onSubmit={(e) => { e.preventDefault(); const v = searchText.trim(); addRecent(v); setShowDrawer(false); navigate(v ? LinkBuilder.toSearch(v) : '/discover'); }}>
 								<div style={{ display: 'flex', background: '#ffffff', border: '1px solid #e5e7eb', borderRadius: 12, overflow: 'hidden', boxShadow: '0 2px 6px rgba(0,0,0,0.06)' }}>
 									<select aria-label="Category" value={searchCat} onChange={(e) => setSearchCat(e.target.value)} style={{ background: '#f3f4f6', color: '#111827', border: 0, borderRight: '1px solid #e5e7eb', padding: '8px 10px', fontSize: 14, fontFamily: 'inherit' }}>
 										<option value="all">All</option>
@@ -1094,9 +1102,14 @@ function MerkatoNavbar({ role: roleProp = 'public', showCategories: showCategori
 						</section>
 						<section>
 							<strong style={{ display: 'block', marginBottom: 8, color: '#cbd5e1' }}>Browse</strong>
-							{effectiveMegaMenu.map((c) => (
-								<Link key={`m-cat-${c.title}`} to={`/shop?category=${encodeURIComponent((c.title || '').toLowerCase())}`} onClick={() => setShowDrawer(false)}>{c.title}</Link>
-							))}
+							{/* Quick link to Discover */}
+							<Link to="/discover" onClick={() => setShowDrawer(false)}>Discover</Link>
+							{effectiveMegaMenu.map((c) => {
+								const href = LinkBuilder.toCategory(c.title || '', { sort: 'best' }) || '/discover';
+								return (
+									<Link key={`m-cat-${c.title}`} to={href} onClick={() => setShowDrawer(false)}>{c.title}</Link>
+								);
+							})}
 						</section>
 						<section>
 							<strong style={{ display: 'block', marginBottom: 8, color: '#cbd5e1' }}>Account</strong>

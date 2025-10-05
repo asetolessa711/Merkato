@@ -3,7 +3,7 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { MemoryRouter } from 'react-router-dom';
-import CustomerOrders from '../../pages/CustomerOrders';
+import CustomerOrders from '../../pages/CustomerOrders'';
 
 jest.mock('axios', () => ({ get: jest.fn(() => Promise.resolve({ data: { orders: [] } })) }));
 

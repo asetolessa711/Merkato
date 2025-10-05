@@ -1,7 +1,14 @@
 import React from 'react';
 import { screen, fireEvent } from '@testing-library/react';
-import ProductCard from '../../components/ProductCard';
-import { renderWithProviders } from '../../test/renderWithProviders';
+// Force flags for this suite to maintain legacy expectations (description visible, multi-CTA)
+jest.mock('../../utils/featureFlags', () => ({
+  Flags: {
+    CARD_SHOW_DESCRIPTION: true,
+    CARD_SINGLE_CTA: false,
+  },
+}));
+import ProductCard from '../../components/ProductCard'';
+import { renderWithProviders } from '../../test/renderWithProviders'';
 import '@testing-library/jest-dom';
 
 // Mock product data
@@ -45,6 +52,25 @@ describe('\ud83d\udecd\ufe0f ProductCard Component', () => {
   test('shows product description', () => {
     renderWithProviders(<ProductCard product={product} />);
     expect(screen.getByText(/a nice product for testing/i)).toBeInTheDocument();
+  });
+
+  test('image has decoding async attribute', () => {
+    renderWithProviders(<ProductCard product={product} />);
+    const img = screen.getByRole('img');
+    expect(img).toHaveAttribute('decoding', 'async');
+  });
+
+  test('keyboard arrow keys swap image when multiple images exist', () => {
+    const multi = { ...product, images: ['one.jpg', 'two.jpg'] };
+    renderWithProviders(<ProductCard product={multi} />);
+    const card = screen.getByTestId('product-card');
+    const img = screen.getByTestId('product-image');
+    expect(img.getAttribute('src')).toMatch(/one/);
+    card.focus();
+    fireEvent.keyDown(card, { key: 'ArrowRight' });
+    expect(img.getAttribute('src')).toMatch(/two/);
+    fireEvent.keyDown(card, { key: 'ArrowLeft' });
+    expect(img.getAttribute('src')).toMatch(/one/);
   });
 
   test('matches snapshot', () => {

@@ -11,6 +11,94 @@ const VendorLead = require('../models/VendorLead');
 const InviteToken = require('../models/InviteToken');
 const jwt = require('jsonwebtoken');
 
+// Lightweight slugify for matching vendor storefront slugs
+function slugify(s) {
+  return String(s || '')
+    .normalize('NFKD')
+    .toLowerCase()
+    .trim()
+    .replace(/&/g, 'and')
+    .replace(/[^a-z0-9\s_-]/g, '')
+    .replace(/[\s_]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+function publicVendor(user) {
+  if (!user) return null;
+  return {
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    storeName: user.storeName || user.name,
+    storeDescription: user.storeDescription || '',
+    profileImage: user.profileImage || '',
+    bio: user.bio || '',
+    country: user.country || '',
+    slug: slugify(user.storeName || user.name)
+  };
+}
+
+// Public: get vendor profile by id
+router.get('/profile/:id', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user || !(user.roles || []).includes('vendor') || user.isActive === false) {
+      return res.status(404).json({ message: 'Vendor not found' });
+    }
+    res.json(publicVendor(user));
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to load vendor profile' });
+  }
+});
+
+// Authenticated: get my vendor profile
+router.get('/profile/me', protect, authorize('vendor'), async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    res.json(publicVendor(user));
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to load profile' });
+  }
+});
+
+// Public: resolve vendor by slug
+router.get('/slug/:slug', async (req, res) => {
+  try {
+    const s = slugify(req.params.slug);
+    // Narrow to vendors and map to find slug match
+    const candidate = await User.findOne({ roles: 'vendor', isActive: { $ne: false } }).where('storeName').exists(true);
+    // Fast path by storeName exact lower-case match if available
+    let user = null;
+    if (candidate) {
+      // Fallback to broader search in case there are many
+      const list = await User.find({ roles: 'vendor', isActive: { $ne: false } }).select('name storeName email profileImage storeDescription country');
+      user = (list || []).find(u => slugify(u.storeName || u.name) === s) || null;
+    }
+    if (!user) return res.status(404).json({ message: 'Vendor not found' });
+    res.json(publicVendor(user));
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to resolve vendor' });
+  }
+});
+
+// Public: minimal customization by vendor id
+router.get('/customization/:id', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select('storeName');
+    if (!user) return res.json({ theme: 'mint', backgroundColor: '#ffffff', textColor: '#333333', bannerImage: '' });
+    // In absence of a stored theme, derive deterministic color by hash of id
+    const themes = [
+      { theme: 'mint', backgroundColor: '#f7fff9', textColor: '#1b4332' },
+      { theme: 'ocean', backgroundColor: '#f0f9ff', textColor: '#0c4a6e' },
+      { theme: 'sunset', backgroundColor: '#fff7ed', textColor: '#7c2d12' },
+    ];
+    const idx = Math.abs(String(user._id).split('').reduce((a, c) => a + c.charCodeAt(0), 0)) % themes.length;
+    res.json({ ...themes[idx], bannerImage: '' });
+  } catch (err) {
+    res.status(200).json({ theme: 'mint', backgroundColor: '#ffffff', textColor: '#333333', bannerImage: '' });
+  }
+});
 // Create a new product (vendor only)
 router.post('/products', protect, authorize('vendor'), async (req, res) => {
   try {
@@ -47,12 +135,11 @@ router.get('/products', protect, authorize('vendor'), async (req, res) => {
 // Get revenue summary for logged-in vendor
 router.get('/revenue', protect, authorize('vendor'), async (req, res) => {
   try {
+    const range = String(req.query.range || '30d');
+    // Placeholder: compute naive revenue as price*stock for demo; ignore date filtering
     const products = await Product.find({ vendor: req.user._id });
     const totalRevenue = products.reduce((sum, p) => sum + (p.price * (p.stock || 0)), 0);
-    res.json({
-      totalRevenue: totalRevenue.toFixed(2),
-      productCount: products.length
-    });
+    res.json({ totalRevenue: totalRevenue.toFixed(2), productCount: products.length, range });
   } catch (err) {
     res.status(500).json({ message: 'Failed to calculate revenue' });
   }

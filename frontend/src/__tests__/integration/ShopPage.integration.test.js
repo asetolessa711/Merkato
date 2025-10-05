@@ -2,8 +2,8 @@
 import React from 'react';
 import { screen, waitFor, within, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import ShopPage from '../../pages/ShopPage';
-import { renderWithProviders } from '../../test/renderWithProviders';
+import ShopPage from '../../pages/ShopPage'';
+import { renderWithProviders } from '../../test/renderWithProviders'';
 
 import axios from 'axios';
 

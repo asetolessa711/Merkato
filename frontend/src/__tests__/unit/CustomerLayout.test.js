@@ -1,7 +1,7 @@
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { render, screen } from '@testing-library/react';
-import CustomerLayout from '../../layouts/CustomerLayout';
+import CustomerLayout from '../../layouts/CustomerLayout'';
 
 describe('CustomerLayout @persona-ui', () => {
   const baseProps = {

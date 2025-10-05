@@ -27,9 +27,25 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background: linear-gradient(135deg, #f6f9fc 0%, #e0e7ff 40%, #ffe0f7 100%);
-  /* Remove overflow: hidden to allow vertical scroll */
+  background: var(--canvas);
 }
+
+/* Unified vertical rhythm for home rows */
+:root {
+  --home-row-gap: 14px;
+  --home-carousel-stack-extra: 0px;
+  /* Neutral band background (can be reverted to gradient) */
+  --band-bg: #FFFFFF;
+  /* Mini hero size tokens (ensure at least ~half of main hero) */
+  --mini-hero-height: 360px;
+  --mini-hero-height-md: 300px;
+  --mini-hero-height-sm: 240px;
+}
+.home-row { margin: var(--home-row-gap) auto; }
+
+/* Apply standardized vertical spacing to shelves and rails on home */
+.homepage-outer .shelf:not(.shelf--inline) { margin: var(--home-row-gap) auto; }
+.homepage-outer .rails-zone { margin-top: var(--home-row-gap) !important; margin-bottom: var(--home-row-gap); }
 /* Legacy .homepage-navbar-fixed removed to avoid double navbars */
 .homepage-heading {
   font-size: 2rem;
@@ -42,7 +58,8 @@
   margin-top: 0;
   margin-bottom: 60px; /* height of footer */
   background: transparent;
-  overflow-y: auto;
+  /* Use the main document scroll; avoid nested vertical scrollbars */
+  overflow-y: visible;
   min-height: 0;
   padding-top: 0;
 }
@@ -59,19 +76,18 @@
   font-size: 1rem;
 }
 /* === Horizontally Scrollable Product Row (Modern, Compact) === */
-.products-row-scroll {
-  display: flex;
-  overflow-x: auto;
-  gap: 8px;
-  padding: 8px 8px 8px 8px; /* less vertical padding */
-  margin-bottom: 8px; /* less space between rows */
+/* Legacy horizontal product rows removed */
+/* === Rail Container and Viewport Styles === */
+.railSection { max-width: var(--content-max, 1320px); margin: 0 auto 24px; padding-inline: var(--content-gutter, 16px); }
+.railViewport {
+  overflow-x: hidden; /* remove horizontal scrollbar in rail viewport */
   scroll-snap-type: x mandatory;
+  -ms-overflow-style: none; /* IE/Edge */
+  scrollbar-width: none;    /* Firefox */
 }
-.products-row-scroll > * {
-  flex: 0 0 120px;
-  max-width: 120px;
-  scroll-snap-align: start;
-}
+.railViewport::-webkit-scrollbar { display: none; } /* WebKit */
+.railTrack { display: grid; grid-auto-flow: column; gap: 16px; }
+.railItem { scroll-snap-align: start; }
 @media (max-width: 900px) {
   .products-row-scroll > * {
     flex-basis: 90px;
@@ -91,8 +107,8 @@
 
 /* === CTA Buttons === */
 .btn-primary {
-  background-color: #00b894;
-  color: white;
+  background-color: #1B63E0; /* darker for contrast */
+  color: #fff;
   padding: 8px 16px;
   border: none;
   border-radius: 8px;
@@ -102,8 +118,8 @@
   display: inline-block;
 }
 .btn-secondary {
-  background-color: #3498db;
-  color: white;
+  background-color: #E5E7EB; /* light bg */
+  color: #0B1220; /* dark text */
   padding: 8px 16px;
   border: none;
   border-radius: 8px;
@@ -112,12 +128,8 @@
   cursor: pointer;
   display: inline-block;
 }
-.btn-primary:hover {
-  background-color: #009974;
-}
-.btn-secondary:hover {
-  background-color: #217dbb;
-}
+.btn-primary:hover { background-color: #164db8; }
+.btn-secondary:hover { background-color: #CBD5E1; }
 .btn-small {
   background-color: #0984e3;
   color: white;
@@ -128,20 +140,20 @@
   font-size: 0.85rem;
 }
 
-/* === Hero Section === */
-.hero {
+/* === HomePage small hero/intro (not the carousel) === */
+.home-hero {
   background-color: #fff; /* or #f8f8f8, #fdf6f0, etc. */
   padding: 18px 6px;
   text-align: center;
   /* Removed margin-top coupled to legacy top-bar */
 }
-.hero h2 {
+.home-hero h2 {
   font-size: 1.1rem;          /* Smaller headline */
   font-weight: bold;
   color: #00b894;
   margin-bottom: 8px;
 }
-.hero p {
+.home-hero p {
   font-size: 0.9rem;
   color: #555;
   max-width: 90%;
@@ -198,19 +210,18 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2px;
-  padding: 0 12px;
-  font-size: 1.18rem;
-  font-weight: 700;
-  color: #7c2ae8;
-  letter-spacing: 0.5px;
-  text-shadow: 0 2px 8px #f3e9ff;
-  background: linear-gradient(90deg, #ffe0f7 0%, #e0e7ff 100%);
-  border-radius: 10px;
+  margin-bottom: 8px;
+  padding: 0 0 6px; /* remove side padding; u-container supplies 16px gutters */
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #0F273D; /* Brand Blue */
+  background: transparent;
+  border-bottom: 0; /* remove accent underline */
+  border-radius: 0;
   margin-top: 0;
 }
 .view-all-link {
-  color: #3498db;
+  color: #0F273D;
   font-weight: 500;
   text-decoration: none;
 }
@@ -237,44 +248,12 @@
 }
 
 /* === Product Card Styling (Modern, Compact) === */
-.product-card {
-  background: #1a2233;
-  color: #fff;
-  padding: 6px 2px;
-  border-radius: 16px;
-  box-shadow: 0 4px 18px 0 rgba(124,42,232,0.10), 0 1.5px 8px 0 rgba(255,224,247,0.10);
-  text-align: center;
-  transition: transform 0.18s cubic-bezier(.4,2,.6,1), box-shadow 0.18s cubic-bezier(.4,2,.6,1);
-  border: 2.5px solid #e0e7ff;
-  min-height: 220px;
-  max-height: 260px;
-  width: 100px;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  align-items: center;
-}
-.product-card:hover {
-  transform: scale(1.045) translateY(-7px) rotate(-1.5deg);
-  box-shadow: 0 10px 32px 0 rgba(124,42,232,0.18), 0 6px 24px 0 rgba(255,224,247,0.13);
-  border-color: #7c2ae8;
-  background: linear-gradient(135deg, #ffe0f7 60%, #e0e7ff 100%);
-  color: #222b3a;
-}
+/* remove legacy heavy card overrides in homepage to use component styles */
+.product-card { all: unset; }
 
 /* Image container for consistent aspect ratio */
-.product-card-image-container {
-  width: 100%;
-  max-width: 44px;
-  height: 44px;
-  margin: 0 auto 4px auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #222b3a;
-  border-radius: 8px;
-  overflow: hidden;
-}
+/* allow ProductCard.css to control image container */
+.product-card-image-container { all: unset; }
  .product-card img,
  .vendor-card img {
    width: 100%;
@@ -451,10 +430,10 @@
   .products-grid {
     grid-template-columns: 1fr;
   }
-  .hero h2 {
+  .home-hero h2 {
     font-size: 1rem;
   }
-  .hero p {
+  .home-hero p {
     font-size: 0.85rem;
   }
   .logo {
@@ -539,3 +518,25 @@
   background: #eaf6ff;
   color: #0984e3;
 }
+
+/* ===== Unified shelf grid (Amazon-like) ===== */
+.shelf-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 16px; }
+@media (max-width: 1200px){ .shelf-grid{ grid-template-columns: repeat(3, minmax(0,1fr)); } }
+@media (max-width: 900px){ .shelf-grid{ grid-template-columns: repeat(2, minmax(0,1fr)); } }
+@media (max-width: 640px){ .shelf-grid{ grid-template-columns: 1fr; } }
+
+/* Optional full-bleed band background while keeping inner container constrained */
+.shelf-band-bleed{
+  background: var(--band-bg, #FFFFFF);
+  padding: 6px 0;
+  /* Full-bleed edges like the hero */
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  width: 100vw;
+  /* Vertical rhythm */
+  margin-top: var(--home-row-gap, 16px);
+  margin-bottom: var(--home-row-gap, 16px);
+}
+
+/* Avoid double spacing inside the band (container will center content) */
+.shelf-band-bleed > .home-row{ margin: 0 auto; }

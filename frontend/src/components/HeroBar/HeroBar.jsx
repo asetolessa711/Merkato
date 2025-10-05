@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { recordHeroClick } from "../../utils/heroBanners"";
 
 // CTA: { label, href, variant?: 'primary'|'secondary'|'ghost' }
 // Slide: { id, title, subtitle?, bg, image?, imageAlt?, ctas? }
-export default function HeroBar({ slides = [], autoMs = 6000, height = 420, showDots = true }) {
+export default function HeroBar({ slides = [], autoMs = 6000, height, showDots = true, center = false, embedded = false }) {
   const count = slides.length;
   const [idx, setIdx] = useState(1); // start on first real item (after a clone)
   const [anim, setAnim] = useState(true);
@@ -69,12 +70,14 @@ export default function HeroBar({ slides = [], autoMs = 6000, height = 420, show
   const styleRail = {
     transform: `translateX(${-idx * 100}vw)`,
     transition: anim ? 'transform 450ms ease' : 'none',
-    height
+    height: '100%'
   };
+  const styleHero = height ? { ['--hero-h']: `${height}px`, height } : undefined;
 
   return (
     <section
-      className="hero"
+      className={`hero${center ? ' hero--center' : ''}${embedded ? ' hero--embedded' : ''}`}
+      style={styleHero}
       aria-roledescription="carousel"
       aria-label="Promotions"
       onMouseEnter={() => (hovering.current = true)}
@@ -88,32 +91,8 @@ export default function HeroBar({ slides = [], autoMs = 6000, height = 420, show
         onPointerUp={onPointerUp}
       >
         {loopSlides.map((s, i) => (
-          <article key={`${s.id}-${i}`} className="hero__slide" style={{ background: s.bg }}>
-            <div className="hero__inner" style={{ height }}>
-              <div className="hero__copy">
-                <h1 className="hero__title">{s.title}</h1>
-                {s.subtitle && <p className="hero__sub">{s.subtitle}</p>}
-                {!!s.ctas?.length && (
-                  <div className="hero__ctas">
-                    {s.ctas.map((c, k) => (
-                      <a
-                        key={k}
-                        href={c.href}
-                        className={`btn ${btnClass(c.variant)}`}
-                        aria-label={c.ariaLabel || c.label}
-                      >
-                        {c.label}
-                      </a>
-                    ))}
-                  </div>
-                )}
-              </div>
-              {s.image && (
-                <div className="hero__media">
-                  <img src={s.image} alt={s.imageAlt || ''} loading="eager" />
-                </div>
-              )}
-            </div>
+          <article key={`${s.id}-${i}`} className={`hero__slide type-${s.type || 'copy-image-right'}`} style={{ background: s.bg }}>
+            {renderSlideInner(s, height)}
           </article>
         ))}
       </div>
@@ -136,6 +115,7 @@ export default function HeroBar({ slides = [], autoMs = 6000, height = 420, show
                 key={real}
                 role="tab"
                 aria-selected={active}
+                    aria-label={`Go to slide ${real + 1}`}
                 className={`hero__dot ${active ? 'is-active' : ''}`}
                 onClick={() => go(real + 1)}
               />
@@ -156,4 +136,88 @@ function btnClass(v) {
   if (v === 'secondary') return 'btn--secondary';
   if (v === 'ghost') return 'btn--ghost';
   return 'btn--primary';
+}
+
+function renderSlideInner(s, height){
+  const type = s.type || 'copy-image-right';
+  const hasImg = !!s.image;
+  const copy = (
+    <div className="hero__copy">
+      <h1 className="hero__title">{s.title}</h1>
+      {s.subtitle && <p className="hero__sub">{s.subtitle}</p>}
+      {!!s.ctas?.length && (
+        <div className="hero__ctas">
+          {s.ctas.map((c, k) => (
+            <a key={k} href={c.href} className={`btn ${btnClass(c.variant)}`} aria-label={c.ariaLabel || c.label}
+               onClick={() => {
+                 try { recordHeroClick({ slideId: s.id, href: c.href, currentPath: window?.location?.pathname || '/' }); } catch (_) {}
+               }}
+            >
+              {c.label}
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+  const mobile = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
+  const tablet = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(min-width: 769px) and (max-width: 1024px)').matches;
+  const mediaSrc = mobile && s.imageMobile ? s.imageMobile : (tablet && s.imageTablet ? s.imageTablet : s.image);
+  const media = mediaSrc ? (
+    <div className="hero__media">
+      <img
+        src={mediaSrc}
+        alt={s.imageAlt || ''}
+        loading="eager"
+        style={{ objectPosition: s.imageFocal || '50% 50%' }}
+        onError={(e) => {
+          // Hide broken image and collapse layout to a single column
+          try {
+            e.currentTarget.style.display = 'none';
+            const wrap = e.currentTarget.closest('.hero__inner');
+            if (wrap) wrap.classList.add('no-media');
+          } catch(_) {}
+        }}
+      />
+    </div>
+  ) : null;
+
+  // Layout variants
+  if (type === 'copy-only') {
+    return (
+      <div className="hero__inner" style={{ height: height || '100%', gridTemplateColumns: '1fr' }}>
+        {copy}
+      </div>
+    );
+  }
+  if (type === 'image-only') {
+    return (
+      <div className="hero__inner" style={{ height: height || '100%', gridTemplateColumns: '1fr' }}>
+        {media}
+      </div>
+    );
+  }
+  if (type === 'image-left') {
+    return (
+      <div className="hero__inner" style={{ height: height || '100%' }}>
+        {media}
+        {copy}
+      </div>
+    );
+  }
+  if (type === 'split-50') {
+    return (
+      <div className="hero__inner" style={{ height: height || '100%', gridTemplateColumns: '1fr 1fr' }}>
+        {copy}
+        {media}
+      </div>
+    );
+  }
+  // default: copy-image-right
+  return (
+    <div className={`hero__inner${media ? '' : ' no-media'}`} style={{ height: height || '100%' }}>
+      {copy}
+      {media}
+    </div>
+  );
 }

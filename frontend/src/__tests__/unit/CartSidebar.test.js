@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import CartSidebar from '../../components/CartSidebar';
+import CartSidebar from '../../components/CartSidebar'';
 import '@testing-library/jest-dom';
 
 const mockItems = [

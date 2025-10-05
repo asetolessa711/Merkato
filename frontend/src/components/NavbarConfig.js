@@ -3,7 +3,7 @@
 
 export const universalLinks = [
   { to: '/', label: 'Home' },
-  { to: '/shop', label: 'Shop' },
+  { to: '/discover', label: 'Shop' },
   { to: '/vendors', label: 'Vendors' },
   { to: '/customers', label: 'Customers' },
   { to: '/categories', label: 'Categories', dropdown: true },

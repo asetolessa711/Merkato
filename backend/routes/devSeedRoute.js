@@ -70,6 +70,8 @@ router.post('/seed', async (req, res) => {
       category: 'general',
       stock: 50,
       vendor: vendor._id,
+      image: '/images/default-product.svg',
+      images: ['/images/default-product.svg'],
     });
 
     // Additional sample products
@@ -81,6 +83,8 @@ router.post('/seed', async (req, res) => {
       category: 'general',
       stock: 10,
       vendor: vendor._id,
+      image: '/images/default-product.svg',
+      images: ['/images/default-product.svg'],
     });
     await ensureProduct({
       name: 'Test Product 2',
@@ -90,6 +94,8 @@ router.post('/seed', async (req, res) => {
       category: 'general',
       stock: 5,
       vendor: vendor._id,
+      image: '/images/default-product.svg',
+      images: ['/images/default-product.svg'],
     });
 
   res.status(200).json({

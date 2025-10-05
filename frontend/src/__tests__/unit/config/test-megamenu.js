@@ -7,7 +7,7 @@ const path = require('path');
 // eslint-disable-next-line import/no-dynamic-require, global-require
 // Support both default and named exports
 // eslint-disable-next-line import/no-dynamic-require, global-require
-import { MEGA_MENU } from '../../../config/megaMenu';
+import { MEGA_MENU } from '../../../config/megaMenu'';
 
 describe('Mega Menu config', () => {
   it('exports an array of category columns', () => {
@@ -25,23 +25,21 @@ describe('Mega Menu config', () => {
     }
   });
 
-  it('each link has a label and a /shop target with query string', () => {
+  it('each link has a label and a clean browse/deals target', () => {
     for (const col of MEGA_MENU) {
       for (const lnk of col.links) {
         expect(typeof lnk.label).toBe('string');
         expect(lnk.label.trim().length).toBeGreaterThan(0);
         expect(typeof lnk.to).toBe('string');
-        // Our shop paths are query-driven (cat or search)
-        expect(lnk.to.startsWith('/shop')).toBe(true);
+        // Clean routes: categories (/c/...), deals (/deals/...), or discover
+        const isCategory = lnk.to.startsWith('/c/');
+        const isDeals = lnk.to.startsWith('/deals/');
+        const isDiscover = lnk.to === '/discover' || lnk.to.startsWith('/discover');
+        expect(isCategory || isDeals || isDiscover).toBe(true);
 
-        // If a query is provided, it should be parseable
-        const hasQuery = lnk.to.includes('?');
-        if (hasQuery) {
-          const url = new URL(lnk.to, 'http://localhost');
-          const qp = url.searchParams;
-          // Most links should specify either category or search term
-          const hasCatOrSearch = qp.has('cat') || qp.has('category') || qp.has('search');
-          expect(hasCatOrSearch).toBe(true);
+        // If a query is present, it must be parseable
+        if (lnk.to.includes('?')) {
+          expect(() => new URL(lnk.to, 'http://localhost')).not.toThrow();
         }
       }
     }

@@ -6,6 +6,8 @@ const User = require('../../models/User');
 const { registerTestUser, loginTestUser } = require('../utils/testUserUtils');
 
 describe('Invoice Routes @invoices', () => {
+  // Increase timeout for this suite because it previously invoked puppeteer (now mocked)
+  jest.setTimeout(20000);
   let vendor, vendorToken;
   let otherVendor, otherVendorToken;
   let admin, adminToken;

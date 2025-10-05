@@ -17,7 +17,7 @@ jest.mock('@stripe/stripe-js', () => {
 
 import React from 'react';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
-import StripeCheckoutButton from '../../components/StripeCheckoutButton';
+import StripeCheckoutButton from '../../components/StripeCheckoutButton'';
 import '@testing-library/jest-dom';
 import axios from 'axios';
 

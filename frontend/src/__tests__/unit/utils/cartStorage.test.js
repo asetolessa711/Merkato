@@ -1,4 +1,4 @@
-import { loadCart, saveCart, clearCart, isCartExpired } from '../../../utils/cartStorage';
+import { loadCart, saveCart, clearCart, isCartExpired } from '../../../utils/cartStorage'';
 
 describe('cartStorage', () => {
   beforeEach(() => {
@@ -51,8 +51,8 @@ describe('cartStorage', () => {
     localStorage.setItem('merkato-cart', JSON.stringify({ items: [{ id: 'p1' }], timestamp: Date.now() - 10000 }));
     localStorage.setItem('merkato-cart-ttl', '{not-json');
     // Should not throw and should use cart timestamp path
-    expect(() => require('../../../utils/cartStorage')).not.toThrow();
-    const { isCartExpired } = require('../../../utils/cartStorage');
+    expect(() => require('../../../utils/cartStorage'')).not.toThrow();
+    const { isCartExpired } = require('../../../utils/cartStorage'');
     expect(isCartExpired(false)).toBe(false);
   });
 
@@ -64,7 +64,7 @@ describe('cartStorage', () => {
       if (v && typeof v === 'object' && 'items' in v) throw new Error('boom');
       return original(v);
     };
-    const { saveCart, loadCart } = require('../../../utils/cartStorage');
+    const { saveCart, loadCart } = require('../../../utils/cartStorage'');
     // Should not throw despite JSON issue
     expect(() => saveCart([{ id: 'x' }], false)).not.toThrow();
     // Load still returns default if nothing persisted

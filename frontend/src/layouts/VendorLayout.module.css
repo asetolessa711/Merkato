@@ -22,3 +22,53 @@
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
   border-left: 1px solid #e2e8f0;
 }
+
+/* New: sticky heading under the vendor navbar */
+.fixedHeader {
+  position: sticky;
+  top: 60px; /* approximate navbar height; adjust if needed */
+  z-index: 5;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 12px 24px;
+}
+
+/* New: a scrollable main content wrapper that holds sidebar + content */
+.mainContentScrollable {
+  display: flex;
+  gap: 0;
+  flex: 1 1 auto;
+  min-height: 0; /* enables children to size properly with overflow */
+  overflow: hidden; /* contain internal scrolls */
+}
+
+/* Guard/empty states */
+.guardBox {
+  max-width: 680px;
+  margin: 48px auto;
+  padding: 24px 28px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fafcff;
+  box-shadow: 0 1px 6px rgba(18, 38, 63, 0.06);
+}
+
+/* Lightweight skeleton utilities */
+.skeletonRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin: 16px 0;
+}
+.skeleton {
+  height: 14px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #f2f5fa 0%, #e8ecf3 50%, #f2f5fa 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.25s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 0% 0; }
+  100% { background-position: -200% 0; }
+}

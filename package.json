@@ -5,11 +5,17 @@
   "scripts": {
     "test:frontend": "cd frontend && npm test",
     "test:backend": "cd backend && npm test",
+    "test:backend:guardrails": "cd backend && npm run test:guardrails",
+    "test:backend:ci:guardrails": "cd backend && npm run test:ci:guardrails",
     "test:all": "node ./scripts/run-all-tests.js",
     "test:all:ps": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/run-all-tests.ps1",
     "test:e2e": "npm --prefix frontend run cy:run",
+    "docs:manual:pdf": "node ./scripts/build-manual-pdf.js",
     "guard:focused": "node ./scripts/check-focused-tests.js",
-    "guard:lint": "echo lint placeholder",
+    "guard:links": "node ./scripts/guard-canonical-links.js",
+    "guard:twins": "node ./scripts/check-no-js-jsx-twins.js",
+    "fix:imports": "node ./scripts/fix-import-extensions.js",
+    "rm:js-twins": "node -e \"const fs=require('fs'),p=require('path');const root=p.resolve(__dirname,'frontend','src');function w(d){for(const e of fs.readdirSync(d,{withFileTypes:true})){const f=p.join(d,e.name);if(e.isDirectory()){if(['node_modules','.cache','dist','build'].includes(e.name))continue;w(f);}else if(e.isFile()){if(f.endsWith('.jsx')){const base=f.slice(0,-4);const js=base+'js';if(fs.existsSync(js)){console.log('Deleting twin',p.relative(__dirname,js));fs.unlinkSync(js);}}}}}if(fs.existsSync(root))w(root);\"",
     "precommit": "node -e \"console.log('Use Husky hooks instead of npm precommit');\"",
     "prepare": "husky",
     "prepush": "node -e \"console.log('Use Husky hooks instead of npm prepush');\"",
@@ -18,9 +24,11 @@
   },
   "devDependencies": {
     "axios": "^1.11.0",
-  "cypress": "^14.5.4",
+    "cypress": "^14.5.4",
     "husky": "^9.1.6",
-    "lint-staged": "^15.2.10"
+    "lint-staged": "^15.2.10",
+    "marked": "^12.0.2",
+    "puppeteer": "^23.11.1"
   },
   "dependencies": {
     "openai": "^5.16.0"

@@ -6,7 +6,7 @@
 import React from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import VendorOrders from '../../pages/VendorOrders';
+import VendorOrders from '../../pages/VendorOrders'';
 import { MemoryRouter } from 'react-router-dom';
 
 jest.mock('axios', () => ({ get: jest.fn(), patch: jest.fn() }));

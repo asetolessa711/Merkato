@@ -5,15 +5,36 @@ exports[`🛍️ ProductCard Component matches snapshot 1`] = `
   <div
     class="product-card theme-mint size-md  "
     data-testid="product-card"
+    tabindex="0"
   >
     <div
       class="product-card-image-container"
     >
-      <img
-        alt="Test Product"
-        loading="lazy"
-        src="test-product.jpg"
-      />
+      <picture>
+        <source
+          srcset="test-product.avif"
+          type="image/avif"
+        />
+        <source
+          srcset="test-product.webp"
+          type="image/webp"
+        />
+        <img
+          alt="Test Product"
+          aria-describedby="img-status-123"
+          data-testid="product-image"
+          decoding="async"
+          loading="lazy"
+          src="test-product.jpg"
+        />
+      </picture>
+      <span
+        aria-live="polite"
+        id="img-status-123"
+        style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(1px, 1px, 1px, 1px); white-space: nowrap;"
+      >
+        Image 1 of 1
+      </span>
     </div>
     <div
       class="product-info"
@@ -41,6 +62,7 @@ exports[`🛍️ ProductCard Component matches snapshot 1`] = `
       </div>
       <button
         aria-label="Add to Cart"
+        aria-live="polite"
         data-testid="add-to-cart-btn"
         type="button"
       >
@@ -53,6 +75,11 @@ exports[`🛍️ ProductCard Component matches snapshot 1`] = `
         Shop Now
       </a>
     </div>
+    <script
+      type="application/ld+json"
+    >
+      {"@context":"https://schema.org/","@type":"Product","name":"Test Product","image":["test-product.jpg"],"sku":"123","offers":{"@type":"Offer","priceCurrency":"USD","price":"49.99","availability":"https://schema.org/InStock","url":"/product/123"}}
+    </script>
   </div>
 </DocumentFragment>
 `;

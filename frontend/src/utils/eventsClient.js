@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Flags, isTestEnv } from './featureFlags';
+import { Flags, isTestEnv } from './featureFlags'';
 
 const STORAGE_KEY = 'merkato-events-buffer';
 const ANON_KEY = 'merkato-anonymous-id';

@@ -1,33 +1,57 @@
 /* Full-bleed section below the dark navbar */
 .hero{
+  position: relative;
+  /* Desktop default (down from 360/380) */
+  height: var(--hero-h, 320px);
+  /* Overlap navbar by a few pixels to avoid any visible band (DPI/zoom safe) */
+  margin-top: -8px;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  width: 100vw;              /* full-bleed hero */
+  background: var(--band-bg, #FFFFFF); /* neutral band background */
+  overflow: hidden;          /* no vertical scrollbar in the hero */
+}
+
+/* Embedded (mid-page) variation: no full-bleed, no negative top margin */
+.hero.hero--embedded{
+  /* Full-bleed like main hero but without negative overlap */
+  margin-top: var(--home-row-gap, 20px);
+  margin-bottom: var(--home-row-gap, 20px);
   margin-left: calc(50% - 50vw);
   margin-right: calc(50% - 50vw);
   width: 100vw;
-  position: relative;
-  overflow: hidden;
 }
 
 /* Horizontal rail */
 .hero__rail{
   display: flex;
+  gap: 0;
   will-change: transform;
+  height: 100%;
 }
 
 /* Slide shell */
 .hero__slide{
   min-width: 100vw;
+  flex: 0 0 100vw; /* lock each slide to viewport width */
   display: block;
 }
 
+/* When embedded, constrain slides to container width */
+.hero--embedded .hero__slide{ min-width: 100vw; }
+
 /* Inside each slide: two columns (copy + media) */
 .hero__inner{
-  max-width: 1200px;
+  max-width: var(--content-max, 1600px);
   margin: 0 auto;
-  padding: 20px 20px;
+  padding: 24px var(--content-gutter, 16px);
   display: grid;
   grid-template-columns: 1fr 1fr;
   align-items: center;
+  height: 100%;
 }
+.hero--center .hero__inner{ grid-template-columns: 1fr; text-align: center; justify-items: center; }
+.hero__inner.no-media{ grid-template-columns: 1fr; }
 .hero__copy{ max-width: 640px; padding: 8px 0 0; }
 .hero__title{
   font: 700 clamp(2.25rem, 1.6rem + 2.4vw, 3.5rem)/1.1 "Space Grotesk", Inter, sans-serif;
@@ -43,35 +67,37 @@
 .hero__ctas{ display: flex; gap: 12px; }
 
 .hero__media{ justify-self: end; padding-right: 16px; }
+.hero__inner.no-media .hero__media{ display:none; }
 .hero__media img{
-  height: clamp(160px, 20vw, 280px);
-  width: auto;
-  object-fit: contain;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;         /* fill without changing hero height */
   background: #fff; /* image fallback to prevent color flicker */
   filter: drop-shadow(0 10px 24px rgba(0,0,0,.18));
 }
 
 /* Arrows overlay (match Amazon feel) */
 .hero__arrow{
-  position: absolute; top: 50%; transform: translateY(calc(-50% + 1px)); /* 1px optical center tweak */
-  width: 44px; height: 44px; border-radius: 999px;
+  position: absolute; top: 50%; transform: translateY(-50%);
+  z-index: 5;
+  width: 44px; height: 44px; border-radius: 9999px;
   border: 1px solid rgba(0,0,0,.15);
   background: rgba(255,255,255,.85);
   color: #0B1220; font-size: 26px; display:grid; place-items:center;
   cursor: pointer;
 }
 .hero__arrow:hover{ background: #fff; }
-.hero__arrow--left{ left: 12px; }
-.hero__arrow--right{ right: 12px; }
+.hero__arrow--left, .hero__arrow--prev{ left: 12px; }
+.hero__arrow--right, .hero__arrow--next{ right: 12px; }
 
 /* Dots */
-.hero__dots{
-  position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
-  display: flex; gap: 8px;
+.hero__dots, .hero__indicators{
+  position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 6px;
 }
 .hero__dot{
-  width: 10px; height: 10px; border-radius: 999px; border: 0;
-  background: rgba(0,0,0,.25);
+  width: 7px; height: 7px; border-radius: 999px; border: 0;
+  background: rgba(0,0,0,.22);
 }
 .hero__dot.is-active{ background: #0B1220; }
 
@@ -83,6 +109,18 @@
   .hero__dots .hero__dot{ padding: 6px; background-clip: content-box; }
 }
 
+/* Height per breakpoint to keep hero stable (requested tuning) */
+@media (max-width: 767px){
+  .hero{ --hero-h: 210px; height: 210px; }
+}
+@media (min-width: 768px) and (max-width: 1279px){
+  .hero{ --hero-h: 280px; height: 280px; }
+}
+@media (min-width: 1280px) and (max-width: 1439px){
+  .hero{ --hero-h: 300px; height: 300px; }
+}
+/* >=1440px uses default 320px */
+
 /* Buttons (use your tokens) */
 .btn{ display:inline-flex; align-items:center; justify-content:center; padding:10px 16px;
       border-radius:10px; font:600 .95rem/1 Inter; border:1px solid transparent; }
@@ -92,3 +130,14 @@
 .btn--secondary:hover{ background: color-mix(in srgb, var(--brand) 10%, transparent); }
 .btn--ghost{ color: #0B1220; background: transparent; border-color: rgba(0,0,0,.1); }
 .btn--ghost:hover{ background: rgba(0,0,0,.05); }
+
+/* Make hero background extend under the first rail header (Amazon-like) */
+.hero + .rails-zone{ position: relative; }
+.hero + .rails-zone::before{
+  content: "";
+  position: absolute;
+  inset: -24px calc(50% - 50vw) auto calc(50% - 50vw);
+  height: 24px; /* soft overlap */
+  background: inherit; /* continue hero background */
+  pointer-events: none;
+}

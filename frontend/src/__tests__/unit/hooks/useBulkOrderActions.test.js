@@ -1,6 +1,6 @@
 import { renderHook, act } from '@testing-library/react';
 import axios from 'axios';
-import { useBulkOrderActions } from '../../../hooks/useBulkOrderActions';
+import { useBulkOrderActions } from '../../../hooks/useBulkOrderActions'';
 
 const orders = [
   { _id: 'o1', buyer: { name: 'Alice' }, status: 'PLACED' },

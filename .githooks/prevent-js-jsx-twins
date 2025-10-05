@@ -1,0 +1,34 @@
+#!/bin/sh
+# Block committing both .js and .jsx twins for the same module
+
+# Collect staged files
+staged=$(git diff --cached --name-only)
+
+violations=0
+for f in $staged; do
+  case "$f" in
+    frontend/src/*/*.jsx|frontend/src/*.jsx|frontend/src/**/*.jsx)
+      base="${f%.jsx}"
+      twin="$base.js"
+      if git ls-files --error-unmatch "$twin" >/dev/null 2>&1; then
+        echo "❌ Twin detected: $f and $twin. Keep only .jsx (or .tsx)."
+        violations=1
+      fi
+      ;;
+    frontend/src/*/*.js|frontend/src/*.js|frontend/src/**/*.js)
+      base="${f%.js}"
+      twin="$base.jsx"
+      if git ls-files --error-unmatch "$twin" >/dev/null 2>&1; then
+        echo "❌ Twin detected: $f and $twin. Keep only .jsx (or .tsx)."
+        violations=1
+      fi
+      ;;
+  esac
+done
+
+if [ $violations -ne 0 ]; then
+  echo "Commit aborted due to .js/.jsx twins."
+  exit 1
+fi
+
+exit 0

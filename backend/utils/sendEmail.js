@@ -129,7 +129,8 @@ const resetRateLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  skipSuccessfulRequests: true,
+  // Count all requests (including successful ones) toward the limit
+  skipSuccessfulRequests: false,
   handler: (req, res) => {
     console.warn(`Rate limit exceeded for IP: ${req.ip}`);
     res.status(429).json({

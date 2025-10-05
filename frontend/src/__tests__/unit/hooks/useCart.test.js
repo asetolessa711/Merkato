@@ -1,7 +1,7 @@
 import React from 'react';
 import { renderHook, act } from '@testing-library/react';
-import useCart from '../../../hooks/useCart';
-import * as cartStorage from '../../../utils/cartStorage';
+import useCart from '../../../hooks/useCart'';
+import * as cartStorage from '../../../utils/cartStorage'';
 
 describe('useCart', () => {
   beforeEach(() => {

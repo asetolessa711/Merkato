@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, within } from '@testing-library/react';
-import AdminOrders from '../../pages/AdminOrders';
+import AdminOrders from '../../pages/AdminOrders'';
 
 // Minimal mock of axios to prevent real HTTP
 jest.mock('axios', () => ({

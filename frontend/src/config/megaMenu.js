@@ -1,17 +1,19 @@
 // Central mega menu configuration. Keep display groupings here to avoid duplication.
 // Each column has a title, optional icon or thumbnail, and a list of links (each link may also carry an icon).
 
+import { LinkBuilder } from './routes'';
+
 export const MEGA_MENU = [
   // Fashion
   {
     title: 'Fashion',
     icon: '👗',
     links: [
-      { label: "Women's Clothing", to: '/shop?cat=women' },
-      { label: "Men's Clothing", to: '/shop?cat=men' },
-      { label: 'Shoes', to: '/shop?cat=shoes' },
-      { label: 'Bags & Accessories', to: '/shop?cat=bags' },
-      { label: 'Jewelry', to: '/shop?cat=jewelry' },
+  { label: "Women's Clothing", to: LinkBuilder.toSubcategory('fashion', 'women', { sort: 'best' }) },
+  { label: "Men's Clothing", to: LinkBuilder.toSubcategory('fashion', 'men', { sort: 'best' }) },
+  { label: 'Shoes', to: LinkBuilder.toSubcategory('fashion', 'shoes', { sort: 'best' }) },
+  { label: 'Bags & Accessories', to: LinkBuilder.toSubcategory('fashion', 'bags', { sort: 'best' }) },
+  { label: 'Jewelry', to: LinkBuilder.toSubcategory('fashion', 'jewelry', { sort: 'best' }) },
     ],
   },
   // Electronics
@@ -19,11 +21,11 @@ export const MEGA_MENU = [
     title: 'Electronics',
     icon: '📱',
     links: [
-      { label: 'Mobile Phones', to: '/shop?search=mobile%20phone&category=electronics' },
-      { label: 'Laptops', to: '/shop?search=laptop&category=electronics' },
-      { label: 'Smart Watches', to: '/shop?search=smartwatch&category=electronics' },
-      { label: 'Audio Devices', to: '/shop?search=headphones&category=electronics' },
-      { label: 'Accessories', to: '/shop?search=accessories&category=electronics' },
+  { label: 'Mobile Phones', to: LinkBuilder.toSubcategory('electronics', 'mobile-phones', { sort: 'best' }) },
+  { label: 'Laptops', to: LinkBuilder.toSubcategory('electronics', 'laptops', { sort: 'best' }) },
+  { label: 'Smart Watches', to: LinkBuilder.toSubcategory('electronics', 'smart-watches', { sort: 'best' }) },
+  { label: 'Audio Devices', to: LinkBuilder.toSubcategory('electronics', 'audio', { sort: 'best' }) },
+  { label: 'Accessories', to: LinkBuilder.toSubcategory('electronics', 'accessories', { sort: 'best' }) },
     ],
   },
   // Home & Kitchen
@@ -31,11 +33,11 @@ export const MEGA_MENU = [
     title: 'Home & Kitchen',
     icon: '🏠',
     links: [
-      { label: 'Furniture', to: '/shop?search=furniture&category=home' },
-      { label: 'Decor', to: '/shop?search=decor&category=home' },
-      { label: 'Kitchen Tools', to: '/shop?search=kitchen%20tools&category=home' },
-      { label: 'Storage', to: '/shop?search=storage&category=home' },
-      { label: 'Bedding', to: '/shop?search=bedding&category=home' },
+  { label: 'Furniture', to: LinkBuilder.toSubcategory('home', 'furniture', { sort: 'best' }) },
+  { label: 'Decor', to: LinkBuilder.toSubcategory('home', 'decor', { sort: 'best' }) },
+  { label: 'Kitchen Tools', to: LinkBuilder.toSubcategory('home', 'kitchen-tools', { sort: 'best' }) },
+  { label: 'Storage', to: LinkBuilder.toSubcategory('home', 'storage', { sort: 'best' }) },
+  { label: 'Bedding', to: LinkBuilder.toSubcategory('home', 'bedding', { sort: 'best' }) },
     ],
   },
   // Beauty & Health
@@ -43,11 +45,11 @@ export const MEGA_MENU = [
     title: 'Beauty & Health',
     icon: '💄',
     links: [
-      { label: 'Skincare', to: '/shop?search=skincare&category=beauty' },
-      { label: 'Haircare', to: '/shop?search=haircare&category=beauty' },
-      { label: 'Makeup', to: '/shop?search=makeup&category=beauty' },
-      { label: 'Personal Care', to: '/shop?search=personal%20care&category=beauty' },
-      { label: 'Supplements', to: '/shop?search=supplements&category=beauty' },
+  { label: 'Skincare', to: LinkBuilder.toSubcategory('beauty', 'skincare', { sort: 'best' }) },
+  { label: 'Haircare', to: LinkBuilder.toSubcategory('beauty', 'haircare', { sort: 'best' }) },
+  { label: 'Makeup', to: LinkBuilder.toSubcategory('beauty', 'makeup', { sort: 'best' }) },
+  { label: 'Personal Care', to: LinkBuilder.toSubcategory('beauty', 'personal-care', { sort: 'best' }) },
+  { label: 'Supplements', to: LinkBuilder.toSubcategory('beauty', 'supplements', { sort: 'best' }) },
     ],
   },
   // Sports & Outdoors
@@ -55,10 +57,10 @@ export const MEGA_MENU = [
     title: 'Sports & Outdoors',
     icon: '🏕️',
     links: [
-      { label: 'Fitness Equipment', to: '/shop?search=fitness&category=sports' },
-      { label: 'Outdoor Gear', to: '/shop?search=outdoor%20gear&category=sports' },
-      { label: 'Activewear', to: '/shop?search=activewear&category=sports' },
-      { label: 'Camping', to: '/shop?search=camping&category=sports' },
+  { label: 'Fitness Equipment', to: LinkBuilder.toSubcategory('sports', 'fitness', { sort: 'best' }) },
+  { label: 'Outdoor Gear', to: LinkBuilder.toSubcategory('sports', 'outdoor-gear', { sort: 'best' }) },
+  { label: 'Activewear', to: LinkBuilder.toSubcategory('sports', 'activewear', { sort: 'best' }) },
+  { label: 'Camping', to: LinkBuilder.toSubcategory('sports', 'camping', { sort: 'best' }) },
     ],
   },
   // Automotive
@@ -66,10 +68,10 @@ export const MEGA_MENU = [
     title: 'Automotive',
     icon: '🚗',
     links: [
-      { label: 'Car Accessories', to: '/shop?search=car%20accessories&category=automotive' },
-      { label: 'Tools', to: '/shop?search=tools&category=automotive' },
-      { label: 'Motorcycle Gear', to: '/shop?search=motorcycle%20gear&category=automotive' },
-      { label: 'Electronics', to: '/shop?search=car%20electronics&category=automotive' },
+  { label: 'Car Accessories', to: LinkBuilder.toSubcategory('automotive', 'car-accessories', { sort: 'best' }) },
+  { label: 'Tools', to: LinkBuilder.toSubcategory('automotive', 'tools', { sort: 'best' }) },
+  { label: 'Motorcycle Gear', to: LinkBuilder.toSubcategory('automotive', 'motorcycle-gear', { sort: 'best' }) },
+  { label: 'Electronics', to: LinkBuilder.toSubcategory('automotive', 'electronics', { sort: 'best' }) },
     ],
   },
   // Toys & Hobbies
@@ -77,10 +79,10 @@ export const MEGA_MENU = [
     title: 'Toys & Hobbies',
     icon: '🧸',
     links: [
-      { label: 'Educational Toys', to: '/shop?search=educational%20toys&category=toys' },
-      { label: 'RC Models', to: '/shop?search=rc%20models&category=toys' },
-      { label: 'Crafts', to: '/shop?search=crafts&category=toys' },
-      { label: 'Collectibles', to: '/shop?search=collectibles&category=toys' },
+  { label: 'Educational Toys', to: LinkBuilder.toSubcategory('toys', 'educational-toys', { sort: 'best' }) },
+  { label: 'RC Models', to: LinkBuilder.toSubcategory('toys', 'rc-models', { sort: 'best' }) },
+  { label: 'Crafts', to: LinkBuilder.toSubcategory('toys', 'crafts', { sort: 'best' }) },
+  { label: 'Collectibles', to: LinkBuilder.toSubcategory('toys', 'collectibles', { sort: 'best' }) },
     ],
   },
   // Office & School
@@ -88,10 +90,10 @@ export const MEGA_MENU = [
     title: 'Office & School',
     icon: '📚',
     links: [
-      { label: 'Stationery', to: '/shop?search=stationery&category=office' },
-      { label: 'Office Furniture', to: '/shop?search=office%20furniture&category=office' },
-      { label: 'Supplies', to: '/shop?search=supplies&category=office' },
-      { label: 'Tech', to: '/shop?search=office%20tech&category=office' },
+  { label: 'Stationery', to: LinkBuilder.toSubcategory('office', 'stationery', { sort: 'best' }) },
+  { label: 'Office Furniture', to: LinkBuilder.toSubcategory('office', 'office-furniture', { sort: 'best' }) },
+  { label: 'Supplies', to: LinkBuilder.toSubcategory('office', 'supplies', { sort: 'best' }) },
+  { label: 'Tech', to: LinkBuilder.toSubcategory('office', 'tech', { sort: 'best' }) },
     ],
   },
   // Baby & Kids
@@ -99,10 +101,10 @@ export const MEGA_MENU = [
     title: 'Baby & Kids',
     icon: '👶',
     links: [
-      { label: 'Clothing', to: '/shop?search=baby%20clothing&category=baby' },
-      { label: 'Toys', to: '/shop?search=baby%20toys&category=baby' },
-      { label: 'Feeding', to: '/shop?search=feeding&category=baby' },
-      { label: 'Nursery', to: '/shop?search=nursery&category=baby' },
+  { label: 'Clothing', to: LinkBuilder.toSubcategory('baby', 'clothing', { sort: 'best' }) },
+  { label: 'Toys', to: LinkBuilder.toSubcategory('baby', 'toys', { sort: 'best' }) },
+  { label: 'Feeding', to: LinkBuilder.toSubcategory('baby', 'feeding', { sort: 'best' }) },
+  { label: 'Nursery', to: LinkBuilder.toSubcategory('baby', 'nursery', { sort: 'best' }) },
     ],
   },
   // Entertainment
@@ -110,10 +112,10 @@ export const MEGA_MENU = [
     title: 'Entertainment',
     icon: '🎮',
     links: [
-      { label: 'Books', to: '/shop?search=books&category=entertainment' },
-      { label: 'Music', to: '/shop?search=music&category=entertainment' },
-      { label: 'Instruments', to: '/shop?search=instrument&category=entertainment' },
-      { label: 'Games', to: '/shop?search=games&category=entertainment' },
+  { label: 'Books', to: LinkBuilder.toSubcategory('entertainment', 'books', { sort: 'best' }) },
+  { label: 'Music', to: LinkBuilder.toSubcategory('entertainment', 'music', { sort: 'best' }) },
+  { label: 'Instruments', to: LinkBuilder.toSubcategory('entertainment', 'instruments', { sort: 'best' }) },
+  { label: 'Games', to: LinkBuilder.toSubcategory('entertainment', 'games', { sort: 'best' }) },
     ],
   },
   // Deals & Promotions
@@ -121,10 +123,10 @@ export const MEGA_MENU = [
     title: 'Deals & Promotions',
     icon: '💸',
     links: [
-      { label: 'Flash Deals', to: '/shop?search=flash%20deals' },
-      { label: 'Clearance', to: '/shop?search=clearance' },
-      { label: 'Coupons', to: '/shop?search=coupons' },
-      { label: 'Seasonal Offers', to: '/shop?search=seasonal%20offers' },
+  { label: 'Flash Deals', to: LinkBuilder.toDeal('percent-off-30') },
+  { label: 'Clearance', to: LinkBuilder.toDeal('clearance') },
+  { label: 'Coupons', to: '/discover' },
+  { label: 'Seasonal Offers', to: LinkBuilder.toDeal('percent-off-20') },
     ],
   },
 ];

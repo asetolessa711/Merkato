@@ -201,6 +201,8 @@ Features:
 
 - See `docs/testing-system.md` for test architecture & coverage.
 - Use `docs/` for additional architecture, API, and usage docs.
+- Admin Marketing Manager manual: `docs/MarketingManager_Manual.md` (step‑by‑step guide)
+- Rails Metrics Admin Guide: `docs/MERKATO_RAILS_METRICS_ADMIN_GUIDE.md` (KPIs, decisions, alerts, hygiene)
 
 ### MicroBanner (Promo/Trust bar)
 

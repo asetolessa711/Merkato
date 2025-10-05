@@ -142,8 +142,15 @@ function filterAndSort(cats, { visibleIn, country }) {
     const aw = code && a.regionWeights && typeof a.regionWeights[code] === 'number' ? a.regionWeights[code] : 0;
     const bw = code && b.regionWeights && typeof b.regionWeights[code] === 'number' ? b.regionWeights[code] : 0;
     if (aw !== bw) return bw - aw;
+    // Deterministic tie-breakers when region weight is equal:
+    // 1) Prefer root categories (no parent) before children for stable top-level menus
+    const aIsRoot = !(a && (a.parentId || (Array.isArray(a.path) && a.path.length > 0)));
+    const bIsRoot = !(b && (b.parentId || (Array.isArray(b.path) && b.path.length > 0)));
+    if (aIsRoot !== bIsRoot) return aIsRoot ? -1 : 1;
+    // 2) Then by displayOrder ascending
     const byOrder = (a.displayOrder || 0) - (b.displayOrder || 0);
     if (byOrder !== 0) return byOrder;
+    // 3) Finally, by name for full determinism
     return String(a.name).localeCompare(String(b.name));
   });
   return out;
@@ -189,6 +196,7 @@ module.exports = {
   computeChildren,
   getLeaves,
   getAttributesForSlug,
+  mergeOverrides,
   readOverrides,
   OVERRIDES_FILE,
   DATA_DIR,

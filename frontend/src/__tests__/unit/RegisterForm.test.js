@@ -1,11 +1,11 @@
 
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import RegisterPage from '../../pages/RegisterPage';
+import RegisterPage from '../../pages/RegisterPage'';
 import { MemoryRouter } from 'react-router-dom';
 import '@testing-library/jest-dom';
 import axios from 'axios';
-import { MessageProvider } from '../../context/MessageContext';
+import { MessageProvider } from '../../context/MessageContext'';
 
 describe('\ud83d\udcdd Register Form Validation', () => {
   beforeEach(() => {

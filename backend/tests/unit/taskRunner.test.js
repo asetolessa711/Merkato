@@ -2,16 +2,24 @@ const path = require('path');
 
 describe('taskRunner', () => {
   let taskRunner;
+  // Track created tasks to ensure we cancel if still running
+  const spawned = [];
   beforeEach(() => {
     jest.resetModules();
     process.env.JEST_WORKER_ID = '1'; // ensure test tasks are included
     taskRunner = require('../../utils/taskRunner');
   });
 
+  afterAll(() => {
+    // Best-effort cancel lingering tasks (should be none after auto-exit patch)
+    spawned.forEach(t => { try { t.kill && t.kill(); } catch(_){} });
+  });
+
   test('lists task defs and can run NOOP to success', (done) => {
     const defs = taskRunner.listTaskDefs();
     expect(defs.some(d => d.key === 'test:noop')).toBe(true);
     const t = taskRunner.createTask('test:noop');
+  spawned.push(t);
     const id = taskRunner.runTask(t);
     expect(id).toBe(t.id);
     const poll = setInterval(() => {
@@ -26,6 +34,7 @@ describe('taskRunner', () => {
 
   test('can start and cancel the hold task', (done) => {
     const t = taskRunner.createTask('test:hold');
+  spawned.push(t);
     const id = taskRunner.runTask(t);
     expect(id).toBe(t.id);
     setTimeout(() => {
@@ -47,6 +56,7 @@ describe('taskRunner', () => {
 
   test('subscribe/unsubscribe handle SSE clients safely', () => {
     const t = taskRunner.createTask('test:noop');
+  spawned.push(t);
     const res = { write: jest.fn() };
     taskRunner.subscribe(t.id, res);
     // simulate a log emission by running the task quickly
@@ -58,6 +68,7 @@ describe('taskRunner', () => {
 
   test('retry succeeds on flaky-once task', (done) => {
     const t = taskRunner.createTask('test:flaky-once');
+  spawned.push(t);
     const id = taskRunner.runTask(t);
     expect(id).toBe(t.id);
     const start = Date.now();
@@ -80,6 +91,7 @@ describe('taskRunner', () => {
 
   test('retry exhausts on always-fail task', (done) => {
     const t = taskRunner.createTask('test:always-fail');
+  spawned.push(t);
     const id = taskRunner.runTask(t);
     const poll = setInterval(() => {
       const cur = taskRunner.getTask(id);

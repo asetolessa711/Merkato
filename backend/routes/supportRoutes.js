@@ -54,16 +54,26 @@ router.get('/', protect, authorize('admin', 'global_admin', 'staff'), async (req
 // Update support ticket (mark resolved / add admin note)
 router.put('/:id', protect, authorize('admin', 'global_admin', 'staff'), async (req, res) => {
   try {
-    const support = await Support.findById(req.params.id);
+    // Validate ObjectId to avoid CastError returning 500 on malformed ids
+    const id = req.params.id;
+    const isValidId = require('mongoose').Types.ObjectId.isValid(id);
+    if (!isValidId) return res.status(400).json({ message: 'Invalid ticket id' });
+
+    const support = await Support.findById(id);
     if (!support) return res.status(404).json({ message: 'Ticket not found' });
 
+    // Accept alias "response" for adminNote for API ergonomics
+    const responseText = typeof req.body.response === 'string' ? req.body.response : undefined;
     support.status = req.body.status || support.status;
-    support.adminNote = req.body.adminNote || support.adminNote;
+    support.adminNote = (req.body.adminNote ?? responseText ?? support.adminNote);
 
     await support.save();
-    res.json({ message: 'Ticket updated' });
+    // Return the updated ticket including a response field alias
+    const obj = support.toObject();
+    obj.response = obj.adminNote;
+    return res.json(obj);
   } catch (err) {
-    res.status(500).json({ message: 'Failed to update ticket' });
+    return res.status(500).json({ message: 'Failed to update ticket' });
   }
 });
 

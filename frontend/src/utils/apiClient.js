@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { ENV } from '../config/env';
+import { ENV } from '../config/env'';
 
 // Configure global axios base URL if provided; tests often mock axios directly.
 try {

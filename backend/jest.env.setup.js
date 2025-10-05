@@ -21,23 +21,8 @@ if (!loadedAny) {
   console.warn('⚠️ No .env.test or .env.test.local file found in backend directory.');
 }
 
-// Final safety: ensure mongoose is closed when Jest finishes the test run in this process
-const maybeAddTeardown = () => {
-  try {
-    const mongoose = require('mongoose');
-    if (mongoose && typeof afterAll === 'function') {
-      afterAll(async () => {
-        try {
-          if (mongoose.connection && mongoose.connection.readyState !== 0) {
-            await mongoose.connection.close(false);
-          }
-        } catch (_) {}
-      });
-    }
-  } catch (_) {}
-};
-
-maybeAddTeardown();
+// Note: We intentionally avoid closing mongoose per test file here.
+// Global teardown handles closing DB/socket handles once after all tests finish.
 
 // Ensure NODE_ENV is 'test' for server.js gating
 if (!process.env.NODE_ENV || process.env.NODE_ENV !== 'test') {
@@ -61,4 +46,25 @@ if (!process.env.EMAIL_PASS) {
 // Provide a default local Mongo URI for tests if missing, so server.js can start in CI
 if (!process.env.MONGO_URI) {
   process.env.MONGO_URI = 'mongodb://127.0.0.1:27017/merkato_test';
+}
+
+// Ensure JWT secret exists in tests; registration/login depends on it
+if (!process.env.JWT_SECRET) {
+  process.env.JWT_SECRET = 'test-secret-please-change';
+}
+
+// Derivatives: enable and use small sizes in tests for stability and speed
+if (!process.env.IMG_DERIVATIVES_ENABLED) {
+  process.env.IMG_DERIVATIVES_ENABLED = 'true';
+}
+if (!process.env.IMG_HERO_MAX) {
+  process.env.IMG_HERO_MAX = '800';
+}
+if (!process.env.IMG_THUMB_MAX) {
+  process.env.IMG_THUMB_MAX = '160';
+}
+
+// Keep derivatives queue disabled under tests for determinism
+if (!process.env.IMG_DERIVATIVES_ASYNC) {
+  process.env.IMG_DERIVATIVES_ASYNC = 'false';
 }

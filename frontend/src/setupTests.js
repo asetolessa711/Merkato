@@ -30,6 +30,9 @@ import axios from 'axios';
 		'Not implemented: window.scrollTo',
 		// React Testing Library act() advisory for async state in mounted components
 		'inside a test was not wrapped in act',
+		// Benign noise when jsdom tries to hit http://localhost/ (IPv6 ::1) during certain flows
+		'connect ECONNREFUSED ::1:80',
+		'ECONNREFUSED ::1:80',
 	];
 
 	console.warn = (...args) => {
