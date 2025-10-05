@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo "[post-merge] Verifying no .js/.jsx twins were introduced..."
+if ! node scripts/check-no-js-jsx-twins.js; then
+  echo "⚠️ Twins detected after merge/pull. Please remove .js twins (keep .jsx) and run scripts/fix-import-extensions.js if needed.";
+  exit 1
+fi
+
+echo "✅ No twins detected post-merge."

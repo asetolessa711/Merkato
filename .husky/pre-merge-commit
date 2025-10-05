@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo "[pre-merge-commit] Running .js/.jsx twin check before finalizing merge..."
+node scripts/check-no-js-jsx-twins.js || {
+  echo "❌ Merge blocked: .js/.jsx twins detected. Resolve by removing the .js twin and updating imports.";
+  exit 1;
+}
+
+echo "✅ Merge twin check passed."

@@ -1,4 +1,15 @@
 #!/usr/bin/env sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Prevent pushing branches that reintroduce .js/.jsx twins under frontend/src
+echo "[pre-push] Checking for .js/.jsx twins..."
+node scripts/check-no-js-jsx-twins.js || {
+  echo "❌ Refusing to push: .js/.jsx twins detected. Fix by keeping only the .jsx version and normalizing imports.";
+  exit 1;
+}
+
+echo "✅ No .js/.jsx twins found. Proceeding with push."
+#!/usr/bin/env sh
 
 echo "husky pre-push: guard + backend/frontend tests (no coverage)"
 export CI=true
