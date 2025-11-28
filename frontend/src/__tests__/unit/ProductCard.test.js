@@ -2,6 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import ProductCard from '../../components/ProductCard';
 import { MemoryRouter } from 'react-router-dom';
+import { CartProvider } from '../../cart/CartContext';
 import '@testing-library/jest-dom';
 
 // Mock product data
@@ -13,12 +14,21 @@ const product = {
   image: 'test-product.jpg',
 };
 
+// Helper wrapper component
+const Wrapper = ({ children }) => (
+  <MemoryRouter>
+    <CartProvider>
+      {children}
+    </CartProvider>
+  </MemoryRouter>
+);
+
 describe('\ud83d\udecd\ufe0f ProductCard Component', () => {
   test('renders product name and price', () => {
     render(
-      <MemoryRouter>
+      <Wrapper>
         <ProductCard product={product} />
-      </MemoryRouter>
+      </Wrapper>
     );
     expect(screen.getByText(/test product/i)).toBeInTheDocument();
     expect(screen.getByText(/\$?49\.99/i)).toBeInTheDocument();
@@ -26,9 +36,9 @@ describe('\ud83d\udecd\ufe0f ProductCard Component', () => {
 
   test('displays product image with alt text', () => {
     render(
-      <MemoryRouter>
+      <Wrapper>
         <ProductCard product={product} />
-      </MemoryRouter>
+      </Wrapper>
     );
     const img = screen.getByRole('img');
     expect(img).toHaveAttribute('src', expect.stringContaining('test-product.jpg'));
@@ -38,9 +48,9 @@ describe('\ud83d\udecd\ufe0f ProductCard Component', () => {
   test('calls add-to-cart when button clicked', () => {
     const onAddToCart = jest.fn();
     render(
-      <MemoryRouter>
+      <Wrapper>
         <ProductCard product={product} onAddToCart={onAddToCart} />
-      </MemoryRouter>
+      </Wrapper>
     );
     const btn = screen.getByRole('button', { name: /add to cart/i });
     fireEvent.click(btn);
@@ -50,9 +60,9 @@ describe('\ud83d\udecd\ufe0f ProductCard Component', () => {
 
   test('disables add-to-cart button if out of stock', () => {
     render(
-      <MemoryRouter>
+      <Wrapper>
         <ProductCard product={{ ...product, stock: 0 }} />
-      </MemoryRouter>
+      </Wrapper>
     );
     const btn = screen.getByRole('button', { name: /add to cart/i });
     expect(btn).toBeDisabled();
@@ -60,18 +70,18 @@ describe('\ud83d\udecd\ufe0f ProductCard Component', () => {
 
   test('shows product description', () => {
     render(
-      <MemoryRouter>
+      <Wrapper>
         <ProductCard product={product} />
-      </MemoryRouter>
+      </Wrapper>
     );
     expect(screen.getByText(/a nice product for testing/i)).toBeInTheDocument();
   });
 
   test('matches snapshot', () => {
     const { asFragment } = render(
-      <MemoryRouter>
+      <Wrapper>
         <ProductCard product={product} />
-      </MemoryRouter>
+      </Wrapper>
     );
     expect(asFragment()).toMatchSnapshot();
   });

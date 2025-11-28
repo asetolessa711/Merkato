@@ -20,7 +20,8 @@ describe('Favorite Routes (coverage uplift)', () => {
         name: 'Fav Product',
         description: 'To be favorited',
         price: 9.99,
-        stock: 5
+        stock: 5,
+        category: 'General'
       });
     expect([201, 200]).toContain(prodRes.statusCode);
     createdProductId = prodRes.body._id || prodRes.body.id;

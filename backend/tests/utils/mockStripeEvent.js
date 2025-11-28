@@ -1,4 +1,5 @@
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+// Only initialize stripe if STRIPE_SECRET_KEY is available, otherwise use a test key
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder');
 
 /**
  * Generates a mock Stripe webhook event payload and signature for testing.

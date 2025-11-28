@@ -37,7 +37,7 @@ describe('Email Invoice Routes (coverage uplift)', () => {
     const pRes = await request(app)
       .post('/api/products')
       .set('Authorization', vendorToken)
-      .send({ name: 'Invoice Prod', price: 12.5, stock: 10 });
+      .send({ name: 'Invoice Prod', price: 12.5, stock: 10, category: 'General' });
     expect([200, 201]).toContain(pRes.statusCode);
     productId = pRes.body._id || pRes.body.id;
 
