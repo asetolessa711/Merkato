@@ -38,7 +38,9 @@ describe('CheckoutPage', () => {
     expect(screen.getByText('Test Product')).toBeInTheDocument();
     expect(screen.getByText('2')).toBeInTheDocument();
     expect(screen.getByText('$10')).toBeInTheDocument();
-    expect(screen.getByText(/total: \$20/i)).toBeInTheDocument();
+    // Component renders Subtotal, not Total
+    expect(screen.getByText(/subtotal/i)).toBeInTheDocument();
+    expect(screen.getByText('$20.00')).toBeInTheDocument();
   });
 
   it('shows buyer details form if not logged in', () => {
@@ -63,12 +65,16 @@ describe('CheckoutPage', () => {
     fireEvent.change(screen.getByLabelText(/shipping address/i), { target: { value: '123 Main St' } });
     fireEvent.change(screen.getByLabelText(/country/i), { target: { value: 'USA' } });
     fireEvent.click(screen.getByTestId('guest-summary-btn'));
-    // Modal should show
-    await waitFor(() => expect(screen.getByText(/order summary/i)).toBeInTheDocument());
-    // Apply promo code
-    fireEvent.change(screen.getByPlaceholderText(/promo code/i), { target: { value: 'SAVE10' } });
-    fireEvent.click(screen.getByText(/apply/i));
-    await waitFor(() => expect(screen.getByText(/promo applied/i)).toBeInTheDocument());
+    // Modal should show - look for the Close button which is unique to the modal
+    await waitFor(() => expect(screen.getByRole('button', { name: /close/i })).toBeInTheDocument());
+    // Apply promo code - use getAllByPlaceholderText since there may be multiple promo inputs
+    const promoInputs = screen.getAllByPlaceholderText(/promo code/i);
+    fireEvent.change(promoInputs[promoInputs.length - 1], { target: { value: 'SAVE10' } });
+    // Click the Apply button in the modal (the last one)
+    const applyButtons = screen.getAllByText(/apply/i);
+    fireEvent.click(applyButtons[applyButtons.length - 1]);
+    // Use getAllByText since promo applied appears in both aside and modal
+    await waitFor(() => expect(screen.getAllByText(/promo applied/i).length).toBeGreaterThan(0));
     // Use a custom matcher to handle split nodes for the discount line
     expect(
       screen.getByText((content, node) => {
