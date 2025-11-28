@@ -4,6 +4,7 @@ import { render, screen, waitFor, within, fireEvent } from '@testing-library/rea
 import '@testing-library/jest-dom';
 import ShopPage from '../../pages/ShopPage';
 import { MemoryRouter } from 'react-router-dom';
+import { CartProvider } from '../../cart/CartContext';
 
 import axios from 'axios';
 
@@ -23,7 +24,9 @@ afterAll(() => {
 function renderPage() {
   return render(
     <MemoryRouter initialEntries={['/shop']}>
-      <ShopPage />
+      <CartProvider>
+        <ShopPage />
+      </CartProvider>
     </MemoryRouter>
   );
 }

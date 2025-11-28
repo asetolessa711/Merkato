@@ -63,12 +63,15 @@ describe('CheckoutPage', () => {
     fireEvent.change(screen.getByLabelText(/shipping address/i), { target: { value: '123 Main St' } });
     fireEvent.change(screen.getByLabelText(/country/i), { target: { value: 'USA' } });
     fireEvent.click(screen.getByTestId('guest-summary-btn'));
-    // Modal should show
-    await waitFor(() => expect(screen.getByText(/order summary/i)).toBeInTheDocument());
-    // Apply promo code
-    fireEvent.change(screen.getByPlaceholderText(/promo code/i), { target: { value: 'SAVE10' } });
-    fireEvent.click(screen.getByText(/apply/i));
-    await waitFor(() => expect(screen.getByText(/promo applied/i)).toBeInTheDocument());
+    // Modal should show - there may be multiple "Order Summary" elements (one in aside, one in modal)
+    await waitFor(() => expect(screen.getAllByText(/order summary/i).length).toBeGreaterThanOrEqual(2));
+    // Apply promo code - there are multiple promo inputs, use the last one (in modal)
+    const promoInputs = screen.getAllByPlaceholderText(/promo code/i);
+    fireEvent.change(promoInputs[promoInputs.length - 1], { target: { value: 'SAVE10' } });
+    // Click the Apply button - there are multiple, use the last one (in modal)
+    const applyBtns = screen.getAllByText(/apply/i);
+    fireEvent.click(applyBtns[applyBtns.length - 1]);
+    await waitFor(() => expect(screen.getAllByText(/promo applied/i).length).toBeGreaterThanOrEqual(1));
     // Use a custom matcher to handle split nodes for the discount line
     expect(
       screen.getByText((content, node) => {
