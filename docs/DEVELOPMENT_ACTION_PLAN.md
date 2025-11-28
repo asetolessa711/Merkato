@@ -68,23 +68,33 @@ This document outlines a prioritized action plan to accelerate the development o
 **Effort: High | Impact: Critical for B2I**
 
 - [ ] **Create Organization Schema**
+  
+  Create new file: `backend/models/Organization.js`
+  
+  This model extends the existing User model's vendor fields (`businessRegistryId`, `taxId`, `bankDetails`) to support full organization entities. The migration strategy is:
+  1. Create Organization model alongside User
+  2. Link users to organizations via OrgUser junction
+  3. Gradually migrate vendor-specific fields to organization level
+  
   ```javascript
-  // Proposed schema
-  {
-    legalName: String,
+  // backend/models/Organization.js - Proposed schema
+  const mongoose = require('mongoose');
+  
+  const organizationSchema = new mongoose.Schema({
+    legalName: { type: String, required: true },
     tradingName: String,
     registrationId: String,
     taxId: String,
-    type: ['business', 'institution', 'ngo', 'government'],
+    type: { type: String, enum: ['business', 'institution', 'ngo', 'government'] },
     addresses: [AddressSchema],
-    primaryContact: { type: ObjectId, ref: 'User' },
-    status: ['pending', 'approved', 'suspended'],
-    kycStatus: ['pending_review', 'approved', 'rejected'],
+    primaryContact: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    status: { type: String, enum: ['pending', 'approved', 'suspended'], default: 'pending' },
+    kycStatus: { type: String, enum: ['pending_review', 'approved', 'rejected'], default: 'pending_review' },
     kycDocuments: [DocumentSchema],
-    sectors: [String],
-    createdAt: Date,
-    updatedAt: Date
-  }
+    sectors: [String]
+  }, { timestamps: true });
+  
+  module.exports = mongoose.model('Organization', organizationSchema);
   ```
 
 - [ ] **User-Organization Relationship**
@@ -201,9 +211,35 @@ This document outlines a prioritized action plan to accelerate the development o
 **Effort: High | Impact: High**
 
 - [ ] **Service Setup**
-  - Create AI service module
-  - OpenAI/Azure OpenAI integration
-  - Rate limiting and fallback handling
+  
+  Create new files:
+  - `backend/services/aiOrchestrator.js` - Main AI service module
+  - `backend/middleware/aiMiddleware.js` - Request/response handling
+  - `backend/utils/aiHelpers.js` - Utility functions for AI operations
+  
+  Architecture pattern:
+  1. Use service layer pattern for AI operations
+  2. Implement circuit breaker for external API calls
+  3. Queue-based processing for non-blocking AI tasks
+  
+  ```javascript
+  // backend/services/aiOrchestrator.js - Base structure
+  const OpenAI = require('openai');
+  
+  class AIOrchestrator {
+    constructor() {
+      this.client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+      this.enabled = !!process.env.OPENAI_API_KEY;
+    }
+    
+    async enrichProduct(product) { /* ... */ }
+    async generateDescription(productName, attributes) { /* ... */ }
+    async suggestCategory(productName) { /* ... */ }
+    async getEmbedding(text) { /* ... */ }
+  }
+  
+  module.exports = new AIOrchestrator();
+  ```
 
 - [ ] **Catalog Enrichment (High Impact)**
   - Auto-generate product descriptions
