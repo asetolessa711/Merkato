@@ -1,5 +1,11 @@
-// Only initialize stripe if STRIPE_SECRET_KEY is available, otherwise use a test key
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder');
+// Only initialize stripe if STRIPE_SECRET_KEY is available
+// In test environments, STRIPE_SECRET_KEY should be set as a test key (sk_test_...)
+// This avoids hardcoding any keys in the codebase
+const stripeKey = process.env.STRIPE_SECRET_KEY;
+if (!stripeKey) {
+  console.warn('[mockStripeEvent] STRIPE_SECRET_KEY not set. Stripe signature generation may fail.');
+}
+const stripe = stripeKey ? require('stripe')(stripeKey) : null;
 
 /**
  * Generates a mock Stripe webhook event payload and signature for testing.
@@ -31,7 +37,7 @@ function mockStripeEvent(event = null, type = 'payment_intent.succeeded', data =
 
   const payloadString = JSON.stringify(eventPayload);
 
-  const signature = secret
+  const signature = secret && stripe
     ? stripe.webhooks.generateTestHeaderString({ payload: payloadString, secret, timestamp })
     : generateSignatureHeader(payloadString, timestamp);
 
