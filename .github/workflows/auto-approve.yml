@@ -19,7 +19,7 @@ jobs:
         id: app-token
         uses: tibdex/github-app-token@v2
         with:
-          app_id: ${{ secrets.AUTO_APPROVE_APP_ID }}
+          app_id: 3245068
           private_key: ${{ secrets.AUTO_APPROVE_PRIVATE_KEY }}
           installation_retrieval_mode: repository
           installation_retrieval_payload: ${{ github.repository }}
