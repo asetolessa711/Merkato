@@ -1,0 +1,36 @@
+name: Auto-approve PR
+
+"on":
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  approve:
+    # Safety: only same-repo branches, and only PRs opened by you
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.user.login == 'asetolessa711' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Create GitHub App token
+        id: app-token
+        uses: tibdex/github-app-token@v2
+        with:
+          app_id: ${{ secrets.AUTO_APPROVE_APP_ID }}
+          installation_id: ${{ secrets.AUTO_APPROVE_INSTALLATION_ID }}
+          private_key: ${{ secrets.AUTO_APPROVE_PRIVATE_KEY }}
+
+      - name: Approve PR via GitHub API
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          gh api \
+            -X POST \
+            repos/$REPO/pulls/$PR_NUMBER/reviews \
+            -f event='APPROVE' \
+            -f body='Auto-approved by GitHub App to allow CI + governed merge.'
