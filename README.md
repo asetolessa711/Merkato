@@ -93,13 +93,28 @@ STRIPE_WEBHOOK_SECRET=whsec_xxx
 ### 3. Run in Dev Mode
 
 ```bash
-# In one terminal
-cd backend
+# Canonical (from repo root)
 npm run dev
 
-# In another terminal
-cd frontend
-npm run dev
+# Alternative (two terminals)
+cd backend && npm run dev
+cd frontend && npm run dev
+```
+
+### 4. Core Verification (before PR/merge)
+
+Run the standard checks from the repo root:
+
+```bash
+npm run guard:focused
+npm run guard:lint
+npm run verify:core
+```
+
+Optional visibility scan for duplicate basenames (non-blocking):
+
+```bash
+npm run guard:duplicates
 ```
 
 ---
