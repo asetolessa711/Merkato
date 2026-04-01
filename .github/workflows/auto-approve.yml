@@ -15,6 +15,34 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Validate GitHub App private key secret
+        env:
+          PRIVATE_KEY: ${{ secrets.AUTO_APPROVE_PRIVATE_KEY }}
+        run: |
+          python - <<'PY'
+          import os, re, sys
+
+          key = os.environ.get('PRIVATE_KEY', '')
+          if not key.strip():
+            print('AUTO_APPROVE_PRIVATE_KEY is empty or not set.')
+            sys.exit(1)
+
+          # Do not print the key. Only validate expected PEM markers.
+          has_begin = re.search(r'^-----BEGIN (RSA )?PRIVATE KEY-----\s*$', key, re.M) is not None
+          has_end = re.search(r'^-----END (RSA )?PRIVATE KEY-----\s*$', key, re.M) is not None
+
+          if not (has_begin and has_end):
+            print('AUTO_APPROVE_PRIVATE_KEY does not look like a PEM private key (missing BEGIN/END PRIVATE KEY lines).')
+            print('Paste the full contents of the .pem file you downloaded from the GitHub App “Private keys” page.')
+            sys.exit(1)
+
+          if key.strip().startswith('SHA256:'):
+            print('AUTO_APPROVE_PRIVATE_KEY looks like a SHA256 fingerprint, not a PEM private key.')
+            sys.exit(1)
+
+          print('Private key secret format looks like PEM.')
+          PY
+
       - name: Create GitHub App token
         id: app-token
         uses: tibdex/github-app-token@v2
