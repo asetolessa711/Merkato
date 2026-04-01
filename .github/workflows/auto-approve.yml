@@ -82,7 +82,7 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           REPO: ${{ github.repository }}
         run: |
-          gh api \
+          gh api --include \
             -X POST \
             repos/$REPO/pulls/$PR_NUMBER/reviews \
             -f event='APPROVE' \
