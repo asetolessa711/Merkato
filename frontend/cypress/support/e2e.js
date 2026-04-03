@@ -64,20 +64,28 @@ if ((excludeTag || includeTag) && !globalThis[TAG_WRAPPER_FLAG]) {
   });
 
   const origIt = globalThis.it;
-  const makeBound = (base) => function wrapped(title, testFn) {
+  const origItBase = typeof origIt === 'function' ? origIt.bind(globalThis) : null;
+  const origItOnly = origIt && typeof origIt.only === 'function' ? origIt.only.bind(globalThis) : null;
+  const origItSkip = origIt && typeof origIt.skip === 'function'
+    ? origIt.skip.bind(globalThis)
+    : origItBase;
+
+  const makeBound = (base) => function wrapped(title, ...rest) {
     const t = typeof title === 'string' ? title : '';
     const shouldInclude = includeTag ? t.includes(includeTag) : true;
     const shouldExclude = excludeTag ? t.includes(excludeTag) : false;
     if (!shouldInclude || shouldExclude) {
       // Skip at definition time
-      return origIt.skip.call(globalThis, title || '(skipped by tag filter)');
+      return origItSkip ? origItSkip(title || '(skipped by tag filter)', ...rest) : undefined;
     }
-    return base.call(globalThis, title, testFn);
+    return base ? base(title, ...rest) : undefined;
   };
 
   // Replace global it with a safe wrapper and preserve it.only/skip
-  // eslint-disable-next-line no-global-assign
-  globalThis.it = makeBound(origIt);
-  if (origIt.only) globalThis.it.only = makeBound(origIt.only);
-  if (origIt.skip) globalThis.it.skip = origIt.skip.bind(globalThis);
+  if (origItBase) {
+    // eslint-disable-next-line no-global-assign
+    globalThis.it = makeBound(origItBase);
+    if (origItOnly) globalThis.it.only = makeBound(origItOnly);
+    if (origItSkip) globalThis.it.skip = origItSkip;
+  }
 }

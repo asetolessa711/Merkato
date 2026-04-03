@@ -108,6 +108,7 @@ jobs:
           browser: chrome
         env:
           CYPRESS_baseUrl: http://localhost:3000
+          CYPRESS_API_URL: http://localhost:5000
           CYPRESS_CACHE_FOLDER: ${{ github.workspace }}/.cache/cypress
 
       - name: Upload Cypress screenshots
