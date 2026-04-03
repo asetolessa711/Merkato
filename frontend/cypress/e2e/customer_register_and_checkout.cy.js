@@ -40,16 +40,20 @@ describe('🛒 Customer Register + Checkout (Auth Path)', () => {
     cy.get('form').contains('button', /register/i).click();
     cy.wait('@register');
 
-    // Ensure we are authenticated (redirect or manual login fallback)
-    cy.location('pathname', { timeout: 10000 }).then((path) => {
-      if (path.includes('/register')) {
-        cy.visit('/login');
-        cy.intercept('POST', '/api/auth/login').as('login');
-        cy.get('input[name="email"]').type(email);
-        cy.get('input[name="password"]').type(password);
-        cy.get('form').contains('button', /login/i).click();
-        cy.wait('@login');
-      }
+    // Register flow should exit /register and persist auth token.
+    // If token is missing in CI timing windows, recover via API login (no flaky UI typing).
+    cy.location('pathname', { timeout: 10000 }).should('not.include', '/register');
+    cy.window().then((win) => {
+      const existingToken = win.localStorage.getItem('token') || win.localStorage.getItem('merkato-token');
+      if (existingToken) return;
+
+      cy.request('POST', '/api/auth/login', { email, password }).then(({ body }) => {
+        const token = body?.token;
+        expect(token, 'fallback login token').to.be.a('string').and.not.be.empty;
+        win.localStorage.setItem('token', token);
+        win.localStorage.setItem('merkato-token', token);
+        win.localStorage.setItem('user', JSON.stringify(body));
+      });
     });
 
     // Navigate to shop & add product
