@@ -65,15 +65,18 @@ jobs:
       - name: Comment tag scope on PR
         if: always()
         uses: actions/github-script@v7
+        env:
+          INCLUDE_TAGS: ${{ steps.tags.outputs.include }}
+          EXCLUDE_TAGS: ${{ steps.tags.outputs.exclude }}
         with:
           script: |
-            const include = '${{ steps.tags.outputs.include }}' || '@smoke';
-            const exclude = '${{ steps.tags.outputs.exclude }}' || '@flaky';
+            const include = process.env.INCLUDE_TAGS || '@smoke';
+            const exclude = process.env.EXCLUDE_TAGS || '@flaky';
             const body = [
               '### E2E Smoke Scope',
               '',
-              `Included tags: \\`${include}\\``,
-              `Excluded tags: \\`${exclude}\\``,
+              'Included tags: `' + include + '`',
+              'Excluded tags: `' + exclude + '`',
               '',
               'Labels can tune scope, e.g.:',
               '- e2e-include-a11y, e2e-include-admin, e2e-include-vendor, e2e-include-buyer',

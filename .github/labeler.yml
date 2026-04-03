@@ -1,6 +1,20 @@
-# Labeler configuration: Map file globs to labels
-backend/**: [backend]
-frontend/**: [frontend]
-docs/**: [documentation]
-"**/*.md": [documentation]
-"**/test*/*": [tests]
+backend:
+  - changed-files:
+      - any-glob-to-any-file: 'backend/**'
+
+frontend:
+  - changed-files:
+      - any-glob-to-any-file: 'frontend/**'
+
+documentation:
+  - changed-files:
+      - any-glob-to-any-file:
+          - 'docs/**'
+          - '**/*.md'
+
+tests:
+  - changed-files:
+      - any-glob-to-any-file:
+          - '**/test*/*'
+          - '**/*test*.*'
+          - '**/__tests__/**'

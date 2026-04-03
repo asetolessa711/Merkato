@@ -20,7 +20,7 @@ jobs:
           npm audit fix || echo "No fixable vulnerabilities in backend"
       - name: Run npm audit fix (frontend)
         run: |
-          cd ../frontend
+          cd frontend
           npm ci
           npm audit fix || echo "No fixable vulnerabilities in frontend"
       - name: Commit and push changes

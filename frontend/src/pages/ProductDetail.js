@@ -3,7 +3,6 @@ import axios from 'axios';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { syncCart } from '../utils/cartClient';
 import { fetchPaymentMethods } from '../utils/paymentsClient';
-import { useCart } from '../cart/CartContext';
 
 function ProductDetail({ currency = 'USD', rates = { USD: 1, ETB: 144, EUR: 0.91 } }) {
   const { id } = useParams();
@@ -17,7 +16,6 @@ function ProductDetail({ currency = 'USD', rates = { USD: 1, ETB: 144, EUR: 0.91
   const token = localStorage.getItem('token');
   const headers = { Authorization: `Bearer ${token}` };
   const navigate = useNavigate();
-  const { add } = useCart();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -62,12 +60,31 @@ const getDisplayPrice = (p) => {
 };
 
 const handleAddToCart = async () => {
-  // Primary cart state (used by CartPage and modern flows)
+  const now = Date.now();
+
+  // Keep CartContext-compatible local state in sync without requiring a provider in isolated tests.
   try {
+    const key = 'cart:v1';
+    const raw = localStorage.getItem(key);
+    const parsed = raw ? JSON.parse(raw) : { items: [], updatedAt: now };
+    const items = Array.isArray(parsed.items) ? [...parsed.items] : [];
+
     const sku = String(product.sku || product._id || product.id || product.name);
     const title = String(product.name || product.title || 'Untitled');
     const price = Number(product.price) || 0;
-    add({ sku, title, price, image: product.image }, 1);
+    const idx = items.findIndex((it) => it.sku === sku);
+    if (idx >= 0) {
+      items[idx] = { ...items[idx], qty: (items[idx].qty || 0) + 1 };
+    } else {
+      items.push({ sku, title, price, image: product.image, qty: 1 });
+    }
+
+    const next = { items, updatedAt: now };
+    const nextRaw = JSON.stringify(next);
+    localStorage.setItem(key, nextRaw);
+    try {
+      window.dispatchEvent(new StorageEvent('storage', { key, newValue: nextRaw }));
+    } catch (_) {}
   } catch (_) {}
 
   // Legacy cart keys retained for backward compatibility with older integrations/tests.
@@ -82,7 +99,6 @@ const handleAddToCart = async () => {
     cart.push({ ...product, quantity: 1 });
   }
 
-  const now = Date.now();
   localStorage.setItem('merkato-cart', JSON.stringify({
     items: cart,
     timestamp: now

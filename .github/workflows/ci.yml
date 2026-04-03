@@ -25,14 +25,15 @@ jobs:
         working-directory: backend
         run: npm ci
       - name: Create backend/.env.test
+        working-directory: backend
         run: |
-          echo "NODE_ENV=test" >> backend/.env.test
-          echo "MONGO_URI=mongodb://127.0.0.1:27017/merkato_test" >> backend/.env.test
-          echo "JWT_SECRET=test_secret" >> backend/.env.test
-          echo "CLIENT_URL=http://localhost:3000" >> backend/.env.test
-          echo "EMAIL_USER=test@example.com" >> backend/.env.test
-          echo "EMAIL_PASS=test-password" >> backend/.env.test
-          echo "OPENAI_API_KEY=" >> backend/.env.test
+          echo "NODE_ENV=test" >> .env.test
+          echo "MONGO_URI=mongodb://127.0.0.1:27017/merkato_test" >> .env.test
+          echo "JWT_SECRET=test_secret" >> .env.test
+          echo "CLIENT_URL=http://localhost:3000" >> .env.test
+          echo "EMAIL_USER=test@example.com" >> .env.test
+          echo "EMAIL_PASS=test-password" >> .env.test
+          echo "OPENAI_API_KEY=" >> .env.test
       - name: Run backend tests
         working-directory: backend
         env:

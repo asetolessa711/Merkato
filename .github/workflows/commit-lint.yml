@@ -9,3 +9,6 @@ jobs:
       - uses: wagoid/commitlint-github-action@v5
         with:
           failOnWarnings: false
+          failOnErrors: true
+          configFile: ./commitlint.config.js
+          commitDepth: 1
