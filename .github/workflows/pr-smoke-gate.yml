@@ -28,6 +28,23 @@ jobs:
       - name: Install frontend deps
         working-directory: frontend
         run: npm ci
+      - name: Restore Cypress binary cache
+        id: cypress-cache
+        uses: actions/cache@v4
+        with:
+          path: ./.cache/cypress
+          key: cypress-${{ runner.os }}-pr-smoke-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: |
+            cypress-${{ runner.os }}-pr-smoke-
+            cypress-${{ runner.os }}-
+      - name: Ensure Cypress binary (install/verify)
+        if: steps.cypress-cache.outputs.cache-hit != 'true'
+        working-directory: frontend
+        env:
+          CI: 'true'
+          CYPRESS_CACHE_FOLDER: ${{ github.workspace }}/.cache/cypress
+        run: |
+          npx cypress install --force || npx cypress verify
       - name: Run smoke (measure time and gate)
         id: smoke
         working-directory: frontend
@@ -38,6 +55,7 @@ jobs:
           E2E_BACKEND_PORT: '5051'
           CYPRESS_retries: '2'
           CYPRESS_EXCLUDE_TAG: '@flaky'
+          CYPRESS_CACHE_FOLDER: ${{ github.workspace }}/.cache/cypress
           # Focus a fast, stable subset
           E2E_SPEC: >-
             cypress/e2e/basic_navigation.cy.js,
@@ -46,17 +64,23 @@ jobs:
             cypress/e2e/card_intent.cy.js
         run: |
           start=$(date +%s)
+          set +e
           npm run e2e:run
           code=$?
+          set -e
           end=$(date +%s)
-          echo "duration=$((end-start))" >> $GITHUB_OUTPUT
+          echo "duration=$((end-start))" >> "$GITHUB_OUTPUT"
           exit $code
       - name: Enforce 5-minute budget
         if: always()
         run: |
           dur=${{ steps.smoke.outputs.duration }}
           echo "Total duration: ${dur}s"
-          if [ -z "$dur" ] || [ "$dur" -gt 300 ]; then
+          if [ -z "$dur" ]; then
+            echo "::warning::Smoke duration unavailable; preserving original smoke step result."
+            exit 0
+          fi
+          if [ "$dur" -gt 300 ]; then
             echo "::error::Smoke suite exceeded budget (<=300s)."
             exit 1
           fi
