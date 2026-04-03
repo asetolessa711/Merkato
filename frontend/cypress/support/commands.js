@@ -14,22 +14,37 @@ Cypress.Commands.add('ensureSeed', () => {
 // Custom command to seed orders for tests
 // Accepts an optional payload (ignored by backend route, but kept for API-compat)
 Cypress.Commands.add('seedOrders', (payload) => {
+  // Keep a deterministic fallback id for specs that pass explicit payloads
+  const fallbackOrderId = Array.isArray(payload) && payload.length
+    ? (payload[0]._id || payload[0].id || '')
+    : '';
+
   // Use token from localStorage to authorize the test seed endpoint
-  cy.window().then((win) => {
+  return cy.window().then((win) => {
     const token = win.localStorage.getItem('token');
     // Persist payload for UI-level injection as a fallback (AdminOrders reads e2e-orders)
     if (payload) {
       try { win.localStorage.setItem('e2e-orders', JSON.stringify(payload)); } catch {}
     }
-    cy.request({
+    return cy.request({
       method: 'POST',
       url: `${API_URL}/api/test/seed-orders`,
       headers: token ? { Authorization: `Bearer ${token}` } : {},
       body: payload || {},
       failOnStatusCode: false
     });
-    // Ensure the UI reflects the seeded data immediately
-    cy.reload();
+  }).then((res) => {
+    const body = res && res.body ? res.body : {};
+    const seededId =
+      body.orderId ||
+      body.id ||
+      body.order?._id ||
+      (Array.isArray(body.orders) && body.orders[0] && body.orders[0]._id) ||
+      (Array.isArray(body.created) && body.created[0] && body.created[0]._id) ||
+      fallbackOrderId;
+
+    // Ensure the UI reflects injected localStorage seeded data immediately
+    return cy.reload().then(() => (seededId ? String(seededId) : ''));
   });
 });
 // Custom command to log in as admin via API for stability

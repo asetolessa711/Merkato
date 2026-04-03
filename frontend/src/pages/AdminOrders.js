@@ -762,7 +762,7 @@ function AdminOrders({ showMessage: showMessageProp, initialOrders }) {
       {/* Render Undo button for bulk action, hide after click for test compatibility */}
       {!undoClicked && !showBulkSummary && (
         <button
-          data-testid="undo-bulk-action"
+          data-testid="undo-bulk-action-secondary"
           style={{ marginLeft: 10, background: "rgb(255, 224, 224)" }}
           onClick={() => setTimeout(() => setUndoClicked(true), 0)}
         >

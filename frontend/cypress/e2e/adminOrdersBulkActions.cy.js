@@ -35,7 +35,7 @@ describe('AdminOrders Bulk Actions E2E', () => {
     cy.get('[data-testid="bulk-preview-header"]').should('exist').and('be.visible');
     cy.get('[data-testid="bulk-preview-dialog"] button').contains('Confirm').scrollIntoView().should('be.visible').click();
     cy.wait('@bulkStatus');
-    cy.get('[data-testid="undo-bulk-action"]').scrollIntoView().should('exist').and('be.visible').click();
+    cy.get('[data-testid="undo-bulk-action"]').first().scrollIntoView().should('exist').and('be.visible').click({ force: true });
     cy.get('[data-testid="undo-bulk-action"]').should('not.exist');
   });
 

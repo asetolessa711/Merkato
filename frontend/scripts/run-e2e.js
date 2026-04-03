@@ -6,6 +6,11 @@ const os = require('os');
 const { spawn, execSync } = require('child_process');
 const waitOn = require('wait-on');
 const net = require('net');
+const {
+  startProgressSpinner,
+  stopProgressSpinner,
+  renderPrettyCypressResults,
+} = require('./prettyE2eReporter');
 
 function run(cmd, args, opts = {}) {
   const child = spawn(cmd, args, { stdio: 'inherit', shell: true, ...opts });
@@ -351,8 +356,13 @@ async function main() {
     console.log('[e2e] Cypress env (filtered):', JSON.stringify(expose));
     console.log('[e2e] Cypress args:', JSON.stringify(cyArgs));
   } catch (_) {}
+  const cypressSpinner = startProgressSpinner('[e2e] Running Cypress specs...');
   const cy = run('npx', cyArgs, { cwd: frontendDir, env: cyEnv });
   const cyCode = await new Promise((resolve) => cy.on('close', resolve));
+  stopProgressSpinner(
+    cypressSpinner,
+    cyCode === 0 ? '✔ [e2e] Cypress run completed' : `✘ [e2e] Cypress run failed (exit ${cyCode})`
+  );
   try {
     const summaryPath = path.join(frontendDir, 'cypress-summary.txt');
     // Aggregate all mochawesome JSON reports in resultsDir
@@ -370,13 +380,15 @@ async function main() {
           total.duration += Number(s.duration || 0);
         } catch (_) {}
       }
-      const line = `[e2e] Cypress results: ${total.tests} tests, ${total.passes} passed, ${total.failures} failed`;
+      const prettyTotals = renderPrettyCypressResults(resultsDir, { prefix: '[e2e]' });
+      const view = prettyTotals || total;
+      const prettyLine = `[e2e] Cypress results: ${view.tests} tests, ${view.passes} passed, ${view.failures} failed`;
       const meta = [];
       if (ephemeralDbName) meta.push(`db=${ephemeralDbName}`);
       if (apiUrl) meta.push(`api=${apiUrl}`);
       const metaLine = meta.length ? ` [${meta.join(' ')}]` : '';
-      console.log(line);
-      try { fs.writeFileSync(summaryPath, `${line}${metaLine}\n`, 'utf8'); } catch (_) {}
+      console.log(prettyLine);
+      try { fs.writeFileSync(summaryPath, `${prettyLine}${metaLine}\n`, 'utf8'); } catch (_) {}
     } else {
       const fallback = `[e2e] Cypress finished with exit code ${cyCode}. No JSON reports found in ${resultsDir}.`;
       console.warn(fallback);

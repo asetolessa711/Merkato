@@ -57,41 +57,49 @@ router.get('/vendor/:id', async (req, res) => {
 router.post('/', protect, authorize('vendor', 'admin'), async (req, res) => {
   try {
     const body = req.body || {};
-    // 1) Validate category against taxonomy: must be a leaf and visible for upload
+    // 1) Validate category against taxonomy: must be a leaf and visible for upload.
+    // If taxonomy upload config is unavailable, gracefully fall back to legacy behavior.
     const { categories } = await buildTaxonomy();
     const filtered = filterAndSort(categories, { visibleIn: 'upload', country: (req.user.country || '').toUpperCase() });
     const { byId, children } = computeChildren(filtered);
-    // Allow selection by slug or id; fallback to simple label string
+    const enforceTaxonomy = filtered.length > 0;
     const chosenSlug = body.categorySlug || body.category;
-    const chosen = [...byId.values()].find(c => c.slug === chosenSlug || c.id === chosenSlug || c.name === body.category);
-    if (!chosen) {
-      return res.status(400).json({ message: 'Invalid or unsupported category' });
-    }
-    if ((children.get(chosen.id) || []).length > 0) {
-      return res.status(400).json({ message: 'Please choose a more specific category' });
+    const chosen = enforceTaxonomy
+      ? [...byId.values()].find(c => c.slug === chosenSlug || c.id === chosenSlug || c.name === body.category)
+      : null;
+
+    if (enforceTaxonomy) {
+      if (!chosen) {
+        return res.status(400).json({ message: 'Invalid or unsupported category' });
+      }
+      if ((children.get(chosen.id) || []).length > 0) {
+        return res.status(400).json({ message: 'Please choose a more specific category' });
+      }
     }
 
-    // 2) Validate dynamic attributes: required fields present
-    const attrs = Array.isArray(chosen.attributes) ? chosen.attributes : [];
+    // 2) Validate dynamic attributes: required fields present (taxonomy mode only)
+    const attrs = Array.isArray(chosen?.attributes) ? chosen.attributes : [];
     const attrObj = body.attributes || {};
-    for (const a of attrs) {
-      if (a.required) {
-        const val = attrObj[a.key];
-        if (val === undefined || val === null || val === '') {
-          return res.status(400).json({ message: `${a.label || a.key} is required` });
+    if (enforceTaxonomy) {
+      for (const a of attrs) {
+        if (a.required) {
+          const val = attrObj[a.key];
+          if (val === undefined || val === null || val === '') {
+            return res.status(400).json({ message: `${a.label || a.key} is required` });
+          }
         }
       }
     }
 
-    // Compute category path slugs for SEO
-    const pathIds = Array.isArray(chosen.path) ? chosen.path.slice() : [];
+    // Compute category path slugs for SEO (taxonomy mode)
+    const pathIds = Array.isArray(chosen?.path) ? chosen.path.slice() : [];
     const pathSlugs = pathIds.map(id => byId.get(id)?.slug).filter(Boolean);
 
     const product = new Product({
       ...body,
-      category: body.category || chosen.name,
-      categoryId: chosen.id,
-      categorySlug: chosen.slug,
+      category: body.category || chosen?.name,
+      categoryId: chosen?.id,
+      categorySlug: chosen?.slug,
       categoryPathIds: pathIds,
       categoryPathSlugs: pathSlugs,
       attributes: attrObj,

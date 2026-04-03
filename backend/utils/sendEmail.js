@@ -6,25 +6,30 @@ const {
   EMAIL_USER = process.env.EMAIL_USER,
   EMAIL_PASS = process.env.EMAIL_PASS,
   BASE_URL = process.env.CLIENT_URL || "http://localhost:3000",
-  EMAIL_FROM = `Merkato <${EMAIL_USER}>`,
+  EMAIL_FROM = `Merkato <${EMAIL_USER || "no-reply@merkato.local"}>`,
 } = process.env;
 
+const isProduction = process.env.NODE_ENV === "production";
+const hasEmailCreds = Boolean(EMAIL_USER && EMAIL_PASS);
+
 // Validate required environment variables
-if (!EMAIL_USER || !EMAIL_PASS) {
+if (!hasEmailCreds && isProduction) {
   throw new Error(
     "❌ EMAIL_USER and EMAIL_PASS must be set in environment variables",
   );
 }
 
-// Enhanced transporter with TLS
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: { user: EMAIL_USER, pass: EMAIL_PASS },
-  tls: {
-    rejectUnauthorized: true,
-    minVersion: "TLSv1.2",
-  },
-});
+// Enhanced transporter with TLS in production-like paths; JSON transport in test/dev without creds.
+const transporter = hasEmailCreds
+  ? nodemailer.createTransport({
+      service: "gmail",
+      auth: { user: EMAIL_USER, pass: EMAIL_PASS },
+      tls: {
+        rejectUnauthorized: true,
+        minVersion: "TLSv1.2",
+      },
+    })
+  : nodemailer.createTransport({ jsonTransport: true });
 
 // Email Templates
 const templates = {

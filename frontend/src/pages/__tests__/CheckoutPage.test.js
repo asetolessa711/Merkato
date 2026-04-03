@@ -64,11 +64,13 @@ describe('CheckoutPage', () => {
     fireEvent.change(screen.getByLabelText(/country/i), { target: { value: 'USA' } });
     fireEvent.click(screen.getByTestId('guest-summary-btn'));
     // Modal should show
-    await waitFor(() => expect(screen.getByText(/order summary/i)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getAllByText(/order summary/i).length).toBeGreaterThan(0));
     // Apply promo code
-    fireEvent.change(screen.getByPlaceholderText(/promo code/i), { target: { value: 'SAVE10' } });
-    fireEvent.click(screen.getByText(/apply/i));
-    await waitFor(() => expect(screen.getByText(/promo applied/i)).toBeInTheDocument());
+    const promoInputs = screen.getAllByPlaceholderText(/promo code/i);
+    fireEvent.change(promoInputs[promoInputs.length - 1], { target: { value: 'SAVE10' } });
+    const applyButtons = screen.getAllByRole('button', { name: /apply/i });
+    fireEvent.click(applyButtons[applyButtons.length - 1]);
+    await waitFor(() => expect(screen.getAllByText(/promo applied/i).length).toBeGreaterThan(0));
     // Use a custom matcher to handle split nodes for the discount line
     expect(
       screen.getByText((content, node) => {

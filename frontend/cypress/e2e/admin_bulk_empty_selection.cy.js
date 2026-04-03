@@ -7,7 +7,7 @@ describe('🧪 Admin bulk action - empty selection', () => {
   });
 
   it('shows friendly error when running bulk action without selecting orders @negative', () => {
-    cy.contains(/Mark as Shipped|Bulk Update/i).scrollIntoView().should('be.visible').click({ force: true });
-    cy.contains(/select at least one order|no orders selected|choose some orders/i, { timeout: 5000 }).should('be.visible');
+    cy.contains(/no selection/i).should('be.visible');
+    cy.get('[data-testid="bulk-action-mark-shipped"]').should('be.disabled');
   });
 });

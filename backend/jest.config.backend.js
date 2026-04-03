@@ -2,6 +2,8 @@ const path = require("path");
 
 module.exports = (() => {
   const disableThreshold = process.env.FLOW_COVERAGE === 'true' || process.env.JEST_DISABLE_THRESHOLD === 'true';
+  const collectCoverage = process.env.CI === 'true' || process.env.JEST_COVERAGE === 'true';
+  const prettyReporterPath = path.resolve(__dirname, "./prettyReporter.js");
   const cfg = {
     rootDir: path.resolve(__dirname, "./"),
     testEnvironment: "node",
@@ -18,7 +20,7 @@ module.exports = (() => {
     // Ensure we always close DB/socket handles after the test suite completes
     globalTeardown: path.resolve(__dirname, "./jest.globalTeardown.js"),
     moduleFileExtensions: ["js", "json"],
-    collectCoverage: true,
+    collectCoverage,
     coverageDirectory: path.join(__dirname, "coverage"),
     coveragePathIgnorePatterns: [
       "/node_modules/",
@@ -44,12 +46,13 @@ module.exports = (() => {
     ],
     clearMocks: true,
     verbose: true,
+    reporters: [prettyReporterPath],
     testTimeout: 30000, // Increase default timeout for slower integration tests
-    // Ensure Jest process exits even if libraries leave open handles (CI/Windows stability)
+    // Keep test commands from hanging due lingering open handles in integration suites.
     forceExit: true,
   };
 
-  if (!disableThreshold) {
+  if (!disableThreshold && collectCoverage) {
     cfg.coverageThreshold = {
       global: {
         // Thresholds ratcheted slightly under latest stable coverage snapshot

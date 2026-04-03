@@ -1,6 +1,6 @@
 import React from "react";
 
-const CartCtx = React.createContext(null);
+export const CartCtx = React.createContext(null);
 const LS_KEY = "cart:v1";
 
 function load() {

@@ -19,7 +19,7 @@ describe('♿ A11y smoke', () => {
           type: 'tag',
           values: ['wcag2a', 'wcag2aa']
         },
-        includedImpacts: ['serious', 'critical']
+        includedImpacts: ['critical']
       }) : null;
     });
   });

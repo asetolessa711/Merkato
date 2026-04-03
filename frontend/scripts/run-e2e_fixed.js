@@ -6,6 +6,11 @@ const os = require('os');
 const { spawn, execSync } = require('child_process');
 const waitOn = require('wait-on');
 const net = require('net');
+const {
+  startProgressSpinner,
+  stopProgressSpinner,
+  renderPrettyCypressResults,
+} = require('./prettyE2eReporter');
 
 function run(cmd, args, opts = {}) {
   const child = spawn(cmd, args, { stdio: 'inherit', shell: true, ...opts });
@@ -110,7 +115,8 @@ async function main() {
         }
       }
     }
-  } catch (_) {}\n  // Prefer project-local Cypress cache binary if available
+  } catch (_) {}
+  // Prefer project-local Cypress cache binary if available
   if (!runBinary && process.platform === 'win32') {
     try {
       if (fs.existsSync(cypressCache)) {
@@ -125,27 +131,42 @@ async function main() {
         }
       }
     } catch (_) {}
-  }\n  const cyEnv = { ...process.env, CYPRESS_API_URL: apiUrl, CYPRESS_video: 'false',
+  }
+  const cyEnv = { ...process.env, CYPRESS_API_URL: apiUrl, CYPRESS_video: 'false',
     CYPRESS_CACHE_FOLDER: cypressCache,
     npm_config_cache: npmCache,
     ...(runBinary ? { CYPRESS_RUN_BINARY: runBinary } : {}) };
   const specArg = process.env.E2E_SPEC ? ['--spec', process.env.E2E_SPEC] : [];
-  const reportPath = path.join(frontendDir, 'cypress-report.json');
+  const resultsDir = path.join(frontendDir, 'cypress-results');
+  try {
+    fs.mkdirSync(resultsDir, { recursive: true });
+    for (const f of fs.readdirSync(resultsDir)) {
+      if (/\.json$/i.test(f)) {
+        try { fs.unlinkSync(path.join(resultsDir, f)); } catch (_) {}
+      }
+    }
+  } catch (_) {}
   const cyArgs = [
     'cypress', 'run',
     '--config', `baseUrl=http://localhost:${frontendPort}`,
     '--browser', 'electron',
-    '--reporter', 'json',
-    '--reporter-options', `output=${reportPath}`,
+    '--reporter', 'mochawesome',
+    '--reporter-options', 'reportDir=cypress-results,reportFilename=cypress-report,overwrite=false,quiet=true,charts=false,html=false,json=true',
     ...specArg
   ];
+  const cypressSpinner = startProgressSpinner('[e2e] Running Cypress specs...');
   const cy = run('npx', cyArgs, { cwd: frontendDir, env: cyEnv });
   const cyCode = await new Promise((resolve) => cy.on('close', resolve));
+  stopProgressSpinner(
+    cypressSpinner,
+    cyCode === 0 ? '✔ [e2e] Cypress run completed' : `✘ [e2e] Cypress run failed (exit ${cyCode})`
+  );
   try {
-    if (fs.existsSync(reportPath)) {
-      const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
-      const stats = report?.stats || {};
-      console.log(`[e2e] Cypress results: ${stats.tests || 0} tests, ${stats.passes || 0} passed, ${stats.failures || 0} failed`);
+    const prettyTotals = renderPrettyCypressResults(resultsDir, { prefix: '[e2e]' });
+    if (prettyTotals) {
+      console.log(
+        `[e2e] Cypress results: ${prettyTotals.tests} tests, ${prettyTotals.passes} passed, ${prettyTotals.failures} failed`
+      );
     }
   } catch (_) {}
   cleanup();

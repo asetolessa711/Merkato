@@ -5,6 +5,16 @@
 
 describe('🛒 Customer Register + Checkout (Auth Path)', () => {
   const password = 'Password123!';
+  const shopProducts = [
+    {
+      _id: 'prod-e2e-auth-1',
+      name: 'E2E Auth Product',
+      price: 19.99,
+      stock: 25,
+      image: '/images/default-product.png',
+      currency: 'USD'
+    }
+  ];
   let email;
 
   beforeEach(() => {
@@ -14,6 +24,7 @@ describe('🛒 Customer Register + Checkout (Auth Path)', () => {
     // Stub non-critical network (placeholder patterns; refine later)
     cy.intercept('POST', /analytics|collect/, { statusCode: 204, body: '' }).as('analytics');
     cy.intercept('GET', /\/api\/promotions\//, { statusCode: 200, body: { banners: [] } }).as('promos');
+    cy.intercept('GET', '/api/products*', { statusCode: 200, body: shopProducts }).as('products');
   });
 
   it('registers new user and completes checkout (COD path)', () => {
@@ -26,7 +37,7 @@ describe('🛒 Customer Register + Checkout (Auth Path)', () => {
     cy.get('input[name="email"]').type(email);
     cy.get('input[name="password"]').type(password);
     cy.get('input[name="confirmPassword"]').type(password);
-    cy.get('button[type="submit"]').contains(/register/i).click();
+    cy.get('form').contains('button', /register/i).click();
     cy.wait('@register');
 
     // Ensure we are authenticated (redirect or manual login fallback)
@@ -36,13 +47,14 @@ describe('🛒 Customer Register + Checkout (Auth Path)', () => {
         cy.intercept('POST', '/api/auth/login').as('login');
         cy.get('input[name="email"]').type(email);
         cy.get('input[name="password"]').type(password);
-        cy.get('button[type="submit"]').contains(/login/i).click();
+        cy.get('form').contains('button', /login/i).click();
         cy.wait('@login');
       }
     });
 
     // Navigate to shop & add product
-    cy.contains(/shop/i).click();
+    cy.visit('/shop');
+    cy.wait('@products');
     cy.get('[data-testid="product-card"]').first().within(() => {
       cy.contains(/add to cart/i).click();
     });
@@ -57,7 +69,7 @@ describe('🛒 Customer Register + Checkout (Auth Path)', () => {
     cy.get('input[name="city"]').type('Testville');
     cy.get('input[name="zip"]').type('12345');
     cy.intercept('POST', '/api/orders').as('createOrder');
-    cy.get('button[type="submit"]').contains(/place order|pay/i).click();
+    cy.get('[data-testid="submit-order-btn"]').click();
     cy.wait('@createOrder');
 
     // Confirmation
@@ -65,8 +77,8 @@ describe('🛒 Customer Register + Checkout (Auth Path)', () => {
     cy.contains(/order has been placed/i).should('be.visible');
 
     // Basic post-checkout auth state
-    cy.get('[data-testid="navbar"]').within(() => {
-      cy.contains(/logout/i).should('exist');
+    cy.window().then((win) => {
+      expect(win.localStorage.getItem('token')).to.be.a('string').and.not.be.empty;
     });
   });
 });

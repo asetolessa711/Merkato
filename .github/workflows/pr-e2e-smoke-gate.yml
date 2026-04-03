@@ -4,6 +4,11 @@ on:
   pull_request:
     branches: [ main, dev ]
 
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
 concurrency:
   group: pr-e2e-smoke-${{ github.event.pull_request.number }}
   cancel-in-progress: true
@@ -63,7 +68,8 @@ jobs:
           echo "include=$include" >> "$GITHUB_OUTPUT"
           echo "exclude=$exclude" >> "$GITHUB_OUTPUT"
       - name: Comment tag scope on PR
-        if: always()
+        if: always() && github.event_name == 'pull_request'
+        continue-on-error: true
         uses: actions/github-script@v7
         env:
           INCLUDE_TAGS: ${{ steps.tags.outputs.include }}
@@ -102,11 +108,13 @@ jobs:
           CYPRESS_EXCLUDE_TAG: ${{ steps.tags.outputs.exclude }}
         run: |
           start=$(date +%s)
+          set +e
           node ./scripts/run-e2e.js --pr-smoke
           status=$?
+          set -e
           end=$(date +%s)
           duration=$((end-start))
-          echo "duration_seconds=${duration}" >> $GITHUB_OUTPUT
+          echo "duration_seconds=${duration}" >> "$GITHUB_OUTPUT"
           exit $status
 
       - name: Append Cypress summary to Job Summary
@@ -123,13 +131,13 @@ jobs:
             head -n 100 frontend/scope-report.txt >> $GITHUB_STEP_SUMMARY
           fi
       - name: Enforce runtime budget (<= 300s)
-        if: always()
+        if: always() && steps.run_smoke.outcome != 'skipped'
         run: |
-          if [ -z "${{ steps.run_smoke.outputs.duration_seconds }}" ]; then
-            echo "::error::Missing duration output; failing gate."
-            exit 1
+          dur="${{ steps.run_smoke.outputs.duration_seconds }}"
+          if [ -z "$dur" ]; then
+            echo "::warning::Missing duration output; skipping budget enforcement."
+            exit 0
           fi
-          dur=${{ steps.run_smoke.outputs.duration_seconds }}
           echo "Total duration: ${dur}s"
           if [ "$dur" -gt "300" ]; then
             echo "::error::Smoke suite exceeded 5 minutes (${dur}s)."

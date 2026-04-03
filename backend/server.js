@@ -160,10 +160,53 @@ function getMongoUriCandidates() {
   return list;
 }
 
+async function waitForConnectingState(timeoutMs = 12000) {
+  if (mongoose.connection.readyState !== 2) return;
+
+  await new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      cleanup();
+      reject(new Error("Timed out waiting for MongoDB connection"));
+    }, timeoutMs);
+
+    const onConnected = () => {
+      cleanup();
+      resolve();
+    };
+
+    const onError = (err) => {
+      cleanup();
+      reject(err);
+    };
+
+    function cleanup() {
+      clearTimeout(timer);
+      mongoose.connection.off("connected", onConnected);
+      mongoose.connection.off("error", onError);
+    }
+
+    mongoose.connection.on("connected", onConnected);
+    mongoose.connection.on("error", onError);
+  });
+}
+
 async function connectMongoWithFallback() {
+  if (mongoose.connection.readyState === 1) {
+    return;
+  }
+
+  if (mongoose.connection.readyState === 2) {
+    await waitForConnectingState(Number(process.env.MONGO_CONNECT_WAIT_TIMEOUT_MS || 12000));
+    return;
+  }
+
   const uris = getMongoUriCandidates();
   if (!uris.length) {
-    console.error("❌ No MongoDB URI provided. Set MONGO_URI (and optionally MONGO_URI_FALLBACK or MONGO_URI_LOCAL).");
+    const noUriError = new Error(
+      "No MongoDB URI provided. Set MONGO_URI (and optionally MONGO_URI_FALLBACK or MONGO_URI_LOCAL)."
+    );
+    console.error(`❌ ${noUriError.message}`);
+    if (IS_TEST) throw noUriError;
     process.exit(1);
   }
 
@@ -198,13 +241,21 @@ async function connectMongoWithFallback() {
 
   // If all candidates failed, exit (nodemon will retry). In CI, fail fast.
   if (lastErr) {
+    if (IS_TEST) {
+      throw lastErr;
+    }
     process.exitCode = 1;
     // Give a moment for logs to flush before exit in some environments
     setTimeout(() => process.exit(1), 100);
   }
 }
 
-connectMongoWithFallback().then(() => {
+const mongoConnectionReady = connectMongoWithFallback();
+
+app.locals.mongoConnectionReady = mongoConnectionReady;
+app.locals.ensureMongoConnected = connectMongoWithFallback;
+
+mongoConnectionReady.then(() => {
   if (require.main === module) {
     const PORT = process.env.PORT || 5000;
     const server = app.listen(PORT, () => {
@@ -226,6 +277,13 @@ connectMongoWithFallback().then(() => {
 
     process.on("SIGINT", shutdown);
     process.on("SIGTERM", shutdown);
+  }
+}).catch((err) => {
+  const msg = (err && err.message) || String(err);
+  terror(`❌ [server.js] MongoDB initialization failed: ${msg}`);
+  if (!IS_TEST) {
+    process.exitCode = 1;
+    setTimeout(() => process.exit(1), 100);
   }
 });
 

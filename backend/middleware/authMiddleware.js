@@ -1,6 +1,12 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
+const getJwtSecret = () => {
+  if (process.env.JWT_SECRET) return process.env.JWT_SECRET;
+  if (process.env.NODE_ENV === 'production') return '';
+  return 'test_secret';
+};
+
 // ✅ Middleware: Protect route
 const protect = async (req, res, next) => {
   let token;
@@ -13,7 +19,7 @@ const protect = async (req, res, next) => {
       token = req.headers.authorization.split(' ')[1];
       // In test env, allow expired tokens to be used to avoid brittle token fixtures
       const verifyOpts = process.env.NODE_ENV === 'test' ? { ignoreExpiration: true } : {};
-      const decoded = jwt.verify(token, process.env.JWT_SECRET, verifyOpts);
+      const decoded = jwt.verify(token, getJwtSecret(), verifyOpts);
       console.log('[protect] Decoded JWT:', decoded);
       const userId = decoded._id || decoded.id;
       const user = await User.findById(userId).select('-password');
@@ -108,7 +114,7 @@ module.exports = {
       if (!auth.startsWith('Bearer ')) return next();
       const token = auth.split(' ')[1];
       const verifyOpts = process.env.NODE_ENV === 'test' ? { ignoreExpiration: true } : {};
-      const decoded = jwt.verify(token, process.env.JWT_SECRET, verifyOpts);
+      const decoded = jwt.verify(token, getJwtSecret(), verifyOpts);
       const userId = decoded._id || decoded.id;
       const user = await User.findById(userId).select('-password');
       if (user) req.user = user;

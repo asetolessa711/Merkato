@@ -8,9 +8,15 @@ const { sendPasswordResetEmail, resetRateLimiter } = require('../utils/sendEmail
 
 const router = express.Router();
 
+const getJwtSecret = () => {
+  if (process.env.JWT_SECRET) return process.env.JWT_SECRET;
+  if (process.env.NODE_ENV === 'production') return '';
+  return 'test_secret';
+};
+
 // 🔐 Generate JWT token
 const generateToken = (user) => {
-  return jwt.sign({ id: user._id, roles: user.roles }, process.env.JWT_SECRET, {
+  return jwt.sign({ id: user._id, roles: user.roles }, getJwtSecret(), {
     expiresIn: '7d'
   });
 };
@@ -25,7 +31,7 @@ router.get('/verify', (req, res) => {
 
   const token = authHeader.split(' ')[1];
   try {
-    jwt.verify(token, process.env.JWT_SECRET);
+    jwt.verify(token, getJwtSecret());
     return res.status(200).json({ valid: true });
   } catch (err) {
     console.warn('❌ /verify: Invalid token');
