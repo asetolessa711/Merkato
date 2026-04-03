@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { syncCart } from '../utils/cartClient';
 import { fetchPaymentMethods } from '../utils/paymentsClient';
+import { useCart } from '../cart/CartContext';
 
 function ProductDetail({ currency = 'USD', rates = { USD: 1, ETB: 144, EUR: 0.91 } }) {
   const { id } = useParams();
@@ -16,6 +17,7 @@ function ProductDetail({ currency = 'USD', rates = { USD: 1, ETB: 144, EUR: 0.91
   const token = localStorage.getItem('token');
   const headers = { Authorization: `Bearer ${token}` };
   const navigate = useNavigate();
+  const { add } = useCart();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -60,6 +62,15 @@ const getDisplayPrice = (p) => {
 };
 
 const handleAddToCart = async () => {
+  // Primary cart state (used by CartPage and modern flows)
+  try {
+    const sku = String(product.sku || product._id || product.id || product.name);
+    const title = String(product.name || product.title || 'Untitled');
+    const price = Number(product.price) || 0;
+    add({ sku, title, price, image: product.image }, 1);
+  } catch (_) {}
+
+  // Legacy cart keys retained for backward compatibility with older integrations/tests.
   const stored = localStorage.getItem('merkato-cart');
   const parsed = stored ? JSON.parse(stored) : { items: [], timestamp: 0 };
   const cart = parsed.items || [];

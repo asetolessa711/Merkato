@@ -111,7 +111,7 @@ export default function CartPage() {
 
           <p className="text-muted text-sm">Taxes and shipping calculated at checkout.</p>
 
-          <button className="btn btn-primary w-full" onClick={() => nav("/checkout")} style={{ marginTop: 8 }}>
+          <button data-testid="checkout-btn" className="btn btn-primary w-full" onClick={() => nav("/checkout")} style={{ marginTop: 8 }}>
             Checkout
           </button>
 
