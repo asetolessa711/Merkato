@@ -24,7 +24,7 @@ jobs:
           npx eslint . --fix || echo "No ESLint or nothing to fix in backend"
       - name: Run ESLint auto-fix (frontend)
         run: |
-          cd ../frontend
+          cd frontend
           npx eslint . --fix || echo "No ESLint or nothing to fix in frontend"
       - name: Commit and push changes
         run: |

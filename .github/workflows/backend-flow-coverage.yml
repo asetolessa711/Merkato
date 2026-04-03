@@ -43,14 +43,14 @@ jobs:
       - name: Install deps
         run: npm ci
 
-      - name: Create backend/.env.test
+      - name: Create .env.test
         run: |
-          echo "NODE_ENV=test" >> backend/.env.test
-          echo "MONGO_URI=mongodb://127.0.0.1:27017/merkato_test" >> backend/.env.test
-          echo "JWT_SECRET=test_secret" >> backend/.env.test
-          echo "CLIENT_URL=http://localhost:3000" >> backend/.env.test
-          echo "EMAIL_USER=test@example.com" >> backend/.env.test
-          echo "EMAIL_PASS=test-password" >> backend/.env.test
+          echo "NODE_ENV=test" >> .env.test
+          echo "MONGO_URI=mongodb://127.0.0.1:27017/merkato_test" >> .env.test
+          echo "JWT_SECRET=test_secret" >> .env.test
+          echo "CLIENT_URL=http://localhost:3000" >> .env.test
+          echo "EMAIL_USER=test@example.com" >> .env.test
+          echo "EMAIL_PASS=test-password" >> .env.test
 
       - name: Start backend (flow coverage) on port 5000
         working-directory: backend
@@ -69,7 +69,7 @@ jobs:
         if: failure()
         run: |
           echo "---- backend.log (tail) ----"
-          tail -n 200 backend/backend.log || true
+          tail -n 200 backend.log || true
 
       - name: Run flow tests (${{ matrix.flow }})
         env:
@@ -85,7 +85,7 @@ jobs:
         if: failure()
         run: |
           echo "---- backend.log (tail after tests) ----"
-          tail -n 200 backend/backend.log || true
+          tail -n 200 backend.log || true
 
       - name: Upload coverage artifact (${{ matrix.flow }})
         if: always()

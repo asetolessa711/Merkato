@@ -31,21 +31,23 @@ jobs:
       - name: Cache Cypress binary
         uses: actions/cache@v4
         with:
-          path: |
-            ~/.cache/Cypress
-            frontend/node_modules/.cache/Cypress
+          path: ./.cache/cypress
           key: cypress-${{ runner.os }}-${{ hashFiles('frontend/package-lock.json') }}
           restore-keys: |
             cypress-${{ runner.os }}-
-      - name: Verify Cypress binary
+      - name: Ensure Cypress binary
         working-directory: frontend
-        run: npx cypress install --force
+        env:
+          CI: 'true'
+          CYPRESS_CACHE_FOLDER: ${{ github.workspace }}/.cache/cypress
+        run: npx cypress install --force || npx cypress verify
       - name: Run core E2E subset
         working-directory: frontend
         env:
           E2E_EPHEMERAL: 'true'
           E2E_AUTODROP: 'true'
           E2E_BACKEND_PORT: '5051'
+          CYPRESS_CACHE_FOLDER: ${{ github.workspace }}/.cache/cypress
           # Use targeted subset for speed (admin + smoke + critical customer/vendor flows)
           E2E_SPEC: >-
             cypress/e2e/smoke.cy.js,

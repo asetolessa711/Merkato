@@ -11,6 +11,14 @@ jobs:
       contents: read
       pull-requests: write
     timeout-minutes: 60
+    services:
+      mongo:
+        image: mongo:6
+        ports:
+          - '27017:27017'
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand(\"ping\")' || exit 1"
+          --health-interval 10s --health-timeout 5s --health-retries 5
     defaults:
       run:
         shell: bash
@@ -37,18 +45,22 @@ jobs:
       - name: Cache Cypress binary
         uses: actions/cache@v4
         with:
-          path: |
-            ~/.cache/Cypress
-            frontend/node_modules/.cache/Cypress
+          path: ./.cache/cypress
           key: cypress-${{ runner.os }}-${{ hashFiles('frontend/package-lock.json') }}
           restore-keys: |
             cypress-${{ runner.os }}-
-      - name: Verify Cypress binary
+      - name: Ensure Cypress binary
         working-directory: ./frontend
-        run: npx cypress install --force
+        env:
+          CI: 'true'
+          CYPRESS_CACHE_FOLDER: ${{ github.workspace }}/.cache/cypress
+        run: npx cypress install --force || npx cypress verify
 
       - name: Run PR smoke E2E (curated)
         working-directory: ./frontend
+        env:
+          CI: 'true'
+          CYPRESS_CACHE_FOLDER: ${{ github.workspace }}/.cache/cypress
         run: npm run e2e:pr
 
       - name: Upload Cypress results

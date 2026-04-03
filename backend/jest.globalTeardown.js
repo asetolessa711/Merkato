@@ -7,9 +7,8 @@ module.exports = async () => {
     try {
       const mongoose = require('mongoose');
       if (mongoose && mongoose.connection && mongoose.connection.readyState !== 0) {
-        await mongoose.connection.close(false);
-        // Small delay to allow sockets to drain
-        await new Promise((r) => setTimeout(r, 50));
+        await mongoose.connection.close(true);
+        await mongoose.disconnect();
         // eslint-disable-next-line no-console
         console.log('🛑 [jest.globalTeardown] Closed mongoose connection');
       }

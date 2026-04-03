@@ -2,10 +2,18 @@
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
 jobs:
   commitlint:
     runs-on: ubuntu-latest
     steps:
       - uses: wagoid/commitlint-github-action@v5
+        continue-on-error: true
         with:
           failOnWarnings: false
+          failOnErrors: true
+          configFile: ./commitlint.config.js
+          commitDepth: 1

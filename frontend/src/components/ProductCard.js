@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import './ProductCard.css';
-import { useCart } from '../cart/CartContext';
+import { CartCtx } from '../cart/CartContext';
 
 function ProductCard({
   product,
@@ -11,9 +11,9 @@ function ProductCard({
   colorOptions = [], // e.g. ['#FF0000', '#000']
   onAddToCart,
 }) {
-  const { add } = useCart();
+  const cart = React.useContext(CartCtx);
+  const add = cart?.add;
   const isDeal = type === 'deal' || product.promotion?.isPromoted || product.discount > 0;
-  const discountText = product.discount > 0 ? `-${product.discount}%` : '';
   const finalPrice = product.price.toFixed(2);
   const imageSrc = product.image || '/images/default-product.png';
   const theme = product.theme || 'mint'; // fallback
@@ -31,7 +31,9 @@ function ProductCard({
       const title = String(product.name || product.title || 'Untitled');
       const price = Number(product.price) || 0;
       const image = product.image;
-      add({ sku, title, price, image }, 1);
+      if (typeof add === 'function') {
+        add({ sku, title, price, image }, 1);
+      }
       // Notify any legacy listeners
       try { window.dispatchEvent(new Event('cart:updated')); } catch (_) {}
     } catch (_) { /* no-op */ }

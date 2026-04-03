@@ -3,21 +3,30 @@ const router = express.Router();
 const IS_TEST = process.env.NODE_ENV === 'test' || !!process.env.JEST_WORKER_ID;
 let stripeClient = null;
 
+function buildMockStripeClient() {
+  return {
+    checkout: {
+      sessions: {
+        create: async () => ({
+          id: `cs_test_${Date.now()}`,
+          url: 'https://checkout.stripe.com/pay/cs_test_mock'
+        })
+      }
+    }
+  };
+}
+
 function getStripe() {
   if (stripeClient) return stripeClient;
   const key = process.env.STRIPE_SECRET_KEY;
+  const useMockInTests = IS_TEST && process.env.STRIPE_USE_REAL !== 'true';
+
+  if (useMockInTests) {
+    stripeClient = buildMockStripeClient();
+    return stripeClient;
+  }
+
   if (!key) {
-    if (IS_TEST) {
-      // Minimal mock for tests to avoid external dependency
-      stripeClient = {
-        checkout: {
-          sessions: {
-            create: async () => ({ id: `cs_test_${Date.now()}`, url: 'https://stripe.test/checkout' })
-          }
-        }
-      };
-      return stripeClient;
-    }
     throw new Error('STRIPE_SECRET_KEY is not set');
   }
   stripeClient = require('stripe')(key);

@@ -9,6 +9,7 @@ module.exports = {
   jest: {
     configure: (jestConfig) => {
       const fs = require('fs');
+      const reporterPath = require('path').resolve(__dirname, 'prettyReporter.js');
       const hasExtraTestsDir = fs.existsSync(require('path').resolve(__dirname, 'tests'));
       jestConfig.roots = [
         '<rootDir>/src',
@@ -16,6 +17,16 @@ module.exports = {
       ];
       // Prefer .jsx over .js to avoid basename collisions selecting the wrong file
       jestConfig.moduleFileExtensions = ['jsx', 'js', 'json', 'node'];
+
+      const existingReporters = Array.isArray(jestConfig.reporters) ? jestConfig.reporters : [];
+      const hasPrettyReporter = existingReporters.some((entry) => {
+        if (Array.isArray(entry)) return entry[0] === reporterPath;
+        return entry === reporterPath;
+      });
+      if (!hasPrettyReporter) {
+        jestConfig.reporters = [...existingReporters, reporterPath];
+      }
+
       return jestConfig;
     }
   },

@@ -33,9 +33,28 @@ jobs:
       - name: Install frontend deps
         working-directory: frontend
         run: npm ci
+      - name: Restore Cypress binary cache
+        id: cypress-cache
+        uses: actions/cache@v4
+        with:
+          path: ./.cache/cypress
+          key: cypress-${{ runner.os }}-e2e-smoke-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: |
+            cypress-${{ runner.os }}-e2e-smoke-
+            cypress-${{ runner.os }}-
+      - name: Ensure Cypress binary
+        if: steps.cypress-cache.outputs.cache-hit != 'true'
+        working-directory: frontend
+        env:
+          CI: 'true'
+          CYPRESS_CACHE_FOLDER: ${{ github.workspace }}/.cache/cypress
+        run: |
+          npx cypress install --force || npx cypress verify
       - name: Run E2E smoke
         working-directory: frontend
         env:
+          CI: 'true'
+          CYPRESS_CACHE_FOLDER: ${{ github.workspace }}/.cache/cypress
           MONGO_URI: mongodb://127.0.0.1:27017/merkato_e2e
           E2E_SPEC: cypress/e2e/smoke.cy.js,cypress/e2e/card_intent.cy.js,cypress/e2e/paypal_approval.cy.js
         run: npm run e2e:smoke

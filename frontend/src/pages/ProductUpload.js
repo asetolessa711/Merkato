@@ -236,7 +236,13 @@ function ProductUpload() {
               No uploadable categories are available yet. Please try again later or contact support.
             </div>
           ) : (
-            <select value={selectedCat} onChange={(e) => setSelectedCat(e.target.value)} required>
+            <select
+              name="category"
+              data-testid="category-select"
+              value={selectedCat}
+              onChange={(e) => setSelectedCat(e.target.value)}
+              required
+            >
               <option value="">Select a category</option>
               {canonCats.map(c => (
                 <option key={c.id} value={c.slug}>{c.name}</option>
@@ -334,7 +340,7 @@ function ProductUpload() {
           </div>
         )}
 
-        <button type="submit" disabled={noUploadCats} style={{
+        <button data-testid="upload-submit-btn" type="submit" disabled={noUploadCats} style={{
           marginTop: '20px',
           backgroundColor: '#0984e3',
           color: 'white',

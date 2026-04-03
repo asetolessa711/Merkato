@@ -1,4 +1,5 @@
 const path = require('path');
+const prettyReporterPath = path.resolve(__dirname, './prettyReporter.js');
 
 module.exports = {
   rootDir: '.',
@@ -31,6 +32,7 @@ module.exports = {
   clearMocks: true,
   resetMocks: true,
   restoreMocks: true,
+  reporters: [prettyReporterPath],
   collectCoverage: true,
   collectCoverageFrom: [
     '<rootDir>/src/**/*.{js,jsx}',

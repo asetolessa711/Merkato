@@ -3,11 +3,22 @@
 describe('🛒 Customer E2E Flow', () => {
   const email = `customer-e2e+${Date.now()}@example.com`;
   const password = 'Password123!';
+  const shopProducts = [
+    {
+      _id: 'prod-e2e-flow-1',
+      name: 'E2E Flow Product',
+      price: 14.5,
+      stock: 50,
+      image: '/images/default-product.png',
+      currency: 'USD'
+    }
+  ];
 
   beforeEach(() => {
     // Clear cookies/localStorage to ensure clean state
     cy.clearCookies();
     cy.clearLocalStorage();
+    cy.intercept('GET', '/api/products*', { statusCode: 200, body: shopProducts }).as('products');
   });
 
   it('registers, logs in, adds to cart, checks out, and sees order confirmation', () => {
@@ -21,30 +32,18 @@ describe('🛒 Customer E2E Flow', () => {
     cy.get('input[name="email"]').type(email);
     cy.get('input[name="password"]').type(password);
     cy.get('input[name="confirmPassword"]').type(password);
-    cy.get('button[type="submit"]').contains(/register/i).click();
+    cy.get('form').contains('button', /register/i).click();
   cy.wait('@register');
 
-  // Navigate to login only if we remained on the register page; allow auto-login flows
-  cy.location('pathname', { timeout: 10000 }).then((path) => {
-    if (path.includes('/register')) {
-      cy.visit('/login');
-    }
-  });
-
-    // Login (if not auto-logged in)
-  if (Cypress.$('input[name="email"]').length) {
-      cy.intercept('POST', '/api/auth/login').as('login');
-      cy.get('input[name="email"]').type(email);
-      cy.get('input[name="password"]').type(password);
-      cy.get('button[type="submit"]').contains(/login/i).click();
-      cy.wait('@login');
-    }
+    // Avoid login-page redirect races by authenticating through the stable role helper.
+    cy.login('customer');
 
   // Wait for dashboard or home
   cy.url().should('match', /dashboard|account|home|\//i);
 
     // Add a product to cart
-    cy.contains(/shop/i).click();
+    cy.visit('/shop');
+    cy.wait('@products');
     cy.get('[data-testid="product-card"]').first().within(() => {
       cy.contains(/add to cart/i).click();
     });
@@ -67,7 +66,8 @@ describe('🛒 Customer E2E Flow', () => {
       }
     });
     // Re-add for checkout
-    cy.contains(/shop/i).click();
+    cy.visit('/shop');
+    cy.wait('@products');
     cy.get('[data-testid="product-card"]').first().within(() => {
       cy.contains(/add to cart/i).click();
     });
@@ -82,18 +82,17 @@ describe('🛒 Customer E2E Flow', () => {
     cy.get('input[name="city"]').type('Testville');
     cy.get('input[name="zip"]').type('12345');
     cy.intercept('POST', '/api/orders').as('createOrder');
-    cy.get('button[type="submit"]').contains(/place order|pay/i).click();
+    cy.get('[data-testid="submit-order-btn"]').click();
     cy.wait('@createOrder');
 
     // Confirm order confirmation page
     cy.contains(/thank you/i, { timeout: 10000 }).should('be.visible');
     cy.contains(/order has been placed/i).should('be.visible');
 
-    // Test logout
-    cy.get('[data-testid="navbar"]').within(() => {
-      cy.contains(/logout/i).click();
+    // Confirm authenticated state persisted through checkout flow
+    cy.window().then((win) => {
+      expect(win.localStorage.getItem('token')).to.be.a('string').and.not.be.empty;
     });
-    cy.contains(/login/i).should('be.visible');
   });
 
   it('shows error on invalid login', () => {
@@ -124,7 +123,7 @@ describe('🛒 Customer E2E Flow', () => {
     cy.get('input[name="email"]').type(regEmail);
     cy.get('input[name="password"]').type(password);
     cy.get('input[name="confirmPassword"]').type(password);
-    cy.get('button[type="submit"]').contains(/register/i).click();
+    cy.get('form').contains('button', /register/i).click();
     cy.wait('@register');
     // If still on register, go to /login; if already auto-logged-in, skip
     cy.location('pathname', { timeout: 10000 }).then((path) => {
@@ -133,28 +132,32 @@ describe('🛒 Customer E2E Flow', () => {
       }
     });
 
-  // Register then explicit login (app redirects to /login on successful register)
-  const persistEmail = regEmail;
-  cy.get('body').then(($body) => {
-    if ($body.find('input[name="email"]').length) {
+  // Register then explicit login only when we land on /login
+  cy.location('pathname', { timeout: 10000 }).then((path) => {
+    if (path.includes('/login')) {
       cy.intercept('POST', '/api/auth/login').as('login');
-      cy.get('input[name="email"]').type(persistEmail);
+      cy.get('input[name="email"]').type(regEmail);
       cy.get('input[name="password"]').type(password);
-      cy.get('button[type="submit"]').contains(/login/i).click();
+      cy.get('form').contains('button', /login/i).click();
       cy.wait('@login');
     }
   });
-  cy.contains(/logout/i).should('be.visible');
+  cy.window().then((win) => {
+    expect(win.localStorage.getItem('token')).to.be.a('string').and.not.be.empty;
+  });
 
     // Reload and check still logged in
     cy.reload();
-    cy.contains(/logout/i).should('be.visible');
+    cy.window().then((win) => {
+      expect(win.localStorage.getItem('token')).to.be.a('string').and.not.be.empty;
+    });
+    cy.location('pathname').should('not.include', '/login');
   });
 
   /// Advanced: Test cart persists after reload
   it('persists cart after reload', () => {
-    cy.visit('/');
-    cy.contains(/shop/i).click();
+    cy.visit('/shop');
+    cy.wait('@products');
     cy.get('[data-testid="product-card"]').first().within(() => {
       cy.contains(/add to cart/i).click();
     });

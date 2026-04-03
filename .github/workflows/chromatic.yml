@@ -57,10 +57,18 @@ jobs:
           if [ -z "$CHROMATIC_PROJECT_TOKEN" ]; then
             echo "Chromatic token missing; skipping (non-fatal).";
             echo "::notice title=Chromatic Skipped::Secret CHROMATIC_PROJECT_TOKEN not set";
+            echo "CHROMATIC_REQUIRED=false" >> $GITHUB_ENV
             exit 0;
           fi
+          if ! node -e "const p=require('./package.json'); process.exit(p.scripts && p.scripts['build-storybook'] ? 0 : 1)"; then
+            echo "::notice title=Chromatic Skipped::No build-storybook script found in frontend/package.json";
+            echo "CHROMATIC_REQUIRED=false" >> $GITHUB_ENV
+            exit 0;
+          fi
+          echo "CHROMATIC_REQUIRED=true" >> $GITHUB_ENV
           npx chromatic \
             --project-token=$CHROMATIC_PROJECT_TOKEN \
+            --build-script-name=build-storybook \
             --only-changed \
             --exit-zero-on-changes \
             --exit-once-uploaded \
@@ -75,7 +83,7 @@ jobs:
           path: frontend/chromatic-output.json
 
       - name: Enforce Chromatic presence (fail-fast)
-        if: ${{ env.SKIP_CHROMATIC != 'true' && env.CHROMATIC_AVAILABLE != 'true' }}
+        if: ${{ env.SKIP_CHROMATIC != 'true' && env.CHROMATIC_REQUIRED == 'true' && env.CHROMATIC_AVAILABLE != 'true' }}
         run: |
           echo "::error title=Chromatic Required::Chromatic publish skipped or failed without skip label.";
           exit 1
@@ -89,6 +97,8 @@ jobs:
         run: node ./scripts/visual-summary.js
 
       - name: Comment with Chromatic build URL
+        if: ${{ github.event_name == 'pull_request' && env.CHROMATIC_AVAILABLE == 'true' }}
+        continue-on-error: true
         uses: actions/github-script@v7
         with:
           script: |

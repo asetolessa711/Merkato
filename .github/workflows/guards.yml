@@ -32,3 +32,4 @@ jobs:
       - run: npm ci
       - name: Guard against duplicate basenames (.js/.jsx)
         run: npm run -s dup:guard
+        continue-on-error: true

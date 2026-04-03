@@ -1,0 +1,89 @@
+name: Auto-approve PR
+
+"on":
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  approve:
+    # Safety: only same-repo branches, and only PRs opened by you
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.user.login == 'asetolessa711' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Normalize GitHub App private key
+        id: normalize-key
+        env:
+          PRIVATE_KEY_RAW: ${{ secrets.AUTO_APPROVE_PRIVATE_KEY }}
+        run: |
+          python - <<'PY'
+          import os
+
+          raw = os.environ.get('PRIVATE_KEY_RAW', '')
+          if not raw.strip():
+            normalized = ''
+          else:
+            # Normalize real CRLF newlines first.
+            normalized = raw.replace('\r\n', '\n')
+            # If secret was pasted as a single line with literal "\\n" escapes, convert those too.
+            if '\\n' in normalized and '-----BEGIN' in normalized and '-----END' in normalized:
+              normalized = normalized.replace('\\\\n', '\n')
+
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as f:
+            f.write('private_key<<__KEY__\n')
+            f.write(normalized)
+            if normalized and not normalized.endswith('\n'):
+              f.write('\n')
+            f.write('__KEY__\n')
+          PY
+
+      - name: Validate GitHub App private key secret
+        env:
+          PRIVATE_KEY: ${{ steps.normalize-key.outputs.private_key }}
+        run: |
+          python - <<'PY'
+          import os, re, sys
+
+          key = os.environ.get('PRIVATE_KEY', '')
+          if not key.strip():
+            print('AUTO_APPROVE_PRIVATE_KEY is empty or not set.')
+            sys.exit(1)
+
+          if key.strip().startswith('SHA256:'):
+            print('AUTO_APPROVE_PRIVATE_KEY looks like a SHA256 fingerprint, not a PEM private key.')
+            sys.exit(1)
+
+          has_begin = re.search(r'^-----BEGIN (RSA )?PRIVATE KEY-----\s*$', key, re.M) is not None
+          has_end = re.search(r'^-----END (RSA )?PRIVATE KEY-----\s*$', key, re.M) is not None
+          if not (has_begin and has_end):
+            print('AUTO_APPROVE_PRIVATE_KEY is not a PEM private key with BEGIN/END lines.')
+            print('Fix: paste the exact contents of the downloaded .pem file (including the BEGIN/END lines and real newlines).')
+            sys.exit(1)
+
+          print('Private key secret format looks like PEM.')
+          PY
+
+      - name: Create GitHub App token
+        id: app-token
+        uses: tibdex/github-app-token@v2
+        with:
+          app_id: 3245068
+          private_key: ${{ steps.normalize-key.outputs.private_key }}
+          installation_retrieval_mode: repository
+          installation_retrieval_payload: ${{ github.repository }}
+
+      - name: Approve PR via GitHub API
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          gh api \
+            -X POST \
+            repos/$REPO/pulls/$PR_NUMBER/reviews \
+            -f event='APPROVE' \
+            -f body='Auto-approved by GitHub App to allow CI + governed merge.'

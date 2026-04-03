@@ -1,6 +1,65 @@
 const request = require('supertest');
 const { v4: uuidv4 } = require('uuid');
 const app = require('../../server');
+const mongoose = require('mongoose');
+
+async function ensureMongoReadyForTests() {
+  if (typeof app?.locals?.ensureMongoConnected === 'function') {
+    await app.locals.ensureMongoConnected();
+    return;
+  }
+
+  if (mongoose.connection.readyState === 1) {
+    return;
+  }
+
+  if (mongoose.connection.readyState === 2) {
+    await new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        cleanup();
+        reject(new Error('Timed out waiting for MongoDB connection in test helper'));
+      }, Number(process.env.MONGO_CONNECT_WAIT_TIMEOUT_MS || 12000));
+
+      const onConnected = () => {
+        cleanup();
+        resolve();
+      };
+
+      const onError = (err) => {
+        cleanup();
+        reject(err);
+      };
+
+      function cleanup() {
+        clearTimeout(timer);
+        mongoose.connection.off('connected', onConnected);
+        mongoose.connection.off('error', onError);
+      }
+
+      mongoose.connection.on('connected', onConnected);
+      mongoose.connection.on('error', onError);
+    });
+    return;
+  }
+
+  const mongoUri =
+    process.env.MONGO_URI ||
+    process.env.MONGO_URI_FALLBACK ||
+    process.env.MONGO_URI_LOCAL ||
+    process.env.MONGO_LOCAL;
+
+  if (!mongoUri) {
+    throw new Error('MONGO_URI is not configured for tests');
+  }
+
+  await mongoose.connect(mongoUri, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    serverSelectionTimeoutMS: Number(process.env.MONGO_SERVER_SELECTION_TIMEOUT_MS || 10000),
+    connectTimeoutMS: Number(process.env.MONGO_CONNECT_TIMEOUT_MS || 10000),
+    socketTimeoutMS: Number(process.env.MONGO_SOCKET_TIMEOUT_MS || 45000),
+  });
+}
 
 /**
  * Registers a new test user via API.
@@ -10,6 +69,8 @@ const app = require('../../server');
  * @returns {Promise<Object>} Created user data (may include token or user ID).
  */
 async function registerTestUser(userFields = {}, { registerPath = '/api/auth/register' } = {}) {
+  await ensureMongoReadyForTests();
+
   const uniqueSuffix = uuidv4();
   const defaultEmail = `testuser_${uniqueSuffix}@example.com`;
 
@@ -50,6 +111,8 @@ async function loginTestUser(
   password,
   { loginPath = '/api/auth/login', extraFields = {} } = {}
 ) {
+  await ensureMongoReadyForTests();
+
   if (!email || !password) {
     throw new Error('Email and password are required to login a test user.');
   }
@@ -90,6 +153,8 @@ async function deleteTestUser(
   token,
   { deletePath = '/api/users', silent = false, tokenHeader = 'Authorization' } = {}
 ) {
+  await ensureMongoReadyForTests();
+
   if (!userId) return false;
 
   let req = request(app).delete(`${deletePath}/${userId}`);

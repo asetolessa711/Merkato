@@ -45,16 +45,17 @@ jobs:
       - name: Cache Cypress binary
         uses: actions/cache@v4
         with:
-          path: |
-            ~/.cache/Cypress
-            frontend/node_modules/.cache/Cypress
+          path: ./.cache/cypress
           key: cypress-${{ runner.os }}-${{ hashFiles('frontend/package-lock.json') }}
           restore-keys: |
             cypress-${{ runner.os }}-
 
-      - name: Verify Cypress binary
+      - name: Ensure Cypress binary
         working-directory: frontend
-        run: npx cypress install --force
+        env:
+          CI: 'true'
+          CYPRESS_CACHE_FOLDER: ${{ github.workspace }}/.cache/cypress
+        run: npx cypress install --force || npx cypress verify
 
       - name: Start backend (port 5000)
         working-directory: backend
@@ -89,6 +90,7 @@ jobs:
         working-directory: frontend
         run: npm run build
         env:
+          CI: 'false'
           REACT_APP_API_URL: http://localhost:5000
 
       - name: Serve frontend (React SPA)
@@ -106,6 +108,8 @@ jobs:
           browser: chrome
         env:
           CYPRESS_baseUrl: http://localhost:3000
+          CYPRESS_API_URL: http://localhost:5000
+          CYPRESS_CACHE_FOLDER: ${{ github.workspace }}/.cache/cypress
 
       - name: Upload Cypress screenshots
         if: always()

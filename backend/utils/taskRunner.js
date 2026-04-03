@@ -119,7 +119,7 @@ if (process.env.JEST_WORKER_ID || process.env.NODE_ENV === 'test') {
     label: 'Test Hold (cancelable)',
     // Keep process alive printing ticks so we can cancel it deterministically
     cmd: process.execPath,
-    args: ['-e', 'let i=0; const t=setInterval(()=>{ console.log(`tick ${++i}`); }, 200); process.on("SIGTERM", ()=>{ clearInterval(t); console.log("received SIGTERM"); }); setTimeout(()=>{}, 1<<30);'],
+    args: ['-e', 'let i=0; const t=setInterval(()=>{ console.log(`tick ${++i}`); }, 200); process.on("SIGTERM", ()=>{ clearInterval(t); console.log("received SIGTERM"); process.exit(0); }); setTimeout(()=>{}, 1<<30);'],
     cwd: repoRoot,
   };
   TASK_DEFS['test:flaky-once'] = {

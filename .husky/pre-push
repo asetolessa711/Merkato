@@ -1,31 +1,11 @@
 #!/usr/bin/env sh
 
-echo "husky pre-push: guard + backend/frontend tests (no coverage)"
+echo "husky pre-push: canonical workflow checks"
 export CI=true
 export NODE_ENV=test
 export PRE_PUSH=true
 export JEST_CLOSE_DB=true
 
-node scripts/check-focused-tests.js || exit 1
-
-# Helper: run a command once, retry once on failure
-run_with_retry() {
-	CMD="$1"
-	DESC="$2"
-	echo "Running $DESC..."
-	sh -c "$CMD"
-	status=$?
-	if [ $status -ne 0 ]; then
-		echo "$DESC failed once, retrying..."
-		sleep 1
-		sh -c "$CMD"
-		status=$?
-	fi
-	return $status
-}
-
-# Backend and frontend from their folders (backend already uses --runInBand)
-# Disable coverage during pre-push to avoid threshold gating and speed up local pushes
-# Run via PowerShell to avoid Git Bash env/path quirks on Windows
-run_with_retry "powershell -NoProfile -ExecutionPolicy Bypass -Command \"& { Set-Variable -Name ErrorActionPreference -Value Stop; cd './backend'; Set-Item Env:JEST_CLOSE_DB 'true'; npm test --silent }\"" "backend tests (pwsh)" || exit 1
-run_with_retry "powershell -NoProfile -ExecutionPolicy Bypass -Command \"& { Set-Variable -Name ErrorActionPreference -Value Stop; cd './frontend'; Set-Item Env:CI 'true'; npm test --silent }\"" "frontend tests (pwsh)" || exit 1
+npm run -s guard:focused || exit 1
+npm run -s guard:lint || exit 1
+npm run -s verify:core || exit 1

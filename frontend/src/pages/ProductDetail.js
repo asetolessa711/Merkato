@@ -60,6 +60,34 @@ const getDisplayPrice = (p) => {
 };
 
 const handleAddToCart = async () => {
+  const now = Date.now();
+
+  // Keep CartContext-compatible local state in sync without requiring a provider in isolated tests.
+  try {
+    const key = 'cart:v1';
+    const raw = localStorage.getItem(key);
+    const parsed = raw ? JSON.parse(raw) : { items: [], updatedAt: now };
+    const items = Array.isArray(parsed.items) ? [...parsed.items] : [];
+
+    const sku = String(product.sku || product._id || product.id || product.name);
+    const title = String(product.name || product.title || 'Untitled');
+    const price = Number(product.price) || 0;
+    const idx = items.findIndex((it) => it.sku === sku);
+    if (idx >= 0) {
+      items[idx] = { ...items[idx], qty: (items[idx].qty || 0) + 1 };
+    } else {
+      items.push({ sku, title, price, image: product.image, qty: 1 });
+    }
+
+    const next = { items, updatedAt: now };
+    const nextRaw = JSON.stringify(next);
+    localStorage.setItem(key, nextRaw);
+    try {
+      window.dispatchEvent(new StorageEvent('storage', { key, newValue: nextRaw }));
+    } catch (_) {}
+  } catch (_) {}
+
+  // Legacy cart keys retained for backward compatibility with older integrations/tests.
   const stored = localStorage.getItem('merkato-cart');
   const parsed = stored ? JSON.parse(stored) : { items: [], timestamp: 0 };
   const cart = parsed.items || [];
@@ -71,7 +99,6 @@ const handleAddToCart = async () => {
     cart.push({ ...product, quantity: 1 });
   }
 
-  const now = Date.now();
   localStorage.setItem('merkato-cart', JSON.stringify({
     items: cart,
     timestamp: now

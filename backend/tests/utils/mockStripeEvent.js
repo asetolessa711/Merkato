@@ -1,4 +1,16 @@
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+let stripeClient = null;
+
+function getStripeClient() {
+  if (stripeClient) return stripeClient;
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) return null;
+  try {
+    stripeClient = require('stripe')(key);
+    return stripeClient;
+  } catch (_) {
+    return null;
+  }
+}
 
 /**
  * Generates a mock Stripe webhook event payload and signature for testing.
@@ -30,7 +42,8 @@ function mockStripeEvent(event = null, type = 'payment_intent.succeeded', data =
 
   const payloadString = JSON.stringify(eventPayload);
 
-  const signature = secret
+  const stripe = getStripeClient();
+  const signature = secret && stripe && stripe.webhooks && typeof stripe.webhooks.generateTestHeaderString === 'function'
     ? stripe.webhooks.generateTestHeaderString({ payload: payloadString, secret, timestamp })
     : generateSignatureHeader(payloadString, timestamp);
 

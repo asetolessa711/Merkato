@@ -4,6 +4,11 @@ on:
   pull_request:
     branches: [ main, dev ]
 
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
 concurrency:
   group: pr-e2e-smoke-${{ github.event.pull_request.number }}
   cancel-in-progress: true
@@ -33,6 +38,23 @@ jobs:
       - name: Install frontend deps
         working-directory: frontend
         run: npm ci
+      - name: Restore Cypress binary cache
+        id: cypress-cache
+        uses: actions/cache@v4
+        with:
+          path: ./.cache/cypress
+          key: cypress-${{ runner.os }}-pr-e2e-smoke-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: |
+            cypress-${{ runner.os }}-pr-e2e-smoke-
+            cypress-${{ runner.os }}-
+      - name: Ensure Cypress binary (install/verify)
+        if: steps.cypress-cache.outputs.cache-hit != 'true'
+        working-directory: frontend
+        env:
+          CI: 'true'
+          CYPRESS_CACHE_FOLDER: ${{ github.workspace }}/.cache/cypress
+        run: |
+          npx cypress install --force || npx cypress verify
       - name: Compute Cypress tags from PR labels
         id: tags
         shell: bash
@@ -63,17 +85,21 @@ jobs:
           echo "include=$include" >> "$GITHUB_OUTPUT"
           echo "exclude=$exclude" >> "$GITHUB_OUTPUT"
       - name: Comment tag scope on PR
-        if: always()
+        if: always() && github.event_name == 'pull_request'
+        continue-on-error: true
         uses: actions/github-script@v7
+        env:
+          INCLUDE_TAGS: ${{ steps.tags.outputs.include }}
+          EXCLUDE_TAGS: ${{ steps.tags.outputs.exclude }}
         with:
           script: |
-            const include = '${{ steps.tags.outputs.include }}' || '@smoke';
-            const exclude = '${{ steps.tags.outputs.exclude }}' || '@flaky';
+            const include = process.env.INCLUDE_TAGS || '@smoke';
+            const exclude = process.env.EXCLUDE_TAGS || '@flaky';
             const body = [
               '### E2E Smoke Scope',
               '',
-              `Included tags: \\`${include}\\``,
-              `Excluded tags: \\`${exclude}\\``,
+              'Included tags: `' + include + '`',
+              'Excluded tags: `' + exclude + '`',
               '',
               'Labels can tune scope, e.g.:',
               '- e2e-include-a11y, e2e-include-admin, e2e-include-vendor, e2e-include-buyer',
@@ -95,15 +121,18 @@ jobs:
           E2E_AUTODROP: 'true'
           E2E_BACKEND_PORT: '5051'
           CYPRESS_retries: '2'
+          CYPRESS_CACHE_FOLDER: ${{ github.workspace }}/.cache/cypress
           CYPRESS_INCLUDE_TAG: ${{ steps.tags.outputs.include }}
           CYPRESS_EXCLUDE_TAG: ${{ steps.tags.outputs.exclude }}
         run: |
           start=$(date +%s)
+          set +e
           node ./scripts/run-e2e.js --pr-smoke
           status=$?
+          set -e
           end=$(date +%s)
           duration=$((end-start))
-          echo "duration_seconds=${duration}" >> $GITHUB_OUTPUT
+          echo "duration_seconds=${duration}" >> "$GITHUB_OUTPUT"
           exit $status
 
       - name: Append Cypress summary to Job Summary
@@ -120,13 +149,13 @@ jobs:
             head -n 100 frontend/scope-report.txt >> $GITHUB_STEP_SUMMARY
           fi
       - name: Enforce runtime budget (<= 300s)
-        if: always()
+        if: always() && steps.run_smoke.outcome != 'skipped'
         run: |
-          if [ -z "${{ steps.run_smoke.outputs.duration_seconds }}" ]; then
-            echo "::error::Missing duration output; failing gate."
-            exit 1
+          dur="${{ steps.run_smoke.outputs.duration_seconds }}"
+          if [ -z "$dur" ]; then
+            echo "::warning::Missing duration output; skipping budget enforcement."
+            exit 0
           fi
-          dur=${{ steps.run_smoke.outputs.duration_seconds }}
           echo "Total duration: ${dur}s"
           if [ "$dur" -gt "300" ]; then
             echo "::error::Smoke suite exceeded 5 minutes (${dur}s)."

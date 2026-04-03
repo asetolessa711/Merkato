@@ -27,6 +27,20 @@ jobs:
           node-version: 20
           cache: npm
           cache-dependency-path: frontend/package-lock.json
-      - run: npm ci
+      - name: Install deps (retry once on Windows file-lock)
+        shell: pwsh
+        run: |
+          npm ci
+          if ($LASTEXITCODE -ne 0) {
+            Write-Warning "npm ci failed once; cleaning node_modules and retrying."
+            if (Test-Path node_modules) {
+              Remove-Item -Recurse -Force node_modules -ErrorAction SilentlyContinue
+            }
+            npm cache verify
+            npm ci
+          }
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - run: npm run build
+        env:
+          CI: 'false'
 

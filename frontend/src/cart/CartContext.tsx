@@ -12,7 +12,7 @@ type CartContextType = CartState & {
   subtotal: number;
 };
 
-const CartCtx = React.createContext<CartContextType | null>(null);
+export const CartCtx = React.createContext<CartContextType | null>(null);
 const LS_KEY = "cart:v1";
 
 function load(): CartState {

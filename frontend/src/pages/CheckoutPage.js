@@ -493,6 +493,9 @@ function CheckoutPage() {
             <span>Subtotal</span>
             <span className="sumrow__val">{formatMoney(subtotal)}</span>
           </div>
+          <div className="sumrow" style={{ borderBottom: 'none' }}>
+            <span>Total: {formatMoney(subtotal)}</span>
+          </div>
 
           {/* Coupon (optional) */}
           <div className="coupon">
