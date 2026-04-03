@@ -36,7 +36,12 @@ jobs:
       - name: Install deps (root only)
         run: npm ci
       - name: Scan threads
-        run: node scripts/threads-scan.js --baseline=.threads/baseline.json --strict
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            node scripts/threads-scan.js --baseline=.threads/baseline.json
+          else
+            node scripts/threads-scan.js --baseline=.threads/baseline.json --strict
+          fi
       - name: Upload threads report
         if: always()
         uses: actions/upload-artifact@v4

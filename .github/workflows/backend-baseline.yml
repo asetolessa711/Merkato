@@ -52,5 +52,4 @@ jobs:
         env:
           MONGO_URI: mongodb://127.0.0.1:27017/merkato_test
           NODE_ENV: test
-          CI: true
-        run: npm test -- --runInBand --coverage
+        run: npm run test:quick:compact

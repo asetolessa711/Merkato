@@ -17,19 +17,49 @@ if (!summary) {
 
 // If we only have coverage-final.json (per-file), aggregate a total
 function computeTotalFromCoverageFinal(data) {
-  const keys = ['statements', 'branches', 'functions', 'lines'];
-  const acc = Object.fromEntries(keys.map(k => [k, { covered: 0, total: 0 }]));
-  for (const file of Object.values(data)) {
-    if (file && typeof file === 'object') {
-      for (const k of keys) {
-        const m = file[k];
-        if (m && typeof m.covered === 'number' && typeof m.total === 'number') {
-          acc[k].covered += m.covered;
-          acc[k].total += m.total;
-        }
-      }
+  const acc = {
+    statements: { covered: 0, total: 0 },
+    branches: { covered: 0, total: 0 },
+    functions: { covered: 0, total: 0 },
+    lines: { covered: 0, total: 0 },
+  };
+
+  const countHits = (hitMap) => {
+    const values = Object.values(hitMap || {});
+    const total = values.length;
+    const covered = values.filter((v) => Number(v) > 0).length;
+    return { covered, total };
+  };
+
+  const countBranchHits = (branchMap) => {
+    let covered = 0;
+    let total = 0;
+    for (const hits of Object.values(branchMap || {})) {
+      if (!Array.isArray(hits)) continue;
+      total += hits.length;
+      covered += hits.filter((v) => Number(v) > 0).length;
     }
+    return { covered, total };
+  };
+
+  for (const file of Object.values(data || {})) {
+    if (!file || typeof file !== 'object') continue;
+
+    const statements = countHits(file.s);
+    const functions = countHits(file.f);
+    const branches = countBranchHits(file.b);
+    const lines = countHits(file.l || file.s);
+
+    acc.statements.covered += statements.covered;
+    acc.statements.total += statements.total;
+    acc.functions.covered += functions.covered;
+    acc.functions.total += functions.total;
+    acc.branches.covered += branches.covered;
+    acc.branches.total += branches.total;
+    acc.lines.covered += lines.covered;
+    acc.lines.total += lines.total;
   }
+
   const toPct = (covered, total) => (total > 0 ? Math.round((covered / total) * 10000) / 100 : 0);
   return {
     statements: { pct: toPct(acc.statements.covered, acc.statements.total) },

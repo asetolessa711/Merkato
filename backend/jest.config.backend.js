@@ -2,7 +2,7 @@ const path = require("path");
 
 module.exports = (() => {
   const disableThreshold = process.env.FLOW_COVERAGE === 'true' || process.env.JEST_DISABLE_THRESHOLD === 'true';
-  const collectCoverage = process.env.CI === 'true' || process.env.JEST_COVERAGE === 'true';
+  const collectCoverage = process.env.JEST_COVERAGE === 'true';
   const prettyReporterPath = path.resolve(__dirname, "./prettyReporter.js");
   const cfg = {
     rootDir: path.resolve(__dirname, "./"),

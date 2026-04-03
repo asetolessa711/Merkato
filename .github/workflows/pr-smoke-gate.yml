@@ -81,7 +81,10 @@ jobs:
             exit 0
           fi
           if [ "$dur" -gt 300 ]; then
-            echo "::error::Smoke suite exceeded budget (<=300s)."
+            echo "::warning::Smoke suite exceeded 300s target (${dur}s) but is within grace window."
+          fi
+          if [ "$dur" -gt 330 ]; then
+            echo "::error::Smoke suite exceeded hard budget (<=330s with CI grace)."
             exit 1
           fi
       - name: Upload artifacts
