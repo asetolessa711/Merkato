@@ -49,12 +49,16 @@ after(() => {
 
 // Utility: tag-based filtering support (e.g., @flaky). Usage: add in spec titles.
 // Exclude via CYPRESS_EXCLUDE_TAG="@flaky"; include-only via CYPRESS_INCLUDE_TAG="@flaky".
-const excludeTag = String(Cypress.env('EXCLUDE_TAG') || '');
-const includeTag = String(Cypress.env('INCLUDE_TAG') || '');
+const splitTags = (value) => String(value || '')
+  .split(',')
+  .map((v) => v.trim())
+  .filter(Boolean);
+const excludeTags = splitTags(Cypress.env('EXCLUDE_TAG'));
+const includeTags = splitTags(Cypress.env('INCLUDE_TAG'));
 
 // Guard to avoid re-wrapping in case this file is evaluated more than once in the same run
 const TAG_WRAPPER_FLAG = '__MERKATO_IT_TAG_WRAPPED__';
-if ((excludeTag || includeTag) && !globalThis[TAG_WRAPPER_FLAG]) {
+if ((excludeTags.length || includeTags.length) && !globalThis[TAG_WRAPPER_FLAG]) {
   // Mark as wrapped before assigning to avoid races
   Object.defineProperty(globalThis, TAG_WRAPPER_FLAG, {
     value: true,
@@ -66,17 +70,15 @@ if ((excludeTag || includeTag) && !globalThis[TAG_WRAPPER_FLAG]) {
   const origIt = globalThis.it;
   const origItBase = typeof origIt === 'function' ? origIt.bind(globalThis) : null;
   const origItOnly = origIt && typeof origIt.only === 'function' ? origIt.only.bind(globalThis) : null;
-  const origItSkip = origIt && typeof origIt.skip === 'function'
-    ? origIt.skip.bind(globalThis)
-    : origItBase;
+  const definePending = (title) => (origItBase ? origItBase(title || '(skipped by tag filter)') : undefined);
 
   const makeBound = (base) => function wrapped(title, ...rest) {
     const t = typeof title === 'string' ? title : '';
-    const shouldInclude = includeTag ? t.includes(includeTag) : true;
-    const shouldExclude = excludeTag ? t.includes(excludeTag) : false;
+    const shouldInclude = includeTags.length ? includeTags.some((tag) => t.includes(tag)) : true;
+    const shouldExclude = excludeTags.length ? excludeTags.some((tag) => t.includes(tag)) : false;
     if (!shouldInclude || shouldExclude) {
-      // Skip at definition time
-      return origItSkip ? origItSkip(title || '(skipped by tag filter)', ...rest) : undefined;
+      // Define as pending to avoid recursive skip wrappers in some Cypress/Mocha internals.
+      return definePending(title);
     }
     return base ? base(title, ...rest) : undefined;
   };
@@ -86,6 +88,8 @@ if ((excludeTag || includeTag) && !globalThis[TAG_WRAPPER_FLAG]) {
     // eslint-disable-next-line no-global-assign
     globalThis.it = makeBound(origItBase);
     if (origItOnly) globalThis.it.only = makeBound(origItOnly);
-    if (origItSkip) globalThis.it.skip = origItSkip;
+    if (origIt && typeof origIt.skip === 'function') {
+      globalThis.it.skip = origIt.skip.bind(globalThis);
+    }
   }
 }
