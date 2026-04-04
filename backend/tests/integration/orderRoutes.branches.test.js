@@ -54,6 +54,36 @@ describe('Order Routes — branch coverage', () => {
       deliveryOption: { name: 'Standard', cost: 5, days: 3 }
     });
 
+    test('400 when unauthenticated request omits buyer information', async () => {
+      const res = await request(app)
+        .post('/api/orders')
+        .send(baseBody());
+      expect(res.statusCode).toBe(400);
+      expect(res.body.message).toMatch(/buyer information is incomplete/i);
+    });
+
+    test('201 when guest checkout provides complete buyer information', async () => {
+      const res = await request(app)
+        .post('/api/orders')
+        .send({
+          ...baseBody(),
+          buyerInfo: {
+            name: 'Guest Buyer',
+            email: 'guest.order@example.com',
+            country: 'Ethiopia',
+          },
+        });
+      expect(res.statusCode).toBe(201);
+    });
+
+    test('403 when authenticated user is not a customer', async () => {
+      const res = await request(app)
+        .post('/api/orders')
+        .set('Authorization', vendorAuth)
+        .send(baseBody());
+      expect(res.statusCode).toBe(403);
+    });
+
     test('400 when no products selected', async () => {
       const res = await request(app)
         .post('/api/orders')
@@ -95,15 +125,71 @@ describe('Order Routes — branch coverage', () => {
       expect(res.statusCode).toBe(400);
     });
 
-    test('400 when discount exceeds order total', async () => {
+    test('400 when manual discount is submitted without promo code', async () => {
       const body = baseBody();
-      body.totalAfterDiscount = 99999; // absurdly high
+      body.discount = 3;
       const res = await request(app)
         .post('/api/orders')
         .set('Authorization', customerAuth)
         .send(body);
-      // This requires order creation flow; ensure we still get a guarded 400/500 depending on promo path
-      expect([400, 500]).toContain(res.statusCode);
+      expect(res.statusCode).toBe(400);
+      expect(res.body.message).toMatch(/discount requires a valid promo code/i);
+    });
+
+    test('400 when guest submits manual discount without promo code', async () => {
+      const body = {
+        ...baseBody(),
+        discount: 3,
+        buyerInfo: {
+          name: 'Guest Buyer',
+          email: 'guest.discount@example.com',
+          country: 'Ethiopia',
+        },
+      };
+      const res = await request(app)
+        .post('/api/orders')
+        .send(body);
+      expect(res.statusCode).toBe(400);
+      expect(res.body.message).toMatch(/discount requires a valid promo code/i);
+    });
+
+    test('400 when client total does not match server-calculated total', async () => {
+      const body = baseBody();
+      body.totalAfterDiscount = 1;
+      const res = await request(app)
+        .post('/api/orders')
+        .set('Authorization', customerAuth)
+        .send(body);
+      expect(res.statusCode).toBe(400);
+      expect(res.body.message).toMatch(/client total does not match server-calculated order total/i);
+    });
+
+    test('400 when guest total does not match server-calculated total', async () => {
+      const body = {
+        ...baseBody(),
+        totalAfterDiscount: 1,
+        buyerInfo: {
+          name: 'Guest Buyer',
+          email: 'guest.total@example.com',
+          country: 'Ethiopia',
+        },
+      };
+      const res = await request(app)
+        .post('/api/orders')
+        .send(body);
+      expect(res.statusCode).toBe(400);
+      expect(res.body.message).toMatch(/client total does not match server-calculated order total/i);
+    });
+
+    test('400 when discount exceeds order total', async () => {
+      const body = baseBody();
+      body.promoId = new mongoose.Types.ObjectId().toString();
+      body.discount = 99999;
+      const res = await request(app)
+        .post('/api/orders')
+        .set('Authorization', customerAuth)
+        .send(body);
+      expect(res.statusCode).toBe(400);
     });
   });
 

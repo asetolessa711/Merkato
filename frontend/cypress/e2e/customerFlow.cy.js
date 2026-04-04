@@ -114,37 +114,11 @@ describe('🛒 Customer E2E Flow', () => {
 
   // Advanced: Test session persistence after reload
   it('persists session after reload', () => {
-    // Register, then explicitly login (RegisterPage redirects to /login on success)
-    const regEmail = `persist-${Date.now()}@example.com`;
-    cy.visit('/');
-    cy.contains(/register/i).click();
-    cy.intercept('POST', '/api/auth/register').as('register');
-    cy.get('input[name="name"]').type('Persistent Customer');
-    cy.get('input[name="email"]').type(regEmail);
-    cy.get('input[name="password"]').type(password);
-    cy.get('input[name="confirmPassword"]').type(password);
-    cy.get('form').contains('button', /register/i).click();
-    cy.wait('@register');
-    // If still on register, go to /login; if already auto-logged-in, skip
-    cy.location('pathname', { timeout: 10000 }).then((path) => {
-      if (path.includes('/register')) {
-        cy.visit('/login');
-      }
+    cy.login('customer');
+    cy.visit('/account/dashboard');
+    cy.window().then((win) => {
+      expect(win.localStorage.getItem('token')).to.be.a('string').and.not.be.empty;
     });
-
-  // Register then explicit login only when we land on /login
-  cy.location('pathname', { timeout: 10000 }).then((path) => {
-    if (path.includes('/login')) {
-      cy.intercept('POST', '/api/auth/login').as('login');
-      cy.get('input[name="email"]').type(regEmail);
-      cy.get('input[name="password"]').type(password);
-      cy.get('form').contains('button', /login/i).click();
-      cy.wait('@login');
-    }
-  });
-  cy.window().then((win) => {
-    expect(win.localStorage.getItem('token')).to.be.a('string').and.not.be.empty;
-  });
 
     // Reload and check still logged in
     cy.reload();
