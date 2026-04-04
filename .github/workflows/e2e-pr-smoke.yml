@@ -1,11 +1,12 @@
-name: E2E PR Smoke
+name: E2E PR Smoke (Fast Required Tier)
 
 on:
   pull_request:
-    branches: [ "**" ]
+    branches: [ codespaces-mongo-setup-recovery, main, dev ]
 
 jobs:
   e2e-smoke:
+    name: e2e-smoke
     runs-on: ubuntu-latest
     permissions:
       contents: read

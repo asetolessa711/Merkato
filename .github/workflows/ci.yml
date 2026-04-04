@@ -9,6 +9,10 @@ on:
 jobs:
   backend:
     runs-on: ubuntu-latest
+    env:
+      MONGO_HOST: mongo
+      MONGO_PORT: '27017'
+      MONGO_DB_TEST: merkato_test
     services:
       mongo:
         image: mongo:6
@@ -27,8 +31,10 @@ jobs:
       - name: Create backend/.env.test
         working-directory: backend
         run: |
+          TEST_MONGO_URI="mongodb://${MONGO_HOST}:${MONGO_PORT}/${MONGO_DB_TEST}"
           echo "NODE_ENV=test" >> .env.test
-          echo "MONGO_URI=mongodb://127.0.0.1:27017/merkato_test" >> .env.test
+          echo "MONGO_URI=$TEST_MONGO_URI" >> .env.test
+          echo "MONGO_URI_TEST=$TEST_MONGO_URI" >> .env.test
           echo "JWT_SECRET=test_secret" >> .env.test
           echo "CLIENT_URL=http://localhost:3000" >> .env.test
           echo "EMAIL_USER=test@example.com" >> .env.test
@@ -37,7 +43,7 @@ jobs:
       - name: Run backend tests
         working-directory: backend
         env:
-          MONGO_URI: mongodb://127.0.0.1:27017/merkato_test
+          MONGO_URI: mongodb://${{ env.MONGO_HOST }}:${{ env.MONGO_PORT }}/${{ env.MONGO_DB_TEST }}
           NODE_ENV: test
         run: npm run test:quick:compact
 

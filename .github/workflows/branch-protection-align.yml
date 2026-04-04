@@ -1,0 +1,45 @@
+name: Branch Protection Align (Required Checks)
+
+on:
+  workflow_dispatch:
+    inputs:
+      include_main:
+        description: "Also apply to main branch"
+        required: false
+        type: boolean
+        default: false
+      apply:
+        description: "Apply changes (true) or dry-run (false)"
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  administration: write
+
+jobs:
+  align:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Resolve target branches
+        id: targets
+        run: |
+          if [ "${{ inputs.include_main }}" = "true" ]; then
+            echo "branches=codespaces-mongo-setup-recovery,main" >> "$GITHUB_OUTPUT"
+          else
+            echo "branches=codespaces-mongo-setup-recovery" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Dry-run or apply required checks alignment
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OWNER: ${{ github.repository_owner }}
+          REPO: ${{ github.event.repository.name }}
+          BRANCHES: ${{ steps.targets.outputs.branches }}
+          REQUIRED_CONTEXTS: backend-required,frontend-targeted-required,runtime-bootstrap-required,e2e-smoke
+          APPLY: ${{ inputs.apply }}
+        run: |
+          chmod +x scripts/github/apply-branch-protection-required-checks.sh
+          scripts/github/apply-branch-protection-required-checks.sh
