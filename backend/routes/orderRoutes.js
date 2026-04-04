@@ -6,7 +6,7 @@ const Product = require('../models/Product');
 const PromoCode = require('../models/PromoCode');
 const Invoice = require('../models/Invoice');
 const ReturnRequest = require('../models/ReturnRequest');
-const { protect, authorize } = require('../middleware/authMiddleware');
+const { protect, authorize, optionalAuth } = require('../middleware/authMiddleware');
 
 function roundCurrency(value) {
   return Number((Number(value) || 0).toFixed(2));
@@ -17,7 +17,7 @@ function roundCurrency(value) {
  * @desc    Create multi-vendor order with invoices
  * @access  Private - Customers only
  */
-router.post('/', protect, authorize('customer'), async (req, res) => {
+router.post('/', optionalAuth, async (req, res) => {
   // Prefer transactions outside of unit tests, but gracefully disable if Mongo isn't a replica set or when flagged off.
   const uriFromEnv = process.env.MONGO_URI || '';
   const looksLikeReplicaSet = /replicaSet=|mongodb\+srv/i.test(uriFromEnv);
@@ -47,7 +47,38 @@ router.post('/', protect, authorize('customer'), async (req, res) => {
       deliveryOption
     } = req.body;
 
-    const buyerId = req.user._id;
+    if (req.user) {
+      const userRoles = req.user.roles || [req.user.role];
+      if (!userRoles.includes('customer')) {
+        return res.status(403).json({ message: 'Only customers can place orders' });
+      }
+    }
+
+    let buyerId = req.user?._id;
+    if (!buyerId) {
+      const { buyerInfo } = req.body || {};
+      const name = buyerInfo?.name || req.body?.shippingAddress?.fullName;
+      const email = buyerInfo?.email;
+      const country = buyerInfo?.country || req.body?.shippingAddress?.country;
+      const emailRegex = /[^@\s]+@[^@\s]+\.[^@\s]+/;
+
+      if (!name || !email || !emailRegex.test(email) || !country) {
+        return res.status(400).json({ message: 'Buyer information is incomplete (name, email, country required)' });
+      }
+
+      const User = require('../models/User');
+      let buyer = await User.findOne({ email });
+      if (!buyer) {
+        const crypto = require('crypto');
+        const randomPass = crypto.randomBytes(12).toString('hex');
+        try {
+          buyer = await User.create({ name, email, password: randomPass, roles: ['customer'], country });
+        } catch (_) {
+          buyer = await User.findOne({ email });
+        }
+      }
+      buyerId = buyer._id;
+    }
 
     // Enhanced input validation
     if (!cartItems?.length) {

@@ -6,7 +6,9 @@ Goal
 Scope (strict)
 - Validate backend order-creation contract for cart-based checkout payloads.
 - Ensure server-side total integrity checks for submitted order amounts.
-- Enforce authorization for order creation and customer order retrieval.
+- Allow both guest customer checkout and registered customer checkout through the same core commerce path.
+- Enforce the same order-creation eligibility, pricing, discount, and total-validation rules for both guest and registered checkout.
+- Limit differences to identity/account handling and post-purchase convenience only.
 - Add focused test coverage in this sequence:
   1. backend unit/contract
   2. frontend unit
@@ -24,6 +26,12 @@ Trust-critical E2E anchor (single path)
 
 Acceptance criteria
 - Backend rejects malformed or unauthorized order creation requests with clear status/message.
+- Guest customer checkout is allowed.
+- Registered customer checkout is allowed.
+- Guest and registered customer checkout share the same core commerce validation rules.
+- Manual client discount injection is blocked unless valid promo context exists.
+- Client-provided totals must match server-calculated totals.
+- Money normalization rules are enforced server-side for both guest and registered checkout.
 - Backend creates order records with stable shape used by customer order surfaces.
 - Frontend checkout and order confirmation surfaces consume the contract without runtime crashes.
 - Focused backend and frontend tests for purchase/order creation are deterministic and passing.
