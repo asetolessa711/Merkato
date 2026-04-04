@@ -140,13 +140,39 @@ describe('Mega Menu Routes @mega-menu', () => {
   });
 
   describe('Admin: PUT /api/admin/mega-menu', () => {
-    test('400 when payload missing menu array', async () => {
+    test('422 when payload missing menu array', async () => {
       const res = await request(app)
         .put('/api/admin/mega-menu')
         .set('Authorization', adminToken)
         .send({});
-      expect(res.statusCode).toBe(400);
-      expect(res.body.message).toMatch(/menu array required/i);
+      expect(res.statusCode).toBe(422);
+      expect(res.body.message).toMatch(/invalid mega menu payload/i);
+      expect(Array.isArray(res.body.errors)).toBe(true);
+      expect(res.body.errors.some((e) => e.path === 'menu')).toBe(true);
+    });
+
+    test('422 with field-level errors for invalid category/link fields', async () => {
+      const res = await request(app)
+        .put('/api/admin/mega-menu')
+        .set('Authorization', adminToken)
+        .send({
+          menu: [
+            {
+              title: '   ',
+              status: 'active',
+              links: [
+                { label: '', to: 'javascript:alert(1)', status: 'active' },
+              ],
+            },
+          ],
+        });
+
+      expect(res.statusCode).toBe(422);
+      expect(res.body.message).toMatch(/invalid mega menu payload/i);
+      expect(Array.isArray(res.body.errors)).toBe(true);
+      expect(res.body.errors.some((e) => e.path === 'menu[0].title')).toBe(true);
+      expect(res.body.errors.some((e) => e.path === 'menu[0].links[0].label')).toBe(true);
+      expect(res.body.errors.some((e) => e.path === 'menu[0].links[0].to')).toBe(true);
     });
 
     test('200 saves provided menu and returns normalized payload', async () => {
