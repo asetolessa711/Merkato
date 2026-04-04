@@ -152,7 +152,6 @@ describe('Order Routes — branch coverage', () => {
       expect(res.statusCode).toBe(400);
       expect(res.body.message).toMatch(/discount requires a valid promo code/i);
     });
-
     test('400 when client total does not match server-calculated total', async () => {
       const body = baseBody();
       body.totalAfterDiscount = 1;
@@ -180,7 +179,6 @@ describe('Order Routes — branch coverage', () => {
       expect(res.statusCode).toBe(400);
       expect(res.body.message).toMatch(/client total does not match server-calculated order total/i);
     });
-
     test('400 when discount exceeds order total', async () => {
       const body = baseBody();
       body.promoId = new mongoose.Types.ObjectId().toString();

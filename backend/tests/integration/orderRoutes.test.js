@@ -70,7 +70,7 @@ describe('Order Routes @orders', () => {
   });
 
   describe('POST /api/orders', () => {
-    test('rejects unauthenticated order when buyerInfo is missing', async () => {
+    test('rejects unauthenticated order creation', async () => {
       const res = await request(app)
         .post('/api/orders')
         .send({ cartItems: [], total: 10 });
