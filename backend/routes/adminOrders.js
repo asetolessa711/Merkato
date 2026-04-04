@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Order = require('../models/Order');
+const ReturnRequest = require('../models/ReturnRequest');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
 // GET /api/admin/orders - Return real orders; if none, create a minimal one for test determinism
@@ -140,5 +141,64 @@ router.post('/bulk-schedule', protect, authorize('admin', 'global_admin'), async
     return res.status(200).json({ ok: true, when: req.body.when, action: req.body.action, count: (req.body.ids||[]).length });
   } catch (e) {
     return res.status(500).json({ message: 'bulk-schedule failed' });
+  }
+});
+
+// GET /api/admin/orders/return-requests
+router.get('/return-requests', protect, authorize('admin', 'global_admin'), async (req, res) => {
+  try {
+    const returnRequests = await ReturnRequest.find({})
+      .populate('order', '_id status total currency createdAt')
+      .populate('customer', 'name email')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return res.json({ success: true, returnRequests });
+  } catch (e) {
+    return res.status(500).json({ message: 'Failed to load return requests' });
+  }
+});
+
+// PATCH /api/admin/orders/return-requests/:requestId/status
+router.patch('/return-requests/:requestId/status', protect, authorize('admin', 'global_admin'), async (req, res) => {
+  try {
+    const { requestId } = req.params;
+    const nextStatus = String(req.body?.status || '').trim();
+
+    const returnRequest = await ReturnRequest.findById(requestId);
+    if (!returnRequest) {
+      return res.status(404).json({ message: 'Return request not found' });
+    }
+
+    if (!ReturnRequest.lifecycleStates.includes(nextStatus)) {
+      return res.status(400).json({ message: `Invalid lifecycle status value: ${nextStatus}` });
+    }
+
+    const currentStatus = returnRequest.status;
+    if (!ReturnRequest.canTransition(currentStatus, nextStatus)) {
+      return res.status(400).json({
+        message: `Invalid return lifecycle transition from ${currentStatus} to ${nextStatus}`,
+      });
+    }
+
+    returnRequest.status = nextStatus;
+    returnRequest.transitionHistory = returnRequest.transitionHistory || [];
+    returnRequest.transitionHistory.push({
+      fromStatus: currentStatus,
+      toStatus: nextStatus,
+      changedBy: req.user._id,
+      note: 'Admin lifecycle transition',
+    });
+
+    await returnRequest.save();
+
+    const hydrated = await ReturnRequest.findById(returnRequest._id)
+      .populate('order', '_id status total currency createdAt')
+      .populate('customer', 'name email')
+      .lean();
+
+    return res.json({ success: true, returnRequest: hydrated });
+  } catch (e) {
+    return res.status(500).json({ message: 'Failed to transition return request' });
   }
 });

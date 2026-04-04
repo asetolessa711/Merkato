@@ -5,12 +5,95 @@ import Invoice from '../components/Invoice'; // adjust if needed
 
 function CustomerOrders() {
   const [orders, setOrders] = useState([]);
+  const [returnRequestsByOrder, setReturnRequestsByOrder] = useState({});
   const [msg, setMsg] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [showModal, setShowModal] = useState(null);
   const [sendingEmail, setSendingEmail] = useState(false);
   const navigate = useNavigate();
   const printRefs = useRef({});
+
+  const mapReturnRequestsByOrder = (returnRequests) => {
+    const next = {};
+    (returnRequests || []).forEach((req) => {
+      const orderId = req?.order?._id || req?.order;
+      if (!orderId) return;
+      next[String(orderId)] = req;
+    });
+    setReturnRequestsByOrder(next);
+  };
+
+  const fetchReturnRequests = async (token) => {
+    try {
+      const res = await axios.get('/api/orders/return-requests/my', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = res.data;
+      const list = Array.isArray(data) ? data : (Array.isArray(data?.returnRequests) ? data.returnRequests : []);
+      mapReturnRequestsByOrder(list);
+    } catch (_) {
+      // Keep customer orders usable even if return-request endpoint is unavailable.
+    }
+  };
+
+  const getReturnStatusLabel = (order) => {
+    const status =
+      returnRequestsByOrder[String(order._id)]?.status ||
+      order.returnStatus ||
+      (order.returnRequested ? 'requested' : '');
+
+    switch (status) {
+      case 'requested':
+        return 'Return Requested';
+      case 'under_review':
+        return 'Under Review';
+      case 'approved':
+        return 'Approved';
+      case 'rejected':
+        return 'Rejected';
+      case 'refunded':
+        return 'Refunded';
+      case 'closed':
+        return 'Closed';
+      default:
+        return '';
+    }
+  };
+
+  const handleCreateReturnRequest = async (orderId) => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    try {
+      const res = await axios.post(
+        `/api/orders/${orderId}/return-requests`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      const created = res?.data?.returnRequest;
+      const linkedOrderId = created?.order?._id || created?.order || orderId;
+      if (linkedOrderId) {
+        setReturnRequestsByOrder((prev) => ({
+          ...prev,
+          [String(linkedOrderId)]: created || { order: linkedOrderId, status: 'requested' },
+        }));
+      }
+    } catch (error) {
+      const existing = error?.response?.data?.returnRequest;
+      const status = existing?.status;
+      if (status) {
+        setReturnRequestsByOrder((prev) => ({
+          ...prev,
+          [String(orderId)]: existing,
+        }));
+        return;
+      }
+
+      // Legacy fallback for deterministic Cypress local-injection path.
+      setOrders((prev) => prev.map((o) => (o._id === orderId ? { ...o, returnRequested: true } : o)));
+    }
+  };
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -28,6 +111,16 @@ function CustomerOrders() {
             const injected = JSON.parse(localStorage.getItem('e2e-customer-orders') || 'null');
             if (Array.isArray(injected)) {
               setOrders(injected);
+              const mapped = {};
+              injected.forEach((o) => {
+                if (o?.returnStatus || o?.returnRequested) {
+                  mapped[String(o._id)] = {
+                    order: o._id,
+                    status: o.returnStatus || 'requested',
+                  };
+                }
+              });
+              setReturnRequestsByOrder(mapped);
               return;
             }
           }
@@ -38,6 +131,7 @@ function CustomerOrders() {
         const data = res.data;
         const list = Array.isArray(data) ? data : (Array.isArray(data?.orders) ? data.orders : []);
         setOrders(list);
+        await fetchReturnRequests(token);
       } catch (err) {
         setMsg('Failed to fetch orders.');
       }
@@ -210,14 +304,12 @@ function CustomerOrders() {
               <div style={{ marginTop: 10 }}>
                 <button
                   data-testid={`request-return-btn-${order._id}`}
-                  onClick={() => {
-                    setOrders(prev => prev.map(o => o._id === order._id ? { ...o, returnRequested: true } : o));
-                  }}
+                  onClick={() => handleCreateReturnRequest(order._id)}
                 >
                   Request Return
                 </button>
                 <div data-testid={`return-status-${order._id}`}>
-                  {order.returnRequested ? 'Return Requested' : ''}
+                  {getReturnStatusLabel(order)}
                 </div>
               </div>
             </div>

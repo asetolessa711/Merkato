@@ -41,6 +41,9 @@ function AdminOrders({ showMessage: showMessageProp, initialOrders }) {
     }, 1200);
   };
   const [orders, setOrders] = useState(initialOrders || []);
+  const [returnRequests, setReturnRequests] = useState([]);
+  const [returnTransitionDrafts, setReturnTransitionDrafts] = useState({});
+  const [returnTransitionMsg, setReturnTransitionMsg] = useState("");
   const updateStatus = async (orderId, newStatus) => {
     try {
       // In Cypress runs, first fire a fetch-based PATCH so cy.intercept reliably captures a network call
@@ -92,6 +95,64 @@ function AdminOrders({ showMessage: showMessageProp, initialOrders }) {
   const [endDate, setEndDate] = useState(null);
   const token = localStorage.getItem("token");
   const headers = { Authorization: `Bearer ${token}` };
+
+  const getNextTransitionDefault = (status) => {
+    const defaults = {
+      requested: "under_review",
+      under_review: "approved",
+      approved: "refunded",
+      rejected: "closed",
+      refunded: "closed",
+      closed: "",
+    };
+    return defaults[status] || "";
+  };
+
+  const fetchReturnRequests = async () => {
+    try {
+      const res = await axios.get("/api/admin/orders/return-requests", { headers });
+      const data = res?.data;
+      const list = Array.isArray(data) ? data : (Array.isArray(data?.returnRequests) ? data.returnRequests : []);
+      setReturnRequests(list);
+      setReturnTransitionDrafts((prev) => {
+        const next = { ...prev };
+        list.forEach((req) => {
+          if (!next[req._id]) {
+            next[req._id] = getNextTransitionDefault(req.status);
+          }
+        });
+        return next;
+      });
+    } catch (_) {
+      setReturnRequests([]);
+    }
+  };
+
+  const applyReturnTransition = async (requestId) => {
+    const nextStatus = returnTransitionDrafts[requestId];
+    if (!nextStatus) {
+      setReturnTransitionMsg("Select a lifecycle status before applying transition.");
+      return;
+    }
+
+    try {
+      const res = await axios.patch(
+        `/api/admin/orders/return-requests/${requestId}/status`,
+        { status: nextStatus },
+        { headers }
+      );
+      const updated = res?.data?.returnRequest;
+      setReturnRequests((prev) => prev.map((req) => (req._id === requestId ? (updated || req) : req)));
+      setReturnTransitionDrafts((prev) => ({
+        ...prev,
+        [requestId]: getNextTransitionDefault(updated?.status || nextStatus),
+      }));
+      setReturnTransitionMsg(`Return request transitioned to ${updated?.status || nextStatus}.`);
+    } catch (err) {
+      const message = err?.response?.data?.message || "Failed to transition return request";
+      setReturnTransitionMsg(message);
+    }
+  };
 
   const handleModerationAction = (actionType) => {
     if (actionType === "approve") setMsg("Review approved.");
@@ -191,6 +252,7 @@ function AdminOrders({ showMessage: showMessageProp, initialOrders }) {
           } catch {}
         }
         setOrders(Array.isArray(list) ? list : []);
+        await fetchReturnRequests();
       } catch (err) {
         setMsg("Failed to load orders");
       }
@@ -559,6 +621,75 @@ function AdminOrders({ showMessage: showMessageProp, initialOrders }) {
             {isExporting ? "Exporting..." : "Export CSV"}
           </button>
         </div>
+      </div>
+
+      <div
+        style={{
+          border: "1px solid #dcdcdc",
+          borderRadius: 8,
+          padding: 16,
+          marginBottom: 20,
+          background: "#ffffff",
+        }}
+      >
+        <h3 style={{ marginTop: 0 }}>Return Requests Review</h3>
+        {returnTransitionMsg && (
+          <p data-testid="return-transition-msg" style={{ marginTop: 8 }}>
+            {returnTransitionMsg}
+          </p>
+        )}
+        {returnRequests.length === 0 ? (
+          <p data-testid="no-return-requests">No return requests.</p>
+        ) : (
+          returnRequests.map((req) => (
+            <div
+              key={req._id}
+              data-testid="return-request-row"
+              style={{ borderTop: "1px solid #efefef", paddingTop: 12, marginTop: 12 }}
+            >
+              <p style={{ margin: "4px 0" }}>
+                <strong>Request ID:</strong> <span data-testid="return-request-id">{req._id}</span>
+              </p>
+              <p style={{ margin: "4px 0" }}>
+                <strong>Order ID:</strong> {req.order?._id || req.order}
+              </p>
+              <p style={{ margin: "4px 0" }}>
+                <strong>Customer:</strong> {req.customer?.email || req.customer?.name || "Unknown"}
+              </p>
+              <p style={{ margin: "4px 0" }}>
+                <strong>Status:</strong>{" "}
+                <span data-testid={`return-request-status-${req._id}`}>{req.status}</span>
+              </p>
+              <div style={{ marginTop: 8 }}>
+                <select
+                  data-testid="return-transition-select"
+                  value={returnTransitionDrafts[req._id] || ""}
+                  onChange={(e) =>
+                    setReturnTransitionDrafts((prev) => ({
+                      ...prev,
+                      [req._id]: e.target.value,
+                    }))
+                  }
+                >
+                  <option value="">Select transition</option>
+                  <option value="requested">requested</option>
+                  <option value="under_review">under_review</option>
+                  <option value="approved">approved</option>
+                  <option value="rejected">rejected</option>
+                  <option value="refunded">refunded</option>
+                  <option value="closed">closed</option>
+                </select>
+                <button
+                  data-testid="apply-return-transition"
+                  onClick={() => applyReturnTransition(req._id)}
+                  style={{ marginLeft: 8 }}
+                >
+                  Apply Transition
+                </button>
+              </div>
+            </div>
+          ))
+        )}
       </div>
       {filteredOrders.length === 0 ? (
         <p>No orders yet.</p>

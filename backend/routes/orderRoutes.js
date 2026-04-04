@@ -5,6 +5,7 @@ const Order = require('../models/Order');
 const Product = require('../models/Product');
 const PromoCode = require('../models/PromoCode');
 const Invoice = require('../models/Invoice');
+const ReturnRequest = require('../models/ReturnRequest');
 const { protect, authorize, optionalAuth } = require('../middleware/authMiddleware');
 
 /**
@@ -378,6 +379,77 @@ router.get('/my', protect, authorize('customer'), async (req, res) => {
     res.json({ success: true, orders });
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+});
+
+/**
+ * @route   POST /api/orders/:orderId/return-requests
+ * @desc    Create return/refund request for an order owned by the customer
+ * @access  Private - Customer
+ */
+router.post('/:orderId/return-requests', protect, authorize('customer'), async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { reason } = req.body || {};
+
+    const order = await Order.findById(orderId).select('_id buyer');
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    if (String(order.buyer) !== String(req.user._id)) {
+      return res.status(403).json({ message: 'Not authorized to create return request for this order' });
+    }
+
+    const openExisting = await ReturnRequest.findOne({
+      order: order._id,
+      customer: req.user._id,
+      status: { $ne: 'closed' },
+    }).select('_id status');
+
+    if (openExisting) {
+      return res.status(409).json({
+        message: 'An active return request already exists for this order',
+        returnRequest: openExisting,
+      });
+    }
+
+    const returnRequest = await ReturnRequest.create({
+      order: order._id,
+      customer: req.user._id,
+      status: 'requested',
+      reason: typeof reason === 'string' ? reason.trim() : undefined,
+      transitionHistory: [
+        {
+          fromStatus: null,
+          toStatus: 'requested',
+          changedBy: req.user._id,
+          note: 'Customer requested return/refund',
+        },
+      ],
+    });
+
+    return res.status(201).json({ success: true, returnRequest });
+  } catch (err) {
+    return res.status(500).json({ message: 'Failed to create return request' });
+  }
+});
+
+/**
+ * @route   GET /api/orders/return-requests/my
+ * @desc    Get customer's return/refund requests
+ * @access  Private - Customer
+ */
+router.get('/return-requests/my', protect, authorize('customer'), async (req, res) => {
+  try {
+    const returnRequests = await ReturnRequest.find({ customer: req.user._id })
+      .populate('order', '_id status total currency createdAt')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return res.json({ success: true, returnRequests });
+  } catch (err) {
+    return res.status(500).json({ message: 'Failed to load return requests' });
   }
 });
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import PropTypes from 'prop-types';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import styles from './CustomerLayout.module.css';
 
 import MerkatoNavbar from '../components/MerkatoNavbar.jsx';
@@ -154,7 +154,7 @@ function CustomerLayout({ children, user, onLogout, lang, onLangChange }) {
         <CustomerSidebar user={user} activePath={location.pathname} />
         <main className={styles.contentArea}>
           {/* Only render children, no duplicate headings */}
-          <div className={styles.childrenWrapper}>{children}</div>
+          <div className={styles.childrenWrapper}>{children || <Outlet />}</div>
         </main>
       </div>
       <MerkatoFooter />
