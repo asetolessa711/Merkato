@@ -1,12 +1,17 @@
 #!/usr/bin/env node
 const { spawn } = require('child_process');
 
+const sharedEnv = { ...process.env };
+if (!sharedEnv.MONGO_URI) {
+  sharedEnv.MONGO_URI = sharedEnv.MONGO_URI_DEV || 'mongodb://127.0.0.1:27017/merkato-dev';
+}
+
 function start(name, cmd, args, cwd) {
   const p = spawn(cmd, args, {
     cwd,
     stdio: 'inherit',
     shell: true,
-    env: process.env,
+    env: sharedEnv,
   });
 
   p.on('exit', (code) => {

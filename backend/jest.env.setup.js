@@ -54,7 +54,5 @@ if (!process.env.CLIENT_URL) {
   process.env.CLIENT_URL = 'http://localhost:3000';
 }
 
-// Provide a default local Mongo URI for tests if missing, so server.js can start in CI
-if (!process.env.MONGO_URI) {
-  process.env.MONGO_URI = 'mongodb://127.0.0.1:27017/merkato_test';
-}
+// Force canonical test DB URI to avoid accidental use of dev DB in shared environments.
+process.env.MONGO_URI = process.env.MONGO_URI_TEST || process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/merkato_test';

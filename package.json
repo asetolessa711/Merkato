@@ -4,6 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "node ./scripts/start-dev.js",
+    "db:bootstrap:dev": "npm --prefix backend run db:bootstrap:dev",
+    "db:bootstrap:test": "npm --prefix backend run db:bootstrap:test",
+    "db:bootstrap:e2e": "npm --prefix backend run db:bootstrap:e2e",
+    "db:validate:dev": "npm --prefix backend run db:validate:dev",
+    "db:validate:test": "npm --prefix backend run db:validate:test",
+    "db:validate:e2e": "npm --prefix backend run db:validate:e2e",
     "verify:core": "node ./scripts/verify-core.js",
     "test:frontend": "cd frontend && npm test",
     "test:backend": "cd backend && npm test",

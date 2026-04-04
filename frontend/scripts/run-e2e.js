@@ -67,10 +67,12 @@ async function main() {
     console.log(`[e2e] ATTACH mode: using API at ${apiUrl}`);
   } else {
     // Ensure MongoDB is accepting connections in CI before starting backend to avoid early exit
+    const mongoWaitHost = process.env.MONGO_HOST || '127.0.0.1';
+    const mongoWaitPort = process.env.MONGO_PORT || '27017';
     try {
-      await waitOn({ resources: ['tcp:127.0.0.1:27017'], timeout: 60000 });
+      await waitOn({ resources: [`tcp:${mongoWaitHost}:${mongoWaitPort}`], timeout: 60000 });
     } catch (_) {
-      console.warn('[e2e] MongoDB port 27017 not ready after 60s; continuing and letting backend retry connect...');
+      console.warn(`[e2e] MongoDB ${mongoWaitHost}:${mongoWaitPort} not ready after 60s; continuing and letting backend retry connect...`);
     }
     // For SEMI-ATTACH, prefer port 5000 to match CRA dev proxy default
     if (semiAttach) {

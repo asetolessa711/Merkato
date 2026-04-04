@@ -81,7 +81,10 @@ cd ../backend && npm install
 Copy `.env.example` to `.env`, `.env.test`, and `.env.local` as needed. Then fill in secrets:
 
 ```env
-MONGO_URI=mongodb://localhost:27017/merkato
+MONGO_URI=mongodb://127.0.0.1:27017/merkato-dev
+MONGO_URI_DEV=mongodb://127.0.0.1:27017/merkato-dev
+MONGO_URI_TEST=mongodb://127.0.0.1:27017/merkato_test
+MONGO_URI_E2E=mongodb://127.0.0.1:27017/merkato_e2e
 JWT_SECRET=your_jwt_secret
 STRIPE_SECRET_KEY=sk_test_xxx
 STRIPE_PUBLISHABLE_KEY=pk_test_xxx
@@ -100,6 +103,31 @@ npm run dev
 cd backend && npm run dev
 cd frontend && npm run dev
 ```
+
+### Codespaces-First Setup (Mongo Runs in Codespaces)
+
+This repository includes a devcontainer setup where MongoDB runs as a service inside Codespaces.
+
+- Canonical DB names:
+  - `merkato-dev`
+  - `merkato_test`
+  - `merkato_e2e`
+- Canonical URIs are auto-wired in `.devcontainer/devcontainer.json`.
+- Fresh Codespaces run repository-driven bootstrap automatically via `.devcontainer/postCreate.sh`.
+
+Manual bootstrap/rebuild commands:
+
+```bash
+npm run db:bootstrap:dev
+npm run db:bootstrap:test
+npm run db:bootstrap:e2e
+
+npm run db:validate:dev
+npm run db:validate:test
+npm run db:validate:e2e
+```
+
+Detailed guide: `docs/CODESPACES_DATABASE_SETUP.md`.
 
 ### 4. Core Verification (before PR/merge)
 

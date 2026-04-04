@@ -1,0 +1,31 @@
+{
+  "name": "Merkato Codespaces",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "workspace",
+  "runServices": ["workspace", "mongo"],
+  "workspaceFolder": "/workspaces/Merkato",
+  "shutdownAction": "stopCompose",
+  "containerEnv": {
+    "MONGO_HOST": "mongo",
+    "MONGO_PORT": "27017",
+    "MONGO_URI": "mongodb://mongo:27017/merkato-dev",
+    "MONGO_URI_DEV": "mongodb://mongo:27017/merkato-dev",
+    "MONGO_URI_TEST": "mongodb://mongo:27017/merkato_test",
+    "MONGO_URI_E2E": "mongodb://mongo:27017/merkato_e2e",
+    "E2E_DB_PREFIX": "merkato_e2e"
+  },
+  "postCreateCommand": "bash .devcontainer/postCreate.sh",
+  "forwardPorts": [3000, 5000, 5051],
+  "portsAttributes": {
+    "3000": { "label": "frontend" },
+    "5000": { "label": "backend" },
+    "5051": { "label": "backend-e2e" }
+  },
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  }
+}

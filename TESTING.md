@@ -59,7 +59,19 @@
   - Windows Service: start the MongoDB service from Services, or
   - Docker: `docker run --rm -p 27017:27017 mongo:5`
 - The project defaults to `mongodb://127.0.0.1:27017` to avoid IPv6 `::1` connection issues on Windows.
-- Test environment file: `backend/.env.test` sets `MONGO_URI=mongodb://127.0.0.1:27017/merkato_test`.
+- Canonical database names:
+  - Dev: `merkato-dev`
+  - Test: `merkato_test`
+  - E2E: `merkato_e2e`
+- Test environment should use `MONGO_URI_TEST=mongodb://127.0.0.1:27017/merkato_test`.
+
+Repository-driven bootstrap commands:
+
+```sh
+npm run db:bootstrap:dev
+npm run db:bootstrap:test
+npm run db:bootstrap:e2e
+```
 
 ## Notes
 - Cypress is only configured for the frontend.

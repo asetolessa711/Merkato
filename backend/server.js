@@ -149,8 +149,22 @@ app.get("/api", (req, res) => {
 });
 
 // �️ MongoDB Connection (resilient with fallback)
+function resolvePrimaryMongoUri() {
+  if (process.env.MONGO_URI) return process.env.MONGO_URI;
+
+  if (process.env.NODE_ENV === "test") {
+    return process.env.MONGO_URI_TEST || "mongodb://127.0.0.1:27017/merkato_test";
+  }
+
+  if (process.env.NODE_ENV === "development") {
+    return process.env.MONGO_URI_DEV || "mongodb://127.0.0.1:27017/merkato-dev";
+  }
+
+  return "";
+}
+
 function getMongoUriCandidates() {
-  const primary = process.env.MONGO_URI || "";
+  const primary = resolvePrimaryMongoUri();
   const fallback = process.env.MONGO_URI_FALLBACK || ""; // e.g., a direct mongodb://host:port/db
   const local = process.env.MONGO_URI_LOCAL || process.env.MONGO_LOCAL || ""; // local dev convenience
   const list = [];
