@@ -9,6 +9,7 @@ Scope (strict)
 - Allow both guest customer checkout and registered customer checkout through the same core commerce path.
 - Enforce the same order-creation eligibility, pricing, discount, and total-validation rules for both guest and registered checkout.
 - Limit differences to identity/account handling and post-purchase convenience only.
+- Enforce authorization for order creation and customer order retrieval.
 - Add focused test coverage in this sequence:
   1. backend unit/contract
   2. frontend unit
