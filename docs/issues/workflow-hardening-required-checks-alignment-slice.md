@@ -32,8 +32,10 @@ Acceptance Criteria
 - E2E tier policy
   - Fast PR smoke E2E remains required.
   - Full E2E tier is explicitly non-required (nightly/workflow_dispatch only).
+  - Auto-merge bot status is optional/informational and not part of required merge gating contexts.
 - Branch protection alignment
   - Branch protection required status checks include backend required, frontend targeted required, runtime/bootstrap smoke, and fast E2E smoke contexts.
+  - Branch protection required status checks explicitly exclude automerge context.
   - PRs with failing required contexts are not mergeable.
 
 Proof Path

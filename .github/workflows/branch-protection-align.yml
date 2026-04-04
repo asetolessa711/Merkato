@@ -39,6 +39,7 @@ jobs:
           REPO: ${{ github.event.repository.name }}
           BRANCHES: ${{ steps.targets.outputs.branches }}
           REQUIRED_CONTEXTS: backend-required,frontend-targeted-required,runtime-bootstrap-required,e2e-smoke
+          FORBID_REQUIRED_CONTEXTS: automerge
           APPLY: ${{ inputs.apply }}
         run: |
           chmod +x scripts/github/apply-branch-protection-required-checks.sh

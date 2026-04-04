@@ -5,6 +5,7 @@ OWNER="${OWNER:-asetolessa711}"
 REPO="${REPO:-Merkato}"
 BRANCHES_CSV="${BRANCHES:-codespaces-mongo-setup-recovery,main}"
 REQUIRED_CONTEXTS_CSV="${REQUIRED_CONTEXTS:-backend-required,frontend-targeted-required,runtime-bootstrap-required,e2e-smoke}"
+FORBID_REQUIRED_CONTEXTS_CSV="${FORBID_REQUIRED_CONTEXTS:-automerge}"
 APPLY="${APPLY:-false}"
 TOKEN="${GITHUB_TOKEN:-${GH_TOKEN:-}}"
 
@@ -15,8 +16,38 @@ fi
 
 IFS=',' read -r -a BRANCHES <<< "$BRANCHES_CSV"
 IFS=',' read -r -a CONTEXTS <<< "$REQUIRED_CONTEXTS_CSV"
+IFS=',' read -r -a FORBID_CONTEXTS <<< "$FORBID_REQUIRED_CONTEXTS_CSV"
 
-CONTEXTS_JSON="$(printf '%s\n' "${CONTEXTS[@]}" | sed '/^$/d' | jq -R . | jq -s .)"
+declare -A FORBID_CONTEXT_MAP=()
+for CONTEXT in "${FORBID_CONTEXTS[@]}"; do
+  CONTEXT_TRIMMED="$(echo "$CONTEXT" | xargs)"
+  [[ -z "$CONTEXT_TRIMMED" ]] && continue
+  FORBID_CONTEXT_MAP["$CONTEXT_TRIMMED"]=1
+done
+
+declare -A SEEN_CONTEXTS=()
+FILTERED_CONTEXTS=()
+for CONTEXT in "${CONTEXTS[@]}"; do
+  CONTEXT_TRIMMED="$(echo "$CONTEXT" | xargs)"
+  [[ -z "$CONTEXT_TRIMMED" ]] && continue
+  if [[ -n "${FORBID_CONTEXT_MAP["$CONTEXT_TRIMMED"]+x}" ]]; then
+    echo "Skipping forbidden required context: $CONTEXT_TRIMMED" >&2
+    continue
+  fi
+  if [[ -n "${SEEN_CONTEXTS["$CONTEXT_TRIMMED"]+x}" ]]; then
+    continue
+  fi
+  SEEN_CONTEXTS["$CONTEXT_TRIMMED"]=1
+  FILTERED_CONTEXTS+=("$CONTEXT_TRIMMED")
+done
+
+if [[ "${#FILTERED_CONTEXTS[@]}" -eq 0 ]]; then
+  echo "No valid required contexts remain after filtering forbidden contexts." >&2
+  exit 1
+fi
+
+CONTEXTS_JSON="$(printf '%s\n' "${FILTERED_CONTEXTS[@]}" | sed '/^$/d' | jq -R . | jq -s .)"
+FILTERED_CONTEXTS_CSV="$(IFS=','; echo "${FILTERED_CONTEXTS[*]}")"
 
 if [[ "$APPLY" != "true" ]]; then
   echo "Dry run (set APPLY=true to apply)."
@@ -53,7 +84,7 @@ for BR in "${BRANCHES[@]}"; do
 
   echo "---"
   echo "Branch: $BR_TRIMMED"
-  echo "Required contexts: ${REQUIRED_CONTEXTS_CSV}"
+  echo "Required contexts: ${FILTERED_CONTEXTS_CSV}"
 
   if [[ "$APPLY" == "true" ]]; then
     RESP="$(curl -sS -X PUT \
