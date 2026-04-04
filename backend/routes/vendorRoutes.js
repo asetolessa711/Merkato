@@ -11,6 +11,26 @@ const VendorLead = require('../models/VendorLead');
 const InviteToken = require('../models/InviteToken');
 const jwt = require('jsonwebtoken');
 
+function buildVendorProfilePayload(vendor) {
+  return {
+    _id: vendor._id,
+    name: vendor.name,
+    email: vendor.email,
+    country: vendor.country,
+    bio: vendor.bio || '',
+    avatar: vendor.avatar || '',
+    storeName: vendor.storeName || '',
+    storeDescription: vendor.storeDescription || '',
+    businessRegistryId: vendor.businessRegistryId || '',
+    taxId: vendor.taxId || '',
+    vendorStatus: vendor.vendorStatus || 'new',
+    vendorApproved: !!vendor.vendorApproved,
+    trust_badge: !!vendor.trust_badge,
+    createdAt: vendor.createdAt,
+    updatedAt: vendor.updatedAt
+  };
+}
+
 // Create a new product (vendor only)
 router.post('/products', protect, authorize('vendor'), async (req, res) => {
   try {
@@ -229,7 +249,21 @@ router.get('/public', async (req, res) => {
   }
 });
 
-// ✅ NEW: Update vendor profile (avatar)
+// Vendor profile for currently authenticated vendor account
+router.get('/profile/me', protect, authorize('vendor'), async (req, res) => {
+  try {
+    const vendor = await User.findById(req.user._id);
+    if (!vendor || !Array.isArray(vendor.roles) || !vendor.roles.includes('vendor')) {
+      return res.status(403).json({ message: 'Unauthorized' });
+    }
+
+    res.json(buildVendorProfilePayload(vendor));
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to load vendor profile', error: err.message });
+  }
+});
+
+// Update vendor account completion fields
 router.put('/profile', protect, authorize('vendor'), async (req, res) => {
   try {
     const vendor = await User.findById(req.user._id);
@@ -238,19 +272,27 @@ router.put('/profile', protect, authorize('vendor'), async (req, res) => {
       return res.status(403).json({ message: 'Unauthorized' });
     }
 
-    vendor.avatar = req.body.avatar || vendor.avatar;
+    const updates = req.body || {};
+    if (typeof updates.name === 'string' && updates.name.trim()) vendor.name = updates.name.trim();
+    if (typeof updates.country === 'string' && updates.country.trim()) vendor.country = updates.country.trim();
+    if (typeof updates.bio === 'string') vendor.bio = updates.bio.trim();
+    if (typeof updates.avatar === 'string') vendor.avatar = updates.avatar.trim();
+    if (typeof updates.storeName === 'string') vendor.storeName = updates.storeName.trim();
+    if (typeof updates.storeDescription === 'string') vendor.storeDescription = updates.storeDescription.trim();
+    if (typeof updates.businessRegistryId === 'string') vendor.businessRegistryId = updates.businessRegistryId.trim();
+    if (typeof updates.taxId === 'string') vendor.taxId = updates.taxId.trim();
+
     await vendor.save();
 
     res.json({
       message: 'Vendor profile updated successfully',
-      avatar: vendor.avatar
+      vendor: buildVendorProfilePayload(vendor)
     });
   } catch (err) {
     res.status(500).json({ message: 'Failed to update profile', error: err.message });
   }
 });
 
-module.exports = router;
 // --- Onboarding: Public Vendor Registration ---
 router.post('/register', async (req, res) => {
   try {
@@ -337,4 +379,6 @@ router.post('/onboarding/complete', protect, authorize('vendor'), async (req, re
     res.status(500).json({ message: 'Failed to complete onboarding' });
   }
 });
+
+module.exports = router;
 

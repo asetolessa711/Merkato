@@ -1,55 +1,102 @@
 // src/pages/VendorOnboarding.js
 import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import MerkatoFooter from '../components/MerkatoFooter';
 import styles from '../layouts/VendorLayout.module.css';
 
 function VendorOnboarding() {
   const navigate = useNavigate();
-  const [steps, setSteps] = useState([
-    { key: 'storeInfo', label: 'Complete Store Information', done: false },
-    { key: 'uploadProduct', label: 'Upload Your First Product', done: false },
-    { key: 'readGuidelines', label: 'Review Vendor Guidelines', done: false },
-    { key: 'joinGroup', label: 'Join the Merkato Vendor Group', done: false }
-  ]);
+  const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState(null);
+  const [productCount, setProductCount] = useState(0);
+  const [message, setMessage] = useState('');
+
+  const token = localStorage.getItem('token');
+  const headers = { Authorization: `Bearer ${token}` };
 
   useEffect(() => {
-    const stored = localStorage.getItem('onboarding');
-    if (stored) {
-      const completed = JSON.parse(stored);
-      setSteps(prev =>
-        prev.map(step => ({
-          ...step,
-          done: completed.includes(step.key)
-        }))
-      );
-    }
+    const fetchState = async () => {
+      try {
+        const [profileRes, productRes] = await Promise.all([
+          axios.get('/api/vendor/profile/me', { headers }),
+          axios.get('/api/vendor/products', { headers })
+        ]);
+        setProfile(profileRes.data);
+        setProductCount(Array.isArray(productRes.data) ? productRes.data.length : 0);
+      } catch (err) {
+        setMessage('Failed to load onboarding state.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchState();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const toggleStep = (key) => {
-    setSteps(prev => {
-      const updated = prev.map(step =>
-        step.key === key ? { ...step, done: !step.done } : step
-      );
-      const completedKeys = updated.filter(s => s.done).map(s => s.key);
-      localStorage.setItem('onboarding', JSON.stringify(completedKeys));
-      return updated;
-    });
+  const handleComplete = async () => {
+    setMessage('');
+    try {
+      await axios.post('/api/vendor/onboarding/complete', {}, { headers });
+      setProfile((prev) => ({ ...(prev || {}), vendorStatus: 'onboarded' }));
+      const existingUser = JSON.parse(localStorage.getItem('user') || 'null');
+      if (existingUser) {
+        localStorage.setItem('user', JSON.stringify({ ...existingUser, vendorStatus: 'onboarded' }));
+      }
+      setMessage('Onboarding marked complete.');
+    } catch (err) {
+      setMessage('Failed to complete onboarding.');
+    }
   };
+
+  if (loading) {
+    return <div className={styles.contentArea}>Loading onboarding state...</div>;
+  }
+
+  const storeInfoDone = Boolean(profile?.storeName && profile?.storeDescription);
+  const firstProductDone = productCount > 0;
+  const completionDone = ['onboarded', 'verified', 'active'].includes(String(profile?.vendorStatus || '').toLowerCase());
+
+  const steps = [
+    {
+      key: 'storeInfo',
+      label: 'Complete Store Information',
+      done: storeInfoDone,
+      actionLabel: 'Open Account Page',
+      action: () => navigate('/vendor/account')
+    },
+    {
+      key: 'uploadProduct',
+      label: 'Upload Your First Product',
+      done: firstProductDone,
+      actionLabel: 'Add Product',
+      action: () => navigate('/vendor/products/upload')
+    },
+    {
+      key: 'complete',
+      label: 'Mark Onboarding Complete',
+      done: completionDone,
+      actionLabel: 'Complete Onboarding',
+      action: handleComplete,
+      disabled: !storeInfoDone || !firstProductDone || completionDone
+    }
+  ];
 
   return (
     <div className={styles.contentArea}>
-      {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-        <h1 style={{ fontSize: '2.2rem', color: '#00B894', fontWeight: 'bold' }}>
-          Welcome to Merkato Vendor Center 🚀
-        </h1>
+        <h1 style={{ fontSize: '2.2rem', color: '#00B894', fontWeight: 'bold' }}>Vendor Onboarding</h1>
         <p style={{ fontSize: '1rem', color: '#555', marginTop: '10px' }}>
-          Let's launch your store in just 4 quick steps. Start selling and reaching new buyers today!
+          Complete your account and first listing to activate your vendor flow.
+        </p>
+        <p style={{ fontSize: '0.95rem', color: '#555' }}>
+          Current status: <strong>{profile?.vendorStatus || 'new'}</strong>
         </p>
       </div>
 
-      {/* Steps List */}
+      {message && <p style={{ textAlign: 'center' }}>{message}</p>}
+
       <ul style={{ padding: 0, listStyle: 'none' }}>
         {steps.map(step => (
           <li key={step.key} style={{
@@ -64,50 +111,32 @@ function VendorOnboarding() {
           }}>
             <div>
               <strong style={{ fontSize: '1.1rem' }}>{step.label}</strong><br />
-              {step.key === 'storeInfo' && (
-                <button
-                  onClick={() => alert('Store Info Editing: Coming soon')}
-                  style={{ marginTop: '8px', backgroundColor: '#3498DB', color: 'white', padding: '6px 12px', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
-                >
-                  Edit Store Info
-                </button>
-              )}
-              {step.key === 'uploadProduct' && (
-                <button
-                  onClick={() => navigate('/upload')}
-                  style={{ marginTop: '8px', backgroundColor: '#00B894', color: 'white', padding: '6px 12px', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
-                >
-                  Add Product
-                </button>
-              )}
-              {step.key === 'readGuidelines' && (
-                <button
-                  onClick={() => window.open('https://example.com/guidelines', '_blank')}
-                  style={{ marginTop: '8px', backgroundColor: '#FFA726', color: 'white', padding: '6px 12px', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
-                >
-                  Read Now
-                </button>
-              )}
-              {step.key === 'joinGroup' && (
-                <button
-                  onClick={() => window.open('https://wa.me/123456789', '_blank')}
-                  style={{ marginTop: '8px', backgroundColor: '#9B59B6', color: 'white', padding: '6px 12px', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
-                >
-                  Join WhatsApp
-                </button>
-              )}
+              <button
+                onClick={step.action}
+                disabled={step.disabled}
+                style={{
+                  marginTop: '8px',
+                  backgroundColor: step.disabled ? '#999' : '#00B894',
+                  color: 'white',
+                  padding: '6px 12px',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: step.disabled ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {step.actionLabel}
+              </button>
             </div>
             <input
               type="checkbox"
               checked={step.done}
-              onChange={() => toggleStep(step.key)}
+              readOnly
               style={{ transform: 'scale(1.5)' }}
             />
           </li>
         ))}
       </ul>
 
-      {/* Footer Info */}
       <p style={{ marginTop: '30px', fontSize: '0.9rem', textAlign: 'center', color: '#777' }}>
         You can return to this page anytime at <strong>/vendor/onboarding</strong> to continue your journey.
       </p>
