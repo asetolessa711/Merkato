@@ -6,15 +6,18 @@ const Product = require('../models/Product');
 const PromoCode = require('../models/PromoCode');
 const Invoice = require('../models/Invoice');
 const ReturnRequest = require('../models/ReturnRequest');
-const { protect, authorize, optionalAuth } = require('../middleware/authMiddleware');
+const { protect, authorize } = require('../middleware/authMiddleware');
+
+function roundCurrency(value) {
+  return Number((Number(value) || 0).toFixed(2));
+}
 
 /**
  * @route   POST /api/orders
  * @desc    Create multi-vendor order with invoices
  * @access  Private - Customers only
  */
-// Allow checkout for authenticated users (any role) or visitors providing minimal identity
-router.post('/', optionalAuth, async (req, res) => {
+router.post('/', protect, authorize('customer'), async (req, res) => {
   // Prefer transactions outside of unit tests, but gracefully disable if Mongo isn't a replica set or when flagged off.
   const uriFromEnv = process.env.MONGO_URI || '';
   const looksLikeReplicaSet = /replicaSet=|mongodb\+srv/i.test(uriFromEnv);
@@ -44,31 +47,7 @@ router.post('/', optionalAuth, async (req, res) => {
       deliveryOption
     } = req.body;
 
-    let buyerId = req.user?._id;
-    // If not authenticated, upsert a minimal customer profile using provided buyerInfo
-    if (!buyerId) {
-      const { buyerInfo } = req.body || {};
-      const name = buyerInfo?.name || req.body?.shippingAddress?.fullName;
-      const email = buyerInfo?.email;
-      const country = buyerInfo?.country || req.body?.shippingAddress?.country;
-      const emailRegex = /[^@\s]+@[^@\s]+\.[^@\s]+/;
-      if (!name || !email || !emailRegex.test(email) || !country) {
-        return res.status(400).json({ message: 'Buyer information is incomplete (name, email, country required)' });
-      }
-      const User = require('../models/User');
-      let buyer = await User.findOne({ email });
-      if (!buyer) {
-        const crypto = require('crypto');
-        const randomPass = crypto.randomBytes(12).toString('hex');
-        try {
-          buyer = await User.create({ name, email, password: randomPass, roles: ['customer'], country });
-        } catch (e) {
-          // Race: if created concurrently, fetch existing
-          buyer = await User.findOne({ email });
-        }
-      }
-      buyerId = buyer._id;
-    }
+    const buyerId = req.user._id;
 
     // Enhanced input validation
     if (!cartItems?.length) {
@@ -118,6 +97,14 @@ router.post('/', optionalAuth, async (req, res) => {
     } catch (_) { /* ignore, best-effort */ }
     if (!deliveryOption?.name || !deliveryOption?.cost || !deliveryOption?.days) {
       return res.status(400).json({ message: 'Delivery option is missing' });
+    }
+
+    const normalizedDiscount = Number(discount || 0);
+    if (!Number.isFinite(normalizedDiscount) || normalizedDiscount < 0) {
+      return res.status(400).json({ message: 'Discount must be a non-negative number' });
+    }
+    if (normalizedDiscount > 0 && !promoId) {
+      return res.status(400).json({ message: 'Discount requires a valid promo code' });
     }
 
     // Process promo code if provided
@@ -182,8 +169,8 @@ router.post('/', optionalAuth, async (req, res) => {
       const vendorId = vendorIdObj.toString();
       const vendorName = (product.vendor && product.vendor.name) ? product.vendor.name : 'Vendor';
       const vendorEmail = (product.vendor && product.vendor.email) ? product.vendor.email : '';
-      const itemTotal = product.price * item.quantity;
-      const itemTax = itemTotal * 0.15; // 15% tax rate
+      const itemTotal = roundCurrency(product.price * item.quantity);
+      const itemTax = roundCurrency(itemTotal * 0.15); // 15% tax rate
 
       if (!vendorMap[vendorId]) {
         vendorMap[vendorId] = {
@@ -214,16 +201,18 @@ router.post('/', optionalAuth, async (req, res) => {
         tax: itemTax
       });
 
-      vendorMap[vendorId].subtotal += itemTotal;
-      vendorMap[vendorId].tax += itemTax;
-      vendorMap[vendorId].shipping += (item.quantity / totalItemCount) * deliveryOption.cost;
+      vendorMap[vendorId].subtotal = roundCurrency(vendorMap[vendorId].subtotal + itemTotal);
+      vendorMap[vendorId].tax = roundCurrency(vendorMap[vendorId].tax + itemTax);
+      vendorMap[vendorId].shipping = roundCurrency(
+        vendorMap[vendorId].shipping + (item.quantity / totalItemCount) * deliveryOption.cost
+      );
     }
 
     // Create invoices and calculate vendor totals
     const vendorArray = await Promise.all(Object.values(vendorMap).map(async (v) => {
-      v.total = v.subtotal + v.tax + v.shipping - v.discount;
-      v.commissionAmount = v.subtotal * (v.commissionRate || 0.1);
-      v.netEarnings = v.total - v.commissionAmount;
+      v.total = roundCurrency(v.subtotal + v.tax + v.shipping - v.discount);
+      v.commissionAmount = roundCurrency(v.subtotal * (v.commissionRate || 0.1));
+      v.netEarnings = roundCurrency(v.total - v.commissionAmount);
 
       const invoice = new Invoice({
         vendor: v.vendorId,
@@ -245,14 +234,31 @@ router.post('/', optionalAuth, async (req, res) => {
       return v;
     }));
 
-    const orderTotal = vendorArray.reduce((sum, v) => sum + v.total, 0);
+    const orderTotal = roundCurrency(vendorArray.reduce((sum, v) => sum + v.total, 0));
 
-    // Validate discount
-    if (totalAfterDiscount && totalAfterDiscount > orderTotal) {
+    const normalizedTotalAfterDiscount =
+      totalAfterDiscount === undefined || totalAfterDiscount === null
+        ? null
+        : Number(totalAfterDiscount);
+
+    if (normalizedTotalAfterDiscount !== null && !Number.isFinite(normalizedTotalAfterDiscount)) {
       if (useTxn) await session.abortTransaction();
-      return res.status(400).json({ 
-        message: 'Discount amount exceeds order total' 
-      });
+      return res.status(400).json({ message: 'Total after discount must be a valid number' });
+    }
+
+    const expectedTotalAfterDiscount = roundCurrency(Math.max(0, orderTotal - normalizedDiscount));
+
+    // Validate discount and any client-provided final total against server calculation.
+    if (normalizedDiscount > orderTotal) {
+      if (useTxn) await session.abortTransaction();
+      return res.status(400).json({ message: 'Discount amount exceeds order total' });
+    }
+    if (
+      normalizedTotalAfterDiscount !== null &&
+      Math.abs(Number(normalizedTotalAfterDiscount.toFixed(2)) - expectedTotalAfterDiscount) > 0.01
+    ) {
+      if (useTxn) await session.abortTransaction();
+      return res.status(400).json({ message: 'Client total does not match server-calculated order total' });
     }
 
 // ...existing code...
@@ -260,8 +266,8 @@ router.post('/', optionalAuth, async (req, res) => {
       buyer: buyerId,
       vendors: vendorArray,
       total: orderTotal,
-      totalAfterDiscount: totalAfterDiscount || orderTotal,
-      discount: discount || 0,
+      totalAfterDiscount: expectedTotalAfterDiscount,
+      discount: normalizedDiscount,
       promoCode: appliedPromo,
       currency: 'USD',
       paymentMethod,

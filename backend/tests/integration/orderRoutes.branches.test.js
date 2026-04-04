@@ -54,6 +54,21 @@ describe('Order Routes — branch coverage', () => {
       deliveryOption: { name: 'Standard', cost: 5, days: 3 }
     });
 
+    test('401 when no token is provided', async () => {
+      const res = await request(app)
+        .post('/api/orders')
+        .send(baseBody());
+      expect(res.statusCode).toBe(401);
+    });
+
+    test('403 when authenticated user is not a customer', async () => {
+      const res = await request(app)
+        .post('/api/orders')
+        .set('Authorization', vendorAuth)
+        .send(baseBody());
+      expect(res.statusCode).toBe(403);
+    });
+
     test('400 when no products selected', async () => {
       const res = await request(app)
         .post('/api/orders')
@@ -95,15 +110,37 @@ describe('Order Routes — branch coverage', () => {
       expect(res.statusCode).toBe(400);
     });
 
-    test('400 when discount exceeds order total', async () => {
+    test('400 when manual discount is submitted without promo code', async () => {
       const body = baseBody();
-      body.totalAfterDiscount = 99999; // absurdly high
+      body.discount = 3;
       const res = await request(app)
         .post('/api/orders')
         .set('Authorization', customerAuth)
         .send(body);
-      // This requires order creation flow; ensure we still get a guarded 400/500 depending on promo path
-      expect([400, 500]).toContain(res.statusCode);
+      expect(res.statusCode).toBe(400);
+      expect(res.body.message).toMatch(/discount requires a valid promo code/i);
+    });
+
+    test('400 when client total does not match server-calculated total', async () => {
+      const body = baseBody();
+      body.totalAfterDiscount = 1;
+      const res = await request(app)
+        .post('/api/orders')
+        .set('Authorization', customerAuth)
+        .send(body);
+      expect(res.statusCode).toBe(400);
+      expect(res.body.message).toMatch(/client total does not match server-calculated order total/i);
+    });
+
+    test('400 when discount exceeds order total', async () => {
+      const body = baseBody();
+      body.promoId = new mongoose.Types.ObjectId().toString();
+      body.discount = 99999;
+      const res = await request(app)
+        .post('/api/orders')
+        .set('Authorization', customerAuth)
+        .send(body);
+      expect(res.statusCode).toBe(400);
     });
   });
 

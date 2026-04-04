@@ -70,24 +70,11 @@ describe('Order Routes @orders', () => {
   });
 
   describe('POST /api/orders', () => {
-    test('rejects unauthenticated order when buyerInfo is missing', async () => {
+    test('rejects unauthenticated order creation', async () => {
       const res = await request(app)
         .post('/api/orders')
         .send({ cartItems: [], total: 10 });
-      expect([400]).toContain(res.statusCode);
-    });
-
-    test('creates order without token when buyerInfo is provided', async () => {
-      const res = await request(app)
-        .post('/api/orders')
-        .send({
-          cartItems: [{ productId: testProductId, quantity: 1 }],
-          paymentMethod: 'cod',
-          shippingAddress: { fullName: 'Buyer One', city: 'Addis Ababa', country: 'ET' },
-          deliveryOption: { name: 'Standard', cost: 10, days: 3 },
-          buyerInfo: { name: 'Buyer One', email: 'buyer@example.com', country: 'ET' }
-        });
-      expect([201, 200]).toContain(res.statusCode);
+      expect(res.statusCode).toBe(401);
     });
 
     test('should fail with invalid data', async () => {
@@ -110,13 +97,13 @@ describe('Order Routes @orders', () => {
           deliveryOption: { name: 'Standard', cost: 10, days: 3 }
         });
 
-      expect([201, 200, 403, 400]).toContain(res.statusCode);
-      if ([201, 200].includes(res.statusCode)) {
+      expect(res.statusCode).toBe(201);
+      if (res.statusCode === 201) {
         const orderId = res.body?.order?._id || res.body?._id;
         expect(orderId).toBeTruthy();
+        expect(res.body.order.totalAfterDiscount).toBe(res.body.order.total);
+        expect(res.body.order.discount).toBe(0);
         createdOrderId = orderId;
-      } else {
-        console.warn('⚠️ Order not created — skipping dependent tests.');
       }
     });
   });
