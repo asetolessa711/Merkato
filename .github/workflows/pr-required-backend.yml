@@ -1,23 +1,21 @@
-﻿name: Backend CI (baseline)
+name: PR Required Backend Check
 
 on:
-  push:
-    branches:
-      - main
-      - dev
-      - feat/**
-      - bugfix/**
-      - chore/**
   pull_request:
-    branches:
-      - main
-      - dev
-  workflow_dispatch:
+    branches: [ codespaces-mongo-setup-recovery, main, dev ]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-required-backend-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 jobs:
-  test:
-    name: Backend tests
+  backend-required:
+    name: backend-required
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     env:
       # Runner-context jobs reach service containers via localhost:published_port.
       MONGO_HOST: 127.0.0.1
@@ -37,13 +35,16 @@ jobs:
       run:
         working-directory: backend
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
           cache-dependency-path: backend/package-lock.json
-      - run: npm ci
+      - name: Install deps
+        run: npm ci
       - name: Create .env.test
         run: |
           TEST_MONGO_URI="mongodb://${MONGO_HOST}:${MONGO_PORT}/${MONGO_DB_TEST}"
@@ -55,8 +56,8 @@ jobs:
           echo "EMAIL_USER=test@example.com" >> .env.test
           echo "EMAIL_PASS=test-password" >> .env.test
           echo "OPENAI_API_KEY=" >> .env.test
-      - name: Run backend tests
+      - name: Run backend quick compact suite
         env:
-          MONGO_URI: mongodb://${{ env.MONGO_HOST }}:${{ env.MONGO_PORT }}/${{ env.MONGO_DB_TEST }}
           NODE_ENV: test
+          MONGO_URI: mongodb://${{ env.MONGO_HOST }}:${{ env.MONGO_PORT }}/${{ env.MONGO_DB_TEST }}
         run: npm run test:quick:compact

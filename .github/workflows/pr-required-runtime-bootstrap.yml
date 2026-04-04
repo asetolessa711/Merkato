@@ -1,0 +1,79 @@
+name: PR Required Runtime Bootstrap Smoke
+
+on:
+  pull_request:
+    branches: [ codespaces-mongo-setup-recovery, main, dev ]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-required-runtime-bootstrap-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  runtime-bootstrap-required:
+    name: runtime-bootstrap-required
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      # Runner-context jobs reach service containers via localhost:published_port.
+      MONGO_HOST: 127.0.0.1
+      MONGO_PORT: '27017'
+      MONGO_DB_TEST: merkato_test
+    services:
+      mongo:
+        image: mongo:6
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand(\"ping\")' || exit 1"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            backend/package-lock.json
+      - name: Install root deps
+        run: npm ci
+      - name: Install backend deps
+        run: npm --prefix backend ci
+      - name: Bootstrap and validate test database
+        env:
+          NODE_ENV: test
+          MONGO_URI_TEST: mongodb://${{ env.MONGO_HOST }}:${{ env.MONGO_PORT }}/${{ env.MONGO_DB_TEST }}
+        run: |
+          npm run db:bootstrap:test
+          npm run db:validate:test
+      - name: Start backend and verify health endpoint
+        env:
+          NODE_ENV: test
+          PORT: 5059
+          MONGO_URI: mongodb://${{ env.MONGO_HOST }}:${{ env.MONGO_PORT }}/${{ env.MONGO_DB_TEST }}
+        run: |
+          set -euo pipefail
+          cd backend
+          node server.js > /tmp/runtime-bootstrap-backend.log 2>&1 &
+          PID=$!
+          trap 'kill $PID >/dev/null 2>&1 || true' EXIT
+          ok=0
+          for i in $(seq 1 30); do
+            if curl -fsS "http://127.0.0.1:5059/api" >/dev/null; then
+              ok=1
+              break
+            fi
+            sleep 1
+          done
+          if [ "$ok" -ne 1 ]; then
+            echo "Backend health check failed" >&2
+            tail -n 200 /tmp/runtime-bootstrap-backend.log || true
+            exit 1
+          fi

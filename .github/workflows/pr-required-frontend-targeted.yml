@@ -1,0 +1,40 @@
+name: PR Required Frontend Targeted Check
+
+on:
+  pull_request:
+    branches: [ codespaces-mongo-setup-recovery, main, dev ]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-required-frontend-targeted-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  frontend-targeted-required:
+    name: frontend-targeted-required
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install deps
+        run: npm ci
+      - name: Run targeted frontend risk suite
+        env:
+          CI: true
+        run: >-
+          npm run test:compact --
+          src/__tests__/integration/AuthFlow.test.js
+          src/__tests__/integration/Routing.test.js
+          src/pages/__tests__/LoginPage.vendorRouting.test.js
