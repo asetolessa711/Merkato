@@ -21,6 +21,25 @@ const generateToken = (user) => {
   });
 };
 
+function buildAuthUserPayload(user) {
+  const roles = user.roles || [user.role] || [];
+  const payload = {
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    role: roles[0],
+    roles
+  };
+
+  if (roles.includes('vendor')) {
+    payload.vendorStatus = user.vendorStatus || 'new';
+    payload.vendorApproved = !!user.vendorApproved;
+    payload.trust_badge = !!user.trust_badge;
+  }
+
+  return payload;
+}
+
 // ✅ /api/auth/verify → used for frontend & Cypress
 router.get('/verify', (req, res) => {
   const authHeader = req.headers.authorization;
@@ -46,16 +65,7 @@ router.get('/me', protect, (req, res) => {
     return res.status(401).json({ message: 'User not found' });
   }
 
-  const roles = req.user.roles || [req.user.role] || [];
-  res.json({
-    user: {
-      _id: req.user._id,
-      name: req.user.name,
-      email: req.user.email,
-      role: roles[0],
-      roles
-    }
-  });
+  res.json({ user: buildAuthUserPayload(req.user) });
 });
 
 // --- /api/auth/register ---
@@ -84,11 +94,7 @@ router.post('/register', async (req, res) => {
     });
 
     res.status(201).json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.roles[0],
-      roles: user.roles,
+      ...buildAuthUserPayload(user),
       token: generateToken(user)
     });
   } catch (err) {
@@ -107,11 +113,7 @@ router.post('/login', async (req, res) => {
     }
 
     res.json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.roles[0],
-      roles: user.roles,
+      ...buildAuthUserPayload(user),
       token: generateToken(user)
     });
   } catch (err) {

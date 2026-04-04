@@ -3,6 +3,13 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import styles from './LoginPage.module.css';
 
+const ONBOARDING_REQUIRED_VENDOR_STATUSES = new Set(['new', 'reviewed', 'invited']);
+
+export function getVendorLandingPath(userLike) {
+  const status = String(userLike?.vendorStatus || 'new').toLowerCase();
+  return ONBOARDING_REQUIRED_VENDOR_STATUSES.has(status) ? '/vendor/onboarding' : '/vendor';
+}
+
 function LoginPage() {
   // Use a single form state for easier input handling
   const [form, setForm] = useState({ email: '', password: '' });
@@ -46,7 +53,7 @@ function LoginPage() {
         ) {
           navigate('/admin');
         } else if (storedUser.roles?.includes('vendor') || role === 'vendor') {
-          navigate('/vendor');
+          navigate(getVendorLandingPath(storedUser));
         } else {
           navigate('/account/dashboard');
         }
@@ -150,7 +157,7 @@ function LoginPage() {
         ) {
           navigate('/admin');
         } else if (res.data.roles?.includes('vendor') || role === 'vendor') {
-          navigate('/vendor');
+          navigate(getVendorLandingPath(res.data));
         } else {
           navigate('/account/dashboard'); // Redirect customers to dashboard
         }

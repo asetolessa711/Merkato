@@ -48,6 +48,9 @@ const userSchema = new mongoose.Schema(
     profileImage: {
       type: String
     },
+    avatar: {
+      type: String
+    },
     storeName: {
       type: String,
       maxlength: 100

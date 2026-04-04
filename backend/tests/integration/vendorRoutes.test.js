@@ -254,17 +254,31 @@ describe('Vendor Routes @vendor', () => {
 
   describe('PUT /api/vendor/profile', () => {
     test('should allow vendor to update profile', async () => {
+      const payload = {
+        storeName: 'Updated Store Name',
+        storeDescription: 'Updated store info',
+        bio: 'Vendor bio sample',
+        country: 'ET',
+        businessRegistryId: 'BR-123',
+        taxId: 'TAX-123',
+        avatar: 'https://example.com/avatar.png'
+      };
+
       const res = await request(app)
         .put('/api/vendor/profile')
         .set('Authorization', testVendorToken)
-        .send({
-          storeName: 'Updated Store Name',
-          description: 'Updated store info'
-        });
+        .send(payload);
 
       expect(res.statusCode).toBe(200);
-      // The backend returns a message and avatar, not storeName
       expect(res.body).toHaveProperty('message');
+      expect(res.body).toHaveProperty('vendor');
+      expect(res.body.vendor).toHaveProperty('storeName', payload.storeName);
+      expect(res.body.vendor).toHaveProperty('storeDescription', payload.storeDescription);
+      expect(res.body.vendor).toHaveProperty('bio', payload.bio);
+      expect(res.body.vendor).toHaveProperty('country', payload.country);
+      expect(res.body.vendor).toHaveProperty('businessRegistryId', payload.businessRegistryId);
+      expect(res.body.vendor).toHaveProperty('taxId', payload.taxId);
+      expect(res.body.vendor).toHaveProperty('avatar', payload.avatar);
     });
 
     test('should block profile update for non-vendor', async () => {
@@ -272,6 +286,30 @@ describe('Vendor Routes @vendor', () => {
         .put('/api/vendor/profile')
         .set('Authorization', testUserToken)
         .send({ storeName: 'Fake Store' });
+      expect(res.statusCode).toBe(403);
+    });
+  });
+
+  describe('GET /api/vendor/profile/me', () => {
+    test('returns current vendor profile with onboarding fields', async () => {
+      const res = await request(app)
+        .get('/api/vendor/profile/me')
+        .set('Authorization', testVendorToken);
+
+      expect(res.statusCode).toBe(200);
+      expect(res.body).toHaveProperty('email');
+      expect(res.body).toHaveProperty('vendorStatus');
+      expect(res.body).toHaveProperty('vendorApproved');
+      expect(res.body).toHaveProperty('trust_badge');
+      expect(res.body).toHaveProperty('storeName');
+      expect(res.body).toHaveProperty('storeDescription');
+    });
+
+    test('blocks non-vendor', async () => {
+      const res = await request(app)
+        .get('/api/vendor/profile/me')
+        .set('Authorization', testUserToken);
+
       expect(res.statusCode).toBe(403);
     });
   });

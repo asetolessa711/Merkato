@@ -1,90 +1,125 @@
-import React, { useState } from 'react';
-import DirectChat from './DirectChat';
-import VendorInbox from './VendorInbox';
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 
-const TABS = [
-  'Profile', 'Orders', 'Inbox', 'Direct Chat', 'Analytics', 'Products', 'Support Chat'
-];
+const EMPTY_FORM = {
+  name: '',
+  country: '',
+  bio: '',
+  avatar: '',
+  storeName: '',
+  storeDescription: '',
+  businessRegistryId: '',
+  taxId: ''
+};
 
 export default function VendorAccountPage() {
-  const [tab, setTab] = useState('Profile');
-  // Demo/mock data for vendor profile
-  const profile = { name: 'Demo Vendor', email: 'vendor@demo.com', avatar: 'https://placehold.co/80x80?text=🛍️', join: '2022-05-01', products: 12, revenue: 12000 };
+  const [profile, setProfile] = useState(null);
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState('');
+
+  const token = localStorage.getItem('token');
+  const headers = { Authorization: `Bearer ${token}` };
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await axios.get('/api/vendor/profile/me', { headers });
+        const data = res.data;
+        setProfile(data);
+        setForm({
+          name: data.name || '',
+          country: data.country || '',
+          bio: data.bio || '',
+          avatar: data.avatar || '',
+          storeName: data.storeName || '',
+          storeDescription: data.storeDescription || '',
+          businessRegistryId: data.businessRegistryId || '',
+          taxId: data.taxId || ''
+        });
+      } catch (err) {
+        setMessage('Failed to load vendor profile.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleChange = (e) => {
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    setMessage('');
+    try {
+      const res = await axios.put('/api/vendor/profile', form, { headers });
+      const updated = res.data?.vendor;
+      if (updated) {
+        setProfile(updated);
+        const existingUser = JSON.parse(localStorage.getItem('user') || 'null');
+        if (existingUser) {
+          localStorage.setItem('user', JSON.stringify({ ...existingUser, ...updated }));
+        }
+      }
+      setMessage('Vendor account saved.');
+    } catch (err) {
+      setMessage('Failed to save vendor account.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return <div style={{ padding: 24 }}>Loading vendor account...</div>;
+  }
+
+  const status = profile?.vendorStatus || 'new';
+  const approved = profile?.vendorApproved ? 'Approved' : 'Pending review';
 
   return (
-    <div style={{ padding: 32, fontFamily: 'Poppins, sans-serif', maxWidth: 900, margin: '0 auto' }}>
-      <h1 style={{ color: '#7c2ae8', fontWeight: 700, fontSize: '2rem', marginBottom: 16 }}>My Vendor Account</h1>
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 24 }}>
-        {TABS.map(t => (
-          <button key={t} onClick={() => setTab(t)} style={{
-            background: tab === t ? 'linear-gradient(90deg,#00b894,#7c2ae8)' : '#f6f9fc',
-            color: tab === t ? '#fff' : '#333',
-            border: 'none', borderRadius: 8, padding: '8px 18px', fontWeight: 600, cursor: 'pointer', boxShadow: tab === t ? '0 2px 8px #00b89455' : 'none'
-          }}>{t}</button>
-        ))}
-      </div>
+    <div style={{ padding: 24, maxWidth: 900 }}>
+      <h1 style={{ marginBottom: 12 }}>Vendor Account</h1>
+      <p style={{ marginBottom: 16 }}>
+        Status: <strong>{status}</strong> | Approval: <strong>{approved}</strong>
+      </p>
 
-      {/* Profile Overview */}
-      {tab === 'Profile' && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 24, marginBottom: 32 }}>
-          <img src={profile.avatar} alt="avatar" style={{ borderRadius: '50%', width: 80, height: 80, border: '2.5px solid #00b894' }} />
-          <div>
-            <h2 style={{ margin: 0 }}>{profile.name}</h2>
-            <p style={{ margin: 0 }}>{profile.email}</p>
-            <p style={{ margin: 0, color: '#888' }}>Joined: {profile.join}</p>
-            <div style={{ marginTop: 8, display: 'flex', gap: 16 }}>
-              <span>Products: <b>{profile.products}</b></span>
-              <span>Revenue: <b>${profile.revenue}</b></span>
-            </div>
-          </div>
-        </div>
-      )}
+      {message && <p>{message}</p>}
 
-      {/* Orders (placeholder) */}
-      {tab === 'Orders' && (
-        <div>
-          <h2>Order Management</h2>
-          <p>View and manage your orders here.</p>
-        </div>
-      )}
+      <form onSubmit={handleSave}>
+        <label>Name</label>
+        <input name="name" value={form.name} onChange={handleChange} style={{ display: 'block', width: '100%', marginBottom: 10 }} />
 
-      {/* Inbox (reuse feature component) */}
-      {tab === 'Inbox' && (
-        <div>
-          <VendorInbox />
-        </div>
-      )}
+        <label>Country</label>
+        <input name="country" value={form.country} onChange={handleChange} style={{ display: 'block', width: '100%', marginBottom: 10 }} />
 
-      {/* Direct Chat (reuse feature component) */}
-      {tab === 'Direct Chat' && (
-        <div>
-          <DirectChat />
-        </div>
-      )}
+        <label>Store Name</label>
+        <input name="storeName" value={form.storeName} onChange={handleChange} style={{ display: 'block', width: '100%', marginBottom: 10 }} />
 
-      {/* Analytics (placeholder) */}
-      {tab === 'Analytics' && (
-        <div>
-          <h2>Analytics</h2>
-          <p>View your sales and product analytics here.</p>
-        </div>
-      )}
+        <label>Store Description</label>
+        <textarea name="storeDescription" value={form.storeDescription} onChange={handleChange} rows="3" style={{ display: 'block', width: '100%', marginBottom: 10 }} />
 
-      {/* Products (placeholder) */}
-      {tab === 'Products' && (
-        <div>
-          <h2>Product Management</h2>
-          <p>Manage your products here.</p>
-        </div>
-      )}
+        <label>Bio</label>
+        <textarea name="bio" value={form.bio} onChange={handleChange} rows="3" style={{ display: 'block', width: '100%', marginBottom: 10 }} />
 
-      {/* Support Chat (placeholder) */}
-      {tab === 'Support Chat' && (
-        <div>
-          <h2>Support Chat</h2>
-          <button style={{ background: '#7c2ae8', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 22px', fontWeight: 600 }}>Open Chat</button>
-        </div>
-      )}
+        <label>Avatar URL</label>
+        <input name="avatar" value={form.avatar} onChange={handleChange} style={{ display: 'block', width: '100%', marginBottom: 10 }} />
+
+        <label>Business Registry ID</label>
+        <input name="businessRegistryId" value={form.businessRegistryId} onChange={handleChange} style={{ display: 'block', width: '100%', marginBottom: 10 }} />
+
+        <label>Tax ID</label>
+        <input name="taxId" value={form.taxId} onChange={handleChange} style={{ display: 'block', width: '100%', marginBottom: 16 }} />
+
+        <button type="submit" disabled={saving}>
+          {saving ? 'Saving...' : 'Save Vendor Account'}
+        </button>
+      </form>
     </div>
   );
 }
