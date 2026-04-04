@@ -153,6 +153,7 @@ export default function AdminMegaMenu() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState([]);
   const [message, setMessage] = useState('');
   const [audit, setAudit] = useState([]);
 
@@ -206,14 +207,18 @@ export default function AdminMegaMenu() {
   const save = async () => {
     setSaving(true);
     setError('');
+    setFieldErrors([]);
     setMessage('');
     try {
       const payload = { menu: Array.isArray(menu) ? menu : [] };
       const res = await axios.put('/api/admin/mega-menu', payload, { headers });
       setUpdatedAt(res.data?.updatedAt || '');
       setMessage('Saved successfully.');
+      window.dispatchEvent(new CustomEvent('mega-menu:updated'));
     } catch (e) {
       setError(e?.response?.data?.message || e?.message || 'Failed to save');
+      const errs = Array.isArray(e?.response?.data?.errors) ? e.response.data.errors : [];
+      setFieldErrors(errs);
     } finally {
       setSaving(false);
     }
@@ -245,6 +250,16 @@ export default function AdminMegaMenu() {
 
       {error && (
         <div style={{ background: '#fee2e2', color: '#991b1b', padding: 10, borderRadius: 6, marginBottom: 12 }}>{error}</div>
+      )}
+      {!!fieldErrors.length && (
+        <div data-testid="validation-errors" style={{ background: '#fff7ed', color: '#9a3412', padding: 10, borderRadius: 6, marginBottom: 12 }}>
+          <div style={{ fontWeight: 600, marginBottom: 6 }}>Validation details</div>
+          <ul style={{ margin: 0, paddingLeft: 18 }}>
+            {fieldErrors.map((err, idx) => (
+              <li key={`ferr-${idx}`}>{`${err.path}: ${err.message}`}</li>
+            ))}
+          </ul>
+        </div>
       )}
       {message && (
         <div style={{ background: '#ecfdf5', color: '#065f46', padding: 10, borderRadius: 6, marginBottom: 12 }}>{message}</div>

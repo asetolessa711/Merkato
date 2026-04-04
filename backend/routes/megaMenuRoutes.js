@@ -111,6 +111,106 @@ async function obsLog(event) {
   }
 }
 
+const ALLOWED_STATUS = new Set(['active', 'hidden']);
+
+function sanitizeText(v) {
+  return typeof v === 'string' ? v.trim() : '';
+}
+
+function isSafeLinkTarget(to) {
+  const value = sanitizeText(to);
+  if (!value) return false;
+  if (/^(javascript|data):/i.test(value)) return false;
+  return value.startsWith('/') || /^https?:\/\//i.test(value);
+}
+
+function validateMegaMenuPayload(body) {
+  const errors = [];
+  if (!body || !Array.isArray(body.menu)) {
+    return {
+      errors: [{ path: 'menu', message: 'menu must be an array' }],
+      menu: [],
+    };
+  }
+
+  const seenTitles = new Set();
+  const normalizedMenu = body.menu.map((col, colIdx) => {
+    const pathPrefix = `menu[${colIdx}]`;
+    if (!col || typeof col !== 'object' || Array.isArray(col)) {
+      errors.push({ path: pathPrefix, message: 'category must be an object' });
+      return { title: '', icon: '', status: 'active', links: [] };
+    }
+
+    const title = sanitizeText(col.title);
+    if (!title) {
+      errors.push({ path: `${pathPrefix}.title`, message: 'title is required' });
+    } else {
+      const key = title.toLowerCase();
+      if (seenTitles.has(key)) {
+        errors.push({ path: `${pathPrefix}.title`, message: 'title must be unique' });
+      }
+      seenTitles.add(key);
+    }
+
+    const status = sanitizeText(col.status || 'active') || 'active';
+    if (!ALLOWED_STATUS.has(status)) {
+      errors.push({ path: `${pathPrefix}.status`, message: "status must be 'active' or 'hidden'" });
+    }
+
+    const links = Array.isArray(col.links) ? col.links : [];
+    if (!Array.isArray(col.links)) {
+      errors.push({ path: `${pathPrefix}.links`, message: 'links must be an array' });
+    }
+
+    const normalizedLinks = links.map((lnk, linkIdx) => {
+      const linkPath = `${pathPrefix}.links[${linkIdx}]`;
+      if (!lnk || typeof lnk !== 'object' || Array.isArray(lnk)) {
+        errors.push({ path: linkPath, message: 'link must be an object' });
+        return { label: '', to: '', status: 'active' };
+      }
+
+      const label = sanitizeText(lnk.label);
+      if (!label) {
+        errors.push({ path: `${linkPath}.label`, message: 'label is required' });
+      }
+
+      const to = sanitizeText(lnk.to);
+      if (!isSafeLinkTarget(to)) {
+        errors.push({ path: `${linkPath}.to`, message: 'link target must start with / or http(s):// and cannot use javascript:/data:' });
+      }
+
+      const linkStatus = sanitizeText(lnk.status || 'active') || 'active';
+      if (!ALLOWED_STATUS.has(linkStatus)) {
+        errors.push({ path: `${linkPath}.status`, message: "status must be 'active' or 'hidden'" });
+      }
+
+      return {
+        label,
+        to,
+        status: ALLOWED_STATUS.has(linkStatus) ? linkStatus : 'active',
+        icon: typeof lnk.icon === 'string' ? lnk.icon : undefined,
+        thumb: typeof lnk.thumb === 'string' ? lnk.thumb : undefined,
+        label_en: typeof lnk.label_en === 'string' ? lnk.label_en.trim() : undefined,
+        label_am: typeof lnk.label_am === 'string' ? lnk.label_am.trim() : undefined,
+        label_or: typeof lnk.label_or === 'string' ? lnk.label_or.trim() : undefined,
+      };
+    });
+
+    return {
+      title,
+      status: ALLOWED_STATUS.has(status) ? status : 'active',
+      icon: typeof col.icon === 'string' ? col.icon : undefined,
+      thumb: typeof col.thumb === 'string' ? col.thumb : undefined,
+      title_en: typeof col.title_en === 'string' ? col.title_en.trim() : undefined,
+      title_am: typeof col.title_am === 'string' ? col.title_am.trim() : undefined,
+      title_or: typeof col.title_or === 'string' ? col.title_or.trim() : undefined,
+      links: normalizedLinks,
+    };
+  });
+
+  return { errors, menu: normalizedMenu };
+}
+
 // Public endpoint: GET /api/categories -> simplified active menu for frontend
 router.get('/categories', async (req, res) => {
   try {
@@ -262,10 +362,14 @@ router.get('/admin/mega-menu', protect, authorize('admin', 'global_admin'), asyn
 router.put('/admin/mega-menu', protect, authorize('admin', 'global_admin'), async (req, res) => {
   try {
     const body = req.body || {};
-    if (!Array.isArray(body.menu)) {
-      return res.status(400).json({ message: 'Invalid payload: menu array required' });
+    const { errors, menu } = validateMegaMenuPayload(body);
+    if (errors.length) {
+      return res.status(422).json({
+        message: 'Invalid mega menu payload',
+        errors,
+      });
     }
-    const saved = await writeMenuFile({ menu: body.menu });
+    const saved = await writeMenuFile({ menu });
     await appendAudit(req.user, 'save', saved);
     res.json(saved);
   } catch (err) {

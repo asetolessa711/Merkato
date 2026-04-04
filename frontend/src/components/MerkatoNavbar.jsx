@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useCart } from '../cart/CartContext';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import MEGA_MENU from '../config/megaMenu';
+import { fetchCategories } from '../api/categories';
 import { getCanonicalTaxonomy, getCategoryListFrom } from '../utils/taxonomy';
 import MegaMenuPromoPanel from './MegaMenuPromoPanel.js';
 import { fetchSearchSuggest, logSearchEvent } from '../api/search';
@@ -297,63 +298,47 @@ function MerkatoNavbar({ role: roleProp = 'public', showCategories: showCategori
 		} catch (_) {}
 	};
 
-	// Admin/CMS override: allow MEGA_MENU to be replaced via localStorage JSON
+	// Track menu refresh requests from admin save actions.
 	const [menuVersion, setMenuVersion] = useState(0);
+	const [serverMegaMenu, setServerMegaMenu] = useState([]);
 	useEffect(() => {
-		const onStorage = (e) => {
-			if (e && e.key && e.key !== 'merkato-mega-menu') return;
-			setMenuVersion((v) => v + 1);
-		};
 		const onCustom = () => setMenuVersion((v) => v + 1);
-		window.addEventListener('storage', onStorage);
 		window.addEventListener('mega-menu:updated', onCustom);
 		return () => {
-			window.removeEventListener('storage', onStorage);
 			window.removeEventListener('mega-menu:updated', onCustom);
 		};
 	}, []);
 
-	const effectiveMegaMenu = useMemo(() => {
-		const normalizeCols = (arr) => (Array.isArray(arr) ? arr : []);
-		const mergeWithDefault = (overrideArr) => {
-			const base = MEGA_MENU;
-			const ov = normalizeCols(overrideArr);
-			const merged = base.map((defCol, i) => {
-				const o = ov[i] || {};
-				const oLinks = Array.isArray(o.links) ? o.links : [];
-				const links = oLinks.length ? oLinks : defCol.links;
-				return {
-					title: (o.title ?? defCol.title) || defCol.title,
-					icon: o.icon ?? defCol.icon,
-					thumb: o.thumb ?? defCol.thumb,
-					links,
-				};
-			});
-			// Append any extra override columns beyond defaults
-			if (ov.length > base.length) {
-				for (let j = base.length; j < ov.length; j++) {
-					const extra = ov[j];
-					merged.push({
-						title: extra?.title ?? '',
-						icon: extra?.icon,
-						thumb: extra?.thumb,
-						links: Array.isArray(extra?.links) ? extra.links : [],
-					});
-				}
+	useEffect(() => {
+		if (isVendor) return;
+		let mounted = true;
+		const loadServerMegaMenu = async () => {
+			try {
+				const menu = await fetchCategories();
+				if (!mounted) return;
+				setServerMegaMenu(Array.isArray(menu) ? menu : []);
+			} catch (_) {
+				if (!mounted) return;
+				setServerMegaMenu([]);
 			}
-			// If all columns somehow have empty links, fallback entirely to base
-			const anyLinks = merged.some((c) => Array.isArray(c.links) && c.links.length > 0);
-			return anyLinks ? merged : base;
 		};
-		try {
-			const raw = localStorage.getItem('merkato-mega-menu');
-			if (raw) {
-				const parsed = JSON.parse(raw);
-				if (Array.isArray(parsed)) return mergeWithDefault(parsed);
-			}
-		} catch (_) {}
+		loadServerMegaMenu();
+		return () => {
+			mounted = false;
+		};
+	}, [isVendor, menuVersion]);
+
+	const effectiveMegaMenu = useMemo(() => {
+		if (Array.isArray(serverMegaMenu) && serverMegaMenu.length > 0) {
+			return serverMegaMenu.map((col) => ({
+				title: col?.title || '',
+				icon: col?.icon,
+				thumb: col?.thumb,
+				links: Array.isArray(col?.links) ? col.links : [],
+			}));
+		}
 		return MEGA_MENU;
-	}, [menuVersion]);
+	}, [serverMegaMenu]);
 
 	// Support SPA navigation when promo panel dispatches navigate intent
 	useEffect(() => {
