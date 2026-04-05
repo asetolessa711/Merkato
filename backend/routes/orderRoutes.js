@@ -6,6 +6,7 @@ const Product = require('../models/Product');
 const PromoCode = require('../models/PromoCode');
 const Invoice = require('../models/Invoice');
 const ReturnRequest = require('../models/ReturnRequest');
+const { mirrorOrderCreationToPostgres } = require('../services/orderPostgresMirror');
 const { protect, authorize, optionalAuth } = require('../middleware/authMiddleware');
 
 function roundCurrency(value) {
@@ -318,6 +319,14 @@ router.post('/', optionalAuth, async (req, res) => {
     );
 
     if (useTxn && session) await session.commitTransaction();
+
+    const mirrorResult = await mirrorOrderCreationToPostgres({
+      order: savedOrder,
+      vendors: vendorArray,
+    });
+    if (mirrorResult.status === 'failed') {
+      console.warn(`[orders] Postgres mirror write failed for ${String(savedOrder._id)}: ${mirrorResult.error}`);
+    }
 
     res.status(201).json({
       success: true,

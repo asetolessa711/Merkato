@@ -1,0 +1,72 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model OrderMirror {
+  id                 BigInt             @id @default(autoincrement())
+  mongoId            String             @unique
+  buyerMongoId       String
+  status             String
+  currency           String
+  paymentMethod      String
+  total              Decimal            @db.Decimal(14, 2)
+  totalAfterDiscount Decimal            @db.Decimal(14, 2)
+  discount           Decimal            @db.Decimal(14, 2)
+  promoMongoId       String?
+  shippingAddressJson Json?
+  deliveryOptionJson  Json?
+  orderDate          DateTime?
+  sourceCreatedAt    DateTime?
+  sourceUpdatedAt    DateTime?
+  mirroredAt         DateTime           @default(now())
+  vendors            OrderVendorMirror[]
+
+  @@index([buyerMongoId])
+  @@index([mirroredAt])
+}
+
+model OrderVendorMirror {
+  id                BigInt                @id @default(autoincrement())
+  orderMirrorId     BigInt
+  orderMirror       OrderMirror            @relation(fields: [orderMirrorId], references: [id], onDelete: Cascade)
+  vendorMongoId     String
+  invoiceMongoId    String?
+  subtotal          Decimal               @db.Decimal(14, 2)
+  discount          Decimal               @db.Decimal(14, 2)
+  tax               Decimal               @db.Decimal(14, 2)
+  shipping          Decimal               @db.Decimal(14, 2)
+  total             Decimal               @db.Decimal(14, 2)
+  commissionRate    Decimal               @db.Decimal(6, 4)
+  commissionAmount  Decimal               @db.Decimal(14, 2)
+  netEarnings       Decimal               @db.Decimal(14, 2)
+  currency          String
+  status            String
+  deliveryStatus    String?
+  displayCurrency   String?
+  exchangeRate      Decimal?              @db.Decimal(14, 6)
+  paidAt            DateTime?
+  items             OrderVendorItemMirror[]
+
+  @@index([orderMirrorId])
+  @@index([vendorMongoId])
+}
+
+model OrderVendorItemMirror {
+  id            BigInt           @id @default(autoincrement())
+  orderVendorId BigInt
+  orderVendor   OrderVendorMirror @relation(fields: [orderVendorId], references: [id], onDelete: Cascade)
+  productMongoId String
+  name          String?
+  quantity      Int
+  price         Decimal          @db.Decimal(14, 2)
+  subtotal      Decimal          @db.Decimal(14, 2)
+  tax           Decimal          @db.Decimal(14, 2)
+
+  @@index([orderVendorId])
+  @@index([productMongoId])
+}
