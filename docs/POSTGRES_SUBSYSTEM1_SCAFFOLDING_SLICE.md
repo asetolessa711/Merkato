@@ -23,10 +23,14 @@ This slice does **not** add:
 
 ## Files added
 - `backend/prisma/schema.prisma`
+- `backend/prisma/migrations/20260405194000_init_order_mirror/migration.sql`
+- `backend/prisma/migrations/migration_lock.toml`
 - `backend/prisma/client.js`
 - `backend/docker-compose.postgres.yml`
 - `backend/services/orderPostgresMirror.js`
 - `backend/scripts/postgres/checkOrderMirror.js`
+- `backend/scripts/postgres/runtimeProofOrderMirror.js`
+- `.github/workflows/pr-subsystem1-postgres-mirror-proof.yml`
 
 ## Files changed
 - `backend/package.json`
@@ -65,6 +69,7 @@ From `backend/`:
 - `npm run prisma:generate`
 - `npm run prisma:migrate:dev`
 - `npm run pg:mirror:check -- <mongoOrderId>`
+- `npm run pg:runtime:proof`
 - `npm run pg:down`
 
 ## Focused validation plan
@@ -78,3 +83,8 @@ From `backend/`:
    - expected item count
    - totals/status fields populated
 6. Re-run existing Mongo-backed integration smoke for order creation to confirm no API/read-path regressions.
+7. In CI, run `.github/workflows/pr-subsystem1-postgres-mirror-proof.yml` to prove:
+  - Postgres harness starts from repository compose
+  - mirror runs in `best_effort`
+  - order creation response invariant remains unchanged
+  - mirrored rows are written and validated

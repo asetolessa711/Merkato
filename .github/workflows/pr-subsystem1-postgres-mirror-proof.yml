@@ -1,0 +1,70 @@
+name: PR Subsystem1 Postgres Mirror Proof
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - backend/prisma/**
+      - backend/services/orderPostgresMirror.js
+      - backend/routes/orderRoutes.js
+      - backend/docker-compose.postgres.yml
+      - backend/scripts/postgres/**
+      - backend/package.json
+      - backend/package-lock.json
+      - .github/workflows/pr-subsystem1-postgres-mirror-proof.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-subsystem1-postgres-mirror-proof-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  subsystem1-postgres-mirror-proof:
+    name: subsystem1-postgres-mirror-proof
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      NODE_ENV: test
+      MONGO_URI: mongodb://127.0.0.1:27017/merkato_runtime_proof
+      DATABASE_URL: postgresql://merkato:merkato@127.0.0.1:5433/merkato?schema=public
+      ORDERS_PG_MIRROR_MODE: best_effort
+    services:
+      mongo:
+        image: mongo:6
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand(\"ping\")' || exit 1"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend deps
+        run: npm --prefix backend ci
+
+      - name: Start Postgres harness from repository
+        run: npm --prefix backend run pg:up
+
+      - name: Prepare Prisma client and schema
+        run: |
+          npm --prefix backend run prisma:generate
+          npm --prefix backend run prisma:migrate:deploy
+
+      - name: Runtime proof (best_effort mirror, Mongo canonical)
+        run: npm --prefix backend run pg:runtime:proof
+
+      - name: Stop Postgres harness
+        if: always()
+        run: npm --prefix backend run pg:down

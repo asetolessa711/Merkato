@@ -17,6 +17,7 @@
     "pg:down": "docker compose -f docker-compose.postgres.yml down",
     "pg:logs": "docker compose -f docker-compose.postgres.yml logs -f postgres",
     "pg:mirror:check": "node scripts/postgres/checkOrderMirror.js",
+    "pg:runtime:proof": "node scripts/postgres/runtimeProofOrderMirror.js",
     "test:seed": "node tests/utils/seedTestData.js",
     "test:seed:utils": "node tests/utils/seedTestData.js",
     "seed:test": "curl -X POST http://localhost:5000/api/dev/seed",
