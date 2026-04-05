@@ -2,6 +2,7 @@
 
 const assert = require("node:assert/strict");
 const request = require("supertest");
+const mongoose = require("mongoose");
 
 const app = require("../../server");
 const Order = require("../../models/Order");
@@ -149,5 +150,8 @@ run()
     process.exitCode = 1;
   })
   .finally(async () => {
+    if (mongoose.connection && mongoose.connection.readyState !== 0) {
+      await mongoose.disconnect();
+    }
     await disconnectPrismaClient();
   });
