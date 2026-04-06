@@ -20,6 +20,7 @@ This slice does **not** add:
 - MongoDB remains canonical for order creation.
 - Postgres writes are mirror-only and feature-flag controlled.
 - Mirror covers only the minimum order creation payload needed to validate schema viability.
+- Supported runtime proof path for this slice is CI-only.
 
 ## Files added
 - `backend/prisma/schema.prisma`
@@ -68,9 +69,26 @@ From `backend/`:
 - `npm run prisma:validate`
 - `npm run prisma:generate`
 - `npm run prisma:migrate:dev`
+- `npm run pg:runtime:proof:env-check`
 - `npm run pg:mirror:check -- <mongoOrderId>`
 - `npm run pg:runtime:proof`
 - `npm run pg:down`
+
+## Supported proof path
+- Official runtime proof path: CI-only
+- Workflow: `.github/workflows/pr-subsystem1-postgres-mirror-proof.yml`
+- Job: `subsystem1-postgres-mirror-proof`
+- Trigger: `pull_request` targeting `main` with changes under:
+  - `backend/prisma/**`
+  - `backend/services/orderPostgresMirror.js`
+  - `backend/routes/orderRoutes.js`
+  - `backend/docker-compose.postgres.yml`
+  - `backend/scripts/postgres/**`
+  - `backend/package.json`
+  - `backend/package-lock.json`
+  - `.github/workflows/pr-subsystem1-postgres-mirror-proof.yml`
+
+Phase 1 closure is based on this CI path, not local execution.
 
 ## Focused validation plan
 1. Start Postgres harness (`pg:up`) and validate Prisma schema (`prisma:validate`).
@@ -85,6 +103,7 @@ From `backend/`:
 6. Re-run existing Mongo-backed integration smoke for order creation to confirm no API/read-path regressions.
 7. In CI, run `.github/workflows/pr-subsystem1-postgres-mirror-proof.yml` to prove:
   - Postgres harness starts from repository compose
+  - runtime dependencies are reachable before application proof runs
   - mirror runs in `best_effort`
   - order creation response invariant remains unchanged
   - mirrored rows are written and validated

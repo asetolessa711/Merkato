@@ -146,7 +146,10 @@ async function run() {
 
 run()
   .catch((err) => {
-    console.error("[runtime-proof] failed:", err && err.message ? err.message : err);
+    console.error(
+      "[application-failure][runtime-proof]",
+      err && err.message ? err.message : err
+    );
     process.exitCode = 1;
   })
   .finally(async () => {
