@@ -1,4 +1,4 @@
-name: PR Subsystem1 Postgres Mirror Proof
+name: PR Subsystem1 Postgres Mirror Proof (CI-only)
 
 on:
   pull_request:
@@ -57,13 +57,21 @@ jobs:
       - name: Start Postgres harness from repository
         run: npm --prefix backend run pg:up
 
-      - name: Prepare Prisma client and schema
-        run: |
-          npm --prefix backend run prisma:generate
-          npm --prefix backend run prisma:migrate:deploy
+      - name: Validate Prisma schema
+        run: npm --prefix backend run prisma:validate
 
-      - name: Runtime proof (best_effort mirror, Mongo canonical)
-        run: npm --prefix backend run pg:runtime:proof
+      - name: Prepare Prisma client
+        run: npm --prefix backend run prisma:generate
+
+      - name: Apply Prisma migrations
+        run: npm --prefix backend run prisma:migrate:deploy
+
+      - name: Assert CI runtime proof environment
+        run: npm --prefix backend run pg:runtime:proof:env-check
+
+      - name: Runtime proof (application behavior)
+        run: |
+          npm --prefix backend run pg:runtime:proof
 
       - name: Stop Postgres harness
         if: always()
