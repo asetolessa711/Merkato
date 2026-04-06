@@ -63,17 +63,6 @@ Non-supported modes are treated as `off` with a warning.
 - `OrderVendorItemMirror`
   - per-item product id, quantity, pricing/tax
 
-## Harness commands
-From `backend/`:
-- `npm run pg:up`
-- `npm run prisma:validate`
-- `npm run prisma:generate`
-- `npm run prisma:migrate:dev`
-- `npm run pg:runtime:proof:env-check`
-- `npm run pg:mirror:check -- <mongoOrderId>`
-- `npm run pg:runtime:proof`
-- `npm run pg:down`
-
 ## Supported proof path
 - Official runtime proof path: CI-only
 - Workflow: `.github/workflows/pr-subsystem1-postgres-mirror-proof.yml`
@@ -90,20 +79,23 @@ From `backend/`:
 
 Phase 1 closure is based on this CI path, not local execution.
 
-## Focused validation plan
-1. Start Postgres harness (`pg:up`) and validate Prisma schema (`prisma:validate`).
-2. Generate Prisma client (`prisma:generate`) and run migration (`prisma:migrate:dev`).
-3. Run backend order-creation flow with mirror mode `off` and confirm baseline response unchanged.
-4. Run backend order-creation flow with mirror mode `best_effort`.
-5. Use `pg:mirror:check` with returned Mongo order id and confirm mirrored row shape:
-   - one `OrderMirror`
-   - expected vendor count
-   - expected item count
-   - totals/status fields populated
-6. Re-run existing Mongo-backed integration smoke for order creation to confirm no API/read-path regressions.
-7. In CI, run `.github/workflows/pr-subsystem1-postgres-mirror-proof.yml` to prove:
-  - Postgres harness starts from repository compose
-  - runtime dependencies are reachable before application proof runs
-  - mirror runs in `best_effort`
-  - order creation response invariant remains unchanged
-  - mirrored rows are written and validated
+## Internal implementation surfaces
+These scripts are internal building blocks used by the canonical CI proof path above. They are not separate supported proof paths for Phase 1 closure.
+
+From `backend/`:
+- `npm run pg:up`
+- `npm run prisma:validate`
+- `npm run prisma:generate`
+- `npm run prisma:migrate:dev`
+- `npm run pg:runtime:proof:env-check`
+- `npm run pg:mirror:check -- <mongoOrderId>`
+- `npm run pg:runtime:proof`
+- `npm run pg:down`
+
+## Canonical proof expectations
+The canonical CI proof path is expected to prove:
+- Postgres harness starts from repository compose
+- runtime dependencies are reachable before application proof runs
+- mirror runs in `best_effort`
+- order creation response invariant remains unchanged
+- mirrored rows are written and validated
