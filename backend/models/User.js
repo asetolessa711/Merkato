@@ -1,5 +1,10 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
+const {
+  generateExternalId,
+  isLikelyMongoObjectId,
+  isValidExternalId,
+} = require('../utils/externalId');
 
 const userSchema = new mongoose.Schema(
   {
@@ -11,6 +16,18 @@ const userSchema = new mongoose.Schema(
       type: String,
       unique: true,
       required: true
+    },
+    externalId: {
+      type: String,
+      unique: true,
+      sparse: true,
+      immutable: true,
+      lowercase: true,
+      trim: true,
+      validate: {
+        validator: (value) => !value || isValidExternalId(value),
+        message: 'Invalid canonical external ID format',
+      },
     },
     password: {
       type: String,
@@ -76,6 +93,16 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+userSchema.pre('validate', function (next) {
+  if (this.isNew && !this.externalId) {
+    this.externalId = generateExternalId();
+    if (String(process.env.IDENTITY_EXTERNAL_ID_LOG || '').toLowerCase() === 'true') {
+      console.info(`[identity-foundation] Assigned externalId=${this.externalId} for user email=${this.email}`);
+    }
+  }
+  next();
+});
+
 // Hash password before save
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
@@ -91,6 +118,26 @@ userSchema.pre('save', async function (next) {
 // Compare password
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
+};
+
+userSchema.methods.getCanonicalIdentityKey = function () {
+  return this.externalId || String(this._id);
+};
+
+userSchema.statics.isCanonicalExternalId = function (value) {
+  return isValidExternalId(value);
+};
+
+userSchema.statics.findByCanonicalIdentity = async function (identityKey, projection = null, options = {}) {
+  const normalized = String(identityKey || '').trim().toLowerCase();
+  if (!normalized) return null;
+  if (isValidExternalId(normalized)) {
+    return this.findOne({ externalId: normalized }, projection, options);
+  }
+  if (isLikelyMongoObjectId(normalized)) {
+    return this.findById(normalized, projection, options);
+  }
+  return null;
 };
 
 module.exports = mongoose.model('User', userSchema);
