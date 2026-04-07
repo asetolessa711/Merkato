@@ -7,7 +7,10 @@ const {
 } = require('../../../utils/externalId');
 
 describe('NEW identity external-ID foundation', () => {
+  const originalEnv = { ...process.env };
+
   afterEach(() => {
+    process.env = { ...originalEnv };
     jest.restoreAllMocks();
   });
 
@@ -55,5 +58,51 @@ describe('NEW identity external-ID foundation', () => {
 
     const invalid = await User.findByCanonicalIdentity('invalid-value');
     expect(invalid).toBeNull();
+  });
+
+  test('rejects duplicate externalId during validation (uniqueness behavior)', async () => {
+    process.env.IDENTITY_EXTERNAL_ID_TEST_UNIQUENESS = 'true';
+
+    const externalId = generateExternalId();
+    const existsSpy = jest.spyOn(User, 'exists').mockResolvedValue({ _id: new mongoose.Types.ObjectId() });
+
+    const user = new User({
+      name: 'Duplicate ExternalId User',
+      email: `duplicate-external-${Date.now()}@example.com`,
+      password: 'Password123!',
+      country: 'ET',
+      externalId,
+    });
+
+    await expect(user.validate()).rejects.toThrow(mongoose.Error.ValidationError);
+    await user.validate().catch((err) => {
+      expect(err.errors.externalId.message).toMatch(/already in use/i);
+    });
+
+    expect(existsSpy).toHaveBeenCalledWith({
+      externalId,
+      _id: { $ne: user._id },
+    });
+  });
+
+  test('rejects attempted externalId mutation after initial assignment (immutability behavior)', async () => {
+    process.env.IDENTITY_EXTERNAL_ID_TEST_UNIQUENESS = 'true';
+    jest.spyOn(User, 'exists').mockResolvedValue(null);
+
+    const user = new User({
+      name: 'Immutable ExternalId User',
+      email: `immutable-external-${Date.now()}@example.com`,
+      password: 'Password123!',
+      country: 'ET',
+    });
+    await user.validate();
+
+    user.isNew = false;
+    user.externalId = generateExternalId();
+
+    await expect(user.validate()).rejects.toThrow(mongoose.Error.ValidationError);
+    await user.validate().catch((err) => {
+      expect(err.errors.externalId.message).toMatch(/immutable/i);
+    });
   });
 });

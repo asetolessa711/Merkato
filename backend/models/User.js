@@ -93,14 +93,45 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-userSchema.pre('validate', function (next) {
-  if (this.isNew && !this.externalId) {
-    this.externalId = generateExternalId();
-    if (String(process.env.IDENTITY_EXTERNAL_ID_LOG || '').toLowerCase() === 'true') {
-      console.info(`[identity-foundation] Assigned externalId=${this.externalId} for user email=${this.email}`);
+userSchema.pre('validate', async function (next) {
+  try {
+    if (this.isNew && !this.externalId) {
+      this.externalId = generateExternalId();
+      if (String(process.env.IDENTITY_EXTERNAL_ID_LOG || '').toLowerCase() === 'true') {
+        console.info(`[identity-foundation] Assigned externalId=${this.externalId} for user email=${this.email}`);
+      }
     }
+
+    if (!this.isNew && this.isModified('externalId')) {
+      this.invalidate('externalId', 'externalId is immutable once assigned');
+      return next();
+    }
+
+    const needsUniquenessCheck = this.externalId && (this.isNew || this.isModified('externalId'));
+    if (!needsUniquenessCheck) {
+      return next();
+    }
+
+    const allowCheckWhileDisconnected =
+      String(process.env.IDENTITY_EXTERNAL_ID_TEST_UNIQUENESS || '').toLowerCase() === 'true';
+    const hasLiveDbConnection = this.constructor.db && this.constructor.db.readyState === 1;
+    if (!hasLiveDbConnection && !allowCheckWhileDisconnected) {
+      return next();
+    }
+
+    const duplicate = await this.constructor.exists({
+      externalId: this.externalId,
+      _id: { $ne: this._id },
+    });
+
+    if (duplicate) {
+      this.invalidate('externalId', 'externalId is already in use');
+    }
+
+    next();
+  } catch (err) {
+    next(err);
   }
-  next();
 });
 
 // Hash password before save
