@@ -1,4 +1,7 @@
 const { getPrismaClient } = require("../prisma/client");
+const User = require("../models/User");
+const Product = require("../models/Product");
+const { isValidProductExternalId, isValidVendorExternalId } = require("../utils/externalId");
 
 const VALID_MIRROR_MODES = new Set(["off", "best_effort"]);
 
@@ -45,6 +48,96 @@ function asJsonOrNull(value) {
   return value;
 }
 
+function normalizeExternalId(value, validator) {
+  if (!value) return null;
+  const normalized = String(value).trim().toLowerCase();
+  if (!normalized) return null;
+  return validator(normalized) ? normalized : null;
+}
+
+function buildExternalIdLookup(documents, validator) {
+  const lookup = new Map();
+  const docs = Array.isArray(documents) ? documents : [];
+  docs.forEach((doc) => {
+    if (!doc || !doc._id) return;
+    const normalizedExternalId = normalizeExternalId(doc.externalId, validator);
+    if (!normalizedExternalId) return;
+    lookup.set(String(doc._id), normalizedExternalId);
+  });
+  return lookup;
+}
+
+async function enrichVendorsWithCanonicalIdentity(vendors) {
+  const normalizedVendors = Array.isArray(vendors) ? vendors : [];
+  if (normalizedVendors.length === 0) return [];
+
+  const vendorMongoIds = Array.from(
+    new Set(
+      normalizedVendors
+        .map((vendor) => (vendor && vendor.vendorId ? String(vendor.vendorId) : ""))
+        .filter(Boolean)
+    )
+  );
+  const productMongoIds = Array.from(
+    new Set(
+      normalizedVendors
+        .flatMap((vendor) => (Array.isArray(vendor && vendor.products) ? vendor.products : []))
+        .map((product) => (product && product.product ? String(product.product) : ""))
+        .filter(Boolean)
+    )
+  );
+
+  let vendorExternalIdLookup = new Map();
+  let productExternalIdLookup = new Map();
+
+  if (vendorMongoIds.length > 0 || productMongoIds.length > 0) {
+    try {
+      const [vendorDocs, productDocs] = await Promise.all([
+        vendorMongoIds.length > 0
+          ? User.find({ _id: { $in: vendorMongoIds } }).select("_id externalId").lean()
+          : [],
+        productMongoIds.length > 0
+          ? Product.find({ _id: { $in: productMongoIds } }).select("_id externalId").lean()
+          : [],
+      ]);
+
+      vendorExternalIdLookup = buildExternalIdLookup(vendorDocs, isValidVendorExternalId);
+      productExternalIdLookup = buildExternalIdLookup(productDocs, isValidProductExternalId);
+    } catch (error) {
+      const message = error && error.message ? error.message : String(error);
+      console.warn(`[orders-postgres-mirror] Canonical identity enrichment fallback: ${message}`);
+    }
+  }
+
+  return normalizedVendors.map((vendor) => {
+    const vendorMongoId = vendor && vendor.vendorId ? String(vendor.vendorId) : "";
+    const explicitVendorExternalId = normalizeExternalId(
+      vendor && (vendor.vendorExternalId || vendor.vendorCanonicalExternalId),
+      isValidVendorExternalId
+    );
+
+    const products = Array.isArray(vendor && vendor.products) ? vendor.products : [];
+    const enrichedProducts = products.map((product) => {
+      const productMongoId = product && product.product ? String(product.product) : "";
+      const explicitProductExternalId = normalizeExternalId(
+        product && (product.productExternalId || product.productCanonicalExternalId),
+        isValidProductExternalId
+      );
+
+      return {
+        ...(product || {}),
+        productExternalId: explicitProductExternalId || productExternalIdLookup.get(productMongoId) || null,
+      };
+    });
+
+    return {
+      ...(vendor || {}),
+      vendorExternalId: explicitVendorExternalId || vendorExternalIdLookup.get(vendorMongoId) || null,
+      products: enrichedProducts,
+    };
+  });
+}
+
 function buildVendorRows(vendors) {
   if (!Array.isArray(vendors)) return [];
 
@@ -53,6 +146,7 @@ function buildVendorRows(vendors) {
 
     return {
       vendorMongoId: vendor.vendorId ? String(vendor.vendorId) : "",
+      vendorExternalId: normalizeExternalId(vendor.vendorExternalId, isValidVendorExternalId),
       vendorName: vendor.vendorName || null,
       vendorEmail: vendor.vendorEmail || null,
       invoiceMongoId: vendor.invoiceId ? String(vendor.invoiceId) : null,
@@ -73,6 +167,7 @@ function buildVendorRows(vendors) {
       items: {
         create: products.map((product) => ({
           productMongoId: product.product ? String(product.product) : "",
+          productExternalId: normalizeExternalId(product.productExternalId, isValidProductExternalId),
           name: product.name || null,
           quantity: Number(product.quantity || 0),
           price: toMoney(product.price),
@@ -133,8 +228,9 @@ function compareMirrorSummary(sourceSummary, mirroredSummary) {
   return discrepancies;
 }
 
-function buildMirrorPayload(order, vendors) {
-  const sourceSummary = buildMirrorSummary(order, vendors);
+async function buildMirrorPayload(order, vendors) {
+  const enrichedVendors = await enrichVendorsWithCanonicalIdentity(vendors);
+  const sourceSummary = buildMirrorSummary(order, enrichedVendors);
 
   return {
     sourceSummary,
@@ -156,7 +252,7 @@ function buildMirrorPayload(order, vendors) {
       sourceCreatedAt: toDate(order.createdAt),
       sourceUpdatedAt: toDate(order.updatedAt),
       vendors: {
-        create: buildVendorRows(vendors),
+        create: buildVendorRows(enrichedVendors),
       },
     },
   };
@@ -174,7 +270,7 @@ async function mirrorOrderCreationToPostgres({ order, vendors }) {
 
   const orderMongoId = String(order._id);
   const prisma = getPrismaClient();
-  const { data, sourceSummary } = buildMirrorPayload(order, vendors);
+  const { data, sourceSummary } = await buildMirrorPayload(order, vendors);
 
   try {
     const existing = await prisma.orderMirror.findUnique({
@@ -198,7 +294,7 @@ async function mirrorOrderCreationToPostgres({ order, vendors }) {
         ...data,
         vendors: {
           deleteMany: {},
-          create: buildVendorRows(vendors),
+          create: data.vendors.create,
         },
       },
       include: {
@@ -237,6 +333,7 @@ module.exports = {
   buildMirrorSummary,
   buildVendorRows,
   compareMirrorSummary,
+  enrichVendorsWithCanonicalIdentity,
   mirrorOrderCreationToPostgres,
   resolveOrdersPgMirrorMode,
   summarizeMirroredOrder,

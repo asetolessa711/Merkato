@@ -2,15 +2,19 @@ const {
   buildMirrorSummary,
   buildVendorRows,
   compareMirrorSummary,
+  enrichVendorsWithCanonicalIdentity,
   resolveOrdersPgMirrorMode,
   summarizeMirroredOrder,
 } = require("../../../services/orderPostgresMirror");
+const Product = require("../../../models/Product");
+const User = require("../../../models/User");
 
 describe("orderPostgresMirror", () => {
   const originalEnv = { ...process.env };
 
   afterEach(() => {
     process.env = { ...originalEnv };
+    jest.restoreAllMocks();
   });
 
   test("falls back to off when mirror mode is invalid", () => {
@@ -51,12 +55,14 @@ describe("orderPostgresMirror", () => {
 
     expect(rows[0]).toMatchObject({
       vendorMongoId: "vendor-1",
+      vendorExternalId: null,
       vendorName: "Vendor One",
       vendorEmail: "vendor@example.com",
       invoiceMongoId: "invoice-1",
     });
     expect(rows[0].items.create[0]).toMatchObject({
       productMongoId: "product-1",
+      productExternalId: null,
       name: "Mirror Product",
       quantity: 2,
       price: "12.50",
@@ -136,5 +142,57 @@ describe("orderPostgresMirror", () => {
       itemCount: 3,
       invoiceCount: 2,
     });
+  });
+
+  test("enriches vendor/product canonical IDs from Mongo lookups", async () => {
+    const userFindSpy = jest.spyOn(User, "find").mockReturnValue({
+      select: () => ({
+        lean: () => Promise.resolve([{ _id: "vendor-1", externalId: "uid_11111111111111111111" }]),
+      }),
+    });
+    const productFindSpy = jest.spyOn(Product, "find").mockReturnValue({
+      select: () => ({
+        lean: () => Promise.resolve([{ _id: "product-1", externalId: "pid_11111111111111111111" }]),
+      }),
+    });
+
+    const enriched = await enrichVendorsWithCanonicalIdentity([
+      {
+        vendorId: "vendor-1",
+        products: [{ product: "product-1", name: "Mirror Product", quantity: 1, price: 10 }],
+      },
+    ]);
+
+    expect(userFindSpy).toHaveBeenCalledWith({ _id: { $in: ["vendor-1"] } });
+    expect(productFindSpy).toHaveBeenCalledWith({ _id: { $in: ["product-1"] } });
+    expect(enriched[0].vendorExternalId).toBe("uid_11111111111111111111");
+    expect(enriched[0].products[0].productExternalId).toBe("pid_11111111111111111111");
+  });
+
+  test("buildVendorRows keeps canonical IDs additive and nullable", () => {
+    const rows = buildVendorRows([
+      {
+        vendorId: "vendor-1",
+        vendorExternalId: "uid_aaaaaaaaaaaaaaaaaaaa",
+        products: [
+          {
+            product: "product-1",
+            productExternalId: "pid_bbbbbbbbbbbbbbbbbbbb",
+            quantity: 1,
+            price: 10,
+          },
+          {
+            product: "product-2",
+            productExternalId: "invalid",
+            quantity: 1,
+            price: 12,
+          },
+        ],
+      },
+    ]);
+
+    expect(rows[0].vendorExternalId).toBe("uid_aaaaaaaaaaaaaaaaaaaa");
+    expect(rows[0].items.create[0].productExternalId).toBe("pid_bbbbbbbbbbbbbbbbbbbb");
+    expect(rows[0].items.create[1].productExternalId).toBeNull();
   });
 });
