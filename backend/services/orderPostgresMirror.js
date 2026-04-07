@@ -53,6 +53,8 @@ function buildVendorRows(vendors) {
 
     return {
       vendorMongoId: vendor.vendorId ? String(vendor.vendorId) : "",
+      vendorName: vendor.vendorName || null,
+      vendorEmail: vendor.vendorEmail || null,
       invoiceMongoId: vendor.invoiceId ? String(vendor.invoiceId) : null,
       subtotal: toMoney(vendor.subtotal),
       discount: toMoney(vendor.discount),
@@ -82,6 +84,84 @@ function buildVendorRows(vendors) {
   });
 }
 
+function buildMirrorSummary(order, vendors) {
+  const normalizedVendors = Array.isArray(vendors) ? vendors : [];
+  const itemCount = normalizedVendors.reduce((sum, vendor) => {
+    const products = Array.isArray(vendor.products) ? vendor.products : [];
+    return sum + products.length;
+  }, 0);
+  const invoiceCount = normalizedVendors.filter((vendor) => Boolean(vendor.invoiceId)).length;
+
+  return {
+    orderMongoId: order && order._id ? String(order._id) : null,
+    total: toMoney(order && order.total),
+    totalAfterDiscount: toMoney(order && order.totalAfterDiscount),
+    discount: toMoney(order && order.discount),
+    vendorCount: normalizedVendors.length,
+    itemCount,
+    invoiceCount,
+  };
+}
+
+function summarizeMirroredOrder(mirroredOrder) {
+  const vendors = Array.isArray(mirroredOrder && mirroredOrder.vendors) ? mirroredOrder.vendors : [];
+  return {
+    orderMongoId: mirroredOrder && mirroredOrder.mongoId ? String(mirroredOrder.mongoId) : null,
+    total: toMoney(mirroredOrder && mirroredOrder.total),
+    totalAfterDiscount: toMoney(mirroredOrder && mirroredOrder.totalAfterDiscount),
+    discount: toMoney(mirroredOrder && mirroredOrder.discount),
+    vendorCount: Number(mirroredOrder && mirroredOrder.vendorCount) || vendors.length,
+    itemCount:
+      Number(mirroredOrder && mirroredOrder.itemCount) ||
+      vendors.reduce((sum, vendor) => sum + ((vendor.items || []).length), 0),
+    invoiceCount:
+      Number(mirroredOrder && mirroredOrder.invoiceCount) ||
+      vendors.filter((vendor) => Boolean(vendor.invoiceMongoId)).length,
+  };
+}
+
+function compareMirrorSummary(sourceSummary, mirroredSummary) {
+  const discrepancies = [];
+  const keys = ["total", "totalAfterDiscount", "discount", "vendorCount", "itemCount", "invoiceCount"];
+
+  keys.forEach((key) => {
+    if (String(sourceSummary[key]) !== String(mirroredSummary[key])) {
+      discrepancies.push(`${key}:${sourceSummary[key]}->${mirroredSummary[key]}`);
+    }
+  });
+
+  return discrepancies;
+}
+
+function buildMirrorPayload(order, vendors) {
+  const sourceSummary = buildMirrorSummary(order, vendors);
+
+  return {
+    sourceSummary,
+    data: {
+      buyerMongoId: order.buyer ? String(order.buyer) : "",
+      status: order.status || "pending",
+      currency: order.currency || "USD",
+      paymentMethod: order.paymentMethod || "cod",
+      total: sourceSummary.total,
+      totalAfterDiscount: sourceSummary.totalAfterDiscount,
+      discount: sourceSummary.discount,
+      vendorCount: sourceSummary.vendorCount,
+      itemCount: sourceSummary.itemCount,
+      invoiceCount: sourceSummary.invoiceCount,
+      promoMongoId: order.promoCode ? String(order.promoCode) : null,
+      shippingAddressJson: asJsonOrNull(order.shippingAddress),
+      deliveryOptionJson: asJsonOrNull(order.deliveryOption),
+      orderDate: toDate(order.orderDate),
+      sourceCreatedAt: toDate(order.createdAt),
+      sourceUpdatedAt: toDate(order.updatedAt),
+      vendors: {
+        create: buildVendorRows(vendors),
+      },
+    },
+  };
+}
+
 async function mirrorOrderCreationToPostgres({ order, vendors }) {
   const mode = resolveOrdersPgMirrorMode();
   if (mode === "off") {
@@ -94,44 +174,57 @@ async function mirrorOrderCreationToPostgres({ order, vendors }) {
 
   const orderMongoId = String(order._id);
   const prisma = getPrismaClient();
+  const { data, sourceSummary } = buildMirrorPayload(order, vendors);
 
   try {
     const existing = await prisma.orderMirror.findUnique({
       where: { mongoId: orderMongoId },
-      select: { id: true },
-    });
-
-    if (existing) {
-      return { status: "skipped", reason: "already-mirrored", orderMongoId };
-    }
-
-    await prisma.orderMirror.create({
-      data: {
-        mongoId: orderMongoId,
-        buyerMongoId: order.buyer ? String(order.buyer) : "",
-        status: order.status || "pending",
-        currency: order.currency || "USD",
-        paymentMethod: order.paymentMethod || "cod",
-        total: toMoney(order.total),
-        totalAfterDiscount: toMoney(order.totalAfterDiscount),
-        discount: toMoney(order.discount),
-        promoMongoId: order.promoCode ? String(order.promoCode) : null,
-        shippingAddressJson: asJsonOrNull(order.shippingAddress),
-        deliveryOptionJson: asJsonOrNull(order.deliveryOption),
-        orderDate: toDate(order.orderDate),
-        sourceCreatedAt: toDate(order.createdAt),
-        sourceUpdatedAt: toDate(order.updatedAt),
+      include: {
         vendors: {
-          create: buildVendorRows(vendors),
+          include: {
+            items: true,
+          },
         },
       },
     });
 
+    const mirrored = await prisma.orderMirror.upsert({
+      where: { mongoId: orderMongoId },
+      create: {
+        mongoId: orderMongoId,
+        ...data,
+      },
+      update: {
+        ...data,
+        vendors: {
+          deleteMany: {},
+          create: buildVendorRows(vendors),
+        },
+      },
+      include: {
+        vendors: {
+          include: {
+            items: true,
+          },
+        },
+      },
+    });
+
+    const mirroredSummary = summarizeMirroredOrder(mirrored);
+    const discrepancies = compareMirrorSummary(sourceSummary, mirroredSummary);
+
     if (String(process.env.ORDERS_PG_MIRROR_LOG_SUCCESS || "").toLowerCase() === "true") {
-      console.log(`[orders-postgres-mirror] Mirrored order ${orderMongoId} to Postgres.`);
+      console.log(
+        `[orders-postgres-mirror] ${existing ? "Updated" : "Mirrored"} order ${orderMongoId} to Postgres.`
+      );
     }
 
-    return { status: "ok", orderMongoId };
+    return {
+      status: existing ? "updated" : "ok",
+      orderMongoId,
+      summary: sourceSummary,
+      discrepancies,
+    };
   } catch (error) {
     const message = error && error.message ? error.message : String(error);
     console.warn(`[orders-postgres-mirror] Failed to mirror order ${orderMongoId}: ${message}`);
@@ -140,6 +233,11 @@ async function mirrorOrderCreationToPostgres({ order, vendors }) {
 }
 
 module.exports = {
+  buildMirrorPayload,
+  buildMirrorSummary,
+  buildVendorRows,
+  compareMirrorSummary,
   mirrorOrderCreationToPostgres,
   resolveOrdersPgMirrorMode,
+  summarizeMirroredOrder,
 };

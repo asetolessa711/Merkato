@@ -326,6 +326,10 @@ router.post('/', optionalAuth, async (req, res) => {
     });
     if (mirrorResult.status === 'failed') {
       console.warn(`[orders] Postgres mirror write failed for ${String(savedOrder._id)}: ${mirrorResult.error}`);
+    } else if (Array.isArray(mirrorResult.discrepancies) && mirrorResult.discrepancies.length > 0) {
+      console.warn(
+        `[orders] Postgres mirror verification mismatch for ${String(savedOrder._id)}: ${mirrorResult.discrepancies.join(', ')}`
+      );
     }
 
     res.status(201).json({

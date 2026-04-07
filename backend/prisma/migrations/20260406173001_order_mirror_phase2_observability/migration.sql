@@ -1,0 +1,8 @@
+ALTER TABLE "OrderMirror"
+  ADD COLUMN "vendorCount" INTEGER NOT NULL DEFAULT 0,
+  ADD COLUMN "itemCount" INTEGER NOT NULL DEFAULT 0,
+  ADD COLUMN "invoiceCount" INTEGER NOT NULL DEFAULT 0;
+
+ALTER TABLE "OrderVendorMirror"
+  ADD COLUMN "vendorName" TEXT,
+  ADD COLUMN "vendorEmail" TEXT;

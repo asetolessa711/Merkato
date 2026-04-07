@@ -10,6 +10,7 @@ const Product = require("../../models/Product");
 const User = require("../../models/User");
 const Invoice = require("../../models/Invoice");
 const { getPrismaClient, disconnectPrismaClient } = require("../../prisma/client");
+const { summarizeMirroredOrder } = require("../../services/orderPostgresMirror");
 
 function rid(prefix) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -113,6 +114,16 @@ async function run() {
     0
   );
   assert.equal(mirroredItemCount, mongoItemCount, "Mirrored item count mismatch");
+  assert.equal(mirrored.invoiceCount, res.body.invoices.length, "Mirrored invoice count mismatch");
+  assert.ok(mirrored.vendors.every((vendor) => vendor.vendorName), "Vendor names should be mirrored");
+  assert.ok(mirrored.vendors.every((vendor) => vendor.vendorEmail), "Vendor emails should be mirrored");
+  assert.ok(mirrored.vendors.every((vendor) => vendor.invoiceMongoId), "Invoice links should be mirrored");
+  assert.ok(
+    mirrored.vendors.every((vendor) =>
+      vendor.items.every((item) => item.name && item.price !== null && item.subtotal !== null && item.tax !== null)
+    ),
+    "Item pricing fields should be mirrored"
+  );
 
   const responseInvariant = {
     success: res.body.success,
@@ -128,8 +139,7 @@ async function run() {
         orderId: createdOrderId,
         responseInvariant,
         mongoOrderStatus: mongoOrder.status,
-        mirroredVendorCount: mirrored.vendors.length,
-        mirroredItemCount,
+        mirroredSummary: summarizeMirroredOrder(mirrored),
       },
       null,
       2

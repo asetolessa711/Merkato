@@ -17,6 +17,9 @@ model OrderMirror {
   total              Decimal            @db.Decimal(14, 2)
   totalAfterDiscount Decimal            @db.Decimal(14, 2)
   discount           Decimal            @db.Decimal(14, 2)
+  vendorCount        Int                @default(0)
+  itemCount          Int                @default(0)
+  invoiceCount       Int                @default(0)
   promoMongoId       String?
   shippingAddressJson Json?
   deliveryOptionJson  Json?
@@ -35,6 +38,8 @@ model OrderVendorMirror {
   orderMirrorId     BigInt
   orderMirror       OrderMirror            @relation(fields: [orderMirrorId], references: [id], onDelete: Cascade)
   vendorMongoId     String
+  vendorName        String?
+  vendorEmail       String?
   invoiceMongoId    String?
   subtotal          Decimal               @db.Decimal(14, 2)
   discount          Decimal               @db.Decimal(14, 2)
