@@ -9,6 +9,7 @@ const {
   compareMirrorSummary,
   summarizeMirroredOrder,
 } = require("../../services/orderPostgresMirror");
+const { isValidProductExternalId, isValidVendorExternalId } = require("../../utils/externalId");
 
 async function main() {
   const orderId = process.argv[2] || process.env.MONGO_ORDER_ID;
@@ -62,8 +63,16 @@ async function main() {
     vendorNamesPresent: mirrored.vendors.every((vendor) => Boolean(vendor.vendorName)),
     vendorEmailsPresent: mirrored.vendors.every((vendor) => Boolean(vendor.vendorEmail)),
     invoiceLinksPresent: mirrored.vendors.every((vendor) => Boolean(vendor.invoiceMongoId)),
+    vendorCanonicalIdsPresent: mirrored.vendors.every(
+      (vendor) => Boolean(vendor.vendorExternalId) && isValidVendorExternalId(vendor.vendorExternalId)
+    ),
     itemPricingPresent: mirrored.vendors.every((vendor) =>
       vendor.items.every((item) => item.name && item.price !== null && item.subtotal !== null && item.tax !== null)
+    ),
+    productCanonicalIdsPresent: mirrored.vendors.every((vendor) =>
+      vendor.items.every(
+        (item) => Boolean(item.productExternalId) && isValidProductExternalId(item.productExternalId)
+      )
     ),
   };
 
