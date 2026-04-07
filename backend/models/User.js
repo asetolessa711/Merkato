@@ -171,4 +171,26 @@ userSchema.statics.findByCanonicalIdentity = async function (identityKey, projec
   return null;
 };
 
+userSchema.methods.getCanonicalVendorIdentityKey = function () {
+  const roles = Array.isArray(this.roles) ? this.roles : [];
+  if (!roles.includes('vendor')) return null;
+  return this.getCanonicalIdentityKey();
+};
+
+userSchema.statics.findVendorByCanonicalIdentity = async function (
+  identityKey,
+  projection = null,
+  options = {}
+) {
+  const normalized = String(identityKey || '').trim().toLowerCase();
+  if (!normalized) return null;
+  if (isValidExternalId(normalized)) {
+    return this.findOne({ externalId: normalized, roles: 'vendor' }, projection, options);
+  }
+  if (isLikelyMongoObjectId(normalized)) {
+    return this.findOne({ _id: normalized, roles: 'vendor' }, projection, options);
+  }
+  return null;
+};
+
 module.exports = mongoose.model('User', userSchema);

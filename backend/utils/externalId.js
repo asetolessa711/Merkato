@@ -1,17 +1,38 @@
 const crypto = require('crypto');
 
 const EXTERNAL_ID_PREFIX = 'uid';
+const PRODUCT_EXTERNAL_ID_PREFIX = 'pid';
 const EXTERNAL_ID_BODY_LENGTH = 20;
 const EXTERNAL_ID_PATTERN = new RegExp(`^${EXTERNAL_ID_PREFIX}_[a-f0-9]{${EXTERNAL_ID_BODY_LENGTH}}$`);
+const PRODUCT_EXTERNAL_ID_PATTERN = new RegExp(
+  `^${PRODUCT_EXTERNAL_ID_PREFIX}_[a-f0-9]{${EXTERNAL_ID_BODY_LENGTH}}$`
+);
 const LEGACY_MONGO_ID_PATTERN = /^[a-f0-9]{24}$/;
 
 function generateExternalId() {
   return `${EXTERNAL_ID_PREFIX}_${crypto.randomBytes(10).toString('hex')}`;
 }
 
+function generateProductExternalId() {
+  return `${PRODUCT_EXTERNAL_ID_PREFIX}_${crypto.randomBytes(10).toString('hex')}`;
+}
+
+function generateVendorExternalId() {
+  return generateExternalId();
+}
+
 function isValidExternalId(value) {
   if (!value) return false;
   return EXTERNAL_ID_PATTERN.test(String(value).trim().toLowerCase());
+}
+
+function isValidProductExternalId(value) {
+  if (!value) return false;
+  return PRODUCT_EXTERNAL_ID_PATTERN.test(String(value).trim().toLowerCase());
+}
+
+function isValidVendorExternalId(value) {
+  return isValidExternalId(value);
 }
 
 function isLikelyMongoObjectId(value) {
@@ -21,6 +42,10 @@ function isLikelyMongoObjectId(value) {
 
 module.exports = {
   generateExternalId,
+  generateProductExternalId,
+  generateVendorExternalId,
   isLikelyMongoObjectId,
   isValidExternalId,
+  isValidProductExternalId,
+  isValidVendorExternalId,
 };
