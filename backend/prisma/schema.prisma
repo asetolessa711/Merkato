@@ -11,6 +11,7 @@ model OrderMirror {
   id                 BigInt             @id @default(autoincrement())
   mongoId            String             @unique
   buyerMongoId       String
+  buyerExternalId    String?
   status             String
   currency           String
   paymentMethod      String
@@ -30,6 +31,7 @@ model OrderMirror {
   vendors            OrderVendorMirror[]
 
   @@index([buyerMongoId])
+  @@index([buyerExternalId])
   @@index([mirroredAt])
 }
 

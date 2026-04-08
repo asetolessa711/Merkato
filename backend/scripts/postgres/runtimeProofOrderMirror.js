@@ -11,7 +11,7 @@ const User = require("../../models/User");
 const Invoice = require("../../models/Invoice");
 const { getPrismaClient, disconnectPrismaClient } = require("../../prisma/client");
 const { summarizeMirroredOrder } = require("../../services/orderPostgresMirror");
-const { isValidProductExternalId, isValidVendorExternalId } = require("../../utils/externalId");
+const { isValidExternalId, isValidProductExternalId, isValidVendorExternalId } = require("../../utils/externalId");
 
 function rid(prefix) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -119,6 +119,10 @@ async function run() {
   assert.ok(mirrored.vendors.every((vendor) => vendor.vendorName), "Vendor names should be mirrored");
   assert.ok(mirrored.vendors.every((vendor) => vendor.vendorEmail), "Vendor emails should be mirrored");
   assert.ok(mirrored.vendors.every((vendor) => vendor.invoiceMongoId), "Invoice links should be mirrored");
+  assert.ok(
+    !mirrored.buyerMongoId || (mirrored.buyerExternalId && isValidExternalId(mirrored.buyerExternalId)),
+    "Buyer canonical external ID should be mirrored when buyer linkage exists"
+  );
   assert.ok(
     mirrored.vendors.every((vendor) => vendor.vendorExternalId && isValidVendorExternalId(vendor.vendorExternalId)),
     "Vendor canonical external IDs should be mirrored when available"
