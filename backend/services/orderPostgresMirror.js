@@ -1,7 +1,7 @@
 const { getPrismaClient } = require("../prisma/client");
 const User = require("../models/User");
 const Product = require("../models/Product");
-const { isValidProductExternalId, isValidVendorExternalId } = require("../utils/externalId");
+const { isValidExternalId, isValidProductExternalId, isValidVendorExternalId } = require("../utils/externalId");
 
 const VALID_MIRROR_MODES = new Set(["off", "best_effort"]);
 
@@ -65,6 +65,27 @@ function buildExternalIdLookup(documents, validator) {
     lookup.set(String(doc._id), normalizedExternalId);
   });
   return lookup;
+}
+
+async function resolveBuyerExternalId(order) {
+  const explicitBuyerExternalId = normalizeExternalId(
+    order && (order.buyerExternalId || order.buyerCanonicalExternalId),
+    isValidExternalId
+  );
+  if (explicitBuyerExternalId) return explicitBuyerExternalId;
+
+  const buyerMongoId = order && order.buyer ? String(order.buyer) : "";
+  if (!buyerMongoId) return null;
+
+  try {
+    const buyerDoc = await User.findById(buyerMongoId).select("_id externalId").lean();
+    if (!buyerDoc) return null;
+    return normalizeExternalId(buyerDoc.externalId, isValidExternalId);
+  } catch (error) {
+    const message = error && error.message ? error.message : String(error);
+    console.warn(`[orders-postgres-mirror] Canonical buyer identity enrichment fallback: ${message}`);
+    return null;
+  }
 }
 
 async function enrichVendorsWithCanonicalIdentity(vendors) {
@@ -229,6 +250,7 @@ function compareMirrorSummary(sourceSummary, mirroredSummary) {
 }
 
 async function buildMirrorPayload(order, vendors) {
+  const buyerExternalId = await resolveBuyerExternalId(order);
   const enrichedVendors = await enrichVendorsWithCanonicalIdentity(vendors);
   const sourceSummary = buildMirrorSummary(order, enrichedVendors);
 
@@ -236,6 +258,7 @@ async function buildMirrorPayload(order, vendors) {
     sourceSummary,
     data: {
       buyerMongoId: order.buyer ? String(order.buyer) : "",
+      buyerExternalId,
       status: order.status || "pending",
       currency: order.currency || "USD",
       paymentMethod: order.paymentMethod || "cod",
@@ -335,6 +358,7 @@ module.exports = {
   compareMirrorSummary,
   enrichVendorsWithCanonicalIdentity,
   mirrorOrderCreationToPostgres,
+  resolveBuyerExternalId,
   resolveOrdersPgMirrorMode,
   summarizeMirroredOrder,
 };

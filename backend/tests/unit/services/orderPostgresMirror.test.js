@@ -1,8 +1,10 @@
 const {
+  buildMirrorPayload,
   buildMirrorSummary,
   buildVendorRows,
   compareMirrorSummary,
   enrichVendorsWithCanonicalIdentity,
+  resolveBuyerExternalId,
   resolveOrdersPgMirrorMode,
   summarizeMirroredOrder,
 } = require("../../../services/orderPostgresMirror");
@@ -194,5 +196,64 @@ describe("orderPostgresMirror", () => {
     expect(rows[0].vendorExternalId).toBe("uid_aaaaaaaaaaaaaaaaaaaa");
     expect(rows[0].items.create[0].productExternalId).toBe("pid_bbbbbbbbbbbbbbbbbbbb");
     expect(rows[0].items.create[1].productExternalId).toBeNull();
+  });
+
+  test("resolveBuyerExternalId prefers explicit canonical buyer ID", async () => {
+    const findByIdSpy = jest.spyOn(User, "findById");
+
+    const result = await resolveBuyerExternalId({
+      buyer: "buyer-1",
+      buyerExternalId: "UID_AAAAAAAAAAAAAAAAAAAA",
+    });
+
+    expect(result).toBe("uid_aaaaaaaaaaaaaaaaaaaa");
+    expect(findByIdSpy).not.toHaveBeenCalled();
+  });
+
+  test("resolveBuyerExternalId falls back to buyer lookup when explicit value missing", async () => {
+    const findByIdSpy = jest.spyOn(User, "findById").mockReturnValue({
+      select: () => ({
+        lean: () => Promise.resolve({ _id: "buyer-1", externalId: "uid_cccccccccccccccccccc" }),
+      }),
+    });
+
+    const result = await resolveBuyerExternalId({ buyer: "buyer-1" });
+
+    expect(findByIdSpy).toHaveBeenCalledWith("buyer-1");
+    expect(result).toBe("uid_cccccccccccccccccccc");
+  });
+
+  test("buildMirrorPayload keeps buyer canonical ID additive with absence fallback", async () => {
+    jest.spyOn(User, "findById").mockReturnValue({
+      select: () => ({ lean: () => Promise.resolve(null) }),
+    });
+
+    const withExplicitBuyerId = await buildMirrorPayload(
+      {
+        _id: "order-1",
+        buyer: "buyer-1",
+        buyerExternalId: "uid_dddddddddddddddddddd",
+        total: 20,
+        totalAfterDiscount: 18,
+        discount: 2,
+      },
+      []
+    );
+
+    const withMissingBuyerId = await buildMirrorPayload(
+      {
+        _id: "order-2",
+        buyer: "buyer-2",
+        total: 20,
+        totalAfterDiscount: 20,
+        discount: 0,
+      },
+      []
+    );
+
+    expect(withExplicitBuyerId.data.buyerMongoId).toBe("buyer-1");
+    expect(withExplicitBuyerId.data.buyerExternalId).toBe("uid_dddddddddddddddddddd");
+    expect(withMissingBuyerId.data.buyerMongoId).toBe("buyer-2");
+    expect(withMissingBuyerId.data.buyerExternalId).toBeNull();
   });
 });
