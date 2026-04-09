@@ -53,6 +53,7 @@ jobs:
           E2E_EPHEMERAL: 'true'
           E2E_AUTODROP: 'true'
           E2E_BACKEND_PORT: '5051'
+          E2E_USE_ALL: 'false'
           CYPRESS_retries: '2'
           CYPRESS_EXCLUDE_TAG: '@flaky'
           CYPRESS_CACHE_FOLDER: ${{ github.workspace }}/.cache/cypress
