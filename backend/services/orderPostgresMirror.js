@@ -692,6 +692,186 @@ function buildMirroredCustomerOrderListSummary(order) {
   };
 }
 
+function buildSourceAdminOrderListSummary(order) {
+  const vendors = Array.isArray(order && order.vendors) ? order.vendors : [];
+  const itemCount = vendors.reduce((sum, vendor) => {
+    const products = Array.isArray(vendor && vendor.products) ? vendor.products : [];
+    return sum + products.length;
+  }, 0);
+  const derivedVendorInvoiceCount = vendors.reduce((sum, vendor) => sum + (vendor && vendor.invoiceId ? 1 : 0), 0);
+  const explicitInvoiceCount = Number(order && order.invoiceCount);
+  const invoiceCount = Number.isFinite(explicitInvoiceCount)
+    ? explicitInvoiceCount
+    : derivedVendorInvoiceCount;
+
+  return {
+    orderMongoId: order && order._id ? String(order._id) : "",
+    orderExternalId: normalizeExternalId(
+      order && (order.externalId || order.orderExternalId || order.orderCanonicalExternalId),
+      isValidOrderExternalId
+    ),
+    buyerMongoId: order && order.buyer ? String(order.buyer) : "",
+    buyerExternalId: normalizeExternalId(
+      order && (order.buyerExternalId || order.buyerCanonicalExternalId),
+      isValidExternalId
+    ),
+    status: order && order.status ? String(order.status) : "pending",
+    currency: order && order.currency ? String(order.currency) : "USD",
+    paymentMethod: order && order.paymentMethod ? String(order.paymentMethod) : "cod",
+    total: toMoney(order && order.total),
+    totalAfterDiscount: toMoney(order && order.totalAfterDiscount),
+    discount: toMoney(order && order.discount),
+    vendorCount: vendors.length,
+    itemCount,
+    invoiceCount,
+    sortTimestamp: normalizeShadowSortTimestamp(order && order.createdAt),
+  };
+}
+
+function buildMirroredAdminOrderListSummary(order) {
+  const vendors = Array.isArray(order && order.vendors) ? order.vendors : [];
+  const derivedVendorCount = vendors.length;
+  const derivedItemCount = vendors.reduce((sum, vendor) => {
+    const items = Array.isArray(vendor && vendor.items) ? vendor.items : [];
+    return sum + items.length;
+  }, 0);
+  const derivedInvoiceCount = vendors.reduce((sum, vendor) => sum + (vendor && vendor.invoiceMongoId ? 1 : 0), 0);
+
+  const vendorCountRaw = Number(order && order.vendorCount);
+  const itemCountRaw = Number(order && order.itemCount);
+  const invoiceCountRaw = Number(order && order.invoiceCount);
+  const vendorCount = Number.isFinite(vendorCountRaw) ? vendorCountRaw : derivedVendorCount;
+  const itemCount = Number.isFinite(itemCountRaw) ? itemCountRaw : derivedItemCount;
+  const invoiceCount = Number.isFinite(invoiceCountRaw) ? invoiceCountRaw : derivedInvoiceCount;
+
+  return {
+    orderMongoId: order && order.mongoId ? String(order.mongoId) : "",
+    orderExternalId: normalizeExternalId(order && order.orderExternalId, isValidOrderExternalId),
+    buyerMongoId: order && order.buyerMongoId ? String(order.buyerMongoId) : "",
+    buyerExternalId: normalizeExternalId(order && order.buyerExternalId, isValidExternalId),
+    status: order && order.status ? String(order.status) : "pending",
+    currency: order && order.currency ? String(order.currency) : "USD",
+    paymentMethod: order && order.paymentMethod ? String(order.paymentMethod) : "cod",
+    total: toMoney(order && order.total),
+    totalAfterDiscount: toMoney(order && order.totalAfterDiscount),
+    discount: toMoney(order && order.discount),
+    vendorCount,
+    itemCount,
+    invoiceCount,
+    sortTimestamp: normalizeShadowSortTimestamp(
+      order && (order.sourceCreatedAt || order.createdAt || order.orderDate || order.mirroredAt)
+    ),
+  };
+}
+
+function compareAdminOrderListSummaryShadowParity(sourceOrders, mirroredOrders) {
+  const discrepancies = [];
+
+  const sourceSummaries = (Array.isArray(sourceOrders) ? sourceOrders : [])
+    .map((order) => buildSourceAdminOrderListSummary(order))
+    .filter((summary) => summary.orderMongoId);
+
+  const mirroredSummaries = (Array.isArray(mirroredOrders) ? mirroredOrders : [])
+    .map((order) => buildMirroredAdminOrderListSummary(order))
+    .filter((summary) => summary.orderMongoId);
+
+  const sourceById = new Map();
+  sourceSummaries.forEach((summary) => {
+    sourceById.set(summary.orderMongoId, summary);
+  });
+
+  const mirroredById = new Map();
+  mirroredSummaries.forEach((summary) => {
+    mirroredById.set(summary.orderMongoId, summary);
+  });
+
+  const coveredSummaries = [];
+  sourceById.forEach((sourceSummary, orderMongoId) => {
+    const mirroredSummary = mirroredById.get(orderMongoId);
+    if (!mirroredSummary) return;
+    coveredSummaries.push({ sourceSummary, mirroredSummary });
+  });
+
+  if (coveredSummaries.length === 0) {
+    return discrepancies;
+  }
+
+  const sortedSource = coveredSummaries
+    .map((entry) => entry.sourceSummary)
+    .sort((left, right) => {
+      if (right.sortTimestamp !== left.sortTimestamp) return right.sortTimestamp - left.sortTimestamp;
+      return String(right.orderMongoId).localeCompare(String(left.orderMongoId));
+    });
+  const sortedMirrored = coveredSummaries
+    .map((entry) => entry.mirroredSummary)
+    .sort((left, right) => {
+      if (right.sortTimestamp !== left.sortTimestamp) return right.sortTimestamp - left.sortTimestamp;
+      return String(right.orderMongoId).localeCompare(String(left.orderMongoId));
+    });
+
+  const expectedOrder = sortedSource.map((entry) => entry.orderMongoId);
+  const actualOrder = sortedMirrored.map((entry) => entry.orderMongoId);
+  if (expectedOrder.join("|") !== actualOrder.join("|")) {
+    discrepancies.push(`ordering:${expectedOrder.join("|")}->${actualOrder.join("|")}`);
+  }
+
+  sortedSource.forEach((sourceSummary, index) => {
+    const mirroredSummary = mirroredById.get(sourceSummary.orderMongoId);
+    if (!mirroredSummary) return;
+
+    compareCanonicalField({
+      label: `order[${index}].orderExternalId`,
+      expectedValue: sourceSummary.orderExternalId,
+      actualValue: mirroredSummary.orderExternalId,
+      validator: isValidOrderExternalId,
+      discrepancies,
+    });
+    compareCanonicalField({
+      label: `order[${index}].buyerExternalId`,
+      expectedValue: sourceSummary.buyerExternalId,
+      actualValue: mirroredSummary.buyerExternalId,
+      validator: isValidExternalId,
+      discrepancies,
+    });
+
+    compareShadowField({
+      label: `order[${index}].buyerMongoId`,
+      expectedValue: sourceSummary.buyerMongoId,
+      actualValue: mirroredSummary.buyerMongoId,
+      discrepancies,
+    });
+    compareShadowField({
+      label: `order[${index}].status`,
+      expectedValue: sourceSummary.status,
+      actualValue: mirroredSummary.status,
+      discrepancies,
+    });
+    compareShadowField({
+      label: `order[${index}].currency`,
+      expectedValue: sourceSummary.currency,
+      actualValue: mirroredSummary.currency,
+      discrepancies,
+    });
+    compareShadowField({
+      label: `order[${index}].paymentMethod`,
+      expectedValue: sourceSummary.paymentMethod,
+      actualValue: mirroredSummary.paymentMethod,
+      discrepancies,
+    });
+
+    ["total", "totalAfterDiscount", "discount", "vendorCount", "itemCount", "invoiceCount"].forEach((field) => {
+      compareShadowNumericField({
+        label: `order[${index}].${field}`,
+        expectedValue: sourceSummary[field],
+        actualValue: mirroredSummary[field],
+        discrepancies,
+      });
+    });
+  });
+
+  return discrepancies;
+}
+
 function normalizeVendorMongoId(value) {
   if (!value) return "";
   if (typeof value === "object" && value._id) return String(value._id);
@@ -1154,11 +1334,14 @@ async function mirrorOrderCreationToPostgres({ order, vendors }) {
 module.exports = {
   buildMirrorPayload,
   buildMirrorSummary,
+  buildMirroredAdminOrderListSummary,
   buildMirroredCustomerOrderListSummary,
   buildMirroredVendorOrderListSummary,
+  buildSourceAdminOrderListSummary,
   buildSourceCustomerOrderListSummary,
   buildSourceVendorOrderListSummary,
   buildVendorRows,
+  compareAdminOrderListSummaryShadowParity,
   compareCanonicalIdentityCompleteness,
   compareCustomerOrderListSummaryShadowParity,
   compareOrderDetailShadowParity,

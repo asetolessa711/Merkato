@@ -4,9 +4,11 @@ const mongoose = require("mongoose");
 
 const { getPrismaClient, disconnectPrismaClient } = require("../../prisma/client");
 const Order = require("../../models/Order");
+const Invoice = require("../../models/Invoice");
 const {
   buildMirrorPayload,
   buildMirrorSummary,
+  compareAdminOrderListSummaryShadowParity,
   compareCanonicalIdentityCompleteness,
   compareCustomerOrderListSummaryShadowParity,
   compareOrderDetailShadowParity,
@@ -153,11 +155,60 @@ async function main() {
     mirroredVendorOrderList,
     sourceVendorMongoId
   );
+  const sourceAdminOrderList = await Order.find({})
+    .select("_id buyer status currency paymentMethod total totalAfterDiscount discount vendors createdAt +externalId")
+    .sort({ createdAt: -1, _id: -1 })
+    .lean();
+  const sourceAdminOrderIds = sourceAdminOrderList
+    .map((order) => order && order._id)
+    .filter(Boolean);
+  const sourceAdminInvoiceCounts = sourceAdminOrderIds.length
+    ? await Invoice.aggregate([
+      { $match: { order: { $in: sourceAdminOrderIds } } },
+      { $group: { _id: "$order", count: { $sum: 1 } } },
+    ])
+    : [];
+  const sourceAdminInvoiceCountByOrderId = new Map(
+    sourceAdminInvoiceCounts.map((entry) => [String(entry._id), Number(entry.count) || 0])
+  );
+  const sourceAdminOrderListWithInvoiceCounts = sourceAdminOrderList.map((order) => {
+    const explicitInvoiceCount = Number(order && order.invoiceCount);
+    if (Number.isFinite(explicitInvoiceCount)) return order;
+    return {
+      ...order,
+      invoiceCount: sourceAdminInvoiceCountByOrderId.get(String(order && order._id)) || 0,
+    };
+  });
+  const mirroredAdminOrderList = await prisma.orderMirror.findMany({
+    select: {
+      mongoId: true,
+      orderExternalId: true,
+      buyerMongoId: true,
+      buyerExternalId: true,
+      status: true,
+      currency: true,
+      paymentMethod: true,
+      total: true,
+      totalAfterDiscount: true,
+      discount: true,
+      vendorCount: true,
+      itemCount: true,
+      invoiceCount: true,
+      sourceCreatedAt: true,
+      mirroredAt: true,
+    },
+    orderBy: [{ sourceCreatedAt: "desc" }, { mongoId: "desc" }],
+  });
+  const shadowAdminListParityDiscrepancies = compareAdminOrderListSummaryShadowParity(
+    sourceAdminOrderListWithInvoiceCounts,
+    mirroredAdminOrderList
+  );
   const richShape = {
     canonicalIdentityCompleteness: identityDiscrepancies.length === 0,
     orderDetailShadowParity: shadowReadParityDiscrepancies.length === 0,
     customerOrderListSummaryShadowParity: shadowListParityDiscrepancies.length === 0,
     vendorOrderListSummaryShadowParity: shadowVendorListParityDiscrepancies.length === 0,
+    adminOrderListSummaryShadowParity: shadowAdminListParityDiscrepancies.length === 0,
     orderCanonicalIdPresentWhenSourcePresent:
       !expectedMirrorData.orderExternalId ||
       (Boolean(mirrored.orderExternalId) && isValidOrderExternalId(mirrored.orderExternalId)),
@@ -195,6 +246,7 @@ async function main() {
     shadowReadParityDiscrepancies,
     shadowListParityDiscrepancies,
     shadowVendorListParityDiscrepancies,
+    shadowAdminListParityDiscrepancies,
     richShape,
     mirroredAt: mirrored.mirroredAt,
   };
@@ -205,7 +257,8 @@ async function main() {
     identityDiscrepancies.length > 0 ||
     shadowReadParityDiscrepancies.length > 0 ||
     shadowListParityDiscrepancies.length > 0 ||
-    shadowVendorListParityDiscrepancies.length > 0
+    shadowVendorListParityDiscrepancies.length > 0 ||
+    shadowAdminListParityDiscrepancies.length > 0
   ) {
     process.exitCode = 5;
   }
