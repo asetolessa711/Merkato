@@ -4,6 +4,7 @@ const mongoose = require("mongoose");
 
 const { getPrismaClient, disconnectPrismaClient } = require("../../prisma/client");
 const Order = require("../../models/Order");
+const Invoice = require("../../models/Invoice");
 const {
   buildMirrorPayload,
   buildMirrorSummary,
@@ -158,6 +159,26 @@ async function main() {
     .select("_id buyer status currency paymentMethod total totalAfterDiscount discount vendors createdAt +externalId")
     .sort({ createdAt: -1, _id: -1 })
     .lean();
+  const sourceAdminOrderIds = sourceAdminOrderList
+    .map((order) => order && order._id)
+    .filter(Boolean);
+  const sourceAdminInvoiceCounts = sourceAdminOrderIds.length
+    ? await Invoice.aggregate([
+      { $match: { order: { $in: sourceAdminOrderIds } } },
+      { $group: { _id: "$order", count: { $sum: 1 } } },
+    ])
+    : [];
+  const sourceAdminInvoiceCountByOrderId = new Map(
+    sourceAdminInvoiceCounts.map((entry) => [String(entry._id), Number(entry.count) || 0])
+  );
+  const sourceAdminOrderListWithInvoiceCounts = sourceAdminOrderList.map((order) => {
+    const explicitInvoiceCount = Number(order && order.invoiceCount);
+    if (Number.isFinite(explicitInvoiceCount)) return order;
+    return {
+      ...order,
+      invoiceCount: sourceAdminInvoiceCountByOrderId.get(String(order && order._id)) || 0,
+    };
+  });
   const mirroredAdminOrderList = await prisma.orderMirror.findMany({
     select: {
       mongoId: true,
@@ -179,7 +200,7 @@ async function main() {
     orderBy: [{ sourceCreatedAt: "desc" }, { mongoId: "desc" }],
   });
   const shadowAdminListParityDiscrepancies = compareAdminOrderListSummaryShadowParity(
-    sourceAdminOrderList,
+    sourceAdminOrderListWithInvoiceCounts,
     mirroredAdminOrderList
   );
   const richShape = {

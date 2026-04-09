@@ -1426,6 +1426,47 @@ describe("orderPostgresMirror", () => {
     expect(discrepancies).toEqual([]);
   });
 
+  test("compareAdminOrderListSummaryShadowParity uses explicit source invoiceCount when vendor invoice links are absent", () => {
+    const discrepancies = compareAdminOrderListSummaryShadowParity(
+      [
+        {
+          _id: "order-1",
+          externalId: "oid_aaaaaaaaaaaaaaaaaaaa",
+          buyer: "buyer-1",
+          status: "pending",
+          currency: "USD",
+          paymentMethod: "cod",
+          total: 80,
+          totalAfterDiscount: 80,
+          discount: 0,
+          vendors: [{ products: [{}] }],
+          invoiceCount: 1,
+          createdAt: "2024-01-01T00:00:00.000Z",
+        },
+      ],
+      [
+        {
+          mongoId: "order-1",
+          orderExternalId: "oid_aaaaaaaaaaaaaaaaaaaa",
+          buyerMongoId: "buyer-1",
+          buyerExternalId: null,
+          status: "pending",
+          currency: "USD",
+          paymentMethod: "cod",
+          total: 80,
+          totalAfterDiscount: 80,
+          discount: 0,
+          vendorCount: 1,
+          itemCount: 1,
+          invoiceCount: 1,
+          sourceCreatedAt: "2024-01-01T00:00:00.000Z",
+        },
+      ]
+    );
+
+    expect(discrepancies).toEqual([]);
+  });
+
   test("compareAdminOrderListSummaryShadowParity compares only covered list results", () => {
     const discrepancies = compareAdminOrderListSummaryShadowParity(
       [

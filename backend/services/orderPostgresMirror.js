@@ -698,7 +698,11 @@ function buildSourceAdminOrderListSummary(order) {
     const products = Array.isArray(vendor && vendor.products) ? vendor.products : [];
     return sum + products.length;
   }, 0);
-  const invoiceCount = vendors.reduce((sum, vendor) => sum + (vendor && vendor.invoiceId ? 1 : 0), 0);
+  const derivedVendorInvoiceCount = vendors.reduce((sum, vendor) => sum + (vendor && vendor.invoiceId ? 1 : 0), 0);
+  const explicitInvoiceCount = Number(order && order.invoiceCount);
+  const invoiceCount = Number.isFinite(explicitInvoiceCount)
+    ? explicitInvoiceCount
+    : derivedVendorInvoiceCount;
 
   return {
     orderMongoId: order && order._id ? String(order._id) : "",
