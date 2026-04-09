@@ -15,6 +15,7 @@ const {
   compareCanonicalIdentityCompleteness,
   compareCustomerOrderListSummaryShadowParity,
   compareOrderDetailShadowParity,
+  compareVendorOrderListSummaryShadowParity,
   summarizeMirroredOrder,
 } = require("../../services/orderPostgresMirror");
 const {
@@ -154,6 +155,48 @@ async function run() {
     mirroredOrderList,
     String(mongoOrder.buyer)
   );
+  const sourceVendorOrderList = await Order.find({ "vendors.vendorId": vendor._id })
+    .select("_id status currency vendors createdAt +externalId")
+    .sort({ createdAt: -1, _id: -1 })
+    .lean();
+  const mirroredVendorOrderList = await prisma.orderMirror.findMany({
+    where: { vendors: { some: { vendorMongoId: String(vendor._id) } } },
+    select: {
+      mongoId: true,
+      orderExternalId: true,
+      status: true,
+      currency: true,
+      sourceCreatedAt: true,
+      mirroredAt: true,
+      vendors: {
+        where: { vendorMongoId: String(vendor._id) },
+        select: {
+          vendorMongoId: true,
+          vendorExternalId: true,
+          status: true,
+          currency: true,
+          subtotal: true,
+          discount: true,
+          tax: true,
+          shipping: true,
+          total: true,
+          commissionAmount: true,
+          netEarnings: true,
+          items: {
+            select: {
+              id: true,
+            },
+          },
+        },
+      },
+    },
+    orderBy: [{ sourceCreatedAt: "desc" }, { mongoId: "desc" }],
+  });
+  const shadowVendorListParityDiscrepancies = compareVendorOrderListSummaryShadowParity(
+    sourceVendorOrderList,
+    mirroredVendorOrderList,
+    String(vendor._id)
+  );
   assert.equal(
     identityDiscrepancies.length,
     0,
@@ -168,6 +211,11 @@ async function run() {
     shadowListParityDiscrepancies.length,
     0,
     `Customer order-list summary shadow parity mismatches: ${shadowListParityDiscrepancies.join(", ")}`
+  );
+  assert.equal(
+    shadowVendorListParityDiscrepancies.length,
+    0,
+    `Vendor order-list summary shadow parity mismatches: ${shadowVendorListParityDiscrepancies.join(", ")}`
   );
 
   const mirroredItemCount = mirrored.vendors.reduce((sum, v) => sum + v.items.length, 0);
@@ -230,6 +278,7 @@ async function run() {
         identityDiscrepancyCount: identityDiscrepancies.length,
         shadowReadParityDiscrepancyCount: shadowReadParityDiscrepancies.length,
         shadowListParityDiscrepancyCount: shadowListParityDiscrepancies.length,
+        shadowVendorListParityDiscrepancyCount: shadowVendorListParityDiscrepancies.length,
         mongoOrderStatus: mongoOrder.status,
         mirroredSummary: summarizeMirroredOrder(mirrored),
       },

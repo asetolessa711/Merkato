@@ -6,6 +6,7 @@ const {
   compareCustomerOrderListSummaryShadowParity,
   compareOrderDetailShadowParity,
   compareMirrorSummary,
+  compareVendorOrderListSummaryShadowParity,
   enrichVendorsWithCanonicalIdentity,
   resolveBuyerExternalId,
   resolveOrderExternalId,
@@ -956,6 +957,288 @@ describe("orderPostgresMirror", () => {
         },
       ],
       "buyer-1"
+    );
+
+    expect(discrepancies).toEqual([]);
+  });
+
+  test("compareVendorOrderListSummaryShadowParity enforces covered-list ordering and vendor summary field parity", () => {
+    const discrepancies = compareVendorOrderListSummaryShadowParity(
+      [
+        {
+          _id: "order-1",
+          externalId: "oid_aaaaaaaaaaaaaaaaaaaa",
+          status: "pending",
+          currency: "USD",
+          createdAt: "2024-01-01T00:00:00.000Z",
+          vendors: [
+            {
+              vendorId: "vendor-1",
+              vendorExternalId: "uid_aaaaaaaaaaaaaaaaaaaa",
+              status: "pending",
+              currency: "USD",
+              subtotal: 80,
+              discount: 5,
+              tax: 8,
+              shipping: 2,
+              total: 85,
+              commissionAmount: 8.5,
+              netEarnings: 76.5,
+              products: [{}, {}],
+            },
+          ],
+        },
+        {
+          _id: "order-2",
+          externalId: "oid_bbbbbbbbbbbbbbbbbbbb",
+          status: "delivered",
+          currency: "USD",
+          createdAt: "2024-01-02T00:00:00.000Z",
+          vendors: [
+            {
+              vendorId: "vendor-1",
+              vendorExternalId: "uid_aaaaaaaaaaaaaaaaaaaa",
+              status: "delivered",
+              currency: "USD",
+              subtotal: 50,
+              discount: 0,
+              tax: 5,
+              shipping: 1,
+              total: 56,
+              commissionAmount: 5.6,
+              netEarnings: 50.4,
+              products: [{}],
+            },
+          ],
+        },
+      ],
+      [
+        {
+          mongoId: "order-1",
+          orderExternalId: "oid_ffffffffffffffffffff",
+          status: "pending",
+          currency: "USD",
+          sourceCreatedAt: "2024-01-03T00:00:00.000Z",
+          vendors: [
+            {
+              vendorMongoId: "vendor-1",
+              vendorExternalId: "uid_bbbbbbbbbbbbbbbbbbbb",
+              status: "cancelled",
+              currency: "ETB",
+              subtotal: 81,
+              discount: 4,
+              tax: 9,
+              shipping: 1,
+              total: 87,
+              commissionAmount: 9,
+              netEarnings: 78,
+              items: [{}],
+            },
+          ],
+        },
+        {
+          mongoId: "order-2",
+          orderExternalId: "oid_bbbbbbbbbbbbbbbbbbbb",
+          status: "delivered",
+          currency: "USD",
+          sourceCreatedAt: "2024-01-01T00:00:00.000Z",
+          vendors: [
+            {
+              vendorMongoId: "vendor-1",
+              vendorExternalId: "uid_aaaaaaaaaaaaaaaaaaaa",
+              status: "delivered",
+              currency: "USD",
+              subtotal: 50,
+              discount: 0,
+              tax: 5,
+              shipping: 1,
+              total: 56,
+              commissionAmount: 5.6,
+              netEarnings: 50.4,
+              items: [{}],
+            },
+          ],
+        },
+      ],
+      "vendor-1"
+    );
+
+    expect(discrepancies).toEqual(
+      expect.arrayContaining([
+        "ordering:order-2|order-1->order-1|order-2",
+        "order[1].orderExternalId:oid_aaaaaaaaaaaaaaaaaaaa->oid_ffffffffffffffffffff",
+        "order[1].vendorExternalId:uid_aaaaaaaaaaaaaaaaaaaa->uid_bbbbbbbbbbbbbbbbbbbb",
+        "order[1].status:pending->cancelled",
+        "order[1].currency:USD->ETB",
+        "order[1].subtotal:80->81",
+        "order[1].discount:5->4",
+        "order[1].tax:8->9",
+        "order[1].shipping:2->1",
+        "order[1].total:85->87",
+        "order[1].commissionAmount:8.5->9",
+        "order[1].netEarnings:76.5->78",
+        "order[1].itemCount:2->1",
+      ])
+    );
+  });
+
+  test("compareVendorOrderListSummaryShadowParity keeps canonical vendor ID additive when source ID is absent", () => {
+    const discrepancies = compareVendorOrderListSummaryShadowParity(
+      [
+        {
+          _id: "order-1",
+          externalId: null,
+          status: "pending",
+          currency: "USD",
+          createdAt: "2024-01-01T00:00:00.000Z",
+          vendors: [
+            {
+              vendorId: "vendor-1",
+              vendorExternalId: null,
+              status: "pending",
+              currency: "USD",
+              subtotal: 80,
+              discount: 5,
+              tax: 8,
+              shipping: 2,
+              total: 85,
+              commissionAmount: 8.5,
+              netEarnings: 76.5,
+              products: [{}, {}],
+            },
+          ],
+        },
+      ],
+      [
+        {
+          mongoId: "order-1",
+          orderExternalId: "oid_aaaaaaaaaaaaaaaaaaaa",
+          status: "pending",
+          currency: "USD",
+          sourceCreatedAt: "2024-01-01T00:00:00.000Z",
+          vendors: [
+            {
+              vendorMongoId: "vendor-1",
+              vendorExternalId: "uid_aaaaaaaaaaaaaaaaaaaa",
+              status: "pending",
+              currency: "USD",
+              subtotal: 80,
+              discount: 5,
+              tax: 8,
+              shipping: 2,
+              total: 85,
+              commissionAmount: 8.5,
+              netEarnings: 76.5,
+              items: [{}, {}],
+            },
+          ],
+        },
+      ],
+      "vendor-1"
+    );
+
+    expect(discrepancies).toEqual([]);
+  });
+
+  test("compareVendorOrderListSummaryShadowParity compares only covered list results", () => {
+    const discrepancies = compareVendorOrderListSummaryShadowParity(
+      [
+        {
+          _id: "order-1",
+          externalId: "oid_aaaaaaaaaaaaaaaaaaaa",
+          status: "pending",
+          currency: "USD",
+          createdAt: "2024-01-01T00:00:00.000Z",
+          vendors: [
+            {
+              vendorId: "vendor-1",
+              vendorExternalId: "uid_aaaaaaaaaaaaaaaaaaaa",
+              status: "pending",
+              currency: "USD",
+              subtotal: 80,
+              discount: 5,
+              tax: 8,
+              shipping: 2,
+              total: 85,
+              commissionAmount: 8.5,
+              netEarnings: 76.5,
+              products: [{}, {}],
+            },
+          ],
+        },
+        {
+          _id: "order-2",
+          externalId: "oid_bbbbbbbbbbbbbbbbbbbb",
+          status: "pending",
+          currency: "USD",
+          createdAt: "2024-01-02T00:00:00.000Z",
+          vendors: [
+            {
+              vendorId: "vendor-1",
+              vendorExternalId: "uid_aaaaaaaaaaaaaaaaaaaa",
+              status: "pending",
+              currency: "USD",
+              subtotal: 60,
+              discount: 0,
+              tax: 6,
+              shipping: 1,
+              total: 67,
+              commissionAmount: 6.7,
+              netEarnings: 60.3,
+              products: [{}],
+            },
+          ],
+        },
+      ],
+      [
+        {
+          mongoId: "order-1",
+          orderExternalId: "oid_aaaaaaaaaaaaaaaaaaaa",
+          status: "pending",
+          currency: "USD",
+          sourceCreatedAt: "2024-01-01T00:00:00.000Z",
+          vendors: [
+            {
+              vendorMongoId: "vendor-1",
+              vendorExternalId: "uid_aaaaaaaaaaaaaaaaaaaa",
+              status: "pending",
+              currency: "USD",
+              subtotal: 80,
+              discount: 5,
+              tax: 8,
+              shipping: 2,
+              total: 85,
+              commissionAmount: 8.5,
+              netEarnings: 76.5,
+              items: [{}, {}],
+            },
+          ],
+        },
+        {
+          mongoId: "order-extra",
+          orderExternalId: "oid_cccccccccccccccccccc",
+          status: "pending",
+          currency: "USD",
+          sourceCreatedAt: "2024-01-03T00:00:00.000Z",
+          vendors: [
+            {
+              vendorMongoId: "vendor-1",
+              vendorExternalId: "uid_aaaaaaaaaaaaaaaaaaaa",
+              status: "pending",
+              currency: "USD",
+              subtotal: 10,
+              discount: 0,
+              tax: 1,
+              shipping: 0,
+              total: 11,
+              commissionAmount: 1.1,
+              netEarnings: 9.9,
+              items: [{}],
+            },
+          ],
+        },
+      ],
+      "vendor-1"
     );
 
     expect(discrepancies).toEqual([]);
