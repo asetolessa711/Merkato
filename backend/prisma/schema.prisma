@@ -10,6 +10,7 @@ datasource db {
 model OrderMirror {
   id                 BigInt             @id @default(autoincrement())
   mongoId            String             @unique
+  orderExternalId    String?
   buyerMongoId       String
   buyerExternalId    String?
   status             String
@@ -31,6 +32,7 @@ model OrderMirror {
   vendors            OrderVendorMirror[]
 
   @@index([buyerMongoId])
+  @@index([orderExternalId])
   @@index([buyerExternalId])
   @@index([mirroredAt])
 }
@@ -44,6 +46,7 @@ model OrderVendorMirror {
   vendorName        String?
   vendorEmail       String?
   invoiceMongoId    String?
+  invoiceExternalId String?
   subtotal          Decimal               @db.Decimal(14, 2)
   discount          Decimal               @db.Decimal(14, 2)
   tax               Decimal               @db.Decimal(14, 2)
@@ -63,6 +66,7 @@ model OrderVendorMirror {
   @@index([orderMirrorId])
   @@index([vendorMongoId])
   @@index([vendorExternalId])
+  @@index([invoiceExternalId])
 }
 
 model OrderVendorItemMirror {

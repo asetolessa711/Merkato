@@ -1,7 +1,15 @@
 const { getPrismaClient } = require("../prisma/client");
+const Order = require("../models/Order");
 const User = require("../models/User");
 const Product = require("../models/Product");
-const { isValidExternalId, isValidProductExternalId, isValidVendorExternalId } = require("../utils/externalId");
+const Invoice = require("../models/Invoice");
+const {
+  isValidExternalId,
+  isValidInvoiceExternalId,
+  isValidOrderExternalId,
+  isValidProductExternalId,
+  isValidVendorExternalId,
+} = require("../utils/externalId");
 
 const VALID_MIRROR_MODES = new Set(["off", "best_effort"]);
 
@@ -88,6 +96,27 @@ async function resolveBuyerExternalId(order) {
   }
 }
 
+async function resolveOrderExternalId(order) {
+  const explicitOrderExternalId = normalizeExternalId(
+    order && (order.orderExternalId || order.orderCanonicalExternalId || order.externalId),
+    isValidOrderExternalId
+  );
+  if (explicitOrderExternalId) return explicitOrderExternalId;
+
+  const orderMongoId = order && order._id ? String(order._id) : "";
+  if (!orderMongoId) return null;
+
+  try {
+    const orderDoc = await Order.findById(orderMongoId).select("_id externalId").lean();
+    if (!orderDoc) return null;
+    return normalizeExternalId(orderDoc.externalId, isValidOrderExternalId);
+  } catch (error) {
+    const message = error && error.message ? error.message : String(error);
+    console.warn(`[orders-postgres-mirror] Canonical order identity enrichment fallback: ${message}`);
+    return null;
+  }
+}
+
 async function enrichVendorsWithCanonicalIdentity(vendors) {
   const normalizedVendors = Array.isArray(vendors) ? vendors : [];
   if (normalizedVendors.length === 0) return [];
@@ -107,23 +136,35 @@ async function enrichVendorsWithCanonicalIdentity(vendors) {
         .filter(Boolean)
     )
   );
+  const invoiceMongoIds = Array.from(
+    new Set(
+      normalizedVendors
+        .map((vendor) => (vendor && vendor.invoiceId ? String(vendor.invoiceId) : ""))
+        .filter(Boolean)
+    )
+  );
 
   let vendorExternalIdLookup = new Map();
   let productExternalIdLookup = new Map();
+  let invoiceExternalIdLookup = new Map();
 
-  if (vendorMongoIds.length > 0 || productMongoIds.length > 0) {
+  if (vendorMongoIds.length > 0 || productMongoIds.length > 0 || invoiceMongoIds.length > 0) {
     try {
-      const [vendorDocs, productDocs] = await Promise.all([
+      const [vendorDocs, productDocs, invoiceDocs] = await Promise.all([
         vendorMongoIds.length > 0
           ? User.find({ _id: { $in: vendorMongoIds } }).select("_id externalId").lean()
           : [],
         productMongoIds.length > 0
           ? Product.find({ _id: { $in: productMongoIds } }).select("_id externalId").lean()
           : [],
+        invoiceMongoIds.length > 0
+          ? Invoice.find({ _id: { $in: invoiceMongoIds } }).select("_id externalId").lean()
+          : [],
       ]);
 
       vendorExternalIdLookup = buildExternalIdLookup(vendorDocs, isValidVendorExternalId);
       productExternalIdLookup = buildExternalIdLookup(productDocs, isValidProductExternalId);
+      invoiceExternalIdLookup = buildExternalIdLookup(invoiceDocs, isValidInvoiceExternalId);
     } catch (error) {
       const message = error && error.message ? error.message : String(error);
       console.warn(`[orders-postgres-mirror] Canonical identity enrichment fallback: ${message}`);
@@ -132,9 +173,14 @@ async function enrichVendorsWithCanonicalIdentity(vendors) {
 
   return normalizedVendors.map((vendor) => {
     const vendorMongoId = vendor && vendor.vendorId ? String(vendor.vendorId) : "";
+    const invoiceMongoId = vendor && vendor.invoiceId ? String(vendor.invoiceId) : "";
     const explicitVendorExternalId = normalizeExternalId(
       vendor && (vendor.vendorExternalId || vendor.vendorCanonicalExternalId),
       isValidVendorExternalId
+    );
+    const explicitInvoiceExternalId = normalizeExternalId(
+      vendor && (vendor.invoiceExternalId || vendor.invoiceCanonicalExternalId),
+      isValidInvoiceExternalId
     );
 
     const products = Array.isArray(vendor && vendor.products) ? vendor.products : [];
@@ -154,6 +200,7 @@ async function enrichVendorsWithCanonicalIdentity(vendors) {
     return {
       ...(vendor || {}),
       vendorExternalId: explicitVendorExternalId || vendorExternalIdLookup.get(vendorMongoId) || null,
+      invoiceExternalId: explicitInvoiceExternalId || invoiceExternalIdLookup.get(invoiceMongoId) || null,
       products: enrichedProducts,
     };
   });
@@ -164,13 +211,15 @@ function buildVendorRows(vendors) {
 
   return vendors.map((vendor) => {
     const products = Array.isArray(vendor.products) ? vendor.products : [];
+    const invoiceMongoId = vendor.invoiceId ? String(vendor.invoiceId) : null;
 
     return {
       vendorMongoId: vendor.vendorId ? String(vendor.vendorId) : "",
       vendorExternalId: normalizeExternalId(vendor.vendorExternalId, isValidVendorExternalId),
       vendorName: vendor.vendorName || null,
       vendorEmail: vendor.vendorEmail || null,
-      invoiceMongoId: vendor.invoiceId ? String(vendor.invoiceId) : null,
+      invoiceMongoId,
+      invoiceExternalId: normalizeExternalId(vendor.invoiceExternalId, isValidInvoiceExternalId),
       subtotal: toMoney(vendor.subtotal),
       discount: toMoney(vendor.discount),
       tax: toMoney(vendor.tax),
@@ -250,6 +299,7 @@ function compareMirrorSummary(sourceSummary, mirroredSummary) {
 }
 
 async function buildMirrorPayload(order, vendors) {
+  const orderExternalId = await resolveOrderExternalId(order);
   const buyerExternalId = await resolveBuyerExternalId(order);
   const enrichedVendors = await enrichVendorsWithCanonicalIdentity(vendors);
   const sourceSummary = buildMirrorSummary(order, enrichedVendors);
@@ -257,6 +307,7 @@ async function buildMirrorPayload(order, vendors) {
   return {
     sourceSummary,
     data: {
+      orderExternalId,
       buyerMongoId: order.buyer ? String(order.buyer) : "",
       buyerExternalId,
       status: order.status || "pending",
@@ -359,6 +410,7 @@ module.exports = {
   enrichVendorsWithCanonicalIdentity,
   mirrorOrderCreationToPostgres,
   resolveBuyerExternalId,
+  resolveOrderExternalId,
   resolveOrdersPgMirrorMode,
   summarizeMirroredOrder,
 };

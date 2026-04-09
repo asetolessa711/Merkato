@@ -5,9 +5,12 @@ const {
   compareMirrorSummary,
   enrichVendorsWithCanonicalIdentity,
   resolveBuyerExternalId,
+  resolveOrderExternalId,
   resolveOrdersPgMirrorMode,
   summarizeMirroredOrder,
 } = require("../../../services/orderPostgresMirror");
+const Order = require("../../../models/Order");
+const Invoice = require("../../../models/Invoice");
 const Product = require("../../../models/Product");
 const User = require("../../../models/User");
 
@@ -146,7 +149,7 @@ describe("orderPostgresMirror", () => {
     });
   });
 
-  test("enriches vendor/product canonical IDs from Mongo lookups", async () => {
+  test("enriches vendor/product/invoice canonical IDs from Mongo lookups", async () => {
     const userFindSpy = jest.spyOn(User, "find").mockReturnValue({
       select: () => ({
         lean: () => Promise.resolve([{ _id: "vendor-1", externalId: "uid_11111111111111111111" }]),
@@ -157,17 +160,25 @@ describe("orderPostgresMirror", () => {
         lean: () => Promise.resolve([{ _id: "product-1", externalId: "pid_11111111111111111111" }]),
       }),
     });
+    const invoiceFindSpy = jest.spyOn(Invoice, "find").mockReturnValue({
+      select: () => ({
+        lean: () => Promise.resolve([{ _id: "invoice-1", externalId: "iid_11111111111111111111" }]),
+      }),
+    });
 
     const enriched = await enrichVendorsWithCanonicalIdentity([
       {
         vendorId: "vendor-1",
+        invoiceId: "invoice-1",
         products: [{ product: "product-1", name: "Mirror Product", quantity: 1, price: 10 }],
       },
     ]);
 
     expect(userFindSpy).toHaveBeenCalledWith({ _id: { $in: ["vendor-1"] } });
     expect(productFindSpy).toHaveBeenCalledWith({ _id: { $in: ["product-1"] } });
+    expect(invoiceFindSpy).toHaveBeenCalledWith({ _id: { $in: ["invoice-1"] } });
     expect(enriched[0].vendorExternalId).toBe("uid_11111111111111111111");
+    expect(enriched[0].invoiceExternalId).toBe("iid_11111111111111111111");
     expect(enriched[0].products[0].productExternalId).toBe("pid_11111111111111111111");
   });
 
@@ -176,6 +187,8 @@ describe("orderPostgresMirror", () => {
       {
         vendorId: "vendor-1",
         vendorExternalId: "uid_aaaaaaaaaaaaaaaaaaaa",
+        invoiceId: "invoice-1",
+        invoiceExternalId: "iid_cccccccccccccccccccc",
         products: [
           {
             product: "product-1",
@@ -194,6 +207,7 @@ describe("orderPostgresMirror", () => {
     ]);
 
     expect(rows[0].vendorExternalId).toBe("uid_aaaaaaaaaaaaaaaaaaaa");
+    expect(rows[0].invoiceExternalId).toBe("iid_cccccccccccccccccccc");
     expect(rows[0].items.create[0].productExternalId).toBe("pid_bbbbbbbbbbbbbbbbbbbb");
     expect(rows[0].items.create[1].productExternalId).toBeNull();
   });
@@ -223,14 +237,43 @@ describe("orderPostgresMirror", () => {
     expect(result).toBe("uid_cccccccccccccccccccc");
   });
 
+  test("resolveOrderExternalId prefers explicit canonical order ID", async () => {
+    const findByIdSpy = jest.spyOn(Order, "findById");
+
+    const result = await resolveOrderExternalId({
+      _id: "order-1",
+      orderExternalId: "OID_AAAAAAAAAAAAAAAAAAAA",
+    });
+
+    expect(result).toBe("oid_aaaaaaaaaaaaaaaaaaaa");
+    expect(findByIdSpy).not.toHaveBeenCalled();
+  });
+
+  test("resolveOrderExternalId falls back to order lookup when explicit value missing", async () => {
+    const findByIdSpy = jest.spyOn(Order, "findById").mockReturnValue({
+      select: () => ({
+        lean: () => Promise.resolve({ _id: "order-1", externalId: "oid_cccccccccccccccccccc" }),
+      }),
+    });
+
+    const result = await resolveOrderExternalId({ _id: "order-1" });
+
+    expect(findByIdSpy).toHaveBeenCalledWith("order-1");
+    expect(result).toBe("oid_cccccccccccccccccccc");
+  });
+
   test("buildMirrorPayload keeps buyer canonical ID additive with absence fallback", async () => {
     jest.spyOn(User, "findById").mockReturnValue({
+      select: () => ({ lean: () => Promise.resolve(null) }),
+    });
+    jest.spyOn(Order, "findById").mockReturnValue({
       select: () => ({ lean: () => Promise.resolve(null) }),
     });
 
     const withExplicitBuyerId = await buildMirrorPayload(
       {
         _id: "order-1",
+        orderExternalId: "oid_eeeeeeeeeeeeeeeeeeee",
         buyer: "buyer-1",
         buyerExternalId: "uid_dddddddddddddddddddd",
         total: 20,
@@ -253,7 +296,9 @@ describe("orderPostgresMirror", () => {
 
     expect(withExplicitBuyerId.data.buyerMongoId).toBe("buyer-1");
     expect(withExplicitBuyerId.data.buyerExternalId).toBe("uid_dddddddddddddddddddd");
+    expect(withExplicitBuyerId.data.orderExternalId).toBe("oid_eeeeeeeeeeeeeeeeeeee");
     expect(withMissingBuyerId.data.buyerMongoId).toBe("buyer-2");
     expect(withMissingBuyerId.data.buyerExternalId).toBeNull();
+    expect(withMissingBuyerId.data.orderExternalId).toBeNull();
   });
 });
