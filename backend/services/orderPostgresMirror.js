@@ -350,12 +350,29 @@ function compareCanonicalIdentityCompleteness(expectedData, mirroredOrder) {
     mirroredBuckets.set(key, bucket);
   });
 
+  function takeVendorMatch(sourceVendorMongoId, sourceInvoiceMongoId) {
+    const invoiceScopedKey = `${sourceVendorMongoId}::${sourceInvoiceMongoId}`;
+    if (sourceInvoiceMongoId) {
+      const exactBucket = mirroredBuckets.get(invoiceScopedKey) || [];
+      return exactBucket.shift() || null;
+    }
+
+    for (const [bucketKey, bucket] of mirroredBuckets.entries()) {
+      if (!Array.isArray(bucket) || bucket.length === 0) continue;
+      const [bucketVendorMongoId] = String(bucketKey).split("::");
+      if (bucketVendorMongoId === sourceVendorMongoId) {
+        return bucket.shift() || null;
+      }
+    }
+
+    return null;
+  }
+
   sourceVendors.forEach((sourceVendor, vendorIndex) => {
-    const sourceKey = `${String(sourceVendor && sourceVendor.vendorMongoId ? sourceVendor.vendorMongoId : "")}::${
-      String(sourceVendor && sourceVendor.invoiceMongoId ? sourceVendor.invoiceMongoId : "")
-    }`;
-    const matchedBucket = mirroredBuckets.get(sourceKey) || [];
-    const mirroredVendor = matchedBucket.shift();
+    const sourceVendorMongoId = String(sourceVendor && sourceVendor.vendorMongoId ? sourceVendor.vendorMongoId : "");
+    const sourceInvoiceMongoId = String(sourceVendor && sourceVendor.invoiceMongoId ? sourceVendor.invoiceMongoId : "");
+    const sourceKey = `${sourceVendorMongoId}::${sourceInvoiceMongoId}`;
+    const mirroredVendor = takeVendorMatch(sourceVendorMongoId, sourceInvoiceMongoId);
 
     if (!mirroredVendor) {
       discrepancies.push(`vendor[${vendorIndex}]:missing->${sourceKey}`);
