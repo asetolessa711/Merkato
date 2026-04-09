@@ -8,6 +8,7 @@ const {
   buildMirrorPayload,
   buildMirrorSummary,
   compareCanonicalIdentityCompleteness,
+  compareOrderDetailShadowParity,
   compareMirrorSummary,
   summarizeMirroredOrder,
 } = require("../../services/orderPostgresMirror");
@@ -69,8 +70,14 @@ async function main() {
   const discrepancies = compareMirrorSummary(sourceSummary, mirroredSummary);
   const { data: expectedMirrorData } = await buildMirrorPayload(sourceOrder, sourceOrder.vendors || []);
   const identityDiscrepancies = compareCanonicalIdentityCompleteness(expectedMirrorData, mirrored);
+  const shadowReadParityDiscrepancies = compareOrderDetailShadowParity(
+    expectedMirrorData,
+    mirrored,
+    String(sourceOrder._id)
+  );
   const richShape = {
     canonicalIdentityCompleteness: identityDiscrepancies.length === 0,
+    orderDetailShadowParity: shadowReadParityDiscrepancies.length === 0,
     orderCanonicalIdPresentWhenSourcePresent:
       !expectedMirrorData.orderExternalId ||
       (Boolean(mirrored.orderExternalId) && isValidOrderExternalId(mirrored.orderExternalId)),
@@ -105,13 +112,14 @@ async function main() {
     mirroredSummary,
     discrepancies,
     identityDiscrepancies,
+    shadowReadParityDiscrepancies,
     richShape,
     mirroredAt: mirrored.mirroredAt,
   };
 
   console.log(JSON.stringify(summary, null, 2));
 
-  if (identityDiscrepancies.length > 0) {
+  if (identityDiscrepancies.length > 0 || shadowReadParityDiscrepancies.length > 0) {
     process.exitCode = 5;
   }
 }

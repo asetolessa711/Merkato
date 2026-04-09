@@ -13,6 +13,7 @@ const { getPrismaClient, disconnectPrismaClient } = require("../../prisma/client
 const {
   buildMirrorPayload,
   compareCanonicalIdentityCompleteness,
+  compareOrderDetailShadowParity,
   summarizeMirroredOrder,
 } = require("../../services/orderPostgresMirror");
 const {
@@ -120,10 +121,20 @@ async function run() {
   assert.equal(mirrored.vendors.length, mongoOrder.vendors.length, "Vendor mirror count mismatch");
   const { data: expectedMirrorData } = await buildMirrorPayload(mongoOrder, mongoOrder.vendors || []);
   const identityDiscrepancies = compareCanonicalIdentityCompleteness(expectedMirrorData, mirrored);
+  const shadowReadParityDiscrepancies = compareOrderDetailShadowParity(
+    expectedMirrorData,
+    mirrored,
+    createdOrderId
+  );
   assert.equal(
     identityDiscrepancies.length,
     0,
     `Canonical identity completeness mismatches: ${identityDiscrepancies.join(", ")}`
+  );
+  assert.equal(
+    shadowReadParityDiscrepancies.length,
+    0,
+    `Order detail shadow parity mismatches: ${shadowReadParityDiscrepancies.join(", ")}`
   );
 
   const mirroredItemCount = mirrored.vendors.reduce((sum, v) => sum + v.items.length, 0);
@@ -184,6 +195,7 @@ async function run() {
         orderId: createdOrderId,
         responseInvariant,
         identityDiscrepancyCount: identityDiscrepancies.length,
+        shadowReadParityDiscrepancyCount: shadowReadParityDiscrepancies.length,
         mongoOrderStatus: mongoOrder.status,
         mirroredSummary: summarizeMirroredOrder(mirrored),
       },
