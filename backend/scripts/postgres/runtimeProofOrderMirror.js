@@ -11,7 +11,13 @@ const User = require("../../models/User");
 const Invoice = require("../../models/Invoice");
 const { getPrismaClient, disconnectPrismaClient } = require("../../prisma/client");
 const { summarizeMirroredOrder } = require("../../services/orderPostgresMirror");
-const { isValidExternalId, isValidProductExternalId, isValidVendorExternalId } = require("../../utils/externalId");
+const {
+  isValidExternalId,
+  isValidInvoiceExternalId,
+  isValidOrderExternalId,
+  isValidProductExternalId,
+  isValidVendorExternalId,
+} = require("../../utils/externalId");
 
 function rid(prefix) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -91,7 +97,7 @@ async function run() {
   createdOrderId = String(res.body.order._id || "");
   assert.ok(createdOrderId, "Response order missing _id");
 
-  const mongoOrder = await Order.findById(createdOrderId).lean();
+  const mongoOrder = await Order.findById(createdOrderId).select("+externalId").lean();
   assert.ok(mongoOrder, "Mongo order was not persisted");
 
   const mirrored = await prisma.orderMirror.findUnique({
@@ -120,8 +126,19 @@ async function run() {
   assert.ok(mirrored.vendors.every((vendor) => vendor.vendorEmail), "Vendor emails should be mirrored");
   assert.ok(mirrored.vendors.every((vendor) => vendor.invoiceMongoId), "Invoice links should be mirrored");
   assert.ok(
+    !mongoOrder.externalId ||
+      (mirrored.orderExternalId && isValidOrderExternalId(mirrored.orderExternalId)),
+    "Order canonical external ID should be mirrored when source order has one"
+  );
+  assert.ok(
     !mirrored.buyerMongoId || (mirrored.buyerExternalId && isValidExternalId(mirrored.buyerExternalId)),
     "Buyer canonical external ID should be mirrored when buyer linkage exists"
+  );
+  assert.ok(
+    mirrored.vendors.every(
+      (vendor) => !vendor.invoiceMongoId || (vendor.invoiceExternalId && isValidInvoiceExternalId(vendor.invoiceExternalId))
+    ),
+    "Invoice canonical external IDs should be mirrored when invoice linkage exists"
   );
   assert.ok(
     mirrored.vendors.every((vendor) => vendor.vendorExternalId && isValidVendorExternalId(vendor.vendorExternalId)),
