@@ -705,6 +705,32 @@ function sumVendorNumeric(vendors, field) {
   }, 0);
 }
 
+function resolveSourceVendorShipping(vendor) {
+  const explicit = Number(vendor && vendor.shipping);
+  if (Number.isFinite(explicit)) return explicit;
+
+  const subtotal = Number(vendor && vendor.subtotal);
+  const tax = Number(vendor && vendor.tax);
+  const discount = Number(vendor && vendor.discount);
+  const total = Number(vendor && vendor.total);
+
+  if (
+    Number.isFinite(subtotal) &&
+    Number.isFinite(tax) &&
+    Number.isFinite(discount) &&
+    Number.isFinite(total)
+  ) {
+    const derived = total - subtotal - tax + discount;
+    if (Number.isFinite(derived)) return Math.abs(derived) < 0.000001 ? 0 : derived;
+  }
+
+  return 0;
+}
+
+function sumSourceVendorShipping(vendors) {
+  return vendors.reduce((sum, vendor) => sum + resolveSourceVendorShipping(vendor), 0);
+}
+
 function pickFirstCanonicalVendorExternalId(vendors) {
   for (const vendor of vendors) {
     const normalized = normalizeExternalId(
@@ -745,7 +771,7 @@ function buildSourceVendorOrderListSummary(order, vendorMongoId = null) {
     subtotal: toMoney(sumVendorNumeric(scopedVendors, "subtotal")),
     discount: toMoney(sumVendorNumeric(scopedVendors, "discount")),
     tax: toMoney(sumVendorNumeric(scopedVendors, "tax")),
-    shipping: toMoney(sumVendorNumeric(scopedVendors, "shipping")),
+    shipping: toMoney(sumSourceVendorShipping(scopedVendors)),
     total: toMoney(sumVendorNumeric(scopedVendors, "total")),
     commissionAmount: toMoney(sumVendorNumeric(scopedVendors, "commissionAmount")),
     netEarnings: toMoney(sumVendorNumeric(scopedVendors, "netEarnings")),

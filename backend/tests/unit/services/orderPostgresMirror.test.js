@@ -1140,6 +1140,63 @@ describe("orderPostgresMirror", () => {
     expect(discrepancies).toEqual([]);
   });
 
+  test("compareVendorOrderListSummaryShadowParity derives source shipping when legacy source vendor field is absent", () => {
+    const discrepancies = compareVendorOrderListSummaryShadowParity(
+      [
+        {
+          _id: "order-1",
+          externalId: "oid_aaaaaaaaaaaaaaaaaaaa",
+          status: "pending",
+          currency: "USD",
+          createdAt: "2024-01-01T00:00:00.000Z",
+          vendors: [
+            {
+              vendorId: "vendor-1",
+              vendorExternalId: "uid_aaaaaaaaaaaaaaaaaaaa",
+              status: "pending",
+              currency: "USD",
+              subtotal: 80,
+              discount: 0,
+              tax: 8,
+              total: 98,
+              commissionAmount: 8.5,
+              netEarnings: 89.5,
+              products: [{}, {}],
+            },
+          ],
+        },
+      ],
+      [
+        {
+          mongoId: "order-1",
+          orderExternalId: "oid_aaaaaaaaaaaaaaaaaaaa",
+          status: "pending",
+          currency: "USD",
+          sourceCreatedAt: "2024-01-01T00:00:00.000Z",
+          vendors: [
+            {
+              vendorMongoId: "vendor-1",
+              vendorExternalId: "uid_aaaaaaaaaaaaaaaaaaaa",
+              status: "pending",
+              currency: "USD",
+              subtotal: 80,
+              discount: 0,
+              tax: 8,
+              shipping: 10,
+              total: 98,
+              commissionAmount: 8.5,
+              netEarnings: 89.5,
+              items: [{}, {}],
+            },
+          ],
+        },
+      ],
+      "vendor-1"
+    );
+
+    expect(discrepancies).toEqual([]);
+  });
+
   test("compareVendorOrderListSummaryShadowParity compares only covered list results", () => {
     const discrepancies = compareVendorOrderListSummaryShadowParity(
       [
