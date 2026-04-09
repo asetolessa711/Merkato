@@ -7,6 +7,7 @@ const Order = require("../../models/Order");
 const {
   buildMirrorPayload,
   buildMirrorSummary,
+  compareAdminOrderListSummaryShadowParity,
   compareCanonicalIdentityCompleteness,
   compareCustomerOrderListSummaryShadowParity,
   compareOrderDetailShadowParity,
@@ -153,11 +154,40 @@ async function main() {
     mirroredVendorOrderList,
     sourceVendorMongoId
   );
+  const sourceAdminOrderList = await Order.find({})
+    .select("_id buyer status currency paymentMethod total totalAfterDiscount discount vendors createdAt +externalId")
+    .sort({ createdAt: -1, _id: -1 })
+    .lean();
+  const mirroredAdminOrderList = await prisma.orderMirror.findMany({
+    select: {
+      mongoId: true,
+      orderExternalId: true,
+      buyerMongoId: true,
+      buyerExternalId: true,
+      status: true,
+      currency: true,
+      paymentMethod: true,
+      total: true,
+      totalAfterDiscount: true,
+      discount: true,
+      vendorCount: true,
+      itemCount: true,
+      invoiceCount: true,
+      sourceCreatedAt: true,
+      mirroredAt: true,
+    },
+    orderBy: [{ sourceCreatedAt: "desc" }, { mongoId: "desc" }],
+  });
+  const shadowAdminListParityDiscrepancies = compareAdminOrderListSummaryShadowParity(
+    sourceAdminOrderList,
+    mirroredAdminOrderList
+  );
   const richShape = {
     canonicalIdentityCompleteness: identityDiscrepancies.length === 0,
     orderDetailShadowParity: shadowReadParityDiscrepancies.length === 0,
     customerOrderListSummaryShadowParity: shadowListParityDiscrepancies.length === 0,
     vendorOrderListSummaryShadowParity: shadowVendorListParityDiscrepancies.length === 0,
+    adminOrderListSummaryShadowParity: shadowAdminListParityDiscrepancies.length === 0,
     orderCanonicalIdPresentWhenSourcePresent:
       !expectedMirrorData.orderExternalId ||
       (Boolean(mirrored.orderExternalId) && isValidOrderExternalId(mirrored.orderExternalId)),
@@ -195,6 +225,7 @@ async function main() {
     shadowReadParityDiscrepancies,
     shadowListParityDiscrepancies,
     shadowVendorListParityDiscrepancies,
+    shadowAdminListParityDiscrepancies,
     richShape,
     mirroredAt: mirrored.mirroredAt,
   };
@@ -205,7 +236,8 @@ async function main() {
     identityDiscrepancies.length > 0 ||
     shadowReadParityDiscrepancies.length > 0 ||
     shadowListParityDiscrepancies.length > 0 ||
-    shadowVendorListParityDiscrepancies.length > 0
+    shadowVendorListParityDiscrepancies.length > 0 ||
+    shadowAdminListParityDiscrepancies.length > 0
   ) {
     process.exitCode = 5;
   }
