@@ -11,6 +11,7 @@ const {
   compareCustomerOrderListSummaryShadowParity,
   compareOrderDetailShadowParity,
   compareMirrorSummary,
+  compareVendorOrderListSummaryShadowParity,
   summarizeMirroredOrder,
 } = require("../../services/orderPostgresMirror");
 const {
@@ -103,10 +104,60 @@ async function main() {
     mirroredOrderList,
     String(sourceOrder.buyer)
   );
+  const sourceVendorMongoId = Array.isArray(sourceOrder.vendors) && sourceOrder.vendors[0] && sourceOrder.vendors[0].vendorId
+    ? String(sourceOrder.vendors[0].vendorId)
+    : null;
+  const sourceVendorOrderList = sourceVendorMongoId
+    ? await Order.find({ "vendors.vendorId": sourceVendorMongoId })
+      .select("_id status currency vendors createdAt +externalId")
+      .sort({ createdAt: -1, _id: -1 })
+      .lean()
+    : [];
+  const mirroredVendorOrderList = sourceVendorMongoId
+    ? await prisma.orderMirror.findMany({
+      where: { vendors: { some: { vendorMongoId: sourceVendorMongoId } } },
+      select: {
+        mongoId: true,
+        orderExternalId: true,
+        status: true,
+        currency: true,
+        sourceCreatedAt: true,
+        mirroredAt: true,
+        vendors: {
+          where: { vendorMongoId: sourceVendorMongoId },
+          select: {
+            vendorMongoId: true,
+            vendorExternalId: true,
+            status: true,
+            currency: true,
+            subtotal: true,
+            discount: true,
+            tax: true,
+            shipping: true,
+            total: true,
+            commissionAmount: true,
+            netEarnings: true,
+            items: {
+              select: {
+                id: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: [{ sourceCreatedAt: "desc" }, { mongoId: "desc" }],
+    })
+    : [];
+  const shadowVendorListParityDiscrepancies = compareVendorOrderListSummaryShadowParity(
+    sourceVendorOrderList,
+    mirroredVendorOrderList,
+    sourceVendorMongoId
+  );
   const richShape = {
     canonicalIdentityCompleteness: identityDiscrepancies.length === 0,
     orderDetailShadowParity: shadowReadParityDiscrepancies.length === 0,
     customerOrderListSummaryShadowParity: shadowListParityDiscrepancies.length === 0,
+    vendorOrderListSummaryShadowParity: shadowVendorListParityDiscrepancies.length === 0,
     orderCanonicalIdPresentWhenSourcePresent:
       !expectedMirrorData.orderExternalId ||
       (Boolean(mirrored.orderExternalId) && isValidOrderExternalId(mirrored.orderExternalId)),
@@ -143,6 +194,7 @@ async function main() {
     identityDiscrepancies,
     shadowReadParityDiscrepancies,
     shadowListParityDiscrepancies,
+    shadowVendorListParityDiscrepancies,
     richShape,
     mirroredAt: mirrored.mirroredAt,
   };
@@ -152,7 +204,8 @@ async function main() {
   if (
     identityDiscrepancies.length > 0 ||
     shadowReadParityDiscrepancies.length > 0 ||
-    shadowListParityDiscrepancies.length > 0
+    shadowListParityDiscrepancies.length > 0 ||
+    shadowVendorListParityDiscrepancies.length > 0
   ) {
     process.exitCode = 5;
   }
