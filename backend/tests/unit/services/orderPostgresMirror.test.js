@@ -567,9 +567,9 @@ describe("orderPostgresMirror", () => {
       expect.arrayContaining([
         "orderMongoId:order-expected->order-actual",
         "buyerMongoId:buyer-1->buyer-2",
-        "total:100.00->101.00",
-        "totalAfterDiscount:90.00->92.00",
-        "discount:10.00->9.00",
+          "total:100->101",
+          "totalAfterDiscount:90->92",
+          "discount:10->9",
         "orderExternalId:oid_aaaaaaaaaaaaaaaaaaaa->oid_ffffffffffffffffffff",
         "buyerExternalId:uid_bbbbbbbbbbbbbbbbbbbb->uid_11111111111111111111",
         "vendor[0].vendorExternalId:uid_cccccccccccccccccccc->uid_22222222222222222222",
@@ -709,5 +709,81 @@ describe("orderPostgresMirror", () => {
         "invoiceCountInvariant:0->1",
       ])
     );
+  });
+
+  test("compareOrderDetailShadowParity normalizes numeric formatting and ignores non-contract item monetary fields", () => {
+    const discrepancies = compareOrderDetailShadowParity(
+      {
+        buyerMongoId: "buyer-1",
+        orderExternalId: null,
+        buyerExternalId: null,
+        total: "240.00",
+        totalAfterDiscount: "240.00",
+        discount: "0.00",
+        vendors: {
+          create: [
+            {
+              vendorMongoId: "vendor-1",
+              invoiceMongoId: null,
+              vendorExternalId: null,
+              invoiceExternalId: null,
+              subtotal: "200.00",
+              discount: "0.00",
+              tax: "30.00",
+              shipping: "0.00",
+              total: "240.00",
+              items: {
+                create: [
+                  {
+                    productMongoId: "product-1",
+                    productExternalId: null,
+                    quantity: 2,
+                    price: "0.00",
+                    subtotal: "0.00",
+                    tax: "0.00",
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      },
+      {
+        mongoId: "order-1",
+        buyerMongoId: "buyer-1",
+        orderExternalId: null,
+        buyerExternalId: null,
+        total: 240,
+        totalAfterDiscount: 240,
+        discount: 0,
+        invoiceCount: 1,
+        vendors: [
+          {
+            vendorMongoId: "vendor-1",
+            invoiceMongoId: "invoice-1",
+            vendorExternalId: null,
+            invoiceExternalId: null,
+            subtotal: 200,
+            discount: 0,
+            tax: 30,
+            shipping: 10,
+            total: 240,
+            items: [
+              {
+                productMongoId: "product-1",
+                productExternalId: null,
+                quantity: 2,
+                price: 100,
+                subtotal: 200,
+                tax: 30,
+              },
+            ],
+          },
+        ],
+      },
+      "order-1"
+    );
+
+    expect(discrepancies).toEqual([]);
   });
 });

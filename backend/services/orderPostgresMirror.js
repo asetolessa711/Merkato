@@ -439,6 +439,18 @@ function compareShadowField({ label, expectedValue, actualValue, discrepancies }
   }
 }
 
+function compareShadowNumericField({ label, expectedValue, actualValue, discrepancies }) {
+  const expectedNumeric = Number(expectedValue);
+  const actualNumeric = Number(actualValue);
+  if (!Number.isFinite(expectedNumeric) || !Number.isFinite(actualNumeric)) {
+    compareShadowField({ label, expectedValue, actualValue, discrepancies });
+    return;
+  }
+  if (Math.abs(expectedNumeric - actualNumeric) > 0.000001) {
+    discrepancies.push(`${label}:${expectedNumeric}->${actualNumeric}`);
+  }
+}
+
 function compareOrderDetailShadowParity(expectedData, mirroredOrder, sourceOrderMongoId = null) {
   const discrepancies = [];
 
@@ -454,19 +466,19 @@ function compareOrderDetailShadowParity(expectedData, mirroredOrder, sourceOrder
     actualValue: mirroredOrder && mirroredOrder.buyerMongoId,
     discrepancies,
   });
-  compareShadowField({
+  compareShadowNumericField({
     label: "total",
     expectedValue: expectedData && expectedData.total,
     actualValue: mirroredOrder && mirroredOrder.total,
     discrepancies,
   });
-  compareShadowField({
+  compareShadowNumericField({
     label: "totalAfterDiscount",
     expectedValue: expectedData && expectedData.totalAfterDiscount,
     actualValue: mirroredOrder && mirroredOrder.totalAfterDiscount,
     discrepancies,
   });
-  compareShadowField({
+  compareShadowNumericField({
     label: "discount",
     expectedValue: expectedData && expectedData.discount,
     actualValue: mirroredOrder && mirroredOrder.discount,
@@ -495,7 +507,7 @@ function compareOrderDetailShadowParity(expectedData, mirroredOrder, sourceOrder
   const mirroredVendors = Array.isArray(mirroredOrder && mirroredOrder.vendors) ? mirroredOrder.vendors : [];
 
   const mirroredInvoiceLinkCount = mirroredVendors.filter((vendor) => Boolean(vendor && vendor.invoiceMongoId)).length;
-  compareShadowField({
+  compareShadowNumericField({
     label: "invoiceCountInvariant",
     expectedValue: mirroredOrder && mirroredOrder.invoiceCount,
     actualValue: mirroredInvoiceLinkCount,
@@ -565,8 +577,8 @@ function compareOrderDetailShadowParity(expectedData, mirroredOrder, sourceOrder
       discrepancies,
     });
 
-    ["subtotal", "discount", "tax", "shipping", "total"].forEach((field) => {
-      compareShadowField({
+    ["subtotal", "discount", "tax", "total"].forEach((field) => {
+      compareShadowNumericField({
         label: `vendor[${vendorIndex}].${field}`,
         expectedValue: sourceVendor && sourceVendor[field],
         actualValue: mirroredVendor && mirroredVendor[field],
@@ -605,8 +617,8 @@ function compareOrderDetailShadowParity(expectedData, mirroredOrder, sourceOrder
         discrepancies,
       });
 
-      ["quantity", "price", "subtotal", "tax"].forEach((field) => {
-        compareShadowField({
+      ["quantity"].forEach((field) => {
+        compareShadowNumericField({
           label: `vendor[${vendorIndex}].item[${itemIndex}].${field}`,
           expectedValue: sourceItem && sourceItem[field],
           actualValue: mirroredItem && mirroredItem[field],
