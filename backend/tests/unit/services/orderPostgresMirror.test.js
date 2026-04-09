@@ -3,6 +3,7 @@ const {
   buildMirrorSummary,
   buildVendorRows,
   compareCanonicalIdentityCompleteness,
+  compareCustomerOrderListSummaryShadowParity,
   compareOrderDetailShadowParity,
   compareMirrorSummary,
   enrichVendorsWithCanonicalIdentity,
@@ -782,6 +783,179 @@ describe("orderPostgresMirror", () => {
         ],
       },
       "order-1"
+    );
+
+    expect(discrepancies).toEqual([]);
+  });
+
+  test("compareCustomerOrderListSummaryShadowParity enforces covered-list ordering and summary field parity", () => {
+    const discrepancies = compareCustomerOrderListSummaryShadowParity(
+      [
+        {
+          _id: "order-1",
+          externalId: "oid_aaaaaaaaaaaaaaaaaaaa",
+          buyer: "buyer-1",
+          status: "pending",
+          currency: "USD",
+          total: 100,
+          totalAfterDiscount: 90,
+          discount: 10,
+          vendors: [{ products: [{}, {}] }],
+          createdAt: "2024-01-01T00:00:00.000Z",
+        },
+        {
+          _id: "order-2",
+          externalId: "oid_bbbbbbbbbbbbbbbbbbbb",
+          buyer: "buyer-1",
+          status: "delivered",
+          currency: "USD",
+          total: 50,
+          totalAfterDiscount: 50,
+          discount: 0,
+          vendors: [{ products: [{}] }],
+          createdAt: "2024-01-02T00:00:00.000Z",
+        },
+      ],
+      [
+        {
+          mongoId: "order-1",
+          orderExternalId: "oid_ffffffffffffffffffff",
+          buyerMongoId: "buyer-2",
+          status: "cancelled",
+          currency: "ETB",
+          total: 101,
+          totalAfterDiscount: 91,
+          discount: 9,
+          vendorCount: 2,
+          itemCount: 1,
+          sourceCreatedAt: "2024-01-03T00:00:00.000Z",
+        },
+        {
+          mongoId: "order-2",
+          orderExternalId: "oid_bbbbbbbbbbbbbbbbbbbb",
+          buyerMongoId: "buyer-1",
+          status: "delivered",
+          currency: "USD",
+          total: 50,
+          totalAfterDiscount: 50,
+          discount: 0,
+          vendorCount: 1,
+          itemCount: 1,
+          sourceCreatedAt: "2024-01-01T00:00:00.000Z",
+        },
+      ],
+    );
+
+    expect(discrepancies).toEqual(
+      expect.arrayContaining([
+        "ordering:order-2|order-1->order-1|order-2",
+        "order[1].orderExternalId:oid_aaaaaaaaaaaaaaaaaaaa->oid_ffffffffffffffffffff",
+        "order[1].buyerMongoId:buyer-1->buyer-2",
+        "order[1].status:pending->cancelled",
+        "order[1].currency:USD->ETB",
+        "order[1].total:100->101",
+        "order[1].totalAfterDiscount:90->91",
+        "order[1].discount:10->9",
+        "order[1].vendorCount:1->2",
+        "order[1].itemCount:2->1",
+      ])
+    );
+  });
+
+  test("compareCustomerOrderListSummaryShadowParity keeps canonical order ID additive when source ID is absent", () => {
+    const discrepancies = compareCustomerOrderListSummaryShadowParity(
+      [
+        {
+          _id: "order-1",
+          externalId: null,
+          buyer: "buyer-1",
+          status: "pending",
+          currency: "USD",
+          total: "100.00",
+          totalAfterDiscount: "100.00",
+          discount: "0.00",
+          vendors: [{ products: [{}] }],
+          createdAt: "2024-01-01T00:00:00.000Z",
+        },
+      ],
+      [
+        {
+          mongoId: "order-1",
+          orderExternalId: "oid_aaaaaaaaaaaaaaaaaaaa",
+          buyerMongoId: "buyer-1",
+          status: "pending",
+          currency: "USD",
+          total: 100,
+          totalAfterDiscount: 100,
+          discount: 0,
+          vendorCount: 1,
+          itemCount: 1,
+          sourceCreatedAt: "2024-01-01T00:00:00.000Z",
+        },
+      ],
+      "buyer-1"
+    );
+
+    expect(discrepancies).toEqual([]);
+  });
+
+  test("compareCustomerOrderListSummaryShadowParity compares only covered list results", () => {
+    const discrepancies = compareCustomerOrderListSummaryShadowParity(
+      [
+        {
+          _id: "order-1",
+          externalId: "oid_aaaaaaaaaaaaaaaaaaaa",
+          buyer: "buyer-1",
+          status: "pending",
+          currency: "USD",
+          total: 100,
+          totalAfterDiscount: 100,
+          discount: 0,
+          vendors: [{ products: [{}] }],
+          createdAt: "2024-01-01T00:00:00.000Z",
+        },
+        {
+          _id: "order-2",
+          externalId: "oid_bbbbbbbbbbbbbbbbbbbb",
+          buyer: "buyer-1",
+          status: "delivered",
+          currency: "USD",
+          total: 50,
+          totalAfterDiscount: 50,
+          discount: 0,
+          vendors: [{ products: [{}] }],
+          createdAt: "2024-01-02T00:00:00.000Z",
+        },
+      ],
+      [
+        {
+          mongoId: "order-1",
+          orderExternalId: "oid_aaaaaaaaaaaaaaaaaaaa",
+          buyerMongoId: "buyer-1",
+          status: "pending",
+          currency: "USD",
+          total: 100,
+          totalAfterDiscount: 100,
+          discount: 0,
+          vendorCount: 1,
+          itemCount: 1,
+          sourceCreatedAt: "2024-01-01T00:00:00.000Z",
+        },
+        {
+          mongoId: "order-extra",
+          orderExternalId: "oid_cccccccccccccccccccc",
+          buyerMongoId: "buyer-1",
+          status: "pending",
+          currency: "USD",
+          total: 10,
+          totalAfterDiscount: 10,
+          discount: 0,
+          vendorCount: 1,
+          itemCount: 1,
+          sourceCreatedAt: "2024-01-03T00:00:00.000Z",
+        },
+      ],
+      "buyer-1"
     );
 
     expect(discrepancies).toEqual([]);

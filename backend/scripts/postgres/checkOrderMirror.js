@@ -8,6 +8,7 @@ const {
   buildMirrorPayload,
   buildMirrorSummary,
   compareCanonicalIdentityCompleteness,
+  compareCustomerOrderListSummaryShadowParity,
   compareOrderDetailShadowParity,
   compareMirrorSummary,
   summarizeMirroredOrder,
@@ -75,9 +76,37 @@ async function main() {
     mirrored,
     String(sourceOrder._id)
   );
+  const sourceOrderList = await Order.find({ buyer: sourceOrder.buyer })
+    .select("_id buyer status currency total totalAfterDiscount discount vendors createdAt +externalId")
+    .sort({ createdAt: -1, _id: -1 })
+    .lean();
+  const mirroredOrderList = await prisma.orderMirror.findMany({
+    where: { buyerMongoId: String(sourceOrder.buyer) },
+    select: {
+      mongoId: true,
+      orderExternalId: true,
+      buyerMongoId: true,
+      status: true,
+      currency: true,
+      total: true,
+      totalAfterDiscount: true,
+      discount: true,
+      vendorCount: true,
+      itemCount: true,
+      sourceCreatedAt: true,
+      mirroredAt: true,
+    },
+    orderBy: [{ sourceCreatedAt: "desc" }, { mongoId: "desc" }],
+  });
+  const shadowListParityDiscrepancies = compareCustomerOrderListSummaryShadowParity(
+    sourceOrderList,
+    mirroredOrderList,
+    String(sourceOrder.buyer)
+  );
   const richShape = {
     canonicalIdentityCompleteness: identityDiscrepancies.length === 0,
     orderDetailShadowParity: shadowReadParityDiscrepancies.length === 0,
+    customerOrderListSummaryShadowParity: shadowListParityDiscrepancies.length === 0,
     orderCanonicalIdPresentWhenSourcePresent:
       !expectedMirrorData.orderExternalId ||
       (Boolean(mirrored.orderExternalId) && isValidOrderExternalId(mirrored.orderExternalId)),
@@ -113,13 +142,18 @@ async function main() {
     discrepancies,
     identityDiscrepancies,
     shadowReadParityDiscrepancies,
+    shadowListParityDiscrepancies,
     richShape,
     mirroredAt: mirrored.mirroredAt,
   };
 
   console.log(JSON.stringify(summary, null, 2));
 
-  if (identityDiscrepancies.length > 0 || shadowReadParityDiscrepancies.length > 0) {
+  if (
+    identityDiscrepancies.length > 0 ||
+    shadowReadParityDiscrepancies.length > 0 ||
+    shadowListParityDiscrepancies.length > 0
+  ) {
     process.exitCode = 5;
   }
 }

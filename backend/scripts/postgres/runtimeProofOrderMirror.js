@@ -13,6 +13,7 @@ const { getPrismaClient, disconnectPrismaClient } = require("../../prisma/client
 const {
   buildMirrorPayload,
   compareCanonicalIdentityCompleteness,
+  compareCustomerOrderListSummaryShadowParity,
   compareOrderDetailShadowParity,
   summarizeMirroredOrder,
 } = require("../../services/orderPostgresMirror");
@@ -126,6 +127,33 @@ async function run() {
     mirrored,
     createdOrderId
   );
+  const sourceOrderList = await Order.find({ buyer: mongoOrder.buyer })
+    .select("_id buyer status currency total totalAfterDiscount discount vendors createdAt +externalId")
+    .sort({ createdAt: -1, _id: -1 })
+    .lean();
+  const mirroredOrderList = await prisma.orderMirror.findMany({
+    where: { buyerMongoId: String(mongoOrder.buyer) },
+    select: {
+      mongoId: true,
+      orderExternalId: true,
+      buyerMongoId: true,
+      status: true,
+      currency: true,
+      total: true,
+      totalAfterDiscount: true,
+      discount: true,
+      vendorCount: true,
+      itemCount: true,
+      sourceCreatedAt: true,
+      mirroredAt: true,
+    },
+    orderBy: [{ sourceCreatedAt: "desc" }, { mongoId: "desc" }],
+  });
+  const shadowListParityDiscrepancies = compareCustomerOrderListSummaryShadowParity(
+    sourceOrderList,
+    mirroredOrderList,
+    String(mongoOrder.buyer)
+  );
   assert.equal(
     identityDiscrepancies.length,
     0,
@@ -135,6 +163,11 @@ async function run() {
     shadowReadParityDiscrepancies.length,
     0,
     `Order detail shadow parity mismatches: ${shadowReadParityDiscrepancies.join(", ")}`
+  );
+  assert.equal(
+    shadowListParityDiscrepancies.length,
+    0,
+    `Customer order-list summary shadow parity mismatches: ${shadowListParityDiscrepancies.join(", ")}`
   );
 
   const mirroredItemCount = mirrored.vendors.reduce((sum, v) => sum + v.items.length, 0);
@@ -196,6 +229,7 @@ async function run() {
         responseInvariant,
         identityDiscrepancyCount: identityDiscrepancies.length,
         shadowReadParityDiscrepancyCount: shadowReadParityDiscrepancies.length,
+        shadowListParityDiscrepancyCount: shadowListParityDiscrepancies.length,
         mongoOrderStatus: mongoOrder.status,
         mirroredSummary: summarizeMirroredOrder(mirrored),
       },

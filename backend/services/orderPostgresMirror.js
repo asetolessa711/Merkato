@@ -631,6 +631,188 @@ function compareOrderDetailShadowParity(expectedData, mirroredOrder, sourceOrder
   return discrepancies;
 }
 
+function normalizeShadowSortTimestamp(value) {
+  const parsed = toDate(value);
+  if (!parsed) return 0;
+  return parsed.getTime();
+}
+
+function buildSourceCustomerOrderListSummary(order) {
+  const vendors = Array.isArray(order && order.vendors) ? order.vendors : [];
+  const itemCount = vendors.reduce((sum, vendor) => {
+    const products = Array.isArray(vendor && vendor.products) ? vendor.products : [];
+    return sum + products.length;
+  }, 0);
+
+  return {
+    orderMongoId: order && order._id ? String(order._id) : "",
+    orderExternalId: normalizeExternalId(
+      order && (order.externalId || order.orderExternalId || order.orderCanonicalExternalId),
+      isValidOrderExternalId
+    ),
+    buyerMongoId: order && order.buyer ? String(order.buyer) : "",
+    status: order && order.status ? String(order.status) : "pending",
+    currency: order && order.currency ? String(order.currency) : "USD",
+    total: toMoney(order && order.total),
+    totalAfterDiscount: toMoney(order && order.totalAfterDiscount),
+    discount: toMoney(order && order.discount),
+    vendorCount: vendors.length,
+    itemCount,
+    sortTimestamp: normalizeShadowSortTimestamp(order && order.createdAt),
+  };
+}
+
+function buildMirroredCustomerOrderListSummary(order) {
+  const vendors = Array.isArray(order && order.vendors) ? order.vendors : [];
+  const derivedVendorCount = vendors.length;
+  const derivedItemCount = vendors.reduce((sum, vendor) => {
+    const items = Array.isArray(vendor && vendor.items) ? vendor.items : [];
+    return sum + items.length;
+  }, 0);
+
+  const vendorCountRaw = Number(order && order.vendorCount);
+  const itemCountRaw = Number(order && order.itemCount);
+  const vendorCount = Number.isFinite(vendorCountRaw) ? vendorCountRaw : derivedVendorCount;
+  const itemCount = Number.isFinite(itemCountRaw) ? itemCountRaw : derivedItemCount;
+
+  return {
+    orderMongoId: order && order.mongoId ? String(order.mongoId) : "",
+    orderExternalId: normalizeExternalId(order && order.orderExternalId, isValidOrderExternalId),
+    buyerMongoId: order && order.buyerMongoId ? String(order.buyerMongoId) : "",
+    status: order && order.status ? String(order.status) : "pending",
+    currency: order && order.currency ? String(order.currency) : "USD",
+    total: toMoney(order && order.total),
+    totalAfterDiscount: toMoney(order && order.totalAfterDiscount),
+    discount: toMoney(order && order.discount),
+    vendorCount,
+    itemCount,
+    sortTimestamp: normalizeShadowSortTimestamp(
+      order && (order.sourceCreatedAt || order.createdAt || order.orderDate || order.mirroredAt)
+    ),
+  };
+}
+
+function compareCustomerOrderListSummaryShadowParity(sourceOrders, mirroredOrders, buyerMongoId = null) {
+  const discrepancies = [];
+  const buyerScope = buyerMongoId ? String(buyerMongoId) : null;
+
+  const sourceSummaries = (Array.isArray(sourceOrders) ? sourceOrders : [])
+    .map((order) => buildSourceCustomerOrderListSummary(order))
+    .filter((summary) => summary.orderMongoId)
+    .filter((summary) => !buyerScope || summary.buyerMongoId === buyerScope);
+
+  const mirroredSummaries = (Array.isArray(mirroredOrders) ? mirroredOrders : [])
+    .map((order) => buildMirroredCustomerOrderListSummary(order))
+    .filter((summary) => summary.orderMongoId)
+    .filter((summary) => !buyerScope || summary.buyerMongoId === buyerScope);
+
+  const sourceById = new Map();
+  sourceSummaries.forEach((summary) => {
+    sourceById.set(summary.orderMongoId, summary);
+  });
+
+  const mirroredById = new Map();
+  mirroredSummaries.forEach((summary) => {
+    mirroredById.set(summary.orderMongoId, summary);
+  });
+
+  const coveredSummaries = [];
+  sourceById.forEach((sourceSummary, orderMongoId) => {
+    const mirroredSummary = mirroredById.get(orderMongoId);
+    if (!mirroredSummary) return;
+    coveredSummaries.push({ sourceSummary, mirroredSummary });
+  });
+
+  if (coveredSummaries.length === 0) {
+    return discrepancies;
+  }
+
+  const sortedSource = coveredSummaries
+    .map((entry) => entry.sourceSummary)
+    .sort((left, right) => {
+      if (right.sortTimestamp !== left.sortTimestamp) return right.sortTimestamp - left.sortTimestamp;
+      return String(right.orderMongoId).localeCompare(String(left.orderMongoId));
+    });
+  const sortedMirrored = coveredSummaries
+    .map((entry) => entry.mirroredSummary)
+    .sort((left, right) => {
+      if (right.sortTimestamp !== left.sortTimestamp) return right.sortTimestamp - left.sortTimestamp;
+      return String(right.orderMongoId).localeCompare(String(left.orderMongoId));
+    });
+
+  const expectedOrder = sortedSource.map((entry) => entry.orderMongoId);
+  const actualOrder = sortedMirrored.map((entry) => entry.orderMongoId);
+  if (expectedOrder.join("|") !== actualOrder.join("|")) {
+    discrepancies.push(`ordering:${expectedOrder.join("|")}->${actualOrder.join("|")}`);
+  }
+
+  sortedSource.forEach((sourceSummary, index) => {
+    const orderMongoId = sourceSummary.orderMongoId;
+    const mirroredSummary = mirroredById.get(orderMongoId);
+    if (!mirroredSummary) return;
+
+    compareCanonicalField({
+      label: `order[${index}].orderExternalId`,
+      expectedValue: sourceSummary.orderExternalId,
+      actualValue: mirroredSummary.orderExternalId,
+      validator: isValidOrderExternalId,
+      discrepancies,
+    });
+
+    compareShadowField({
+      label: `order[${index}].buyerMongoId`,
+      expectedValue: sourceSummary.buyerMongoId,
+      actualValue: mirroredSummary.buyerMongoId,
+      discrepancies,
+    });
+    compareShadowField({
+      label: `order[${index}].status`,
+      expectedValue: sourceSummary.status,
+      actualValue: mirroredSummary.status,
+      discrepancies,
+    });
+    compareShadowField({
+      label: `order[${index}].currency`,
+      expectedValue: sourceSummary.currency,
+      actualValue: mirroredSummary.currency,
+      discrepancies,
+    });
+
+    compareShadowNumericField({
+      label: `order[${index}].total`,
+      expectedValue: sourceSummary.total,
+      actualValue: mirroredSummary.total,
+      discrepancies,
+    });
+    compareShadowNumericField({
+      label: `order[${index}].totalAfterDiscount`,
+      expectedValue: sourceSummary.totalAfterDiscount,
+      actualValue: mirroredSummary.totalAfterDiscount,
+      discrepancies,
+    });
+    compareShadowNumericField({
+      label: `order[${index}].discount`,
+      expectedValue: sourceSummary.discount,
+      actualValue: mirroredSummary.discount,
+      discrepancies,
+    });
+    compareShadowNumericField({
+      label: `order[${index}].vendorCount`,
+      expectedValue: sourceSummary.vendorCount,
+      actualValue: mirroredSummary.vendorCount,
+      discrepancies,
+    });
+    compareShadowNumericField({
+      label: `order[${index}].itemCount`,
+      expectedValue: sourceSummary.itemCount,
+      actualValue: mirroredSummary.itemCount,
+      discrepancies,
+    });
+  });
+
+  return discrepancies;
+}
+
 async function buildMirrorPayload(order, vendors) {
   const orderExternalId = await resolveOrderExternalId(order);
   const buyerExternalId = await resolveBuyerExternalId(order);
@@ -742,8 +924,11 @@ async function mirrorOrderCreationToPostgres({ order, vendors }) {
 module.exports = {
   buildMirrorPayload,
   buildMirrorSummary,
+  buildMirroredCustomerOrderListSummary,
+  buildSourceCustomerOrderListSummary,
   buildVendorRows,
   compareCanonicalIdentityCompleteness,
+  compareCustomerOrderListSummaryShadowParity,
   compareOrderDetailShadowParity,
   compareMirrorSummary,
   enrichVendorsWithCanonicalIdentity,
