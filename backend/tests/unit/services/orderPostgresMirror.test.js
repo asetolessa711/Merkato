@@ -3,6 +3,7 @@ const {
   buildMirrorSummary,
   buildVendorRows,
   compareCanonicalIdentityCompleteness,
+  compareOrderDetailShadowParity,
   compareMirrorSummary,
   enrichVendorsWithCanonicalIdentity,
   resolveBuyerExternalId,
@@ -487,5 +488,302 @@ describe("orderPostgresMirror", () => {
     expect(discrepancies).toEqual([
       "vendor[0]:missing->vendor-1::invoice-expected",
     ]);
+  });
+
+  test("compareOrderDetailShadowParity reports strict order-detail mismatches", () => {
+    const discrepancies = compareOrderDetailShadowParity(
+      {
+        buyerMongoId: "buyer-1",
+        orderExternalId: "oid_aaaaaaaaaaaaaaaaaaaa",
+        buyerExternalId: "uid_bbbbbbbbbbbbbbbbbbbb",
+        total: "100.00",
+        totalAfterDiscount: "90.00",
+        discount: "10.00",
+        vendors: {
+          create: [
+            {
+              vendorMongoId: "vendor-1",
+              invoiceMongoId: "invoice-1",
+              vendorExternalId: "uid_cccccccccccccccccccc",
+              invoiceExternalId: "iid_dddddddddddddddddddd",
+              subtotal: "80.00",
+              discount: "5.00",
+              tax: "8.00",
+              shipping: "2.00",
+              total: "85.00",
+              items: {
+                create: [
+                  {
+                    productMongoId: "product-1",
+                    productExternalId: "pid_eeeeeeeeeeeeeeeeeeee",
+                    quantity: 2,
+                    price: "40.00",
+                    subtotal: "80.00",
+                    tax: "8.00",
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      },
+      {
+        mongoId: "order-actual",
+        buyerMongoId: "buyer-2",
+        orderExternalId: "oid_ffffffffffffffffffff",
+        buyerExternalId: "uid_11111111111111111111",
+        total: "101.00",
+        totalAfterDiscount: "92.00",
+        discount: "9.00",
+        invoiceCount: 1,
+        vendors: [
+          {
+            vendorMongoId: "vendor-1",
+            invoiceMongoId: "invoice-1",
+            vendorExternalId: "uid_22222222222222222222",
+            invoiceExternalId: "iid_33333333333333333333",
+            subtotal: "79.00",
+            discount: "4.00",
+            tax: "7.00",
+            shipping: "1.00",
+            total: "83.00",
+            items: [
+              {
+                productMongoId: "product-1",
+                productExternalId: "pid_44444444444444444444",
+                quantity: 1,
+                price: "39.00",
+                subtotal: "79.00",
+                tax: "7.00",
+              },
+            ],
+          },
+        ],
+      },
+      "order-expected"
+    );
+
+    expect(discrepancies).toEqual(
+      expect.arrayContaining([
+        "orderMongoId:order-expected->order-actual",
+        "buyerMongoId:buyer-1->buyer-2",
+          "total:100->101",
+          "totalAfterDiscount:90->92",
+          "discount:10->9",
+        "orderExternalId:oid_aaaaaaaaaaaaaaaaaaaa->oid_ffffffffffffffffffff",
+        "buyerExternalId:uid_bbbbbbbbbbbbbbbbbbbb->uid_11111111111111111111",
+        "vendor[0].vendorExternalId:uid_cccccccccccccccccccc->uid_22222222222222222222",
+        "vendor[0].invoiceExternalId:iid_dddddddddddddddddddd->iid_33333333333333333333",
+        "vendor[0].item[0].productExternalId:pid_eeeeeeeeeeeeeeeeeeee->pid_44444444444444444444",
+      ])
+    );
+  });
+
+  test("compareOrderDetailShadowParity keeps additive invoice-link behavior non-breaking", () => {
+    const discrepancies = compareOrderDetailShadowParity(
+      {
+        buyerMongoId: "buyer-1",
+        orderExternalId: null,
+        buyerExternalId: null,
+        total: "100.00",
+        totalAfterDiscount: "90.00",
+        discount: "10.00",
+        vendors: {
+          create: [
+            {
+              vendorMongoId: "vendor-1",
+              invoiceMongoId: null,
+              vendorExternalId: null,
+              invoiceExternalId: null,
+              subtotal: "80.00",
+              discount: "5.00",
+              tax: "8.00",
+              shipping: "2.00",
+              total: "85.00",
+              items: {
+                create: [
+                  {
+                    productMongoId: "product-1",
+                    productExternalId: null,
+                    quantity: 2,
+                    price: "40.00",
+                    subtotal: "80.00",
+                    tax: "8.00",
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      },
+      {
+        mongoId: "order-1",
+        buyerMongoId: "buyer-1",
+        orderExternalId: "oid_aaaaaaaaaaaaaaaaaaaa",
+        buyerExternalId: "uid_bbbbbbbbbbbbbbbbbbbb",
+        total: "100.00",
+        totalAfterDiscount: "90.00",
+        discount: "10.00",
+        invoiceCount: 1,
+        vendors: [
+          {
+            vendorMongoId: "vendor-1",
+            invoiceMongoId: "invoice-1",
+            vendorExternalId: "uid_cccccccccccccccccccc",
+            invoiceExternalId: "iid_dddddddddddddddddddd",
+            subtotal: "80.00",
+            discount: "5.00",
+            tax: "8.00",
+            shipping: "2.00",
+            total: "85.00",
+            items: [
+              {
+                productMongoId: "product-1",
+                productExternalId: "pid_eeeeeeeeeeeeeeeeeeee",
+                quantity: 2,
+                price: "40.00",
+                subtotal: "80.00",
+                tax: "8.00",
+              },
+            ],
+          },
+        ],
+      },
+      "order-1"
+    );
+
+    expect(discrepancies).toEqual([]);
+  });
+
+  test("compareOrderDetailShadowParity enforces mirrored invoice-count invariant", () => {
+    const discrepancies = compareOrderDetailShadowParity(
+      {
+        buyerMongoId: "buyer-1",
+        orderExternalId: null,
+        buyerExternalId: null,
+        total: "100.00",
+        totalAfterDiscount: "100.00",
+        discount: "0.00",
+        vendors: {
+          create: [
+            {
+              vendorMongoId: "vendor-1",
+              invoiceMongoId: null,
+              subtotal: "100.00",
+              discount: "0.00",
+              tax: "0.00",
+              shipping: "0.00",
+              total: "100.00",
+              items: { create: [] },
+            },
+          ],
+        },
+      },
+      {
+        mongoId: "order-1",
+        buyerMongoId: "buyer-1",
+        orderExternalId: null,
+        buyerExternalId: null,
+        total: "100.00",
+        totalAfterDiscount: "100.00",
+        discount: "0.00",
+        invoiceCount: 0,
+        vendors: [
+          {
+            vendorMongoId: "vendor-1",
+            invoiceMongoId: "invoice-1",
+            subtotal: "100.00",
+            discount: "0.00",
+            tax: "0.00",
+            shipping: "0.00",
+            total: "100.00",
+            items: [],
+          },
+        ],
+      },
+      "order-1"
+    );
+
+    expect(discrepancies).toEqual(
+      expect.arrayContaining([
+        "invoiceCountInvariant:0->1",
+      ])
+    );
+  });
+
+  test("compareOrderDetailShadowParity normalizes numeric formatting and ignores non-contract item monetary fields", () => {
+    const discrepancies = compareOrderDetailShadowParity(
+      {
+        buyerMongoId: "buyer-1",
+        orderExternalId: null,
+        buyerExternalId: null,
+        total: "240.00",
+        totalAfterDiscount: "240.00",
+        discount: "0.00",
+        vendors: {
+          create: [
+            {
+              vendorMongoId: "vendor-1",
+              invoiceMongoId: null,
+              vendorExternalId: null,
+              invoiceExternalId: null,
+              subtotal: "200.00",
+              discount: "0.00",
+              tax: "30.00",
+              shipping: "0.00",
+              total: "240.00",
+              items: {
+                create: [
+                  {
+                    productMongoId: "product-1",
+                    productExternalId: null,
+                    quantity: 2,
+                    price: "0.00",
+                    subtotal: "0.00",
+                    tax: "0.00",
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      },
+      {
+        mongoId: "order-1",
+        buyerMongoId: "buyer-1",
+        orderExternalId: null,
+        buyerExternalId: null,
+        total: 240,
+        totalAfterDiscount: 240,
+        discount: 0,
+        invoiceCount: 1,
+        vendors: [
+          {
+            vendorMongoId: "vendor-1",
+            invoiceMongoId: "invoice-1",
+            vendorExternalId: null,
+            invoiceExternalId: null,
+            subtotal: 200,
+            discount: 0,
+            tax: 30,
+            shipping: 10,
+            total: 240,
+            items: [
+              {
+                productMongoId: "product-1",
+                productExternalId: null,
+                quantity: 2,
+                price: 100,
+                subtotal: 200,
+                tax: 30,
+              },
+            ],
+          },
+        ],
+      },
+      "order-1"
+    );
+
+    expect(discrepancies).toEqual([]);
   });
 });
