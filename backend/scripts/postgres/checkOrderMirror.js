@@ -4,9 +4,10 @@ const mongoose = require("mongoose");
 
 const { getPrismaClient, disconnectPrismaClient } = require("../../prisma/client");
 const Order = require("../../models/Order");
-const Invoice = require("../../models/Invoice");
 const {
+  buildMirrorPayload,
   buildMirrorSummary,
+  compareCanonicalIdentityCompleteness,
   compareMirrorSummary,
   summarizeMirroredOrder,
 } = require("../../services/orderPostgresMirror");
@@ -46,34 +47,6 @@ async function main() {
     return;
   }
 
-  const sourceOrderExternalId =
-    sourceOrder && sourceOrder.externalId
-      ? String(sourceOrder.externalId).trim().toLowerCase()
-      : null;
-  const validSourceOrderExternalId =
-    sourceOrderExternalId && isValidOrderExternalId(sourceOrderExternalId) ? sourceOrderExternalId : null;
-
-  const sourceInvoiceIds = Array.from(
-    new Set(
-      (Array.isArray(sourceOrder.vendors) ? sourceOrder.vendors : [])
-        .map((vendor) => (vendor && vendor.invoiceId ? String(vendor.invoiceId) : ""))
-        .filter(Boolean)
-    )
-  );
-  let sourceInvoiceExternalIdByMongoId = new Map();
-  if (sourceInvoiceIds.length > 0) {
-    const sourceInvoices = await Invoice.find({ _id: { $in: sourceInvoiceIds } })
-      .select("_id externalId")
-      .lean();
-    sourceInvoiceExternalIdByMongoId = sourceInvoices.reduce((acc, invoice) => {
-      if (!invoice || !invoice._id || !invoice.externalId) return acc;
-      const normalized = String(invoice.externalId).trim().toLowerCase();
-      if (!isValidInvoiceExternalId(normalized)) return acc;
-      acc.set(String(invoice._id), normalized);
-      return acc;
-    }, new Map());
-  }
-
   const mirrored = await prisma.orderMirror.findUnique({
     where: { mongoId: String(orderId) },
     include: {
@@ -94,9 +67,12 @@ async function main() {
   const sourceSummary = buildMirrorSummary(sourceOrder, sourceOrder.vendors || []);
   const mirroredSummary = summarizeMirroredOrder(mirrored);
   const discrepancies = compareMirrorSummary(sourceSummary, mirroredSummary);
+  const { data: expectedMirrorData } = await buildMirrorPayload(sourceOrder, sourceOrder.vendors || []);
+  const identityDiscrepancies = compareCanonicalIdentityCompleteness(expectedMirrorData, mirrored);
   const richShape = {
+    canonicalIdentityCompleteness: identityDiscrepancies.length === 0,
     orderCanonicalIdPresentWhenSourcePresent:
-      !validSourceOrderExternalId ||
+      !expectedMirrorData.orderExternalId ||
       (Boolean(mirrored.orderExternalId) && isValidOrderExternalId(mirrored.orderExternalId)),
     buyerCanonicalIdPresentWhenBuyerLinked:
       !mirrored.buyerMongoId || (Boolean(mirrored.buyerExternalId) && isValidExternalId(mirrored.buyerExternalId)),
@@ -108,15 +84,8 @@ async function main() {
         !vendor.invoiceMongoId ||
         (Boolean(vendor.invoiceExternalId) && isValidInvoiceExternalId(vendor.invoiceExternalId))
     ),
-    invoiceCanonicalIdsPropagatedWhenSourcePresent: mirrored.vendors.every((vendor) => {
-      if (!vendor.invoiceMongoId) return true;
-      const sourceInvoiceExternalId = sourceInvoiceExternalIdByMongoId.get(String(vendor.invoiceMongoId));
-      if (!sourceInvoiceExternalId) return true;
-      return (
-        Boolean(vendor.invoiceExternalId) &&
-        String(vendor.invoiceExternalId).trim().toLowerCase() === sourceInvoiceExternalId
-      );
-    }),
+    invoiceCanonicalIdsPropagatedWhenSourcePresent:
+      !identityDiscrepancies.some((entry) => entry.includes("invoiceExternalId")),
     vendorCanonicalIdsPresent: mirrored.vendors.every(
       (vendor) => Boolean(vendor.vendorExternalId) && isValidVendorExternalId(vendor.vendorExternalId)
     ),
@@ -135,11 +104,16 @@ async function main() {
     sourceSummary,
     mirroredSummary,
     discrepancies,
+    identityDiscrepancies,
     richShape,
     mirroredAt: mirrored.mirroredAt,
   };
 
   console.log(JSON.stringify(summary, null, 2));
+
+  if (identityDiscrepancies.length > 0) {
+    process.exitCode = 5;
+  }
 }
 
 main()

@@ -298,6 +298,122 @@ function compareMirrorSummary(sourceSummary, mirroredSummary) {
   return discrepancies;
 }
 
+function compareCanonicalField({ label, expectedValue, actualValue, validator, discrepancies }) {
+  const expected = normalizeExternalId(expectedValue, validator);
+  const actualRaw = actualValue === null || actualValue === undefined ? null : String(actualValue).trim().toLowerCase();
+  const actual = actualRaw && validator(actualRaw) ? actualRaw : null;
+
+  if (expected) {
+    if (actual !== expected) {
+      discrepancies.push(`${label}:${expected}->${actualRaw || "null"}`);
+    }
+    return;
+  }
+
+  if (actualRaw && !validator(actualRaw)) {
+    discrepancies.push(`${label}:invalid->${actualRaw}`);
+  }
+}
+
+function compareCanonicalIdentityCompleteness(expectedData, mirroredOrder) {
+  const discrepancies = [];
+
+  compareCanonicalField({
+    label: "orderExternalId",
+    expectedValue: expectedData && expectedData.orderExternalId,
+    actualValue: mirroredOrder && mirroredOrder.orderExternalId,
+    validator: isValidOrderExternalId,
+    discrepancies,
+  });
+
+  compareCanonicalField({
+    label: "buyerExternalId",
+    expectedValue: expectedData && expectedData.buyerExternalId,
+    actualValue: mirroredOrder && mirroredOrder.buyerExternalId,
+    validator: isValidExternalId,
+    discrepancies,
+  });
+
+  const sourceVendors =
+    expectedData && expectedData.vendors && Array.isArray(expectedData.vendors.create)
+      ? expectedData.vendors.create
+      : [];
+  const mirroredVendors = Array.isArray(mirroredOrder && mirroredOrder.vendors) ? mirroredOrder.vendors : [];
+
+  const mirroredBuckets = new Map();
+  mirroredVendors.forEach((vendor) => {
+    const key = `${String(vendor && vendor.vendorMongoId ? vendor.vendorMongoId : "")}::${
+      String(vendor && vendor.invoiceMongoId ? vendor.invoiceMongoId : "")
+    }`;
+    const bucket = mirroredBuckets.get(key) || [];
+    bucket.push(vendor || {});
+    mirroredBuckets.set(key, bucket);
+  });
+
+  sourceVendors.forEach((sourceVendor, vendorIndex) => {
+    const sourceKey = `${String(sourceVendor && sourceVendor.vendorMongoId ? sourceVendor.vendorMongoId : "")}::${
+      String(sourceVendor && sourceVendor.invoiceMongoId ? sourceVendor.invoiceMongoId : "")
+    }`;
+    const matchedBucket = mirroredBuckets.get(sourceKey) || [];
+    const mirroredVendor = matchedBucket.shift();
+
+    if (!mirroredVendor) {
+      discrepancies.push(`vendor[${vendorIndex}]:missing->${sourceKey}`);
+      return;
+    }
+
+    compareCanonicalField({
+      label: `vendor[${vendorIndex}].vendorExternalId`,
+      expectedValue: sourceVendor && sourceVendor.vendorExternalId,
+      actualValue: mirroredVendor.vendorExternalId,
+      validator: isValidVendorExternalId,
+      discrepancies,
+    });
+
+    compareCanonicalField({
+      label: `vendor[${vendorIndex}].invoiceExternalId`,
+      expectedValue: sourceVendor && sourceVendor.invoiceExternalId,
+      actualValue: mirroredVendor.invoiceExternalId,
+      validator: isValidInvoiceExternalId,
+      discrepancies,
+    });
+
+    const sourceItems = sourceVendor && sourceVendor.items && Array.isArray(sourceVendor.items.create)
+      ? sourceVendor.items.create
+      : [];
+    const mirroredItems = Array.isArray(mirroredVendor.items) ? mirroredVendor.items : [];
+    const mirroredItemBuckets = new Map();
+
+    mirroredItems.forEach((item) => {
+      const productMongoId = String(item && item.productMongoId ? item.productMongoId : "");
+      const bucket = mirroredItemBuckets.get(productMongoId) || [];
+      bucket.push(item || {});
+      mirroredItemBuckets.set(productMongoId, bucket);
+    });
+
+    sourceItems.forEach((sourceItem, itemIndex) => {
+      const productMongoId = String(sourceItem && sourceItem.productMongoId ? sourceItem.productMongoId : "");
+      const itemBucket = mirroredItemBuckets.get(productMongoId) || [];
+      const mirroredItem = itemBucket.shift();
+
+      if (!mirroredItem) {
+        discrepancies.push(`vendor[${vendorIndex}].item[${itemIndex}]:missing->${productMongoId}`);
+        return;
+      }
+
+      compareCanonicalField({
+        label: `vendor[${vendorIndex}].item[${itemIndex}].productExternalId`,
+        expectedValue: sourceItem && sourceItem.productExternalId,
+        actualValue: mirroredItem.productExternalId,
+        validator: isValidProductExternalId,
+        discrepancies,
+      });
+    });
+  });
+
+  return discrepancies;
+}
+
 async function buildMirrorPayload(order, vendors) {
   const orderExternalId = await resolveOrderExternalId(order);
   const buyerExternalId = await resolveBuyerExternalId(order);
@@ -382,6 +498,7 @@ async function mirrorOrderCreationToPostgres({ order, vendors }) {
 
     const mirroredSummary = summarizeMirroredOrder(mirrored);
     const discrepancies = compareMirrorSummary(sourceSummary, mirroredSummary);
+    const identityDiscrepancies = compareCanonicalIdentityCompleteness(data, mirrored);
 
     if (String(process.env.ORDERS_PG_MIRROR_LOG_SUCCESS || "").toLowerCase() === "true") {
       console.log(
@@ -394,6 +511,7 @@ async function mirrorOrderCreationToPostgres({ order, vendors }) {
       orderMongoId,
       summary: sourceSummary,
       discrepancies,
+      identityDiscrepancies,
     };
   } catch (error) {
     const message = error && error.message ? error.message : String(error);
@@ -406,6 +524,7 @@ module.exports = {
   buildMirrorPayload,
   buildMirrorSummary,
   buildVendorRows,
+  compareCanonicalIdentityCompleteness,
   compareMirrorSummary,
   enrichVendorsWithCanonicalIdentity,
   mirrorOrderCreationToPostgres,
