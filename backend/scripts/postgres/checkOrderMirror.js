@@ -8,6 +8,7 @@ const Invoice = require("../../models/Invoice");
 const {
   buildMirrorPayload,
   buildMirrorSummary,
+  compareAdminOrderListQuerySemanticsShadowParity,
   compareAdminOrderListSummaryShadowParity,
   compareCanonicalIdentityCompleteness,
   compareCustomerOrderListSummaryShadowParity,
@@ -203,12 +204,17 @@ async function main() {
     sourceAdminOrderListWithInvoiceCounts,
     mirroredAdminOrderList
   );
+  const shadowAdminListQuerySemanticsDiscrepancies = compareAdminOrderListQuerySemanticsShadowParity(
+    sourceAdminOrderListWithInvoiceCounts,
+    mirroredAdminOrderList
+  );
   const richShape = {
     canonicalIdentityCompleteness: identityDiscrepancies.length === 0,
     orderDetailShadowParity: shadowReadParityDiscrepancies.length === 0,
     customerOrderListSummaryShadowParity: shadowListParityDiscrepancies.length === 0,
     vendorOrderListSummaryShadowParity: shadowVendorListParityDiscrepancies.length === 0,
     adminOrderListSummaryShadowParity: shadowAdminListParityDiscrepancies.length === 0,
+    adminOrderListQuerySemanticsShadowParity: shadowAdminListQuerySemanticsDiscrepancies.length === 0,
     orderCanonicalIdPresentWhenSourcePresent:
       !expectedMirrorData.orderExternalId ||
       (Boolean(mirrored.orderExternalId) && isValidOrderExternalId(mirrored.orderExternalId)),
@@ -247,6 +253,7 @@ async function main() {
     shadowListParityDiscrepancies,
     shadowVendorListParityDiscrepancies,
     shadowAdminListParityDiscrepancies,
+    shadowAdminListQuerySemanticsDiscrepancies,
     richShape,
     mirroredAt: mirrored.mirroredAt,
   };
@@ -258,7 +265,8 @@ async function main() {
     shadowReadParityDiscrepancies.length > 0 ||
     shadowListParityDiscrepancies.length > 0 ||
     shadowVendorListParityDiscrepancies.length > 0 ||
-    shadowAdminListParityDiscrepancies.length > 0
+    shadowAdminListParityDiscrepancies.length > 0 ||
+    shadowAdminListQuerySemanticsDiscrepancies.length > 0
   ) {
     process.exitCode = 5;
   }

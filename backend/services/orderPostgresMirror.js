@@ -764,6 +764,158 @@ function buildMirroredAdminOrderListSummary(order) {
   };
 }
 
+function applyAdminOrderListQuerySemantics(summaries, query) {
+  const source = Array.isArray(summaries) ? summaries : [];
+  const contract = query || {};
+
+  const statusFilter = contract.status ? String(contract.status).toLowerCase() : null;
+
+  const fromTimestampRaw = Number(contract.fromTimestamp);
+  const toTimestampRaw = Number(contract.toTimestamp);
+  const fromDate = toDate(contract.fromDate);
+  const toDateValue = toDate(contract.toDate);
+  const fromTimestamp = Number.isFinite(fromTimestampRaw)
+    ? fromTimestampRaw
+    : fromDate
+      ? fromDate.getTime()
+      : null;
+  const toTimestamp = Number.isFinite(toTimestampRaw)
+    ? toTimestampRaw
+    : toDateValue
+      ? toDateValue.getTime()
+      : null;
+
+  const filtered = source.filter((summary) => {
+    if (!summary || !summary.orderMongoId) return false;
+
+    if (statusFilter && String(summary.status || "").toLowerCase() !== statusFilter) {
+      return false;
+    }
+
+    if (fromTimestamp !== null && summary.sortTimestamp < fromTimestamp) {
+      return false;
+    }
+
+    if (toTimestamp !== null && summary.sortTimestamp > toTimestamp) {
+      return false;
+    }
+
+    return true;
+  });
+
+  const ordered = filtered.sort((left, right) => {
+    if (right.sortTimestamp !== left.sortTimestamp) return right.sortTimestamp - left.sortTimestamp;
+    return String(right.orderMongoId).localeCompare(String(left.orderMongoId));
+  });
+
+  const pageRaw = Number(contract.page);
+  const limitRaw = Number(contract.limit);
+  const page = Number.isFinite(pageRaw) && pageRaw > 0 ? Math.floor(pageRaw) : 1;
+  const limit = Number.isFinite(limitRaw) && limitRaw > 0 ? Math.floor(limitRaw) : 20;
+  const start = (page - 1) * limit;
+  const window = ordered.slice(start, start + limit);
+
+  return {
+    page,
+    limit,
+    total: ordered.length,
+    ids: window.map((entry) => entry.orderMongoId),
+  };
+}
+
+function buildAdminOrderListQuerySemanticsContracts(sourceSummaries) {
+  const summaries = Array.isArray(sourceSummaries) ? sourceSummaries : [];
+  const timestamps = summaries
+    .map((summary) => Number(summary && summary.sortTimestamp))
+    .filter((value) => Number.isFinite(value))
+    .sort((left, right) => left - right);
+
+  const minTimestamp = timestamps.length > 0 ? timestamps[0] : 0;
+  const maxTimestamp = timestamps.length > 0 ? timestamps[timestamps.length - 1] : 0;
+
+  const statuses = Array.from(
+    new Set(
+      summaries
+        .map((summary) => String(summary && summary.status ? summary.status : "pending").toLowerCase())
+        .filter(Boolean)
+    )
+  );
+
+  const primaryStatus = statuses[0] || "pending";
+  const secondaryStatus = statuses[1] || primaryStatus;
+  const pageLimit = summaries.length >= 3 ? 2 : 1;
+
+  return [
+    { label: "baseline-page-1", page: 1, limit: pageLimit },
+    { label: "baseline-page-2", page: 2, limit: pageLimit },
+    { label: `status-${primaryStatus}`, status: primaryStatus, page: 1, limit: pageLimit },
+    { label: `status-${secondaryStatus}`, status: secondaryStatus, page: 1, limit: pageLimit },
+    {
+      label: "date-range-full",
+      fromTimestamp: minTimestamp > 0 ? minTimestamp - 1 : null,
+      toTimestamp: maxTimestamp > 0 ? maxTimestamp + 1 : null,
+      page: 1,
+      limit: Math.max(pageLimit, 2),
+    },
+    {
+      label: "date-range-most-recent",
+      fromTimestamp: maxTimestamp > 0 ? maxTimestamp - 1 : null,
+      toTimestamp: maxTimestamp > 0 ? maxTimestamp + 1 : null,
+      page: 1,
+      limit: Math.max(pageLimit, 2),
+    },
+  ];
+}
+
+function compareAdminOrderListQuerySemanticsShadowParity(sourceOrders, mirroredOrders) {
+  const discrepancies = [];
+
+  const sourceSummaries = (Array.isArray(sourceOrders) ? sourceOrders : [])
+    .map((order) => buildSourceAdminOrderListSummary(order))
+    .filter((summary) => summary.orderMongoId);
+
+  const mirroredSummaries = (Array.isArray(mirroredOrders) ? mirroredOrders : [])
+    .map((order) => buildMirroredAdminOrderListSummary(order))
+    .filter((summary) => summary.orderMongoId);
+
+  const mirroredById = new Map();
+  mirroredSummaries.forEach((summary) => {
+    mirroredById.set(summary.orderMongoId, summary);
+  });
+
+  const coveredSourceSummaries = [];
+  const coveredMirroredSummaries = [];
+  sourceSummaries.forEach((sourceSummary) => {
+    const mirroredSummary = mirroredById.get(sourceSummary.orderMongoId);
+    if (!mirroredSummary) return;
+    coveredSourceSummaries.push(sourceSummary);
+    coveredMirroredSummaries.push(mirroredSummary);
+  });
+
+  if (coveredSourceSummaries.length === 0) {
+    return discrepancies;
+  }
+
+  const contracts = buildAdminOrderListQuerySemanticsContracts(coveredSourceSummaries);
+  contracts.forEach((contract, index) => {
+    const sourceResult = applyAdminOrderListQuerySemantics(coveredSourceSummaries, contract);
+    const mirroredResult = applyAdminOrderListQuerySemantics(coveredMirroredSummaries, contract);
+    const label = contract && contract.label ? contract.label : `query-${index}`;
+
+    if (sourceResult.total !== mirroredResult.total) {
+      discrepancies.push(`query[${index}:${label}].total:${sourceResult.total}->${mirroredResult.total}`);
+    }
+
+    const expectedWindow = sourceResult.ids.join("|");
+    const actualWindow = mirroredResult.ids.join("|");
+    if (expectedWindow !== actualWindow) {
+      discrepancies.push(`query[${index}:${label}].window:${expectedWindow}->${actualWindow}`);
+    }
+  });
+
+  return discrepancies;
+}
+
 function compareAdminOrderListSummaryShadowParity(sourceOrders, mirroredOrders) {
   const discrepancies = [];
 
@@ -1341,6 +1493,7 @@ module.exports = {
   buildSourceCustomerOrderListSummary,
   buildSourceVendorOrderListSummary,
   buildVendorRows,
+  compareAdminOrderListQuerySemanticsShadowParity,
   compareAdminOrderListSummaryShadowParity,
   compareCanonicalIdentityCompleteness,
   compareCustomerOrderListSummaryShadowParity,

@@ -12,6 +12,7 @@ const Invoice = require("../../models/Invoice");
 const { getPrismaClient, disconnectPrismaClient } = require("../../prisma/client");
 const {
   buildMirrorPayload,
+  compareAdminOrderListQuerySemanticsShadowParity,
   compareAdminOrderListSummaryShadowParity,
   compareCanonicalIdentityCompleteness,
   compareCustomerOrderListSummaryShadowParity,
@@ -246,6 +247,10 @@ async function run() {
     sourceAdminOrderListWithInvoiceCounts,
     mirroredAdminOrderList
   );
+  const shadowAdminListQuerySemanticsDiscrepancies = compareAdminOrderListQuerySemanticsShadowParity(
+    sourceAdminOrderListWithInvoiceCounts,
+    mirroredAdminOrderList
+  );
   assert.equal(
     identityDiscrepancies.length,
     0,
@@ -270,6 +275,11 @@ async function run() {
     shadowAdminListParityDiscrepancies.length,
     0,
     `Admin order-list summary shadow parity mismatches: ${shadowAdminListParityDiscrepancies.join(", ")}`
+  );
+  assert.equal(
+    shadowAdminListQuerySemanticsDiscrepancies.length,
+    0,
+    `Admin order-list query semantics shadow parity mismatches: ${shadowAdminListQuerySemanticsDiscrepancies.join(", ")}`
   );
 
   const mirroredItemCount = mirrored.vendors.reduce((sum, v) => sum + v.items.length, 0);
@@ -334,6 +344,7 @@ async function run() {
         shadowListParityDiscrepancyCount: shadowListParityDiscrepancies.length,
         shadowVendorListParityDiscrepancyCount: shadowVendorListParityDiscrepancies.length,
         shadowAdminListParityDiscrepancyCount: shadowAdminListParityDiscrepancies.length,
+        shadowAdminListQuerySemanticsDiscrepancyCount: shadowAdminListQuerySemanticsDiscrepancies.length,
         mongoOrderStatus: mongoOrder.status,
         mirroredSummary: summarizeMirroredOrder(mirrored),
       },
