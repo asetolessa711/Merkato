@@ -2,6 +2,7 @@ const {
   buildMirrorPayload,
   buildMirrorSummary,
   buildVendorRows,
+  compareCanonicalIdentityCompleteness,
   compareMirrorSummary,
   enrichVendorsWithCanonicalIdentity,
   resolveBuyerExternalId,
@@ -300,5 +301,191 @@ describe("orderPostgresMirror", () => {
     expect(withMissingBuyerId.data.buyerMongoId).toBe("buyer-2");
     expect(withMissingBuyerId.data.buyerExternalId).toBeNull();
     expect(withMissingBuyerId.data.orderExternalId).toBeNull();
+  });
+
+  test("compareCanonicalIdentityCompleteness reports strict source-to-mirror mismatches", () => {
+    const discrepancies = compareCanonicalIdentityCompleteness(
+      {
+        orderExternalId: "oid_aaaaaaaaaaaaaaaaaaaa",
+        buyerExternalId: "uid_bbbbbbbbbbbbbbbbbbbb",
+        vendors: {
+          create: [
+            {
+              vendorMongoId: "vendor-1",
+              invoiceMongoId: "invoice-1",
+              vendorExternalId: "uid_cccccccccccccccccccc",
+              invoiceExternalId: "iid_dddddddddddddddddddd",
+              items: {
+                create: [
+                  {
+                    productMongoId: "product-1",
+                    productExternalId: "pid_eeeeeeeeeeeeeeeeeeee",
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      },
+      {
+        orderExternalId: "oid_ffffffffffffffffffff",
+        buyerExternalId: "uid_11111111111111111111",
+        vendors: [
+          {
+            vendorMongoId: "vendor-1",
+            invoiceMongoId: "invoice-1",
+            vendorExternalId: "uid_22222222222222222222",
+            invoiceExternalId: "iid_33333333333333333333",
+            items: [
+              {
+                productMongoId: "product-1",
+                productExternalId: "pid_44444444444444444444",
+              },
+            ],
+          },
+        ],
+      }
+    );
+
+    expect(discrepancies).toEqual(
+      expect.arrayContaining([
+        "orderExternalId:oid_aaaaaaaaaaaaaaaaaaaa->oid_ffffffffffffffffffff",
+        "buyerExternalId:uid_bbbbbbbbbbbbbbbbbbbb->uid_11111111111111111111",
+        "vendor[0].vendorExternalId:uid_cccccccccccccccccccc->uid_22222222222222222222",
+        "vendor[0].invoiceExternalId:iid_dddddddddddddddddddd->iid_33333333333333333333",
+        "vendor[0].item[0].productExternalId:pid_eeeeeeeeeeeeeeeeeeee->pid_44444444444444444444",
+      ])
+    );
+  });
+
+  test("compareCanonicalIdentityCompleteness keeps nullable/additive absence behavior non-breaking", () => {
+    const discrepancies = compareCanonicalIdentityCompleteness(
+      {
+        orderExternalId: null,
+        buyerExternalId: null,
+        vendors: {
+          create: [
+            {
+              vendorMongoId: "vendor-1",
+              invoiceMongoId: "invoice-1",
+              vendorExternalId: null,
+              invoiceExternalId: null,
+              items: {
+                create: [
+                  {
+                    productMongoId: "product-1",
+                    productExternalId: null,
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      },
+      {
+        orderExternalId: "oid_aaaaaaaaaaaaaaaaaaaa",
+        buyerExternalId: "uid_bbbbbbbbbbbbbbbbbbbb",
+        vendors: [
+          {
+            vendorMongoId: "vendor-1",
+            invoiceMongoId: "invoice-1",
+            vendorExternalId: "uid_cccccccccccccccccccc",
+            invoiceExternalId: "iid_dddddddddddddddddddd",
+            items: [
+              {
+                productMongoId: "product-1",
+                productExternalId: "pid_eeeeeeeeeeeeeeeeeeee",
+              },
+            ],
+          },
+        ],
+      }
+    );
+
+    expect(discrepancies).toEqual([]);
+  });
+
+  test("compareCanonicalIdentityCompleteness allows additive vendor invoice linkage when source invoice linkage is absent", () => {
+    const discrepancies = compareCanonicalIdentityCompleteness(
+      {
+        orderExternalId: null,
+        buyerExternalId: null,
+        vendors: {
+          create: [
+            {
+              vendorMongoId: "vendor-1",
+              invoiceMongoId: null,
+              vendorExternalId: null,
+              invoiceExternalId: null,
+              items: {
+                create: [
+                  {
+                    productMongoId: "product-1",
+                    productExternalId: null,
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      },
+      {
+        orderExternalId: "oid_aaaaaaaaaaaaaaaaaaaa",
+        buyerExternalId: "uid_bbbbbbbbbbbbbbbbbbbb",
+        vendors: [
+          {
+            vendorMongoId: "vendor-1",
+            invoiceMongoId: "invoice-1",
+            vendorExternalId: "uid_cccccccccccccccccccc",
+            invoiceExternalId: "iid_dddddddddddddddddddd",
+            items: [
+              {
+                productMongoId: "product-1",
+                productExternalId: "pid_eeeeeeeeeeeeeeeeeeee",
+              },
+            ],
+          },
+        ],
+      }
+    );
+
+    expect(discrepancies).toEqual([]);
+  });
+
+  test("compareCanonicalIdentityCompleteness remains strict when source invoice linkage is present", () => {
+    const discrepancies = compareCanonicalIdentityCompleteness(
+      {
+        orderExternalId: null,
+        buyerExternalId: null,
+        vendors: {
+          create: [
+            {
+              vendorMongoId: "vendor-1",
+              invoiceMongoId: "invoice-expected",
+              vendorExternalId: null,
+              invoiceExternalId: null,
+              items: { create: [] },
+            },
+          ],
+        },
+      },
+      {
+        orderExternalId: null,
+        buyerExternalId: null,
+        vendors: [
+          {
+            vendorMongoId: "vendor-1",
+            invoiceMongoId: "invoice-actual",
+            vendorExternalId: null,
+            invoiceExternalId: null,
+            items: [],
+          },
+        ],
+      }
+    );
+
+    expect(discrepancies).toEqual([
+      "vendor[0]:missing->vendor-1::invoice-expected",
+    ]);
   });
 });

@@ -10,7 +10,11 @@ const Product = require("../../models/Product");
 const User = require("../../models/User");
 const Invoice = require("../../models/Invoice");
 const { getPrismaClient, disconnectPrismaClient } = require("../../prisma/client");
-const { summarizeMirroredOrder } = require("../../services/orderPostgresMirror");
+const {
+  buildMirrorPayload,
+  compareCanonicalIdentityCompleteness,
+  summarizeMirroredOrder,
+} = require("../../services/orderPostgresMirror");
 const {
   isValidExternalId,
   isValidInvoiceExternalId,
@@ -114,6 +118,13 @@ async function run() {
   assert.ok(mirrored, "Postgres mirror row was not written");
   assert.equal(String(mirrored.mongoId), createdOrderId, "Mirror mongoId mismatch");
   assert.equal(mirrored.vendors.length, mongoOrder.vendors.length, "Vendor mirror count mismatch");
+  const { data: expectedMirrorData } = await buildMirrorPayload(mongoOrder, mongoOrder.vendors || []);
+  const identityDiscrepancies = compareCanonicalIdentityCompleteness(expectedMirrorData, mirrored);
+  assert.equal(
+    identityDiscrepancies.length,
+    0,
+    `Canonical identity completeness mismatches: ${identityDiscrepancies.join(", ")}`
+  );
 
   const mirroredItemCount = mirrored.vendors.reduce((sum, v) => sum + v.items.length, 0);
   const mongoItemCount = (mongoOrder.vendors || []).reduce(
@@ -172,6 +183,7 @@ async function run() {
         runtimeProof: "ok",
         orderId: createdOrderId,
         responseInvariant,
+        identityDiscrepancyCount: identityDiscrepancies.length,
         mongoOrderStatus: mongoOrder.status,
         mirroredSummary: summarizeMirroredOrder(mirrored),
       },
