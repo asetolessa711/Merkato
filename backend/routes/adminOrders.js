@@ -5,10 +5,92 @@ const ReturnRequest = require('../models/ReturnRequest');
 const { protect, authorize } = require('../middleware/authMiddleware');
 const { getPrismaClient } = require('../prisma/client');
 const {
+  buildMirroredAdminOrderListSummary,
   evaluateAdminOrderListServingExperimentReadiness,
   evaluateAdminOrderListRuntimeShadowVerification,
   resolveOrdersPgMirrorMode,
 } = require('../services/orderPostgresMirror');
+
+const COVERED_ADMIN_ORDER_LIST_QUERY_KEYS = new Set([
+  'status',
+  'fromDate',
+  'toDate',
+  'fromTimestamp',
+  'toTimestamp',
+  'page',
+  'limit',
+]);
+
+function isCoveredAdminOrderListQuery(query) {
+  const payload = query && typeof query === 'object' ? query : {};
+  return Object.keys(payload).every((key) => COVERED_ADMIN_ORDER_LIST_QUERY_KEYS.has(String(key)));
+}
+
+function parseMoneyOrZero(value) {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : 0;
+}
+
+function mapMirroredSummaryToCoveredAdminOrderListResponse(summary) {
+  return {
+    _id: summary.orderMongoId,
+    orderExternalId: summary.orderExternalId || null,
+    buyer: summary.buyerMongoId || null,
+    buyerExternalId: summary.buyerExternalId || null,
+    status: summary.status,
+    currency: summary.currency,
+    paymentMethod: summary.paymentMethod,
+    total: parseMoneyOrZero(summary.total),
+    totalAfterDiscount: parseMoneyOrZero(summary.totalAfterDiscount),
+    discount: parseMoneyOrZero(summary.discount),
+    vendorCount: Number(summary.vendorCount) || 0,
+    itemCount: Number(summary.itemCount) || 0,
+    invoiceCount: Number(summary.invoiceCount) || 0,
+  };
+}
+
+function buildGuardedAdminOrderListPostgresResponse(runtimeParity) {
+  const mirroredOrders = runtimeParity && Array.isArray(runtimeParity.mirroredOrders)
+    ? runtimeParity.mirroredOrders
+    : [];
+  const mirroredResultIds = runtimeParity && runtimeParity.mirroredResult && Array.isArray(runtimeParity.mirroredResult.ids)
+    ? runtimeParity.mirroredResult.ids
+    : null;
+
+  if (!mirroredResultIds) {
+    return {
+      ok: false,
+      reason: 'missing-mirrored-window',
+      orders: [],
+    };
+  }
+
+  const mirroredSummaryByMongoId = new Map(
+    mirroredOrders
+      .map((order) => buildMirroredAdminOrderListSummary(order))
+      .filter((summary) => summary && summary.orderMongoId)
+      .map((summary) => [summary.orderMongoId, summary])
+  );
+
+  const responseWindow = [];
+  for (const id of mirroredResultIds) {
+    const summary = mirroredSummaryByMongoId.get(String(id));
+    if (!summary) {
+      return {
+        ok: false,
+        reason: 'covered-window-incomplete',
+        orders: [],
+      };
+    }
+    responseWindow.push(mapMirroredSummaryToCoveredAdminOrderListResponse(summary));
+  }
+
+  return {
+    ok: true,
+    reason: 'eligible-guarded-serving',
+    orders: responseWindow,
+  };
+}
 
 async function runAdminOrderListRuntimeShadowVerification({ sourceOrders, sourceQueryMs, query }) {
   const mode = resolveOrdersPgMirrorMode();
@@ -36,6 +118,7 @@ async function runAdminOrderListRuntimeShadowVerification({ sourceOrders, source
       },
       sourceResult: { page: Number(query && query.page) || 1, limit: Number(query && query.limit) || 20, total: 0, ids: [] },
       mirroredResult: { page: Number(query && query.page) || 1, limit: Number(query && query.limit) || 20, total: 0, ids: [] },
+      mirroredOrders: [],
       runtimeLatencyMs: {
         sourceQuery: sourceQueryMs,
         mirrorQuery: 0,
@@ -69,6 +152,7 @@ async function runAdminOrderListRuntimeShadowVerification({ sourceOrders, source
 
   return {
     ...comparison,
+    mirroredOrders,
     runtimeLatencyMs: {
       sourceQuery: sourceQueryMs,
       mirrorQuery: mirrorQueryMs,
@@ -82,6 +166,7 @@ async function runAdminOrderListRuntimeShadowVerification({ sourceOrders, source
 router.get('/', protect, authorize('admin', 'global_admin'), async (req, res) => {
   try {
     const sourceQueryStart = Date.now();
+    const queryCovered = isCoveredAdminOrderListQuery(req.query);
     let orders = await Order.find().limit(100).lean();
     if (!orders || orders.length === 0) {
       // Best-effort: create a minimal valid order using existing seeded docs
@@ -127,6 +212,7 @@ router.get('/', protect, authorize('admin', 'global_admin'), async (req, res) =>
     }
 
     const sourceQueryMs = Date.now() - sourceQueryStart;
+    let responseOrders = Array.isArray(orders) ? orders : [];
     try {
       const runtimeParity = await runAdminOrderListRuntimeShadowVerification({
         sourceOrders: orders,
@@ -137,6 +223,33 @@ router.get('/', protect, authorize('admin', 'global_admin'), async (req, res) =>
       const readiness = evaluateAdminOrderListServingExperimentReadiness({
         runtimeParity,
       });
+
+      const servingDecisionTelemetry = {
+        event: 'admin-order-list-serving-experiment-decision',
+        source: 'mongo',
+        reason: 'legacy-default',
+        queryCovered,
+        readinessEligible: readiness.eligible,
+        blockedReasons: readiness.blockedReasons,
+        failClosedDefaultLegacy: readiness.failClosedDefaultLegacy,
+        controls: readiness.controls,
+      };
+
+      if (!queryCovered) {
+        servingDecisionTelemetry.reason = 'query-outside-covered-contract';
+      } else if (!readiness.eligible) {
+        const blockedReasons = Array.isArray(readiness.blockedReasons) ? readiness.blockedReasons : [];
+        servingDecisionTelemetry.reason = blockedReasons[0] || 'readiness-blocked';
+      } else {
+        const postgresResponse = buildGuardedAdminOrderListPostgresResponse(runtimeParity);
+        if (postgresResponse.ok) {
+          responseOrders = postgresResponse.orders;
+          servingDecisionTelemetry.source = 'postgres-covered-experiment';
+          servingDecisionTelemetry.reason = postgresResponse.reason;
+        } else {
+          servingDecisionTelemetry.reason = postgresResponse.reason;
+        }
+      }
 
       if (runtimeParity) {
         const parityTelemetry = {
@@ -171,12 +284,18 @@ router.get('/', protect, authorize('admin', 'global_admin'), async (req, res) =>
           readiness.blockedReasons.length === 1 &&
           readiness.blockedReasons[0] === 'gate-disabled';
 
-        if (!runtimeParity.match || !gateOnlyBlock) {
+        const decisionRequiresWarning =
+          servingDecisionTelemetry.source !== 'mongo' ||
+          (servingDecisionTelemetry.reason !== 'legacy-default' && servingDecisionTelemetry.reason !== 'gate-disabled');
+
+        if (!runtimeParity.match || !gateOnlyBlock || decisionRequiresWarning) {
           console.warn(`[orders-postgres-mirror] ${JSON.stringify(parityTelemetry)}`);
           console.warn(`[orders-postgres-mirror] ${JSON.stringify(readinessTelemetry)}`);
+          console.warn(`[orders-postgres-mirror] ${JSON.stringify(servingDecisionTelemetry)}`);
         } else if (String(process.env.ORDERS_PG_MIRROR_LOG_SUCCESS || '').toLowerCase() === 'true') {
           console.log(`[orders-postgres-mirror] ${JSON.stringify(parityTelemetry)}`);
           console.log(`[orders-postgres-mirror] ${JSON.stringify(readinessTelemetry)}`);
+          console.log(`[orders-postgres-mirror] ${JSON.stringify(servingDecisionTelemetry)}`);
         }
       }
     } catch (shadowError) {
@@ -199,10 +318,22 @@ router.get('/', protect, authorize('admin', 'global_admin'), async (req, res) =>
           evaluationInputs: readiness.evaluationInputs,
         })}`
       );
+      console.warn(
+        `[orders-postgres-mirror] ${JSON.stringify({
+          event: 'admin-order-list-serving-experiment-decision',
+          source: 'mongo',
+          reason: 'comparator-or-runtime-failure-fallback',
+          queryCovered,
+          readinessEligible: readiness.eligible,
+          blockedReasons: readiness.blockedReasons,
+          failClosedDefaultLegacy: readiness.failClosedDefaultLegacy,
+          controls: readiness.controls,
+        })}`
+      );
     }
 
     // Return array directly to align with tests expecting an array response
-    return res.json(Array.isArray(orders) ? orders : []);
+    return res.json(Array.isArray(responseOrders) ? responseOrders : []);
   } catch (e) {
     return res.status(500).json({ message: 'Failed to load admin orders' });
   }
