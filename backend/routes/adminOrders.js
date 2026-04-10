@@ -5,6 +5,7 @@ const ReturnRequest = require('../models/ReturnRequest');
 const { protect, authorize } = require('../middleware/authMiddleware');
 const { getPrismaClient } = require('../prisma/client');
 const {
+  evaluateAdminOrderListServingExperimentReadiness,
   evaluateAdminOrderListRuntimeShadowVerification,
   resolveOrdersPgMirrorMode,
 } = require('../services/orderPostgresMirror');
@@ -133,8 +134,12 @@ router.get('/', protect, authorize('admin', 'global_admin'), async (req, res) =>
         query: req.query,
       });
 
+      const readiness = evaluateAdminOrderListServingExperimentReadiness({
+        runtimeParity,
+      });
+
       if (runtimeParity) {
-        const telemetry = {
+        const parityTelemetry = {
           event: 'admin-order-list-runtime-read-shadow-verification',
           match: runtimeParity.match,
           mismatchClass: runtimeParity.mismatchClass,
@@ -148,15 +153,52 @@ router.get('/', protect, authorize('admin', 'global_admin'), async (req, res) =>
           latencyMs: runtimeParity.runtimeLatencyMs,
         };
 
-        if (!runtimeParity.match) {
-          console.warn(`[orders-postgres-mirror] ${JSON.stringify(telemetry)}`);
+        const readinessTelemetry = {
+          event: 'admin-order-list-serving-experiment-readiness-controls',
+          eligible: readiness.eligible,
+          blocked: readiness.blocked,
+          blockedReasons: readiness.blockedReasons,
+          failClosedDefaultLegacy: readiness.failClosedDefaultLegacy,
+          servingPathDecision: readiness.servingPathDecision,
+          controls: readiness.controls,
+          signals: readiness.signals,
+          evaluationInputs: readiness.evaluationInputs,
+        };
+
+        const gateOnlyBlock =
+          readiness.blocked &&
+          Array.isArray(readiness.blockedReasons) &&
+          readiness.blockedReasons.length === 1 &&
+          readiness.blockedReasons[0] === 'gate-disabled';
+
+        if (!runtimeParity.match || !gateOnlyBlock) {
+          console.warn(`[orders-postgres-mirror] ${JSON.stringify(parityTelemetry)}`);
+          console.warn(`[orders-postgres-mirror] ${JSON.stringify(readinessTelemetry)}`);
         } else if (String(process.env.ORDERS_PG_MIRROR_LOG_SUCCESS || '').toLowerCase() === 'true') {
-          console.log(`[orders-postgres-mirror] ${JSON.stringify(telemetry)}`);
+          console.log(`[orders-postgres-mirror] ${JSON.stringify(parityTelemetry)}`);
+          console.log(`[orders-postgres-mirror] ${JSON.stringify(readinessTelemetry)}`);
         }
       }
     } catch (shadowError) {
       const message = shadowError && shadowError.message ? shadowError.message : String(shadowError);
+      const readiness = evaluateAdminOrderListServingExperimentReadiness({
+        runtimeParity: null,
+        comparatorError: message,
+      });
       console.warn(`[orders-postgres-mirror] admin-order-list runtime read-shadow verification skipped: ${message}`);
+      console.warn(
+        `[orders-postgres-mirror] ${JSON.stringify({
+          event: 'admin-order-list-serving-experiment-readiness-controls',
+          eligible: readiness.eligible,
+          blocked: readiness.blocked,
+          blockedReasons: readiness.blockedReasons,
+          failClosedDefaultLegacy: readiness.failClosedDefaultLegacy,
+          servingPathDecision: readiness.servingPathDecision,
+          controls: readiness.controls,
+          signals: readiness.signals,
+          evaluationInputs: readiness.evaluationInputs,
+        })}`
+      );
     }
 
     // Return array directly to align with tests expecting an array response
