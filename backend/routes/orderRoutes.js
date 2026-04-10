@@ -38,6 +38,94 @@ function normalizeCustomerOrdersForResponse(orders) {
   });
 }
 
+function parseMoneyOrZero(value) {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : 0;
+}
+
+function mapMirroredCustomerOrderToCoveredHistoryResponse(order) {
+  const mirrored = order && typeof order === 'object' ? order : {};
+  const vendors = Array.isArray(mirrored.vendors) ? mirrored.vendors : [];
+
+  return {
+    _id: mirrored.mongoId || null,
+    orderExternalId: mirrored.orderExternalId || null,
+    buyer: mirrored.buyerMongoId || null,
+    status: mirrored.status || 'pending',
+    currency: mirrored.currency || 'USD',
+    paymentMethod: mirrored.paymentMethod || 'cod',
+    total: parseMoneyOrZero(mirrored.total),
+    totalAfterDiscount: parseMoneyOrZero(mirrored.totalAfterDiscount),
+    discount: parseMoneyOrZero(mirrored.discount),
+    createdAt: mirrored.sourceCreatedAt || mirrored.createdAt || mirrored.orderDate || mirrored.mirroredAt || null,
+    vendors: vendors.map((vendor) => {
+      const items = Array.isArray(vendor && vendor.items) ? vendor.items : [];
+      return {
+        vendorId: vendor && vendor.vendorMongoId ? vendor.vendorMongoId : null,
+        vendorExternalId: vendor && vendor.vendorExternalId ? vendor.vendorExternalId : null,
+        vendorName: vendor && vendor.vendorName ? vendor.vendorName : null,
+        status: vendor && vendor.status ? vendor.status : 'pending',
+        currency: vendor && vendor.currency ? vendor.currency : (mirrored.currency || 'USD'),
+        subtotal: parseMoneyOrZero(vendor && vendor.subtotal),
+        discount: parseMoneyOrZero(vendor && vendor.discount),
+        tax: parseMoneyOrZero(vendor && vendor.tax),
+        shipping: parseMoneyOrZero(vendor && vendor.shipping),
+        total: parseMoneyOrZero(vendor && vendor.total),
+        products: items.map((item) => ({
+          product: item && item.productMongoId ? item.productMongoId : null,
+          name: item && item.name ? item.name : null,
+          quantity: Number(item && item.quantity) || 0,
+          price: parseMoneyOrZero(item && item.price),
+          subtotal: parseMoneyOrZero(item && item.subtotal),
+          tax: parseMoneyOrZero(item && item.tax),
+        })),
+      };
+    }),
+  };
+}
+
+function buildGuardedCustomerOrderHistoryPostgresResponse(runtimeParity) {
+  const mirroredOrders = runtimeParity && Array.isArray(runtimeParity.mirroredOrders)
+    ? runtimeParity.mirroredOrders
+    : [];
+  const mirroredResultIds = runtimeParity && runtimeParity.mirroredResult && Array.isArray(runtimeParity.mirroredResult.ids)
+    ? runtimeParity.mirroredResult.ids
+    : null;
+
+  if (!mirroredResultIds) {
+    return {
+      ok: false,
+      reason: 'missing-mirrored-window',
+      orders: [],
+    };
+  }
+
+  const mirroredOrderByMongoId = new Map(
+    mirroredOrders
+      .filter((order) => order && order.mongoId)
+      .map((order) => [String(order.mongoId), order])
+  );
+
+  const responseWindow = [];
+  for (const id of mirroredResultIds) {
+    const mirroredOrder = mirroredOrderByMongoId.get(String(id));
+    if (!mirroredOrder) {
+      return {
+        ok: false,
+        reason: 'covered-window-incomplete',
+        orders: [],
+      };
+    }
+    responseWindow.push(mapMirroredCustomerOrderToCoveredHistoryResponse(mirroredOrder));
+  }
+
+  return {
+    ok: true,
+    reason: 'eligible-guarded-serving',
+    orders: responseWindow,
+  };
+}
+
 async function runCustomerOrderHistoryRuntimeShadowVerification({ sourceOrders, sourceQueryMs, buyerMongoId, aliasPath }) {
   const mode = resolveOrdersPgMirrorMode();
   if (mode === 'off') return null;
@@ -75,6 +163,7 @@ async function runCustomerOrderHistoryRuntimeShadowVerification({ sourceOrders, 
 
   return {
     ...comparison,
+    mirroredOrders,
     runtimeLatencyMs: {
       sourceQuery: sourceQueryMs,
       mirrorQuery: mirrorQueryMs,
@@ -94,6 +183,7 @@ async function handleCustomerOrderHistory(req, res, aliasPath) {
     const orders = normalizeCustomerOrdersForResponse(rawOrders);
 
     const sourceQueryMs = Date.now() - sourceQueryStart;
+    let responseOrders = orders;
     try {
       const runtimeParity = await runCustomerOrderHistoryRuntimeShadowVerification({
         sourceOrders: orders,
@@ -122,8 +212,14 @@ async function handleCustomerOrderHistory(req, res, aliasPath) {
         const blockedReasons = Array.isArray(readiness.blockedReasons) ? readiness.blockedReasons : [];
         servingDecisionTelemetry.reason = blockedReasons[0] || 'readiness-blocked';
       } else {
-        // This slice remains non-serving even when telemetry indicates readiness eligibility.
-        servingDecisionTelemetry.reason = 'eligible-non-serving-slice';
+        const postgresResponse = buildGuardedCustomerOrderHistoryPostgresResponse(runtimeParity);
+        if (postgresResponse.ok) {
+          responseOrders = postgresResponse.orders;
+          servingDecisionTelemetry.source = 'postgres-covered-experiment';
+          servingDecisionTelemetry.reason = postgresResponse.reason;
+        } else {
+          servingDecisionTelemetry.reason = postgresResponse.reason;
+        }
       }
 
       const readinessTelemetry = {
@@ -155,7 +251,10 @@ async function handleCustomerOrderHistory(req, res, aliasPath) {
           sourceResult: runtimeParity.sourceResult,
           mirroredResult: runtimeParity.mirroredResult,
           latencyMs: runtimeParity.runtimeLatencyMs,
-          servingPathDecision: 'mongo-only-shadow-runtime',
+          servingPathDecision:
+            servingDecisionTelemetry.source === 'postgres-covered-experiment'
+              ? 'postgres-covered-experiment'
+              : 'mongo-only-shadow-runtime',
           failClosedDefaultLegacy: true,
         };
 
@@ -217,7 +316,7 @@ async function handleCustomerOrderHistory(req, res, aliasPath) {
       );
     }
 
-    return res.json({ success: true, orders });
+    return res.json({ success: true, orders: responseOrders });
   } catch (err) {
     return res.status(500).json({ message: err.message });
   }
