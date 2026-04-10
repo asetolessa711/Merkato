@@ -7,6 +7,7 @@ const {
   compareCanonicalIdentityCompleteness,
   compareCustomerOrderListSummaryShadowParity,
   compareOrderDetailShadowParity,
+  evaluateCustomerOrderHistoryRuntimeShadowVerification,
   evaluateAdminOrderListServingExperimentReadiness,
   evaluateAdminOrderListRuntimeShadowVerification,
   compareMirrorSummary,
@@ -1804,6 +1805,129 @@ describe("orderPostgresMirror", () => {
     );
 
     expect(discrepancies).toEqual([]);
+  });
+
+  test("evaluateCustomerOrderHistoryRuntimeShadowVerification reports match for covered alias and ownership window", () => {
+    const result = evaluateCustomerOrderHistoryRuntimeShadowVerification(
+      [
+        {
+          _id: "order-1",
+          buyer: "buyer-1",
+          status: "pending",
+          currency: "USD",
+          total: 20,
+          totalAfterDiscount: 20,
+          discount: 0,
+          vendors: [{ products: [{}] }],
+          createdAt: "2024-02-02T00:00:00.000Z",
+        },
+        {
+          _id: "order-2",
+          buyer: "buyer-1",
+          status: "delivered",
+          currency: "USD",
+          total: 40,
+          totalAfterDiscount: 35,
+          discount: 5,
+          vendors: [{ products: [{}, {}] }],
+          createdAt: "2024-02-01T00:00:00.000Z",
+        },
+      ],
+      [
+        {
+          mongoId: "order-1",
+          buyerMongoId: "buyer-1",
+          status: "pending",
+          currency: "USD",
+          total: 20,
+          totalAfterDiscount: 20,
+          discount: 0,
+          vendorCount: 1,
+          itemCount: 1,
+          sourceCreatedAt: "2024-02-02T00:00:00.000Z",
+          vendors: [{ items: [{}] }],
+        },
+        {
+          mongoId: "order-2",
+          buyerMongoId: "buyer-1",
+          status: "delivered",
+          currency: "USD",
+          total: 40,
+          totalAfterDiscount: 35,
+          discount: 5,
+          vendorCount: 1,
+          itemCount: 2,
+          sourceCreatedAt: "2024-02-01T00:00:00.000Z",
+          vendors: [{ items: [{}, {}] }],
+        },
+      ],
+      { buyerMongoId: "buyer-1", aliasPath: "/my-orders" }
+    );
+
+    expect(result.match).toBe(true);
+    expect(result.mismatchClass).toBeNull();
+    expect(result.comparatorConfidence).toBe("high");
+    expect(result.discrepancies).toEqual([]);
+    expect(result.sourceResult.ids).toEqual(["order-1", "order-2"]);
+    expect(result.mirroredResult.ids).toEqual(["order-1", "order-2"]);
+  });
+
+  test("evaluateCustomerOrderHistoryRuntimeShadowVerification classifies ownership mismatch", () => {
+    const result = evaluateCustomerOrderHistoryRuntimeShadowVerification(
+      [
+        {
+          _id: "order-1",
+          buyer: "buyer-1",
+          status: "pending",
+          currency: "USD",
+          total: 20,
+          totalAfterDiscount: 20,
+          discount: 0,
+          vendors: [{ products: [{}] }],
+          createdAt: "2024-02-02T00:00:00.000Z",
+        },
+      ],
+      [
+        {
+          mongoId: "order-1",
+          buyerMongoId: "buyer-2",
+          status: "pending",
+          currency: "USD",
+          total: 20,
+          totalAfterDiscount: 20,
+          discount: 0,
+          vendorCount: 1,
+          itemCount: 1,
+          sourceCreatedAt: "2024-02-02T00:00:00.000Z",
+          vendors: [{ items: [{}] }],
+        },
+      ],
+      { buyerMongoId: "buyer-1", aliasPath: "/my" }
+    );
+
+    expect(result.match).toBe(false);
+    expect(result.mismatchClass).toBe("ownership-mismatch");
+    expect(result.discrepancies).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("ownership.mirror.out-of-scope-count"),
+      ])
+    );
+  });
+
+  test("evaluateCustomerOrderHistoryRuntimeShadowVerification classifies alias-contract drift for unsupported alias", () => {
+    const result = evaluateCustomerOrderHistoryRuntimeShadowVerification(
+      [],
+      [],
+      { buyerMongoId: "buyer-1", aliasPath: "/orders/history" }
+    );
+
+    expect(result.match).toBe(false);
+    expect(result.mismatchClass).toBe("alias-contract-drift");
+    expect(result.discrepancies).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("alias.contract.unsupported:/orders/history"),
+      ])
+    );
   });
 
   test("evaluateAdminOrderListRuntimeShadowVerification reports match with high confidence when covered window parity holds", () => {

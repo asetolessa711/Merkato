@@ -6,11 +6,148 @@ const Product = require('../models/Product');
 const PromoCode = require('../models/PromoCode');
 const Invoice = require('../models/Invoice');
 const ReturnRequest = require('../models/ReturnRequest');
-const { mirrorOrderCreationToPostgres } = require('../services/orderPostgresMirror');
+const { getPrismaClient } = require('../prisma/client');
+const {
+  evaluateCustomerOrderHistoryRuntimeShadowVerification,
+  mirrorOrderCreationToPostgres,
+  resolveOrdersPgMirrorMode,
+} = require('../services/orderPostgresMirror');
 const { protect, authorize, optionalAuth } = require('../middleware/authMiddleware');
 
 function roundCurrency(value) {
   return Number((Number(value) || 0).toFixed(2));
+}
+
+function normalizeCustomerOrdersForResponse(orders) {
+  const list = Array.isArray(orders) ? orders : [];
+  return list.map((doc) => {
+    const o = typeof doc.toObject === 'function' ? doc.toObject({ virtuals: true }) : { ...(doc || {}) };
+    if (Array.isArray(o.vendors)) {
+      o.vendors.forEach((v) => {
+        if (Array.isArray(v.products)) {
+          v.products.forEach((p) => {
+            if (!p.name && p.product && p.product.name) {
+              p.name = p.product.name;
+            }
+          });
+        }
+      });
+    }
+    return o;
+  });
+}
+
+async function runCustomerOrderHistoryRuntimeShadowVerification({ sourceOrders, sourceQueryMs, buyerMongoId, aliasPath }) {
+  const mode = resolveOrdersPgMirrorMode();
+  if (mode === 'off') return null;
+
+  const sourceIds = (Array.isArray(sourceOrders) ? sourceOrders : [])
+    .map((order) => (order && order._id ? String(order._id) : ''))
+    .filter(Boolean);
+
+  const prisma = getPrismaClient();
+  const mirrorStart = Date.now();
+  const mirroredOrders = sourceIds.length > 0
+    ? await prisma.orderMirror.findMany({
+      where: {
+        mongoId: {
+          in: sourceIds,
+        },
+      },
+      include: {
+        vendors: {
+          include: {
+            items: true,
+          },
+        },
+      },
+    })
+    : [];
+  const mirrorQueryMs = Date.now() - mirrorStart;
+
+  const compareStart = Date.now();
+  const comparison = evaluateCustomerOrderHistoryRuntimeShadowVerification(sourceOrders, mirroredOrders, {
+    buyerMongoId,
+    aliasPath,
+  });
+  const comparatorMs = Date.now() - compareStart;
+
+  return {
+    ...comparison,
+    runtimeLatencyMs: {
+      sourceQuery: sourceQueryMs,
+      mirrorQuery: mirrorQueryMs,
+      comparator: comparatorMs,
+      sourceMirrorDelta: Math.abs(sourceQueryMs - mirrorQueryMs),
+    },
+  };
+}
+
+async function handleCustomerOrderHistory(req, res, aliasPath) {
+  try {
+    const sourceQueryStart = Date.now();
+    const rawOrders = await Order.find({ buyer: req.user._id })
+      .populate('vendors.vendorId', 'name')
+      .populate({ path: 'vendors.products.product', select: 'name price images', options: { strictPopulate: false } })
+      .sort('-createdAt');
+    const orders = normalizeCustomerOrdersForResponse(rawOrders);
+
+    const sourceQueryMs = Date.now() - sourceQueryStart;
+    try {
+      const runtimeParity = await runCustomerOrderHistoryRuntimeShadowVerification({
+        sourceOrders: orders,
+        sourceQueryMs,
+        buyerMongoId: req.user && req.user._id ? String(req.user._id) : null,
+        aliasPath,
+      });
+
+      if (runtimeParity) {
+        const telemetry = {
+          event: 'customer-order-history-runtime-read-shadow-verification',
+          aliasPath,
+          match: runtimeParity.match,
+          mismatchClass: runtimeParity.mismatchClass,
+          comparatorConfidence: runtimeParity.comparatorConfidence,
+          coverage: runtimeParity.coverage,
+          queryContract: runtimeParity.queryContract,
+          discrepancyCount: Array.isArray(runtimeParity.discrepancies) ? runtimeParity.discrepancies.length : 0,
+          discrepancySamples: Array.isArray(runtimeParity.discrepancies)
+            ? runtimeParity.discrepancies.slice(0, 3)
+            : [],
+          sourceResult: runtimeParity.sourceResult,
+          mirroredResult: runtimeParity.mirroredResult,
+          latencyMs: runtimeParity.runtimeLatencyMs,
+          servingPathDecision: 'mongo-only-shadow-runtime',
+          failClosedDefaultLegacy: true,
+        };
+
+        if (!runtimeParity.match) {
+          console.warn(`[orders-postgres-mirror] ${JSON.stringify(telemetry)}`);
+        } else if (String(process.env.ORDERS_PG_MIRROR_LOG_SUCCESS || '').toLowerCase() === 'true') {
+          console.log(`[orders-postgres-mirror] ${JSON.stringify(telemetry)}`);
+        }
+      }
+    } catch (shadowError) {
+      const message = shadowError && shadowError.message ? shadowError.message : String(shadowError);
+      console.warn(
+        `[orders-postgres-mirror] ${JSON.stringify({
+          event: 'customer-order-history-runtime-read-shadow-verification',
+          aliasPath,
+          match: false,
+          mismatchClass: 'comparator-error',
+          comparatorConfidence: 'low',
+          discrepancyCount: 1,
+          discrepancySamples: [message],
+          servingPathDecision: 'mongo-only-shadow-runtime',
+          failClosedDefaultLegacy: true,
+        })}`
+      );
+    }
+
+    return res.json({ success: true, orders });
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
 }
 
 /**
@@ -372,64 +509,12 @@ router.post('/', optionalAuth, async (req, res) => {
  * @access  Private - Customer
  */
 router.get('/my-orders', protect, authorize('customer'), async (req, res) => {
-  try {
-    let orders = await Order.find({ buyer: req.user._id })
-      .populate('vendors.vendorId', 'name')
-      .populate({ path: 'vendors.products.product', select: 'name price images', options: { strictPopulate: false } })
-      .sort('-createdAt');
-
-    // Ensure each line item carries a plain `name` for frontend display and tests
-    orders = orders.map((doc) => {
-      const o = doc.toObject({ virtuals: true });
-      if (Array.isArray(o.vendors)) {
-        o.vendors.forEach((v) => {
-          if (Array.isArray(v.products)) {
-            v.products.forEach((p) => {
-              if (!p.name && p.product && p.product.name) {
-                p.name = p.product.name;
-              }
-            });
-          }
-        });
-      }
-      return o;
-    });
-
-    res.json({ success: true, orders });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  return handleCustomerOrderHistory(req, res, '/my-orders');
 });
 
 // Alias for frontend compatibility: /api/orders/my
 router.get('/my', protect, authorize('customer'), async (req, res) => {
-  try {
-    let orders = await Order.find({ buyer: req.user._id })
-      .populate('vendors.vendorId', 'name')
-      .populate({ path: 'vendors.products.product', select: 'name price images', options: { strictPopulate: false } })
-      .sort('-createdAt');
-
-    // Ensure each line item carries a plain `name` for frontend display and tests
-    orders = orders.map((doc) => {
-      const o = doc.toObject({ virtuals: true });
-      if (Array.isArray(o.vendors)) {
-        o.vendors.forEach((v) => {
-          if (Array.isArray(v.products)) {
-            v.products.forEach((p) => {
-              if (!p.name && p.product && p.product.name) {
-                p.name = p.product.name;
-              }
-            });
-          }
-        });
-      }
-      return o;
-    });
-
-    res.json({ success: true, orders });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
+  return handleCustomerOrderHistory(req, res, '/my');
 });
 
 /**

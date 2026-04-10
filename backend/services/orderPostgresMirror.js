@@ -1061,6 +1061,125 @@ function evaluateAdminOrderListRuntimeShadowVerification(sourceOrders, mirroredO
   };
 }
 
+function sortCustomerOrderHistorySummariesForWindow(summaries) {
+  return (Array.isArray(summaries) ? summaries : []).sort((left, right) => {
+    if (right.sortTimestamp !== left.sortTimestamp) return right.sortTimestamp - left.sortTimestamp;
+    return String(right.orderMongoId).localeCompare(String(left.orderMongoId));
+  });
+}
+
+function evaluateCustomerOrderHistoryRuntimeShadowVerification(
+  sourceOrders,
+  mirroredOrders,
+  { buyerMongoId, aliasPath } = {}
+) {
+  const alias = aliasPath ? String(aliasPath) : null;
+  const buyerScope = buyerMongoId ? String(buyerMongoId) : null;
+  const supportedAliases = new Set(["/my-orders", "/my"]);
+
+  const sourceSummariesAll = (Array.isArray(sourceOrders) ? sourceOrders : [])
+    .map((order) => buildSourceCustomerOrderListSummary(order))
+    .filter((summary) => summary.orderMongoId);
+
+  const mirroredSummariesAll = (Array.isArray(mirroredOrders) ? mirroredOrders : [])
+    .map((order) => buildMirroredCustomerOrderListSummary(order))
+    .filter((summary) => summary.orderMongoId);
+
+  const sourceSummaries = sourceSummariesAll
+    .filter((summary) => !buyerScope || summary.buyerMongoId === buyerScope);
+  const mirroredSummaries = mirroredSummariesAll
+    .filter((summary) => !buyerScope || summary.buyerMongoId === buyerScope);
+
+  const sourceOutOfScopeCount = buyerScope
+    ? sourceSummariesAll.filter((summary) => summary.buyerMongoId !== buyerScope).length
+    : 0;
+  const mirroredOutOfScopeCount = buyerScope
+    ? mirroredSummariesAll.filter((summary) => summary.buyerMongoId !== buyerScope).length
+    : 0;
+
+  const sourceById = new Map();
+  sourceSummaries.forEach((summary) => {
+    sourceById.set(summary.orderMongoId, summary);
+  });
+
+  const mirroredById = new Map();
+  mirroredSummaries.forEach((summary) => {
+    mirroredById.set(summary.orderMongoId, summary);
+  });
+
+  const coveredCount = Array.from(sourceById.keys()).filter((orderMongoId) => mirroredById.has(orderMongoId)).length;
+
+  const sourceWindow = sortCustomerOrderHistorySummariesForWindow(sourceSummaries).map((summary) => summary.orderMongoId);
+  const mirroredWindow = sortCustomerOrderHistorySummariesForWindow(mirroredSummaries).map((summary) => summary.orderMongoId);
+
+  const discrepancies = compareCustomerOrderListSummaryShadowParity(sourceOrders, mirroredOrders, buyerScope);
+
+  if (sourceSummaries.length !== mirroredSummaries.length) {
+    discrepancies.push(`runtime.customer-order-history.total:${sourceSummaries.length}->${mirroredSummaries.length}`);
+  }
+
+  if (sourceWindow.join("|") !== mirroredWindow.join("|")) {
+    discrepancies.push(`runtime.customer-order-history.window:${sourceWindow.join("|")}->${mirroredWindow.join("|")}`);
+  }
+
+  if (sourceOutOfScopeCount > 0) {
+    discrepancies.push(`ownership.source.out-of-scope-count:${sourceOutOfScopeCount}`);
+  }
+  if (mirroredOutOfScopeCount > 0) {
+    discrepancies.push(`ownership.mirror.out-of-scope-count:${mirroredOutOfScopeCount}`);
+  }
+
+  if (alias && !supportedAliases.has(alias)) {
+    discrepancies.push(`alias.contract.unsupported:${alias}`);
+  }
+
+  const coverage = {
+    sourceCount: sourceSummaries.length,
+    mirroredCount: mirroredSummaries.length,
+    coveredCount,
+  };
+
+  let comparatorConfidence = "low";
+  if (coverage.sourceCount === 0) comparatorConfidence = "high";
+  if (coverage.coveredCount > 0 && coverage.coveredCount < coverage.sourceCount) comparatorConfidence = "medium";
+  if (coverage.coveredCount > 0 && coverage.coveredCount === coverage.sourceCount) comparatorConfidence = "high";
+
+  const hasAliasContractDrift = discrepancies.some((entry) => String(entry).startsWith("alias.contract."));
+  const hasOwnershipDrift = discrepancies.some((entry) =>
+    String(entry).includes("buyerMongoId") || String(entry).startsWith("ownership.")
+  );
+  const hasSummaryMismatch = discrepancies.length > 0;
+  const hasCoverageGap = coverage.sourceCount > 0 && coverage.coveredCount === 0;
+
+  let mismatchClass = null;
+  if (hasAliasContractDrift) mismatchClass = "alias-contract-drift";
+  else if (hasOwnershipDrift) mismatchClass = "ownership-mismatch";
+  else if (hasCoverageGap) mismatchClass = "coverage-gap";
+  else if (hasSummaryMismatch) mismatchClass = "summary-parity-mismatch";
+
+  const match = discrepancies.length === 0;
+
+  return {
+    match,
+    mismatchClass,
+    comparatorConfidence,
+    discrepancies,
+    coverage,
+    queryContract: {
+      buyerMongoId: buyerScope,
+      aliasPath: alias,
+    },
+    sourceResult: {
+      total: sourceSummaries.length,
+      ids: sourceWindow,
+    },
+    mirroredResult: {
+      total: mirroredSummaries.length,
+      ids: mirroredWindow,
+    },
+  };
+}
+
 function evaluateAdminOrderListServingExperimentReadiness({ runtimeParity, comparatorError } = {}) {
   const controls = resolveAdminOrderListServingExperimentControls();
   const hasRuntimeParity = Boolean(runtimeParity && typeof runtimeParity === "object");
@@ -1731,6 +1850,7 @@ module.exports = {
   compareCanonicalIdentityCompleteness,
   compareCustomerOrderListSummaryShadowParity,
   compareOrderDetailShadowParity,
+  evaluateCustomerOrderHistoryRuntimeShadowVerification,
   evaluateAdminOrderListServingExperimentReadiness,
   evaluateAdminOrderListRuntimeShadowVerification,
   compareMirrorSummary,
