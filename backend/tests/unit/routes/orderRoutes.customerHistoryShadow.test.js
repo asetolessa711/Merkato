@@ -54,6 +54,7 @@ jest.mock("../../../middleware/authMiddleware", () => ({
 jest.mock("../../../services/orderPostgresMirror", () => ({
   mirrorOrderCreationToPostgres: jest.fn(),
   resolveOrdersPgMirrorMode: jest.fn(),
+  evaluateCustomerOrderHistoryServingExperimentReadiness: jest.fn(),
   evaluateCustomerOrderHistoryRuntimeShadowVerification: jest.fn(),
 }));
 
@@ -61,6 +62,7 @@ const Order = require("../../../models/Order");
 const { getPrismaClient } = require("../../../prisma/client");
 const {
   resolveOrdersPgMirrorMode,
+  evaluateCustomerOrderHistoryServingExperimentReadiness,
   evaluateCustomerOrderHistoryRuntimeShadowVerification,
 } = require("../../../services/orderPostgresMirror");
 const orderRoutes = require("../../../routes/orderRoutes");
@@ -127,6 +129,16 @@ describe("orderRoutes customer-history runtime shadow", () => {
       sourceResult: { total: 1, ids: ["order-1"] },
       mirroredResult: { total: 1, ids: ["order-1"] },
     });
+    evaluateCustomerOrderHistoryServingExperimentReadiness.mockReturnValue({
+      eligible: false,
+      blocked: true,
+      blockedReasons: ["gate-disabled"],
+      failClosedDefaultLegacy: true,
+      servingPathDecision: "blocked-legacy-only",
+      controls: { gate: "off", gateEnabled: false, killSwitchActive: false },
+      signals: { telemetryHealth: "healthy", comparatorHealth: "healthy", aliasContract: "aligned" },
+      evaluationInputs: { aliasPath: "/my-orders", mismatchClassSignal: "none" },
+    });
   });
 
   afterEach(() => {
@@ -143,7 +155,11 @@ describe("orderRoutes customer-history runtime shadow", () => {
     expect(myAliasRes.body).toEqual(myOrdersRes.body);
 
     const aliasesPassed = evaluateCustomerOrderHistoryRuntimeShadowVerification.mock.calls.map((call) => call[2].aliasPath);
+    const readinessAliases = evaluateCustomerOrderHistoryServingExperimentReadiness.mock.calls.map(
+      (call) => call[0].aliasPath
+    );
     expect(aliasesPassed).toEqual(["/my-orders", "/my"]);
+    expect(readinessAliases).toEqual(["/my-orders", "/my"]);
   });
 
   test("emits ownership mismatch telemetry while preserving Mongo serving response", async () => {
@@ -157,6 +173,16 @@ describe("orderRoutes customer-history runtime shadow", () => {
       sourceResult: { total: 1, ids: ["order-1"] },
       mirroredResult: { total: 0, ids: [] },
     });
+    evaluateCustomerOrderHistoryServingExperimentReadiness.mockReturnValue({
+      eligible: false,
+      blocked: true,
+      blockedReasons: ["mismatch-class-ownership-mismatch"],
+      failClosedDefaultLegacy: true,
+      servingPathDecision: "blocked-legacy-only",
+      controls: { gate: "ready", gateEnabled: true, killSwitchActive: false },
+      signals: { telemetryHealth: "healthy", comparatorHealth: "healthy", aliasContract: "aligned" },
+      evaluationInputs: { aliasPath: "/my-orders", mismatchClassSignal: "ownership-mismatch" },
+    });
 
     const res = await request(app).get("/api/orders/my-orders");
 
@@ -166,9 +192,39 @@ describe("orderRoutes customer-history runtime shadow", () => {
     expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining("ownership-mismatch"));
   });
 
+  test("kill switch active keeps Mongo-only serving response", async () => {
+    evaluateCustomerOrderHistoryServingExperimentReadiness.mockReturnValue({
+      eligible: false,
+      blocked: true,
+      blockedReasons: ["kill-switch-active"],
+      failClosedDefaultLegacy: true,
+      servingPathDecision: "blocked-legacy-only",
+      controls: { gate: "ready", gateEnabled: true, killSwitchActive: true },
+      signals: { telemetryHealth: "healthy", comparatorHealth: "healthy", aliasContract: "aligned" },
+      evaluationInputs: { aliasPath: "/my-orders", mismatchClassSignal: "none" },
+    });
+
+    const res = await request(app).get("/api/orders/my-orders");
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.orders)).toBe(true);
+    expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining("kill-switch-active"));
+  });
+
   test("fails closed to Mongo response when runtime comparator throws", async () => {
     evaluateCustomerOrderHistoryRuntimeShadowVerification.mockImplementation(() => {
       throw new Error("forced-customer-comparator-failure");
+    });
+    evaluateCustomerOrderHistoryServingExperimentReadiness.mockReturnValue({
+      eligible: false,
+      blocked: true,
+      blockedReasons: ["comparator-error", "telemetry-health-degraded", "comparator-health-degraded"],
+      failClosedDefaultLegacy: true,
+      servingPathDecision: "blocked-legacy-only",
+      controls: { gate: "ready", gateEnabled: true, killSwitchActive: false },
+      signals: { telemetryHealth: "degraded", comparatorHealth: "degraded", aliasContract: "degraded" },
+      evaluationInputs: { aliasPath: "/my", mismatchClassSignal: "comparator-error" },
     });
 
     const res = await request(app).get("/api/orders/my");
@@ -177,5 +233,12 @@ describe("orderRoutes customer-history runtime shadow", () => {
     expect(res.body.success).toBe(true);
     expect(Array.isArray(res.body.orders)).toBe(true);
     expect(consoleWarnSpy).toHaveBeenCalledWith(expect.stringContaining("comparator-error"));
+    expect(evaluateCustomerOrderHistoryServingExperimentReadiness).toHaveBeenCalledWith(
+      expect.objectContaining({
+        runtimeParity: null,
+        comparatorError: "forced-customer-comparator-failure",
+        aliasPath: "/my",
+      })
+    );
   });
 });

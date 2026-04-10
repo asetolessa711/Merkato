@@ -8,6 +8,7 @@ const Invoice = require('../models/Invoice');
 const ReturnRequest = require('../models/ReturnRequest');
 const { getPrismaClient } = require('../prisma/client');
 const {
+  evaluateCustomerOrderHistoryServingExperimentReadiness,
   evaluateCustomerOrderHistoryRuntimeShadowVerification,
   mirrorOrderCreationToPostgres,
   resolveOrdersPgMirrorMode,
@@ -101,8 +102,45 @@ async function handleCustomerOrderHistory(req, res, aliasPath) {
         aliasPath,
       });
 
+      const readiness = evaluateCustomerOrderHistoryServingExperimentReadiness({
+        runtimeParity,
+        aliasPath,
+      });
+
+      const servingDecisionTelemetry = {
+        event: 'customer-order-history-serving-experiment-decision',
+        aliasPath,
+        source: 'mongo',
+        reason: 'legacy-default',
+        readinessEligible: readiness.eligible,
+        blockedReasons: readiness.blockedReasons,
+        failClosedDefaultLegacy: readiness.failClosedDefaultLegacy,
+        controls: readiness.controls,
+      };
+
+      if (!readiness.eligible) {
+        const blockedReasons = Array.isArray(readiness.blockedReasons) ? readiness.blockedReasons : [];
+        servingDecisionTelemetry.reason = blockedReasons[0] || 'readiness-blocked';
+      } else {
+        // This slice remains non-serving even when telemetry indicates readiness eligibility.
+        servingDecisionTelemetry.reason = 'eligible-non-serving-slice';
+      }
+
+      const readinessTelemetry = {
+        event: 'customer-order-history-serving-experiment-readiness-controls',
+        aliasPath,
+        eligible: readiness.eligible,
+        blocked: readiness.blocked,
+        blockedReasons: readiness.blockedReasons,
+        failClosedDefaultLegacy: readiness.failClosedDefaultLegacy,
+        servingPathDecision: readiness.servingPathDecision,
+        controls: readiness.controls,
+        signals: readiness.signals,
+        evaluationInputs: readiness.evaluationInputs,
+      };
+
       if (runtimeParity) {
-        const telemetry = {
+        const parityTelemetry = {
           event: 'customer-order-history-runtime-read-shadow-verification',
           aliasPath,
           match: runtimeParity.match,
@@ -121,25 +159,60 @@ async function handleCustomerOrderHistory(req, res, aliasPath) {
           failClosedDefaultLegacy: true,
         };
 
-        if (!runtimeParity.match) {
-          console.warn(`[orders-postgres-mirror] ${JSON.stringify(telemetry)}`);
+        const gateOnlyBlock =
+          readiness.blocked &&
+          Array.isArray(readiness.blockedReasons) &&
+          readiness.blockedReasons.length === 1 &&
+          readiness.blockedReasons[0] === 'gate-disabled';
+
+        const decisionRequiresWarning =
+          servingDecisionTelemetry.reason !== 'legacy-default' && servingDecisionTelemetry.reason !== 'gate-disabled';
+
+        if (!runtimeParity.match || !gateOnlyBlock || decisionRequiresWarning) {
+          console.warn(`[orders-postgres-mirror] ${JSON.stringify(parityTelemetry)}`);
+          console.warn(`[orders-postgres-mirror] ${JSON.stringify(readinessTelemetry)}`);
+          console.warn(`[orders-postgres-mirror] ${JSON.stringify(servingDecisionTelemetry)}`);
         } else if (String(process.env.ORDERS_PG_MIRROR_LOG_SUCCESS || '').toLowerCase() === 'true') {
-          console.log(`[orders-postgres-mirror] ${JSON.stringify(telemetry)}`);
+          console.log(`[orders-postgres-mirror] ${JSON.stringify(parityTelemetry)}`);
+          console.log(`[orders-postgres-mirror] ${JSON.stringify(readinessTelemetry)}`);
+          console.log(`[orders-postgres-mirror] ${JSON.stringify(servingDecisionTelemetry)}`);
         }
+      } else {
+        console.warn(`[orders-postgres-mirror] ${JSON.stringify(readinessTelemetry)}`);
+        console.warn(`[orders-postgres-mirror] ${JSON.stringify(servingDecisionTelemetry)}`);
       }
     } catch (shadowError) {
       const message = shadowError && shadowError.message ? shadowError.message : String(shadowError);
+      const readiness = evaluateCustomerOrderHistoryServingExperimentReadiness({
+        runtimeParity: null,
+        comparatorError: message,
+        aliasPath,
+      });
+      console.warn(`[orders-postgres-mirror] customer-order-history runtime read-shadow verification skipped: ${message}`);
       console.warn(
         `[orders-postgres-mirror] ${JSON.stringify({
-          event: 'customer-order-history-runtime-read-shadow-verification',
+          event: 'customer-order-history-serving-experiment-readiness-controls',
           aliasPath,
-          match: false,
-          mismatchClass: 'comparator-error',
-          comparatorConfidence: 'low',
-          discrepancyCount: 1,
-          discrepancySamples: [message],
-          servingPathDecision: 'mongo-only-shadow-runtime',
-          failClosedDefaultLegacy: true,
+          eligible: readiness.eligible,
+          blocked: readiness.blocked,
+          blockedReasons: readiness.blockedReasons,
+          failClosedDefaultLegacy: readiness.failClosedDefaultLegacy,
+          servingPathDecision: readiness.servingPathDecision,
+          controls: readiness.controls,
+          signals: readiness.signals,
+          evaluationInputs: readiness.evaluationInputs,
+        })}`
+      );
+      console.warn(
+        `[orders-postgres-mirror] ${JSON.stringify({
+          event: 'customer-order-history-serving-experiment-decision',
+          aliasPath,
+          source: 'mongo',
+          reason: 'comparator-or-runtime-failure-fallback',
+          readinessEligible: readiness.eligible,
+          blockedReasons: readiness.blockedReasons,
+          failClosedDefaultLegacy: readiness.failClosedDefaultLegacy,
+          controls: readiness.controls,
         })}`
       );
     }
