@@ -34,6 +34,7 @@ jest.mock("../../../prisma/client", () => ({
 }));
 
 jest.mock("../../../services/orderPostgresMirror", () => ({
+  buildMirroredAdminOrderListSummary: jest.fn(),
   resolveOrdersPgMirrorMode: jest.fn(),
   evaluateAdminOrderListRuntimeShadowVerification: jest.fn(),
   evaluateAdminOrderListServingExperimentReadiness: jest.fn(),
@@ -42,16 +43,18 @@ jest.mock("../../../services/orderPostgresMirror", () => ({
 const Order = require("../../../models/Order");
 const { getPrismaClient } = require("../../../prisma/client");
 const {
+  buildMirroredAdminOrderListSummary,
   resolveOrdersPgMirrorMode,
   evaluateAdminOrderListRuntimeShadowVerification,
   evaluateAdminOrderListServingExperimentReadiness,
 } = require("../../../services/orderPostgresMirror");
 const adminOrdersRouter = require("../../../routes/adminOrders");
 
-describe("adminOrders route readiness controls (telemetry-only)", () => {
+describe("adminOrders route guarded serving-path experiment", () => {
   let app;
   let consoleWarnSpy;
   let consoleLogSpy;
+  let runtimeParity;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -71,6 +74,36 @@ describe("adminOrders route readiness controls (telemetry-only)", () => {
         ]),
       },
     });
+
+    runtimeParity = {
+      match: true,
+      mismatchClass: null,
+      comparatorConfidence: "high",
+      discrepancies: [],
+      coverage: { sourceCount: 1, mirroredCount: 1, coveredCount: 1 },
+      queryContract: { status: null, page: 1, limit: 20 },
+      mirroredResult: { page: 1, limit: 20, total: 1, ids: ["mongo-order-1"] },
+      mirroredOrders: [{ mongoId: "mongo-order-1", status: "paid" }],
+      runtimeLatencyMs: { sourceQuery: 12, mirrorQuery: 9, comparator: 2, sourceMirrorDelta: 3 },
+    };
+
+    resolveOrdersPgMirrorMode.mockReturnValue("best_effort");
+    evaluateAdminOrderListRuntimeShadowVerification.mockReturnValue(runtimeParity);
+    buildMirroredAdminOrderListSummary.mockReturnValue({
+      orderMongoId: "mongo-order-1",
+      orderExternalId: "ord_01hx00000000000000000001",
+      buyerMongoId: "buyer-1",
+      buyerExternalId: "usr_01hx00000000000000000001",
+      status: "paid",
+      currency: "USD",
+      paymentMethod: "cod",
+      total: "99.90",
+      totalAfterDiscount: "89.90",
+      discount: "10.00",
+      vendorCount: 2,
+      itemCount: 3,
+      invoiceCount: 1,
+    });
   });
 
   afterEach(() => {
@@ -78,16 +111,45 @@ describe("adminOrders route readiness controls (telemetry-only)", () => {
     consoleLogSpy.mockRestore();
   });
 
-  test("keeps readiness logic telemetry-only and serves Mongo orders", async () => {
-    resolveOrdersPgMirrorMode.mockReturnValue("best_effort");
-    evaluateAdminOrderListRuntimeShadowVerification.mockReturnValue({
-      match: false,
-      mismatchClass: "query-semantics",
-      comparatorConfidence: "low",
-      discrepancies: ["runtime.query.sort:mismatch"],
-      coverage: { sourceCount: 1, mirroredCount: 1, coveredCount: 1 },
-      queryContract: { status: "pending", page: 1, limit: 20 },
+  test("gate off -> Mongo serves", async () => {
+    evaluateAdminOrderListServingExperimentReadiness.mockReturnValue({
+      eligible: false,
+      blocked: true,
+      blockedReasons: ["gate-disabled"],
+      failClosedDefaultLegacy: true,
+      servingPathDecision: "blocked-legacy-only",
+      controls: { gate: "off", gateEnabled: false, killSwitchActive: false },
+      signals: { telemetryHealth: "healthy", comparatorHealth: "healthy" },
+      evaluationInputs: { mismatchClassSignal: "none" },
     });
+
+    const res = await request(app).get("/api/admin/orders");
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toEqual(mongoOrders);
+    expect(buildMirroredAdminOrderListSummary).not.toHaveBeenCalled();
+  });
+
+  test("kill switch active -> Mongo serves", async () => {
+    evaluateAdminOrderListServingExperimentReadiness.mockReturnValue({
+      eligible: false,
+      blocked: true,
+      blockedReasons: ["kill-switch-active"],
+      failClosedDefaultLegacy: true,
+      servingPathDecision: "blocked-legacy-only",
+      controls: { gate: "ready", gateEnabled: true, killSwitchActive: true },
+      signals: { telemetryHealth: "healthy", comparatorHealth: "healthy" },
+      evaluationInputs: { mismatchClassSignal: "none" },
+    });
+
+    const res = await request(app).get("/api/admin/orders");
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toEqual(mongoOrders);
+    expect(buildMirroredAdminOrderListSummary).not.toHaveBeenCalled();
+  });
+
+  test("readiness blocked -> Mongo serves", async () => {
     evaluateAdminOrderListServingExperimentReadiness.mockReturnValue({
       eligible: false,
       blocked: true,
@@ -103,21 +165,52 @@ describe("adminOrders route readiness controls (telemetry-only)", () => {
 
     expect(res.statusCode).toBe(200);
     expect(res.body).toEqual(mongoOrders);
-    expect(evaluateAdminOrderListRuntimeShadowVerification).toHaveBeenCalledTimes(1);
-    expect(evaluateAdminOrderListServingExperimentReadiness).toHaveBeenCalledWith(
-      expect.objectContaining({ runtimeParity: expect.any(Object) })
-    );
+    expect(buildMirroredAdminOrderListSummary).not.toHaveBeenCalled();
   });
 
-  test("comparator or readiness failure cannot switch serving path", async () => {
-    resolveOrdersPgMirrorMode.mockReturnValue("best_effort");
+  test("eligible guarded path -> PostgreSQL serves within covered contract", async () => {
+    evaluateAdminOrderListServingExperimentReadiness.mockReturnValue({
+      eligible: true,
+      blocked: false,
+      blockedReasons: [],
+      failClosedDefaultLegacy: true,
+      servingPathDecision: "eligible-for-future-experiment",
+      controls: { gate: "ready", gateEnabled: true, killSwitchActive: false },
+      signals: { telemetryHealth: "healthy", comparatorHealth: "healthy" },
+      evaluationInputs: { mismatchClassSignal: "none" },
+    });
+
+    const res = await request(app).get("/api/admin/orders");
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toEqual([
+      {
+        _id: "mongo-order-1",
+        orderExternalId: "ord_01hx00000000000000000001",
+        buyer: "buyer-1",
+        buyerExternalId: "usr_01hx00000000000000000001",
+        status: "paid",
+        currency: "USD",
+        paymentMethod: "cod",
+        total: 99.9,
+        totalAfterDiscount: 89.9,
+        discount: 10,
+        vendorCount: 2,
+        itemCount: 3,
+        invoiceCount: 1,
+      },
+    ]);
+    expect(buildMirroredAdminOrderListSummary).toHaveBeenCalledTimes(1);
+  });
+
+  test("degradation or comparator/parity failure -> immediate fallback to Mongo", async () => {
     evaluateAdminOrderListRuntimeShadowVerification.mockImplementation(() => {
       throw new Error("forced-comparator-failure");
     });
     evaluateAdminOrderListServingExperimentReadiness.mockReturnValue({
       eligible: false,
       blocked: true,
-      blockedReasons: ["comparator-error", "no-runtime-parity-signal"],
+      blockedReasons: ["comparator-error", "telemetry-health-degraded"],
       failClosedDefaultLegacy: true,
       servingPathDecision: "blocked-legacy-only",
       controls: { gate: "ready", gateEnabled: true, killSwitchActive: false },
@@ -135,5 +228,6 @@ describe("adminOrders route readiness controls (telemetry-only)", () => {
         comparatorError: "forced-comparator-failure",
       })
     );
+    expect(buildMirroredAdminOrderListSummary).not.toHaveBeenCalled();
   });
 });
