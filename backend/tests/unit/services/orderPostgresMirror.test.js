@@ -7,6 +7,7 @@ const {
   compareCanonicalIdentityCompleteness,
   compareCustomerOrderListSummaryShadowParity,
   compareOrderDetailShadowParity,
+  evaluateCustomerOrderHistoryServingExperimentReadiness,
   evaluateCustomerOrderHistoryRuntimeShadowVerification,
   evaluateAdminOrderListServingExperimentReadiness,
   evaluateAdminOrderListRuntimeShadowVerification,
@@ -14,6 +15,7 @@ const {
   compareVendorOrderListSummaryShadowParity,
   enrichVendorsWithCanonicalIdentity,
   resolveAdminOrderListServingExperimentControls,
+  resolveCustomerOrderHistoryServingExperimentControls,
   resolveBuyerExternalId,
   resolveOrderExternalId,
   resolveOrdersPgMirrorMode,
@@ -58,6 +60,31 @@ describe("orderPostgresMirror", () => {
     process.env.ADMIN_ORDER_LIST_PG_SERVING_EXPERIMENT_GATE = "invalid_gate";
 
     const controls = resolveAdminOrderListServingExperimentControls();
+
+    expect(controls.gate).toBe("off");
+    expect(controls.gateEnabled).toBe(false);
+  });
+
+  test("resolveCustomerOrderHistoryServingExperimentControls defaults to fail-closed legacy behavior", () => {
+    delete process.env.CUSTOMER_ORDER_HISTORY_PG_SERVING_EXPERIMENT_GATE;
+    delete process.env.CUSTOMER_ORDER_HISTORY_PG_SERVING_EXPERIMENT_KILL_SWITCH;
+
+    const controls = resolveCustomerOrderHistoryServingExperimentControls();
+
+    expect(controls).toMatchObject({
+      gate: "off",
+      gateEnabled: false,
+      killSwitchActive: false,
+      failClosedDefaultLegacy: true,
+    });
+    expect(controls.latencyGuards.maxSourceMirrorDeltaMs).toBeGreaterThan(0);
+    expect(controls.latencyGuards.maxComparatorMs).toBeGreaterThan(0);
+  });
+
+  test("resolveCustomerOrderHistoryServingExperimentControls falls back to off for invalid experiment gate", () => {
+    process.env.CUSTOMER_ORDER_HISTORY_PG_SERVING_EXPERIMENT_GATE = "invalid_gate";
+
+    const controls = resolveCustomerOrderHistoryServingExperimentControls();
 
     expect(controls.gate).toBe("off");
     expect(controls.gateEnabled).toBe(false);
@@ -1928,6 +1955,143 @@ describe("orderPostgresMirror", () => {
         expect.stringContaining("alias.contract.unsupported:/orders/history"),
       ])
     );
+  });
+
+  test("evaluateCustomerOrderHistoryServingExperimentReadiness blocks when gate is off", () => {
+    process.env.CUSTOMER_ORDER_HISTORY_PG_SERVING_EXPERIMENT_GATE = "off";
+
+    const readiness = evaluateCustomerOrderHistoryServingExperimentReadiness({
+      runtimeParity: {
+        match: true,
+        mismatchClass: null,
+        comparatorConfidence: "high",
+        discrepancies: [],
+        coverage: { sourceCount: 2, mirroredCount: 2, coveredCount: 2 },
+        queryContract: { buyerMongoId: "buyer-1", aliasPath: "/my-orders" },
+        runtimeLatencyMs: { sourceQuery: 12, mirrorQuery: 11, comparator: 3, sourceMirrorDelta: 1 },
+      },
+      aliasPath: "/my-orders",
+    });
+
+    expect(readiness.eligible).toBe(false);
+    expect(readiness.blocked).toBe(true);
+    expect(readiness.blockedReasons).toContain("gate-disabled");
+    expect(readiness.servingPathDecision).toBe("blocked-legacy-only");
+  });
+
+  test("evaluateCustomerOrderHistoryServingExperimentReadiness blocks when kill switch is active", () => {
+    process.env.CUSTOMER_ORDER_HISTORY_PG_SERVING_EXPERIMENT_GATE = "ready";
+    process.env.CUSTOMER_ORDER_HISTORY_PG_SERVING_EXPERIMENT_KILL_SWITCH = "true";
+
+    const readiness = evaluateCustomerOrderHistoryServingExperimentReadiness({
+      runtimeParity: {
+        match: true,
+        mismatchClass: null,
+        comparatorConfidence: "high",
+        discrepancies: [],
+        coverage: { sourceCount: 2, mirroredCount: 2, coveredCount: 2 },
+        queryContract: { buyerMongoId: "buyer-1", aliasPath: "/my" },
+        runtimeLatencyMs: { sourceQuery: 14, mirrorQuery: 10, comparator: 2, sourceMirrorDelta: 4 },
+      },
+      aliasPath: "/my",
+    });
+
+    expect(readiness.eligible).toBe(false);
+    expect(readiness.blockedReasons).toContain("kill-switch-active");
+    expect(readiness.failClosedDefaultLegacy).toBe(true);
+  });
+
+  test("evaluateCustomerOrderHistoryServingExperimentReadiness blocks when telemetry integrity is degraded", () => {
+    process.env.CUSTOMER_ORDER_HISTORY_PG_SERVING_EXPERIMENT_GATE = "ready";
+    delete process.env.CUSTOMER_ORDER_HISTORY_PG_SERVING_EXPERIMENT_KILL_SWITCH;
+
+    const readiness = evaluateCustomerOrderHistoryServingExperimentReadiness({
+      runtimeParity: {
+        match: false,
+        mismatchClass: "coverage-gap",
+        comparatorConfidence: "low",
+        discrepancies: [],
+        coverage: { sourceCount: 1, mirroredCount: 1, coveredCount: 0 },
+        queryContract: null,
+        runtimeLatencyMs: null,
+      },
+      aliasPath: "/my-orders",
+    });
+
+    expect(readiness.eligible).toBe(false);
+    expect(readiness.blockedReasons).toEqual(
+      expect.arrayContaining([
+        "telemetry-health-degraded",
+        "coverage-gap",
+        "mismatch-class-coverage-gap",
+      ])
+    );
+    expect(readiness.signals.comparatorHealth).toBe("healthy");
+    expect(readiness.signals.telemetryHealth).toBe("degraded");
+  });
+
+  test("evaluateCustomerOrderHistoryServingExperimentReadiness fails closed on comparator/runtime error", () => {
+    process.env.CUSTOMER_ORDER_HISTORY_PG_SERVING_EXPERIMENT_GATE = "ready";
+    delete process.env.CUSTOMER_ORDER_HISTORY_PG_SERVING_EXPERIMENT_KILL_SWITCH;
+
+    const readiness = evaluateCustomerOrderHistoryServingExperimentReadiness({
+      runtimeParity: null,
+      comparatorError: "forced-customer-comparator-failure",
+      aliasPath: "/my",
+    });
+
+    expect(readiness.eligible).toBe(false);
+    expect(readiness.blocked).toBe(true);
+    expect(readiness.blockedReasons).toEqual(
+      expect.arrayContaining([
+        "comparator-error",
+        "telemetry-health-degraded",
+        "comparator-health-degraded",
+        "no-runtime-parity-signal",
+      ])
+    );
+    expect(readiness.servingPathDecision).toBe("blocked-legacy-only");
+  });
+
+  test("evaluateCustomerOrderHistoryServingExperimentReadiness keeps alias classification consistent for /my-orders and /my", () => {
+    process.env.CUSTOMER_ORDER_HISTORY_PG_SERVING_EXPERIMENT_GATE = "ready";
+    process.env.CUSTOMER_ORDER_HISTORY_PG_SERVING_EXPERIMENT_KILL_SWITCH = "false";
+    process.env.CUSTOMER_ORDER_HISTORY_PG_READINESS_MAX_SOURCE_MIRROR_DELTA_MS = "50";
+    process.env.CUSTOMER_ORDER_HISTORY_PG_READINESS_MAX_COMPARATOR_MS = "50";
+
+    const baselineRuntimeParity = {
+      match: true,
+      mismatchClass: null,
+      comparatorConfidence: "high",
+      discrepancies: [],
+      coverage: { sourceCount: 3, mirroredCount: 3, coveredCount: 3 },
+      runtimeLatencyMs: { sourceQuery: 20, mirrorQuery: 18, comparator: 6, sourceMirrorDelta: 2 },
+    };
+
+    const myOrdersReadiness = evaluateCustomerOrderHistoryServingExperimentReadiness({
+      runtimeParity: {
+        ...baselineRuntimeParity,
+        queryContract: { buyerMongoId: "buyer-1", aliasPath: "/my-orders" },
+      },
+      aliasPath: "/my-orders",
+    });
+
+    const myAliasReadiness = evaluateCustomerOrderHistoryServingExperimentReadiness({
+      runtimeParity: {
+        ...baselineRuntimeParity,
+        queryContract: { buyerMongoId: "buyer-1", aliasPath: "/my" },
+      },
+      aliasPath: "/my",
+    });
+
+    expect(myOrdersReadiness.eligible).toBe(true);
+    expect(myAliasReadiness.eligible).toBe(true);
+    expect(myOrdersReadiness.blocked).toBe(false);
+    expect(myAliasReadiness.blocked).toBe(false);
+    expect(myOrdersReadiness.blockedReasons).toEqual([]);
+    expect(myAliasReadiness.blockedReasons).toEqual([]);
+    expect(myOrdersReadiness.servingPathDecision).toBe("eligible-for-future-experiment");
+    expect(myAliasReadiness.servingPathDecision).toBe("eligible-for-future-experiment");
   });
 
   test("evaluateAdminOrderListRuntimeShadowVerification reports match with high confidence when covered window parity holds", () => {

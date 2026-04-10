@@ -13,6 +13,7 @@ const {
 
 const VALID_MIRROR_MODES = new Set(["off", "best_effort"]);
 const VALID_ADMIN_ORDER_LIST_EXPERIMENT_GATES = new Set(["off", "ready"]);
+const VALID_CUSTOMER_ORDER_HISTORY_EXPERIMENT_GATES = new Set(["off", "ready"]);
 
 function parsePositiveInteger(rawValue, fallbackValue) {
   const numeric = Number(rawValue);
@@ -47,6 +48,41 @@ function resolveAdminOrderListServingExperimentControls() {
       ),
       maxComparatorMs: parsePositiveInteger(
         process.env.ADMIN_ORDER_LIST_PG_READINESS_MAX_COMPARATOR_MS,
+        1500
+      ),
+    },
+  };
+}
+
+function resolveCustomerOrderHistoryServingExperimentControls() {
+  const gateRaw = String(process.env.CUSTOMER_ORDER_HISTORY_PG_SERVING_EXPERIMENT_GATE || "").trim().toLowerCase();
+  let gate = gateRaw || "off";
+  if (!VALID_CUSTOMER_ORDER_HISTORY_EXPERIMENT_GATES.has(gate)) {
+    if (gateRaw) {
+      console.warn(
+        `[orders-postgres-mirror] Invalid CUSTOMER_ORDER_HISTORY_PG_SERVING_EXPERIMENT_GATE="${gateRaw}". Falling back to off.`
+      );
+    }
+    gate = "off";
+  }
+
+  const killSwitchRaw = String(process.env.CUSTOMER_ORDER_HISTORY_PG_SERVING_EXPERIMENT_KILL_SWITCH || "")
+    .trim()
+    .toLowerCase();
+  const killSwitchActive = killSwitchRaw === "true";
+
+  return {
+    gate,
+    gateEnabled: gate === "ready",
+    killSwitchActive,
+    failClosedDefaultLegacy: true,
+    latencyGuards: {
+      maxSourceMirrorDeltaMs: parsePositiveInteger(
+        process.env.CUSTOMER_ORDER_HISTORY_PG_READINESS_MAX_SOURCE_MIRROR_DELTA_MS,
+        2500
+      ),
+      maxComparatorMs: parsePositiveInteger(
+        process.env.CUSTOMER_ORDER_HISTORY_PG_READINESS_MAX_COMPARATOR_MS,
         1500
       ),
     },
@@ -1180,6 +1216,112 @@ function evaluateCustomerOrderHistoryRuntimeShadowVerification(
   };
 }
 
+function evaluateCustomerOrderHistoryServingExperimentReadiness({ runtimeParity, comparatorError, aliasPath } = {}) {
+  const controls = resolveCustomerOrderHistoryServingExperimentControls();
+  const hasRuntimeParity = Boolean(runtimeParity && typeof runtimeParity === "object");
+  const runtimeLatency = hasRuntimeParity && runtimeParity.runtimeLatencyMs ? runtimeParity.runtimeLatencyMs : null;
+
+  const alias = aliasPath ? String(aliasPath) : null;
+  const supportedAliases = new Set(["/my-orders", "/my"]);
+  const aliasSupported = alias ? supportedAliases.has(alias) : false;
+  const runtimeAlias =
+    hasRuntimeParity && runtimeParity.queryContract && runtimeParity.queryContract.aliasPath
+      ? String(runtimeParity.queryContract.aliasPath)
+      : null;
+  const runtimeAliasSupported = runtimeAlias ? supportedAliases.has(runtimeAlias) : true;
+  const aliasContractAligned = Boolean(!alias || !runtimeAlias || alias === runtimeAlias);
+
+  const sourceMirrorDeltaMs = Number(runtimeLatency && runtimeLatency.sourceMirrorDelta);
+  const comparatorMs = Number(runtimeLatency && runtimeLatency.comparator);
+  const sourceMirrorDeltaExceeded =
+    Number.isFinite(sourceMirrorDeltaMs) && sourceMirrorDeltaMs > controls.latencyGuards.maxSourceMirrorDeltaMs;
+  const comparatorExceeded = Number.isFinite(comparatorMs) && comparatorMs > controls.latencyGuards.maxComparatorMs;
+
+  const comparatorHealthy =
+    hasRuntimeParity &&
+    Array.isArray(runtimeParity.discrepancies) &&
+    runtimeParity.coverage &&
+    Number.isFinite(Number(runtimeParity.coverage.coveredCount));
+
+  const telemetryHealthy =
+    hasRuntimeParity &&
+    runtimeParity.queryContract &&
+    runtimeParity.coverage &&
+    Number.isFinite(Number(runtimeParity.coverage.sourceCount)) &&
+    Number.isFinite(Number(runtimeParity.coverage.mirroredCount)) &&
+    Number.isFinite(Number(runtimeParity.coverage.coveredCount)) &&
+    runtimeLatency &&
+    Number.isFinite(Number(runtimeLatency.sourceQuery)) &&
+    Number.isFinite(Number(runtimeLatency.mirrorQuery)) &&
+    Number.isFinite(Number(runtimeLatency.comparator)) &&
+    Number.isFinite(Number(runtimeLatency.sourceMirrorDelta));
+
+  const mismatchClassSignal = hasRuntimeParity
+    ? runtimeParity.mismatchClass || "none"
+    : comparatorError
+      ? "comparator-error"
+      : "missing-runtime-parity";
+
+  const blockedReasons = [];
+  if (!controls.gateEnabled) blockedReasons.push("gate-disabled");
+  if (controls.killSwitchActive) blockedReasons.push("kill-switch-active");
+  if (comparatorError) blockedReasons.push("comparator-error");
+  if (!aliasSupported) blockedReasons.push("alias-contract-unsupported-request-path");
+  if (!runtimeAliasSupported) blockedReasons.push("alias-contract-runtime-unsupported");
+  if (!aliasContractAligned) blockedReasons.push("alias-contract-request-runtime-drift");
+  if (!telemetryHealthy) blockedReasons.push("telemetry-health-degraded");
+  if (!comparatorHealthy) blockedReasons.push("comparator-health-degraded");
+
+  const coverage = hasRuntimeParity && runtimeParity.coverage ? runtimeParity.coverage : null;
+  if (coverage && Number(coverage.coveredCount) <= 0) blockedReasons.push("coverage-gap");
+
+  if (hasRuntimeParity && runtimeParity.mismatchClass) {
+    blockedReasons.push(`mismatch-class-${runtimeParity.mismatchClass}`);
+  }
+  if (sourceMirrorDeltaExceeded) blockedReasons.push("latency-guard-source-mirror-delta-exceeded");
+  if (comparatorExceeded) blockedReasons.push("latency-guard-comparator-exceeded");
+  if (!hasRuntimeParity) blockedReasons.push("no-runtime-parity-signal");
+
+  const dedupedBlockedReasons = Array.from(new Set(blockedReasons));
+  const blocked = dedupedBlockedReasons.length > 0;
+  const eligible = !blocked;
+
+  return {
+    eligible,
+    blocked,
+    blockedReasons: dedupedBlockedReasons,
+    failClosedDefaultLegacy: true,
+    controls,
+    evaluationInputs: {
+      gate: controls.gate,
+      killSwitchActive: controls.killSwitchActive,
+      aliasPath: alias,
+      runtimeAliasPath: runtimeAlias,
+      aliasContractAligned,
+      mismatchClassSignal,
+      comparatorConfidence: hasRuntimeParity ? runtimeParity.comparatorConfidence || null : null,
+      discrepancyCount: hasRuntimeParity && Array.isArray(runtimeParity.discrepancies)
+        ? runtimeParity.discrepancies.length
+        : null,
+      coverage,
+      latencyMs: runtimeLatency,
+    },
+    signals: {
+      mismatchClass: mismatchClassSignal,
+      aliasContract: aliasContractAligned && aliasSupported && runtimeAliasSupported ? "aligned" : "degraded",
+      telemetryHealth: telemetryHealthy ? "healthy" : "degraded",
+      comparatorHealth: comparatorHealthy ? "healthy" : "degraded",
+      latencyGuard: {
+        sourceMirrorDeltaMs: Number.isFinite(sourceMirrorDeltaMs) ? sourceMirrorDeltaMs : null,
+        comparatorMs: Number.isFinite(comparatorMs) ? comparatorMs : null,
+        sourceMirrorDeltaExceeded,
+        comparatorExceeded,
+      },
+    },
+    servingPathDecision: blocked ? "blocked-legacy-only" : "eligible-for-future-experiment",
+  };
+}
+
 function evaluateAdminOrderListServingExperimentReadiness({ runtimeParity, comparatorError } = {}) {
   const controls = resolveAdminOrderListServingExperimentControls();
   const hasRuntimeParity = Boolean(runtimeParity && typeof runtimeParity === "object");
@@ -1850,6 +1992,7 @@ module.exports = {
   compareCanonicalIdentityCompleteness,
   compareCustomerOrderListSummaryShadowParity,
   compareOrderDetailShadowParity,
+  evaluateCustomerOrderHistoryServingExperimentReadiness,
   evaluateCustomerOrderHistoryRuntimeShadowVerification,
   evaluateAdminOrderListServingExperimentReadiness,
   evaluateAdminOrderListRuntimeShadowVerification,
@@ -1858,6 +2001,7 @@ module.exports = {
   enrichVendorsWithCanonicalIdentity,
   mirrorOrderCreationToPostgres,
   resolveBuyerExternalId,
+  resolveCustomerOrderHistoryServingExperimentControls,
   resolveOrderExternalId,
   resolveAdminOrderListServingExperimentControls,
   resolveOrdersPgMirrorMode,
