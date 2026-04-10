@@ -3,10 +3,84 @@ const router = express.Router();
 const Order = require('../models/Order');
 const ReturnRequest = require('../models/ReturnRequest');
 const { protect, authorize } = require('../middleware/authMiddleware');
+const { getPrismaClient } = require('../prisma/client');
+const {
+  evaluateAdminOrderListRuntimeShadowVerification,
+  resolveOrdersPgMirrorMode,
+} = require('../services/orderPostgresMirror');
+
+async function runAdminOrderListRuntimeShadowVerification({ sourceOrders, sourceQueryMs, query }) {
+  const mode = resolveOrdersPgMirrorMode();
+  if (mode === 'off') {
+    return null;
+  }
+
+  const sourceIds = (Array.isArray(sourceOrders) ? sourceOrders : [])
+    .map((order) => (order && order._id ? String(order._id) : ''))
+    .filter(Boolean);
+
+  if (sourceIds.length === 0) {
+    return {
+      match: false,
+      mismatchClass: 'coverage-gap',
+      comparatorConfidence: 'low',
+      discrepancies: ['runtime.query.coverage:empty-source-order-list'],
+      coverage: { sourceCount: 0, mirroredCount: 0, coveredCount: 0 },
+      queryContract: {
+        status: query && query.status ? String(query.status).toLowerCase() : null,
+        fromTimestamp: null,
+        toTimestamp: null,
+        page: Number(query && query.page) || 1,
+        limit: Number(query && query.limit) || 20,
+      },
+      sourceResult: { page: Number(query && query.page) || 1, limit: Number(query && query.limit) || 20, total: 0, ids: [] },
+      mirroredResult: { page: Number(query && query.page) || 1, limit: Number(query && query.limit) || 20, total: 0, ids: [] },
+      runtimeLatencyMs: {
+        sourceQuery: sourceQueryMs,
+        mirrorQuery: 0,
+        comparator: 0,
+        sourceMirrorDelta: sourceQueryMs,
+      },
+    };
+  }
+
+  const prisma = getPrismaClient();
+  const mirrorStart = Date.now();
+  const mirroredOrders = await prisma.orderMirror.findMany({
+    where: {
+      mongoId: {
+        in: sourceIds,
+      },
+    },
+    include: {
+      vendors: {
+        include: {
+          items: true,
+        },
+      },
+    },
+  });
+  const mirrorQueryMs = Date.now() - mirrorStart;
+
+  const compareStart = Date.now();
+  const comparison = evaluateAdminOrderListRuntimeShadowVerification(sourceOrders, mirroredOrders, query || {});
+  const comparatorMs = Date.now() - compareStart;
+
+  return {
+    ...comparison,
+    runtimeLatencyMs: {
+      sourceQuery: sourceQueryMs,
+      mirrorQuery: mirrorQueryMs,
+      comparator: comparatorMs,
+      sourceMirrorDelta: Math.abs(sourceQueryMs - mirrorQueryMs),
+    },
+  };
+}
 
 // GET /api/admin/orders - Return real orders; if none, create a minimal one for test determinism
 router.get('/', protect, authorize('admin', 'global_admin'), async (req, res) => {
   try {
+    const sourceQueryStart = Date.now();
     let orders = await Order.find().limit(100).lean();
     if (!orders || orders.length === 0) {
       // Best-effort: create a minimal valid order using existing seeded docs
@@ -50,6 +124,41 @@ router.get('/', protect, authorize('admin', 'global_admin'), async (req, res) =>
         // ignore seed-on-demand errors; return empty array below
       }
     }
+
+    const sourceQueryMs = Date.now() - sourceQueryStart;
+    try {
+      const runtimeParity = await runAdminOrderListRuntimeShadowVerification({
+        sourceOrders: orders,
+        sourceQueryMs,
+        query: req.query,
+      });
+
+      if (runtimeParity) {
+        const telemetry = {
+          event: 'admin-order-list-runtime-read-shadow-verification',
+          match: runtimeParity.match,
+          mismatchClass: runtimeParity.mismatchClass,
+          comparatorConfidence: runtimeParity.comparatorConfidence,
+          coverage: runtimeParity.coverage,
+          queryContract: runtimeParity.queryContract,
+          discrepancyCount: Array.isArray(runtimeParity.discrepancies) ? runtimeParity.discrepancies.length : 0,
+          discrepancySamples: Array.isArray(runtimeParity.discrepancies)
+            ? runtimeParity.discrepancies.slice(0, 3)
+            : [],
+          latencyMs: runtimeParity.runtimeLatencyMs,
+        };
+
+        if (!runtimeParity.match) {
+          console.warn(`[orders-postgres-mirror] ${JSON.stringify(telemetry)}`);
+        } else if (String(process.env.ORDERS_PG_MIRROR_LOG_SUCCESS || '').toLowerCase() === 'true') {
+          console.log(`[orders-postgres-mirror] ${JSON.stringify(telemetry)}`);
+        }
+      }
+    } catch (shadowError) {
+      const message = shadowError && shadowError.message ? shadowError.message : String(shadowError);
+      console.warn(`[orders-postgres-mirror] admin-order-list runtime read-shadow verification skipped: ${message}`);
+    }
+
     // Return array directly to align with tests expecting an array response
     return res.json(Array.isArray(orders) ? orders : []);
   } catch (e) {

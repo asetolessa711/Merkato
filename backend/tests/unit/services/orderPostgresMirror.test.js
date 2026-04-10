@@ -7,6 +7,7 @@ const {
   compareCanonicalIdentityCompleteness,
   compareCustomerOrderListSummaryShadowParity,
   compareOrderDetailShadowParity,
+  evaluateAdminOrderListRuntimeShadowVerification,
   compareMirrorSummary,
   compareVendorOrderListSummaryShadowParity,
   enrichVendorsWithCanonicalIdentity,
@@ -1776,5 +1777,199 @@ describe("orderPostgresMirror", () => {
     );
 
     expect(discrepancies).toEqual([]);
+  });
+
+  test("evaluateAdminOrderListRuntimeShadowVerification reports match with high confidence when covered window parity holds", () => {
+    const result = evaluateAdminOrderListRuntimeShadowVerification(
+      [
+        {
+          _id: "order-1",
+          buyer: "buyer-1",
+          status: "pending",
+          currency: "USD",
+          paymentMethod: "cod",
+          total: 80,
+          totalAfterDiscount: 80,
+          discount: 0,
+          vendors: [{ products: [{}], invoiceId: "inv-1" }],
+          createdAt: "2024-01-03T00:00:00.000Z",
+        },
+        {
+          _id: "order-2",
+          buyer: "buyer-2",
+          status: "delivered",
+          currency: "USD",
+          paymentMethod: "stripe",
+          total: 40,
+          totalAfterDiscount: 40,
+          discount: 0,
+          vendors: [{ products: [{}] }],
+          createdAt: "2024-01-02T00:00:00.000Z",
+        },
+      ],
+      [
+        {
+          mongoId: "order-1",
+          buyerMongoId: "buyer-1",
+          status: "pending",
+          currency: "USD",
+          paymentMethod: "cod",
+          total: 80,
+          totalAfterDiscount: 80,
+          discount: 0,
+          vendorCount: 1,
+          itemCount: 1,
+          invoiceCount: 1,
+          sourceCreatedAt: "2024-01-03T00:00:00.000Z",
+        },
+        {
+          mongoId: "order-2",
+          buyerMongoId: "buyer-2",
+          status: "delivered",
+          currency: "USD",
+          paymentMethod: "stripe",
+          total: 40,
+          totalAfterDiscount: 40,
+          discount: 0,
+          vendorCount: 1,
+          itemCount: 1,
+          invoiceCount: 0,
+          sourceCreatedAt: "2024-01-02T00:00:00.000Z",
+        },
+      ],
+      {
+        status: "pending",
+        page: 1,
+        limit: 10,
+      }
+    );
+
+    expect(result.match).toBe(true);
+    expect(result.mismatchClass).toBeNull();
+    expect(result.comparatorConfidence).toBe("high");
+    expect(result.coverage).toEqual({ sourceCount: 2, mirroredCount: 2, coveredCount: 2 });
+    expect(result.discrepancies).toEqual([]);
+    expect(result.sourceResult.ids).toEqual(["order-1"]);
+    expect(result.mirroredResult.ids).toEqual(["order-1"]);
+  });
+
+  test("evaluateAdminOrderListRuntimeShadowVerification classifies query semantics mismatch for live window drift", () => {
+    const result = evaluateAdminOrderListRuntimeShadowVerification(
+      [
+        {
+          _id: "order-1",
+          buyer: "buyer-1",
+          status: "pending",
+          currency: "USD",
+          paymentMethod: "cod",
+          total: 80,
+          totalAfterDiscount: 80,
+          discount: 0,
+          vendors: [{ products: [{}], invoiceId: "inv-1" }],
+          createdAt: "2024-01-03T00:00:00.000Z",
+        },
+        {
+          _id: "order-2",
+          buyer: "buyer-2",
+          status: "pending",
+          currency: "USD",
+          paymentMethod: "cod",
+          total: 40,
+          totalAfterDiscount: 40,
+          discount: 0,
+          vendors: [{ products: [{}] }],
+          createdAt: "2024-01-02T00:00:00.000Z",
+        },
+      ],
+      [
+        {
+          mongoId: "order-1",
+          buyerMongoId: "buyer-1",
+          status: "pending",
+          currency: "USD",
+          paymentMethod: "cod",
+          total: 80,
+          totalAfterDiscount: 80,
+          discount: 0,
+          vendorCount: 1,
+          itemCount: 1,
+          invoiceCount: 1,
+          sourceCreatedAt: "2024-01-01T00:00:00.000Z",
+        },
+        {
+          mongoId: "order-2",
+          buyerMongoId: "buyer-2",
+          status: "pending",
+          currency: "USD",
+          paymentMethod: "cod",
+          total: 40,
+          totalAfterDiscount: 40,
+          discount: 0,
+          vendorCount: 1,
+          itemCount: 1,
+          invoiceCount: 0,
+          sourceCreatedAt: "2024-01-02T00:00:00.000Z",
+        },
+      ],
+      {
+        status: "pending",
+        page: 1,
+        limit: 1,
+      }
+    );
+
+    expect(result.match).toBe(false);
+    expect(result.mismatchClass).toBe("query-semantics-mismatch");
+    expect(result.comparatorConfidence).toBe("high");
+    expect(result.discrepancies).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining("runtime.query.window:"),
+      ])
+    );
+  });
+
+  test("evaluateAdminOrderListRuntimeShadowVerification classifies coverage gap when no mirrored overlap exists", () => {
+    const result = evaluateAdminOrderListRuntimeShadowVerification(
+      [
+        {
+          _id: "order-1",
+          buyer: "buyer-1",
+          status: "pending",
+          currency: "USD",
+          paymentMethod: "cod",
+          total: 80,
+          totalAfterDiscount: 80,
+          discount: 0,
+          vendors: [{ products: [{}], invoiceId: "inv-1" }],
+          createdAt: "2024-01-03T00:00:00.000Z",
+        },
+      ],
+      [
+        {
+          mongoId: "order-other",
+          buyerMongoId: "buyer-x",
+          status: "pending",
+          currency: "USD",
+          paymentMethod: "cod",
+          total: 10,
+          totalAfterDiscount: 10,
+          discount: 0,
+          vendorCount: 1,
+          itemCount: 1,
+          invoiceCount: 0,
+          sourceCreatedAt: "2024-01-01T00:00:00.000Z",
+        },
+      ],
+      {
+        page: 1,
+        limit: 10,
+      }
+    );
+
+    expect(result.match).toBe(false);
+    expect(result.mismatchClass).toBe("coverage-gap");
+    expect(result.comparatorConfidence).toBe("low");
+    expect(result.coverage).toEqual({ sourceCount: 1, mirroredCount: 1, coveredCount: 0 });
+    expect(result.discrepancies).toEqual([]);
   });
 });

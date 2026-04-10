@@ -778,12 +778,12 @@ function applyAdminOrderListQuerySemantics(summaries, query) {
     ? fromTimestampRaw
     : fromDate
       ? fromDate.getTime()
-      : null;
+      : undefined;
   const toTimestamp = Number.isFinite(toTimestampRaw)
     ? toTimestampRaw
     : toDateValue
       ? toDateValue.getTime()
-      : null;
+      : undefined;
 
   const filtered = source.filter((summary) => {
     if (!summary || !summary.orderMongoId) return false;
@@ -792,11 +792,11 @@ function applyAdminOrderListQuerySemantics(summaries, query) {
       return false;
     }
 
-    if (fromTimestamp !== null && summary.sortTimestamp < fromTimestamp) {
+    if (fromTimestamp != null && summary.sortTimestamp < fromTimestamp) {
       return false;
     }
 
-    if (toTimestamp !== null && summary.sortTimestamp > toTimestamp) {
+    if (toTimestamp != null && summary.sortTimestamp > toTimestamp) {
       return false;
     }
 
@@ -914,6 +914,111 @@ function compareAdminOrderListQuerySemanticsShadowParity(sourceOrders, mirroredO
   });
 
   return discrepancies;
+}
+
+function buildAdminOrderListRuntimeQueryContract(rawQuery) {
+  const query = rawQuery || {};
+
+  const statusRaw = query.status === undefined || query.status === null ? "" : String(query.status).trim();
+  const status = statusRaw ? statusRaw.toLowerCase() : null;
+
+  const fromTimestampRaw = Number(query.fromTimestamp);
+  const toTimestampRaw = Number(query.toTimestamp);
+  const fromDate = toDate(query.fromDate);
+  const toDateValue = toDate(query.toDate);
+  const fromTimestamp = Number.isFinite(fromTimestampRaw)
+    ? fromTimestampRaw
+    : fromDate
+      ? fromDate.getTime()
+      : undefined;
+  const toTimestamp = Number.isFinite(toTimestampRaw)
+    ? toTimestampRaw
+    : toDateValue
+      ? toDateValue.getTime()
+      : undefined;
+
+  const pageRaw = Number(query.page);
+  const limitRaw = Number(query.limit);
+  const page = Number.isFinite(pageRaw) && pageRaw > 0 ? Math.floor(pageRaw) : 1;
+  const limit = Number.isFinite(limitRaw) && limitRaw > 0 ? Math.floor(limitRaw) : 20;
+
+  return {
+    status,
+    fromTimestamp,
+    toTimestamp,
+    page,
+    limit,
+  };
+}
+
+function evaluateAdminOrderListRuntimeShadowVerification(sourceOrders, mirroredOrders, rawQuery) {
+  const sourceSummaries = (Array.isArray(sourceOrders) ? sourceOrders : [])
+    .map((order) => buildSourceAdminOrderListSummary(order))
+    .filter((summary) => summary.orderMongoId);
+
+  const mirroredSummaries = (Array.isArray(mirroredOrders) ? mirroredOrders : [])
+    .map((order) => buildMirroredAdminOrderListSummary(order))
+    .filter((summary) => summary.orderMongoId);
+
+  const mirroredById = new Map();
+  mirroredSummaries.forEach((summary) => {
+    mirroredById.set(summary.orderMongoId, summary);
+  });
+
+  const coveredSourceSummaries = [];
+  const coveredMirroredSummaries = [];
+  sourceSummaries.forEach((sourceSummary) => {
+    const mirroredSummary = mirroredById.get(sourceSummary.orderMongoId);
+    if (!mirroredSummary) return;
+    coveredSourceSummaries.push(sourceSummary);
+    coveredMirroredSummaries.push(mirroredSummary);
+  });
+
+  const queryContract = buildAdminOrderListRuntimeQueryContract(rawQuery);
+  const sourceResult = applyAdminOrderListQuerySemantics(coveredSourceSummaries, queryContract);
+  const mirroredResult = applyAdminOrderListQuerySemantics(coveredMirroredSummaries, queryContract);
+
+  const discrepancies = [];
+  if (sourceResult.total !== mirroredResult.total) {
+    discrepancies.push(`runtime.query.total:${sourceResult.total}->${mirroredResult.total}`);
+  }
+
+  const expectedWindow = sourceResult.ids.join("|");
+  const actualWindow = mirroredResult.ids.join("|");
+  if (expectedWindow !== actualWindow) {
+    discrepancies.push(`runtime.query.window:${expectedWindow}->${actualWindow}`);
+  }
+
+  const coverage = {
+    sourceCount: sourceSummaries.length,
+    mirroredCount: mirroredSummaries.length,
+    coveredCount: coveredSourceSummaries.length,
+  };
+
+  let comparatorConfidence = "low";
+  if (coverage.coveredCount > 0 && coverage.coveredCount < coverage.sourceCount) {
+    comparatorConfidence = "medium";
+  }
+  if (coverage.coveredCount > 0 && coverage.coveredCount === coverage.sourceCount) {
+    comparatorConfidence = "high";
+  }
+
+  let mismatchClass = null;
+  if (coverage.coveredCount === 0) mismatchClass = "coverage-gap";
+  if (discrepancies.length > 0) mismatchClass = "query-semantics-mismatch";
+
+  const match = discrepancies.length === 0 && coverage.coveredCount > 0;
+
+  return {
+    match,
+    mismatchClass,
+    comparatorConfidence,
+    discrepancies,
+    coverage,
+    queryContract,
+    sourceResult,
+    mirroredResult,
+  };
 }
 
 function compareAdminOrderListSummaryShadowParity(sourceOrders, mirroredOrders) {
@@ -1498,6 +1603,7 @@ module.exports = {
   compareCanonicalIdentityCompleteness,
   compareCustomerOrderListSummaryShadowParity,
   compareOrderDetailShadowParity,
+  evaluateAdminOrderListRuntimeShadowVerification,
   compareMirrorSummary,
   compareVendorOrderListSummaryShadowParity,
   enrichVendorsWithCanonicalIdentity,
