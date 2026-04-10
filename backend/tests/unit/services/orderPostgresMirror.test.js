@@ -7,10 +7,12 @@ const {
   compareCanonicalIdentityCompleteness,
   compareCustomerOrderListSummaryShadowParity,
   compareOrderDetailShadowParity,
+  evaluateAdminOrderListServingExperimentReadiness,
   evaluateAdminOrderListRuntimeShadowVerification,
   compareMirrorSummary,
   compareVendorOrderListSummaryShadowParity,
   enrichVendorsWithCanonicalIdentity,
+  resolveAdminOrderListServingExperimentControls,
   resolveBuyerExternalId,
   resolveOrderExternalId,
   resolveOrdersPgMirrorMode,
@@ -33,6 +35,31 @@ describe("orderPostgresMirror", () => {
     process.env.ORDERS_PG_MIRROR_MODE = "unsupported";
 
     expect(resolveOrdersPgMirrorMode()).toBe("off");
+  });
+
+  test("resolveAdminOrderListServingExperimentControls defaults to fail-closed legacy behavior", () => {
+    delete process.env.ADMIN_ORDER_LIST_PG_SERVING_EXPERIMENT_GATE;
+    delete process.env.ADMIN_ORDER_LIST_PG_SERVING_EXPERIMENT_KILL_SWITCH;
+
+    const controls = resolveAdminOrderListServingExperimentControls();
+
+    expect(controls).toMatchObject({
+      gate: "off",
+      gateEnabled: false,
+      killSwitchActive: false,
+      failClosedDefaultLegacy: true,
+    });
+    expect(controls.latencyGuards.maxSourceMirrorDeltaMs).toBeGreaterThan(0);
+    expect(controls.latencyGuards.maxComparatorMs).toBeGreaterThan(0);
+  });
+
+  test("resolveAdminOrderListServingExperimentControls falls back to off for invalid experiment gate", () => {
+    process.env.ADMIN_ORDER_LIST_PG_SERVING_EXPERIMENT_GATE = "invalid_gate";
+
+    const controls = resolveAdminOrderListServingExperimentControls();
+
+    expect(controls.gate).toBe("off");
+    expect(controls.gateEnabled).toBe(false);
   });
 
   test("builds vendor rows with richer mirrored shape", () => {
@@ -1971,5 +1998,101 @@ describe("orderPostgresMirror", () => {
     expect(result.comparatorConfidence).toBe("low");
     expect(result.coverage).toEqual({ sourceCount: 1, mirroredCount: 1, coveredCount: 0 });
     expect(result.discrepancies).toEqual([]);
+  });
+
+  test("evaluateAdminOrderListServingExperimentReadiness blocks when gate is off", () => {
+    process.env.ADMIN_ORDER_LIST_PG_SERVING_EXPERIMENT_GATE = "off";
+
+    const readiness = evaluateAdminOrderListServingExperimentReadiness({
+      runtimeParity: {
+        match: true,
+        mismatchClass: null,
+        comparatorConfidence: "high",
+        discrepancies: [],
+        coverage: { sourceCount: 3, mirroredCount: 3, coveredCount: 3 },
+        queryContract: { status: "pending", page: 1, limit: 10 },
+        runtimeLatencyMs: { sourceQuery: 12, mirrorQuery: 11, comparator: 3, sourceMirrorDelta: 1 },
+      },
+    });
+
+    expect(readiness.eligible).toBe(false);
+    expect(readiness.blocked).toBe(true);
+    expect(readiness.blockedReasons).toContain("gate-disabled");
+    expect(readiness.servingPathDecision).toBe("blocked-legacy-only");
+  });
+
+  test("evaluateAdminOrderListServingExperimentReadiness blocks when kill switch is active", () => {
+    process.env.ADMIN_ORDER_LIST_PG_SERVING_EXPERIMENT_GATE = "ready";
+    process.env.ADMIN_ORDER_LIST_PG_SERVING_EXPERIMENT_KILL_SWITCH = "true";
+
+    const readiness = evaluateAdminOrderListServingExperimentReadiness({
+      runtimeParity: {
+        match: true,
+        mismatchClass: null,
+        comparatorConfidence: "high",
+        discrepancies: [],
+        coverage: { sourceCount: 2, mirroredCount: 2, coveredCount: 2 },
+        queryContract: { status: null, page: 1, limit: 20 },
+        runtimeLatencyMs: { sourceQuery: 14, mirrorQuery: 10, comparator: 2, sourceMirrorDelta: 4 },
+      },
+    });
+
+    expect(readiness.eligible).toBe(false);
+    expect(readiness.blockedReasons).toContain("kill-switch-active");
+    expect(readiness.failClosedDefaultLegacy).toBe(true);
+  });
+
+  test("evaluateAdminOrderListServingExperimentReadiness blocks when telemetry integrity is degraded", () => {
+    process.env.ADMIN_ORDER_LIST_PG_SERVING_EXPERIMENT_GATE = "ready";
+    delete process.env.ADMIN_ORDER_LIST_PG_SERVING_EXPERIMENT_KILL_SWITCH;
+
+    const readiness = evaluateAdminOrderListServingExperimentReadiness({
+      runtimeParity: {
+        match: false,
+        mismatchClass: "coverage-gap",
+        comparatorConfidence: "low",
+        discrepancies: [],
+        coverage: { sourceCount: 1, mirroredCount: 1, coveredCount: 0 },
+        queryContract: null,
+        runtimeLatencyMs: null,
+      },
+    });
+
+    expect(readiness.eligible).toBe(false);
+    expect(readiness.blockedReasons).toEqual(
+      expect.arrayContaining([
+        "telemetry-health-degraded",
+        "coverage-gap",
+        "mismatch-class-coverage-gap",
+      ])
+    );
+    expect(readiness.signals.comparatorHealth).toBe("healthy");
+    expect(readiness.signals.telemetryHealth).toBe("degraded");
+  });
+
+  test("evaluateAdminOrderListServingExperimentReadiness can classify eligible inputs while remaining non-serving", () => {
+    process.env.ADMIN_ORDER_LIST_PG_SERVING_EXPERIMENT_GATE = "ready";
+    process.env.ADMIN_ORDER_LIST_PG_SERVING_EXPERIMENT_KILL_SWITCH = "false";
+    process.env.ADMIN_ORDER_LIST_PG_READINESS_MAX_SOURCE_MIRROR_DELTA_MS = "50";
+    process.env.ADMIN_ORDER_LIST_PG_READINESS_MAX_COMPARATOR_MS = "50";
+
+    const readiness = evaluateAdminOrderListServingExperimentReadiness({
+      runtimeParity: {
+        match: true,
+        mismatchClass: null,
+        comparatorConfidence: "high",
+        discrepancies: [],
+        coverage: { sourceCount: 4, mirroredCount: 4, coveredCount: 4 },
+        queryContract: { status: "pending", page: 1, limit: 10 },
+        runtimeLatencyMs: { sourceQuery: 20, mirrorQuery: 18, comparator: 6, sourceMirrorDelta: 2 },
+      },
+    });
+
+    expect(readiness.eligible).toBe(true);
+    expect(readiness.blocked).toBe(false);
+    expect(readiness.blockedReasons).toEqual([]);
+    expect(readiness.signals.telemetryHealth).toBe("healthy");
+    expect(readiness.signals.comparatorHealth).toBe("healthy");
+    expect(readiness.servingPathDecision).toBe("eligible-for-future-experiment");
   });
 });

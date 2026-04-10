@@ -12,6 +12,46 @@ const {
 } = require("../utils/externalId");
 
 const VALID_MIRROR_MODES = new Set(["off", "best_effort"]);
+const VALID_ADMIN_ORDER_LIST_EXPERIMENT_GATES = new Set(["off", "ready"]);
+
+function parsePositiveInteger(rawValue, fallbackValue) {
+  const numeric = Number(rawValue);
+  if (!Number.isFinite(numeric) || numeric <= 0) return fallbackValue;
+  return Math.floor(numeric);
+}
+
+function resolveAdminOrderListServingExperimentControls() {
+  const gateRaw = String(process.env.ADMIN_ORDER_LIST_PG_SERVING_EXPERIMENT_GATE || "").trim().toLowerCase();
+  let gate = gateRaw || "off";
+  if (!VALID_ADMIN_ORDER_LIST_EXPERIMENT_GATES.has(gate)) {
+    if (gateRaw) {
+      console.warn(
+        `[orders-postgres-mirror] Invalid ADMIN_ORDER_LIST_PG_SERVING_EXPERIMENT_GATE=\"${gateRaw}\". Falling back to off.`
+      );
+    }
+    gate = "off";
+  }
+
+  const killSwitchRaw = String(process.env.ADMIN_ORDER_LIST_PG_SERVING_EXPERIMENT_KILL_SWITCH || "").trim().toLowerCase();
+  const killSwitchActive = killSwitchRaw === "true";
+
+  return {
+    gate,
+    gateEnabled: gate === "ready",
+    killSwitchActive,
+    failClosedDefaultLegacy: true,
+    latencyGuards: {
+      maxSourceMirrorDeltaMs: parsePositiveInteger(
+        process.env.ADMIN_ORDER_LIST_PG_READINESS_MAX_SOURCE_MIRROR_DELTA_MS,
+        2500
+      ),
+      maxComparatorMs: parsePositiveInteger(
+        process.env.ADMIN_ORDER_LIST_PG_READINESS_MAX_COMPARATOR_MS,
+        1500
+      ),
+    },
+  };
+}
 
 function resolveOrdersPgMirrorMode() {
   const rawMode = String(process.env.ORDERS_PG_MIRROR_MODE || "").trim().toLowerCase();
@@ -1021,6 +1061,94 @@ function evaluateAdminOrderListRuntimeShadowVerification(sourceOrders, mirroredO
   };
 }
 
+function evaluateAdminOrderListServingExperimentReadiness({ runtimeParity, comparatorError } = {}) {
+  const controls = resolveAdminOrderListServingExperimentControls();
+  const hasRuntimeParity = Boolean(runtimeParity && typeof runtimeParity === "object");
+  const runtimeLatency = hasRuntimeParity && runtimeParity.runtimeLatencyMs ? runtimeParity.runtimeLatencyMs : null;
+
+  const sourceMirrorDeltaMs = Number(runtimeLatency && runtimeLatency.sourceMirrorDelta);
+  const comparatorMs = Number(runtimeLatency && runtimeLatency.comparator);
+  const sourceMirrorDeltaExceeded =
+    Number.isFinite(sourceMirrorDeltaMs) && sourceMirrorDeltaMs > controls.latencyGuards.maxSourceMirrorDeltaMs;
+  const comparatorExceeded = Number.isFinite(comparatorMs) && comparatorMs > controls.latencyGuards.maxComparatorMs;
+
+  const comparatorHealthy =
+    hasRuntimeParity &&
+    Array.isArray(runtimeParity.discrepancies) &&
+    runtimeParity.coverage &&
+    Number.isFinite(Number(runtimeParity.coverage.coveredCount));
+
+  const telemetryHealthy =
+    hasRuntimeParity &&
+    runtimeParity.queryContract &&
+    runtimeParity.coverage &&
+    Number.isFinite(Number(runtimeParity.coverage.sourceCount)) &&
+    Number.isFinite(Number(runtimeParity.coverage.mirroredCount)) &&
+    Number.isFinite(Number(runtimeParity.coverage.coveredCount)) &&
+    runtimeLatency &&
+    Number.isFinite(Number(runtimeLatency.sourceQuery)) &&
+    Number.isFinite(Number(runtimeLatency.mirrorQuery)) &&
+    Number.isFinite(Number(runtimeLatency.comparator)) &&
+    Number.isFinite(Number(runtimeLatency.sourceMirrorDelta));
+
+  const mismatchClassSignal = hasRuntimeParity
+    ? runtimeParity.mismatchClass || "none"
+    : comparatorError
+      ? "comparator-error"
+      : "missing-runtime-parity";
+
+  const blockedReasons = [];
+  if (!controls.gateEnabled) blockedReasons.push("gate-disabled");
+  if (controls.killSwitchActive) blockedReasons.push("kill-switch-active");
+  if (comparatorError) blockedReasons.push("comparator-error");
+  if (!telemetryHealthy) blockedReasons.push("telemetry-health-degraded");
+  if (!comparatorHealthy) blockedReasons.push("comparator-health-degraded");
+
+  const coverage = hasRuntimeParity && runtimeParity.coverage ? runtimeParity.coverage : null;
+  if (coverage && Number(coverage.coveredCount) <= 0) blockedReasons.push("coverage-gap");
+
+  if (hasRuntimeParity && runtimeParity.mismatchClass) {
+    blockedReasons.push(`mismatch-class-${runtimeParity.mismatchClass}`);
+  }
+  if (sourceMirrorDeltaExceeded) blockedReasons.push("latency-guard-source-mirror-delta-exceeded");
+  if (comparatorExceeded) blockedReasons.push("latency-guard-comparator-exceeded");
+  if (!hasRuntimeParity) blockedReasons.push("no-runtime-parity-signal");
+
+  const blocked = blockedReasons.length > 0;
+  const eligible = !blocked;
+
+  return {
+    eligible,
+    blocked,
+    blockedReasons,
+    failClosedDefaultLegacy: true,
+    controls,
+    evaluationInputs: {
+      gate: controls.gate,
+      killSwitchActive: controls.killSwitchActive,
+      mismatchClassSignal,
+      comparatorConfidence: hasRuntimeParity ? runtimeParity.comparatorConfidence || null : null,
+      discrepancyCount: hasRuntimeParity && Array.isArray(runtimeParity.discrepancies)
+        ? runtimeParity.discrepancies.length
+        : null,
+      coverage,
+      latencyMs: runtimeLatency,
+    },
+    signals: {
+      mismatchClass: mismatchClassSignal,
+      telemetryHealth: telemetryHealthy ? "healthy" : "degraded",
+      comparatorHealth: comparatorHealthy ? "healthy" : "degraded",
+      latencyGuard: {
+        sourceMirrorDeltaMs: Number.isFinite(sourceMirrorDeltaMs) ? sourceMirrorDeltaMs : null,
+        comparatorMs: Number.isFinite(comparatorMs) ? comparatorMs : null,
+        sourceMirrorDeltaExceeded,
+        comparatorExceeded,
+      },
+    },
+    servingPathDecision: blocked ? "blocked-legacy-only" : "eligible-for-future-experiment",
+  };
+}
+
 function compareAdminOrderListSummaryShadowParity(sourceOrders, mirroredOrders) {
   const discrepancies = [];
 
@@ -1603,6 +1731,7 @@ module.exports = {
   compareCanonicalIdentityCompleteness,
   compareCustomerOrderListSummaryShadowParity,
   compareOrderDetailShadowParity,
+  evaluateAdminOrderListServingExperimentReadiness,
   evaluateAdminOrderListRuntimeShadowVerification,
   compareMirrorSummary,
   compareVendorOrderListSummaryShadowParity,
@@ -1610,6 +1739,7 @@ module.exports = {
   mirrorOrderCreationToPostgres,
   resolveBuyerExternalId,
   resolveOrderExternalId,
+  resolveAdminOrderListServingExperimentControls,
   resolveOrdersPgMirrorMode,
   summarizeMirroredOrder,
 };
