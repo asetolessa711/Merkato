@@ -90,6 +90,26 @@ describe("orderPostgresMirror", () => {
     expect(controls.gateEnabled).toBe(false);
   });
 
+  test("resolveCustomerOrderHistoryServingExperimentControls resolves bounded in-window controls", () => {
+    process.env.CUSTOMER_ORDER_HISTORY_PG_PROMOTION_WINDOW_START_AT = "2026-04-10T00:00:00.000Z";
+    process.env.CUSTOMER_ORDER_HISTORY_PG_PROMOTION_WINDOW_END_AT = "2026-04-20T00:00:00.000Z";
+    process.env.CUSTOMER_ORDER_HISTORY_PG_PROMOTION_WINDOW_NOW_AT = "2026-04-12T12:00:00.000Z";
+    process.env.CUSTOMER_ORDER_HISTORY_PG_PROMOTION_WINDOW_APPROVED_ENVIRONMENT_ID = "promo-west-1";
+    process.env.CUSTOMER_ORDER_HISTORY_PG_PROMOTION_WINDOW_ENVIRONMENT_ID = "promo-west-1";
+
+    const controls = resolveCustomerOrderHistoryServingExperimentControls();
+
+    expect(controls.promotionWindow).toMatchObject({
+      status: "in-window",
+      inWindow: true,
+      postWindow: false,
+      approvedPromotionEnvironmentId: "promo-west-1",
+      promotionEnvironmentId: "promo-west-1",
+      startAt: "2026-04-10T00:00:00.000Z",
+      endAt: "2026-04-20T00:00:00.000Z",
+    });
+  });
+
   test("builds vendor rows with richer mirrored shape", () => {
     const rows = buildVendorRows([
       {
@@ -2033,6 +2053,11 @@ describe("orderPostgresMirror", () => {
   test("evaluateCustomerOrderHistoryServingExperimentReadiness fails closed on comparator/runtime error", () => {
     process.env.CUSTOMER_ORDER_HISTORY_PG_SERVING_EXPERIMENT_GATE = "ready";
     delete process.env.CUSTOMER_ORDER_HISTORY_PG_SERVING_EXPERIMENT_KILL_SWITCH;
+    process.env.CUSTOMER_ORDER_HISTORY_PG_PROMOTION_WINDOW_START_AT = "2026-04-10T00:00:00.000Z";
+    process.env.CUSTOMER_ORDER_HISTORY_PG_PROMOTION_WINDOW_END_AT = "2026-04-20T00:00:00.000Z";
+    process.env.CUSTOMER_ORDER_HISTORY_PG_PROMOTION_WINDOW_NOW_AT = "2026-04-12T12:00:00.000Z";
+    process.env.CUSTOMER_ORDER_HISTORY_PG_PROMOTION_WINDOW_APPROVED_ENVIRONMENT_ID = "promo-west-1";
+    process.env.CUSTOMER_ORDER_HISTORY_PG_PROMOTION_WINDOW_ENVIRONMENT_ID = "promo-west-1";
 
     const readiness = evaluateCustomerOrderHistoryServingExperimentReadiness({
       runtimeParity: null,
@@ -2058,6 +2083,11 @@ describe("orderPostgresMirror", () => {
     process.env.CUSTOMER_ORDER_HISTORY_PG_SERVING_EXPERIMENT_KILL_SWITCH = "false";
     process.env.CUSTOMER_ORDER_HISTORY_PG_READINESS_MAX_SOURCE_MIRROR_DELTA_MS = "50";
     process.env.CUSTOMER_ORDER_HISTORY_PG_READINESS_MAX_COMPARATOR_MS = "50";
+    process.env.CUSTOMER_ORDER_HISTORY_PG_PROMOTION_WINDOW_START_AT = "2026-04-10T00:00:00.000Z";
+    process.env.CUSTOMER_ORDER_HISTORY_PG_PROMOTION_WINDOW_END_AT = "2026-04-20T00:00:00.000Z";
+    process.env.CUSTOMER_ORDER_HISTORY_PG_PROMOTION_WINDOW_NOW_AT = "2026-04-12T12:00:00.000Z";
+    process.env.CUSTOMER_ORDER_HISTORY_PG_PROMOTION_WINDOW_APPROVED_ENVIRONMENT_ID = "promo-west-1";
+    process.env.CUSTOMER_ORDER_HISTORY_PG_PROMOTION_WINDOW_ENVIRONMENT_ID = "promo-west-1";
 
     const baselineRuntimeParity = {
       match: true,
@@ -2092,6 +2122,67 @@ describe("orderPostgresMirror", () => {
     expect(myAliasReadiness.blockedReasons).toEqual([]);
     expect(myOrdersReadiness.servingPathDecision).toBe("eligible-for-future-experiment");
     expect(myAliasReadiness.servingPathDecision).toBe("eligible-for-future-experiment");
+  });
+
+  test("evaluateCustomerOrderHistoryServingExperimentReadiness blocks outside bounded promotion window", () => {
+    process.env.CUSTOMER_ORDER_HISTORY_PG_SERVING_EXPERIMENT_GATE = "ready";
+    process.env.CUSTOMER_ORDER_HISTORY_PG_SERVING_EXPERIMENT_KILL_SWITCH = "false";
+    process.env.CUSTOMER_ORDER_HISTORY_PG_PROMOTION_WINDOW_START_AT = "2026-04-10T00:00:00.000Z";
+    process.env.CUSTOMER_ORDER_HISTORY_PG_PROMOTION_WINDOW_END_AT = "2026-04-20T00:00:00.000Z";
+    process.env.CUSTOMER_ORDER_HISTORY_PG_PROMOTION_WINDOW_NOW_AT = "2026-04-21T00:00:00.000Z";
+    process.env.CUSTOMER_ORDER_HISTORY_PG_PROMOTION_WINDOW_APPROVED_ENVIRONMENT_ID = "promo-west-1";
+    process.env.CUSTOMER_ORDER_HISTORY_PG_PROMOTION_WINDOW_ENVIRONMENT_ID = "promo-west-1";
+
+    const readiness = evaluateCustomerOrderHistoryServingExperimentReadiness({
+      runtimeParity: {
+        match: true,
+        mismatchClass: null,
+        comparatorConfidence: "high",
+        discrepancies: [],
+        coverage: { sourceCount: 3, mirroredCount: 3, coveredCount: 3 },
+        queryContract: { buyerMongoId: "buyer-1", aliasPath: "/my-orders" },
+        runtimeLatencyMs: { sourceQuery: 20, mirrorQuery: 18, comparator: 6, sourceMirrorDelta: 2 },
+      },
+      aliasPath: "/my-orders",
+    });
+
+    expect(readiness.eligible).toBe(false);
+    expect(readiness.blocked).toBe(true);
+    expect(readiness.blockedReasons).toEqual(
+      expect.arrayContaining(["outside-promotion-window"])
+    );
+    expect(readiness.signals.promotionWindow.status).toBe("post-window");
+    expect(readiness.servingPathDecision).toBe("blocked-legacy-only-post-window-non-go");
+  });
+
+  test("evaluateCustomerOrderHistoryServingExperimentReadiness enforces post-window non-GO legacy fallback", () => {
+    process.env.CUSTOMER_ORDER_HISTORY_PG_SERVING_EXPERIMENT_GATE = "ready";
+    process.env.CUSTOMER_ORDER_HISTORY_PG_SERVING_EXPERIMENT_KILL_SWITCH = "false";
+    process.env.CUSTOMER_ORDER_HISTORY_PG_PROMOTION_WINDOW_START_AT = "2026-04-10T00:00:00.000Z";
+    process.env.CUSTOMER_ORDER_HISTORY_PG_PROMOTION_WINDOW_END_AT = "2026-04-20T00:00:00.000Z";
+    process.env.CUSTOMER_ORDER_HISTORY_PG_PROMOTION_WINDOW_NOW_AT = "2026-04-21T00:00:00.000Z";
+    process.env.CUSTOMER_ORDER_HISTORY_PG_PROMOTION_WINDOW_APPROVED_ENVIRONMENT_ID = "promo-west-1";
+    process.env.CUSTOMER_ORDER_HISTORY_PG_PROMOTION_WINDOW_ENVIRONMENT_ID = "promo-west-1";
+    process.env.CUSTOMER_ORDER_HISTORY_PG_PROMOTION_WINDOW_GO_APPROVED = "false";
+
+    const readiness = evaluateCustomerOrderHistoryServingExperimentReadiness({
+      runtimeParity: {
+        match: true,
+        mismatchClass: null,
+        comparatorConfidence: "high",
+        discrepancies: [],
+        coverage: { sourceCount: 2, mirroredCount: 2, coveredCount: 2 },
+        queryContract: { buyerMongoId: "buyer-1", aliasPath: "/my" },
+        runtimeLatencyMs: { sourceQuery: 18, mirrorQuery: 16, comparator: 4, sourceMirrorDelta: 2 },
+      },
+      aliasPath: "/my",
+    });
+
+    expect(readiness.eligible).toBe(false);
+    expect(readiness.blockedReasons).toEqual(
+      expect.arrayContaining(["post-window-non-go-default-legacy", "outside-promotion-window"])
+    );
+    expect(readiness.servingPathDecision).toBe("blocked-legacy-only-post-window-non-go");
   });
 
   test("evaluateAdminOrderListRuntimeShadowVerification reports match with high confidence when covered window parity holds", () => {

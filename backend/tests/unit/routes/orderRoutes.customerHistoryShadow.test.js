@@ -74,6 +74,7 @@ describe("orderRoutes customer-history runtime shadow", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    delete process.env.CUSTOMER_ORDER_HISTORY_PG_PROMOTION_REHEARSAL_FORCE_COMPARATOR_FAILURE;
 
     app = express();
     app.use(express.json());
@@ -142,6 +143,7 @@ describe("orderRoutes customer-history runtime shadow", () => {
   });
 
   afterEach(() => {
+    delete process.env.CUSTOMER_ORDER_HISTORY_PG_PROMOTION_REHEARSAL_FORCE_COMPARATOR_FAILURE;
     consoleWarnSpy.mockRestore();
     consoleLogSpy.mockRestore();
   });
@@ -432,6 +434,36 @@ describe("orderRoutes customer-history runtime shadow", () => {
         comparatorError: "forced-customer-comparator-failure",
         aliasPath: "/my",
       })
+    );
+  });
+
+  test("fails closed through explicit comparator/runtime-failure rehearsal switch", async () => {
+    process.env.CUSTOMER_ORDER_HISTORY_PG_PROMOTION_REHEARSAL_FORCE_COMPARATOR_FAILURE = "true";
+    evaluateCustomerOrderHistoryServingExperimentReadiness.mockReturnValue({
+      eligible: false,
+      blocked: true,
+      blockedReasons: ["comparator-error", "outside-promotion-window"],
+      failClosedDefaultLegacy: true,
+      servingPathDecision: "blocked-legacy-only",
+      controls: { gate: "ready", gateEnabled: true, killSwitchActive: false },
+      signals: { telemetryHealth: "degraded", comparatorHealth: "degraded", aliasContract: "aligned" },
+      evaluationInputs: { aliasPath: "/my-orders", mismatchClassSignal: "comparator-error" },
+    });
+
+    const res = await request(app).get("/api/orders/my-orders");
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body.success).toBe(true);
+    expect(Array.isArray(res.body.orders)).toBe(true);
+    expect(evaluateCustomerOrderHistoryServingExperimentReadiness).toHaveBeenCalledWith(
+      expect.objectContaining({
+        runtimeParity: null,
+        comparatorError: "forced-customer-comparator-failure-rehearsal",
+        aliasPath: "/my-orders",
+      })
+    );
+    expect(consoleWarnSpy).toHaveBeenCalledWith(
+      expect.stringContaining("forced-customer-comparator-failure-rehearsal")
     );
   });
 });
