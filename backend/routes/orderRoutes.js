@@ -154,6 +154,14 @@ async function runCustomerOrderHistoryRuntimeShadowVerification({ sourceOrders, 
     : [];
   const mirrorQueryMs = Date.now() - mirrorStart;
 
+  const forceComparatorFailureRehearsal =
+    String(process.env.CUSTOMER_ORDER_HISTORY_PG_PROMOTION_REHEARSAL_FORCE_COMPARATOR_FAILURE || '')
+      .trim()
+      .toLowerCase() === 'true';
+  if (forceComparatorFailureRehearsal) {
+    throw new Error('forced-customer-comparator-failure-rehearsal');
+  }
+
   const compareStart = Date.now();
   const comparison = evaluateCustomerOrderHistoryRuntimeShadowVerification(sourceOrders, mirroredOrders, {
     buyerMongoId,
@@ -235,6 +243,19 @@ async function handleCustomerOrderHistory(req, res, aliasPath) {
         evaluationInputs: readiness.evaluationInputs,
       };
 
+      const promotionWindowEvidenceTelemetry = {
+        event: 'customer-order-history-bounded-promotion-window-evidence',
+        aliasPath,
+        timestamp: new Date().toISOString(),
+        promotionWindow: readiness && readiness.controls ? readiness.controls.promotionWindow || null : null,
+        readinessEligible: readiness.eligible,
+        blockedReasons: readiness.blockedReasons,
+        servingPathDecision: readiness.servingPathDecision,
+        servingSource: servingDecisionTelemetry.source,
+        servingReason: servingDecisionTelemetry.reason,
+      };
+      console.warn(`[orders-postgres-mirror] ${JSON.stringify(promotionWindowEvidenceTelemetry)}`);
+
       if (runtimeParity) {
         const parityTelemetry = {
           event: 'customer-order-history-runtime-read-shadow-verification',
@@ -300,6 +321,19 @@ async function handleCustomerOrderHistory(req, res, aliasPath) {
           controls: readiness.controls,
           signals: readiness.signals,
           evaluationInputs: readiness.evaluationInputs,
+        })}`
+      );
+      console.warn(
+        `[orders-postgres-mirror] ${JSON.stringify({
+          event: 'customer-order-history-bounded-promotion-window-evidence',
+          aliasPath,
+          timestamp: new Date().toISOString(),
+          promotionWindow: readiness && readiness.controls ? readiness.controls.promotionWindow || null : null,
+          readinessEligible: readiness.eligible,
+          blockedReasons: readiness.blockedReasons,
+          servingPathDecision: readiness.servingPathDecision,
+          servingSource: 'mongo',
+          servingReason: 'comparator-or-runtime-failure-fallback',
         })}`
       );
       console.warn(

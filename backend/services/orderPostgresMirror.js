@@ -21,6 +21,13 @@ function parsePositiveInteger(rawValue, fallbackValue) {
   return Math.floor(numeric);
 }
 
+function parseIsoTimestamp(rawValue) {
+  const value = String(rawValue || "").trim();
+  if (!value) return null;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
 function resolveAdminOrderListServingExperimentControls() {
   const gateRaw = String(process.env.ADMIN_ORDER_LIST_PG_SERVING_EXPERIMENT_GATE || "").trim().toLowerCase();
   let gate = gateRaw || "off";
@@ -71,11 +78,69 @@ function resolveCustomerOrderHistoryServingExperimentControls() {
     .toLowerCase();
   const killSwitchActive = killSwitchRaw === "true";
 
+  const promotionWindowStartRaw = String(
+    process.env.CUSTOMER_ORDER_HISTORY_PG_PROMOTION_WINDOW_START_AT || ""
+  ).trim();
+  const promotionWindowEndRaw = String(
+    process.env.CUSTOMER_ORDER_HISTORY_PG_PROMOTION_WINDOW_END_AT || ""
+  ).trim();
+  const promotionWindowNowRaw = String(
+    process.env.CUSTOMER_ORDER_HISTORY_PG_PROMOTION_WINDOW_NOW_AT || ""
+  ).trim();
+  const approvedPromotionEnvironmentId = String(
+    process.env.CUSTOMER_ORDER_HISTORY_PG_PROMOTION_WINDOW_APPROVED_ENVIRONMENT_ID || ""
+  ).trim() || null;
+  const promotionEnvironmentId = String(
+    process.env.CUSTOMER_ORDER_HISTORY_PG_PROMOTION_WINDOW_ENVIRONMENT_ID || ""
+  ).trim() || null;
+  const promotionWindowGoApproved =
+    String(process.env.CUSTOMER_ORDER_HISTORY_PG_PROMOTION_WINDOW_GO_APPROVED || "")
+      .trim()
+      .toLowerCase() === "true";
+
+  const promotionWindowStartAt = parseIsoTimestamp(promotionWindowStartRaw);
+  const promotionWindowEndAt = parseIsoTimestamp(promotionWindowEndRaw);
+  const promotionWindowNowAt = parseIsoTimestamp(promotionWindowNowRaw) || new Date();
+
+  const timestampsPresent = Boolean(promotionWindowStartAt && promotionWindowEndAt);
+  const environmentConfigured = Boolean(approvedPromotionEnvironmentId && promotionEnvironmentId);
+  const invalidWindowRange =
+    timestampsPresent && promotionWindowStartAt.getTime() > promotionWindowEndAt.getTime();
+
+  const inWindow =
+    timestampsPresent &&
+    !invalidWindowRange &&
+    promotionWindowNowAt.getTime() >= promotionWindowStartAt.getTime() &&
+    promotionWindowNowAt.getTime() <= promotionWindowEndAt.getTime();
+  const postWindow =
+    timestampsPresent &&
+    !invalidWindowRange &&
+    promotionWindowNowAt.getTime() > promotionWindowEndAt.getTime();
+
+  let promotionWindowStatus = "in-window";
+  if (!timestampsPresent || !environmentConfigured) promotionWindowStatus = "unconfigured";
+  else if (invalidWindowRange) promotionWindowStatus = "invalid";
+  else if (promotionEnvironmentId !== approvedPromotionEnvironmentId) promotionWindowStatus = "environment-mismatch";
+  else if (inWindow) promotionWindowStatus = "in-window";
+  else if (postWindow) promotionWindowStatus = "post-window";
+  else promotionWindowStatus = "pre-window";
+
   return {
     gate,
     gateEnabled: gate === "ready",
     killSwitchActive,
     failClosedDefaultLegacy: true,
+    promotionWindow: {
+      status: promotionWindowStatus,
+      startAt: promotionWindowStartAt ? promotionWindowStartAt.toISOString() : null,
+      endAt: promotionWindowEndAt ? promotionWindowEndAt.toISOString() : null,
+      nowAt: promotionWindowNowAt.toISOString(),
+      approvedPromotionEnvironmentId,
+      promotionEnvironmentId,
+      goApproved: promotionWindowGoApproved,
+      inWindow,
+      postWindow,
+    },
     latencyGuards: {
       maxSourceMirrorDeltaMs: parsePositiveInteger(
         process.env.CUSTOMER_ORDER_HISTORY_PG_READINESS_MAX_SOURCE_MIRROR_DELTA_MS,
@@ -1220,6 +1285,7 @@ function evaluateCustomerOrderHistoryServingExperimentReadiness({ runtimeParity,
   const controls = resolveCustomerOrderHistoryServingExperimentControls();
   const hasRuntimeParity = Boolean(runtimeParity && typeof runtimeParity === "object");
   const runtimeLatency = hasRuntimeParity && runtimeParity.runtimeLatencyMs ? runtimeParity.runtimeLatencyMs : null;
+  const promotionWindow = controls.promotionWindow || {};
 
   const alias = aliasPath ? String(aliasPath) : null;
   const supportedAliases = new Set(["/my-orders", "/my"]);
@@ -1265,6 +1331,11 @@ function evaluateCustomerOrderHistoryServingExperimentReadiness({ runtimeParity,
   const blockedReasons = [];
   if (!controls.gateEnabled) blockedReasons.push("gate-disabled");
   if (controls.killSwitchActive) blockedReasons.push("kill-switch-active");
+  if (!promotionWindow.inWindow) blockedReasons.push("outside-promotion-window");
+  if (promotionWindow.status === "unconfigured") blockedReasons.push("promotion-window-unconfigured");
+  if (promotionWindow.status === "invalid") blockedReasons.push("promotion-window-invalid");
+  if (promotionWindow.status === "environment-mismatch") blockedReasons.push("promotion-environment-not-approved");
+  if (promotionWindow.postWindow && !promotionWindow.goApproved) blockedReasons.push("post-window-non-go-default-legacy");
   if (comparatorError) blockedReasons.push("comparator-error");
   if (!aliasSupported) blockedReasons.push("alias-contract-unsupported-request-path");
   if (!runtimeAliasSupported) blockedReasons.push("alias-contract-runtime-unsupported");
@@ -1285,6 +1356,7 @@ function evaluateCustomerOrderHistoryServingExperimentReadiness({ runtimeParity,
   const dedupedBlockedReasons = Array.from(new Set(blockedReasons));
   const blocked = dedupedBlockedReasons.length > 0;
   const eligible = !blocked;
+  const postWindowNonGoFallback = dedupedBlockedReasons.includes("post-window-non-go-default-legacy");
 
   return {
     eligible,
@@ -1298,6 +1370,7 @@ function evaluateCustomerOrderHistoryServingExperimentReadiness({ runtimeParity,
       aliasPath: alias,
       runtimeAliasPath: runtimeAlias,
       aliasContractAligned,
+      promotionWindow,
       mismatchClassSignal,
       comparatorConfidence: hasRuntimeParity ? runtimeParity.comparatorConfidence || null : null,
       discrepancyCount: hasRuntimeParity && Array.isArray(runtimeParity.discrepancies)
@@ -1311,6 +1384,12 @@ function evaluateCustomerOrderHistoryServingExperimentReadiness({ runtimeParity,
       aliasContract: aliasContractAligned && aliasSupported && runtimeAliasSupported ? "aligned" : "degraded",
       telemetryHealth: telemetryHealthy ? "healthy" : "degraded",
       comparatorHealth: comparatorHealthy ? "healthy" : "degraded",
+      promotionWindow: {
+        status: promotionWindow.status || "unconfigured",
+        inWindow: Boolean(promotionWindow.inWindow),
+        postWindow: Boolean(promotionWindow.postWindow),
+        goApproved: Boolean(promotionWindow.goApproved),
+      },
       latencyGuard: {
         sourceMirrorDeltaMs: Number.isFinite(sourceMirrorDeltaMs) ? sourceMirrorDeltaMs : null,
         comparatorMs: Number.isFinite(comparatorMs) ? comparatorMs : null,
@@ -1318,7 +1397,11 @@ function evaluateCustomerOrderHistoryServingExperimentReadiness({ runtimeParity,
         comparatorExceeded,
       },
     },
-    servingPathDecision: blocked ? "blocked-legacy-only" : "eligible-for-future-experiment",
+    servingPathDecision: blocked
+      ? postWindowNonGoFallback
+        ? "blocked-legacy-only-post-window-non-go"
+        : "blocked-legacy-only"
+      : "eligible-for-future-experiment",
   };
 }
 
